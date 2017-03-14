@@ -19,6 +19,10 @@ namespace AsyncGenerator
 		/// <summary>
 		/// A new type will be created with an Async postfix that will contains the async counterparts
 		/// </summary>
-		NewType = 2
+		NewType = 2,
+		/// <summary>
+		/// The type will not be modified
+		/// </summary>
+		Ignore = 3,
 	}
 }

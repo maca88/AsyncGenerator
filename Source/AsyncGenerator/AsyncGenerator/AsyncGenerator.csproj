@@ -35,6 +35,10 @@
       <HintPath>..\packages\ManagedEsent.1.9.4\lib\net40\Esent.Interop.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.2.0.0\lib\netstandard1.3\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
@@ -187,6 +191,8 @@
     <Compile Include="Configuration\ProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\ProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\ProjectTransformConfiguration.cs" />
+    <Compile Include="Extensions\SymbolExtensions.cs" />
+    <Compile Include="Internal\AsyncCounterpartMethod.cs" />
     <Compile Include="Internal\AsyncLock.cs" />
     <Compile Include="Internal\AsyncSemaphore.cs" />
     <Compile Include="MethodConversion.cs" />

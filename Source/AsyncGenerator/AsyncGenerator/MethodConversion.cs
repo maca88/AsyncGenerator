@@ -9,13 +9,17 @@ namespace AsyncGenerator
 	public enum MethodConversion
 	{
 		/// <summary>
-		/// The method wont be changed
+		/// The method conversion will be decided by the analyzer
 		/// </summary>
-		None = 0,
+		Unknown = 0,
 		/// <summary>
 		/// The method will be converted to async
 		/// </summary>
 		ToAsync = 1,
+		/// <summary>
+		/// The method will not be modified
+		/// </summary>
+		Ignore = 2,
 		/// <summary>
 		/// The method will be converted to async only if there is at least one method within the method body that has an async counterpart
 		/// </summary>

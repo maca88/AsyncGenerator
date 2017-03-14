@@ -11,7 +11,7 @@ namespace AsyncGenerator.Configuration
 
 	public class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
 	{
-		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.None;
+		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
 
 		public Func<INamedTypeSymbol, TypeConversion> TypeConversionFunction { get; private set; } = m => TypeConversion.Unknown;
 

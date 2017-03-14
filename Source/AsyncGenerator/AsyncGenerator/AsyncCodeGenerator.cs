@@ -7,10 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -24,6 +26,13 @@ namespace AsyncGenerator
 			Symbol = symbol;
 			Node = node;
 		}
+
+		/// <summary>
+		/// Contains references of types that are used inside this method
+		/// </summary>
+		public HashSet<ReferenceLocation> TypeReferences { get; } = new HashSet<ReferenceLocation>();
+
+		public MethodConversion Conversion { get; internal set; }
 
 		public TypeData TypeData { get; }
 
@@ -42,7 +51,10 @@ namespace AsyncGenerator
 			Node = node;
 		}
 
-		public HashSet<ReferenceLocation> References { get; } = new HashSet<ReferenceLocation>();
+		/// <summary>
+		/// Contains references of types that are used inside this type
+		/// </summary>
+		public HashSet<ReferenceLocation> TypeReferences { get; } = new HashSet<ReferenceLocation>();
 
 		public TypeData ParentTypeData { get; }
 
@@ -52,9 +64,36 @@ namespace AsyncGenerator
 
 		public TypeDeclarationSyntax Node { get; }
 
+		public TypeConversion Conversion { get; internal set; }
+
 		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> MethodData { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
 
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypeData { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
+
+		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, bool create = false)
+		{
+			var methodSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(methodNode);
+			return GetMethodData(methodSymbol, methodNode, create);
+		}
+
+		public MethodData GetMethodData(IMethodSymbol symbol, bool create = false)
+		{
+			var location = symbol.Locations.Single(o => o.SourceTree.FilePath == Node.SyntaxTree.FilePath);
+			var memberNode = Node.DescendantNodes()
+									 .OfType<MethodDeclarationSyntax>()
+									 .First(o => o.ChildTokens().SingleOrDefault(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == location.SourceSpan);
+			return GetMethodData(symbol, memberNode, create);
+		}
+
+		public MethodData GetMethodData(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodNode, bool create = false)
+		{
+			MethodData methodData;
+			if (MethodData.TryGetValue(methodNode, out methodData))
+			{
+				return methodData;
+			}
+			return !create ? null : MethodData.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
+		}
 	}
 
 	public class NamespaceData
@@ -65,6 +104,11 @@ namespace AsyncGenerator
 			Symbol = symbol;
 			Node = node;
 		}
+
+		/// <summary>
+		/// Contains references of types that are used inside this namespace (alias to a type with a using statement)
+		/// </summary>
+		public HashSet<ReferenceLocation> TypeReferences { get; } = new HashSet<ReferenceLocation>();
 
 		public DocumentData DocumentData { get; }
 
@@ -154,12 +198,22 @@ namespace AsyncGenerator
 
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NamespaceData { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
 
+		public MethodData GetOrCreateMethodData(MethodDeclarationSyntax node)
+		{
+			return GetNamespaceData(node, true).GetTypeData(node, true).GetMethodData(node, true);
+		}
+		/*
+		public MethodData GetOrCreateMethodData(IMethodSymbol symbol)
+		{
+			return GetNamespaceData(node, true).GetTypeData(node, true).GetMethodData(symbol, true);
+		}*/
+
 		public TypeData GetOrCreateTypeData(TypeDeclarationSyntax node)
 		{
 			return GetNamespaceData(node, true).GetTypeData(node, true);
 		}
 
-		private NamespaceData GetNamespaceData(SyntaxNode node, bool create = false)
+		public NamespaceData GetNamespaceData(SyntaxNode node, bool create = false)
 		{
 			if (node == null)
 			{
@@ -170,7 +224,7 @@ namespace AsyncGenerator
 			{
 				return GlobalNamespaceData;
 			}
-			var namespaceSymbol = (INamespaceSymbol)ModelExtensions.GetDeclaredSymbol(SemanticModel, namespaceNode);
+			var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
 			return GetNamespaceData(namespaceNode, namespaceSymbol, create);
 		}
 
@@ -259,6 +313,7 @@ namespace AsyncGenerator
 	{
 		private IImmutableSet<Document> _analyzeDocuments;
 		private ProjectAnalyzeConfiguration _configuration;
+		private readonly ConcurrentDictionary<IMethodSymbol, IMethodSymbol> _methodAsyncConterparts = new ConcurrentDictionary<IMethodSymbol, IMethodSymbol>();
 
 		public ProjectAnalyzer(ProjectData projectData)
 		{
@@ -282,20 +337,176 @@ namespace AsyncGenerator
 
 		public async Task AnalyzeDocumentData(DocumentData documentData)
 		{
-			foreach (var typeDeclaration in documentData.RootNode
+			foreach (var typeNode in documentData.RootNode
 				.DescendantNodes()
 				.OfType<TypeDeclarationSyntax>())
 			{
-				var typeData = documentData.GetOrCreateTypeData(typeDeclaration);
-				if (!_configuration.TypeSelectionPredicate(typeData.Symbol))
+				var typeData = documentData.GetOrCreateTypeData(typeNode);
+				// Not needed as we have TypeConversionFunction
+				//if (!_configuration.TypeSelectionPredicate(typeData.Symbol))
+				//{
+				//	continue;
+				//}
+				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
+				if (typeData.Conversion == TypeConversion.Ignore)
 				{
 					continue;
 				}
-				var typeTransform = _configuration.TypeConversionFunction(typeData.Symbol);
 				// If the type have to be defined as a new type then we need to find all references to that type 
-				if (typeTransform == TypeConversion.NewType)
+				// TODO: move this to post analyze?
+				if (typeData.Conversion == TypeConversion.NewType)
 				{
 					await ScanForTypeReferences(typeData).ConfigureAwait(false);
+				}
+
+				if (_configuration.ScanForMissingAsyncMembers)
+				{
+					await ScanForTypeMissingAsyncMethods(typeData).ConfigureAwait(false);
+				}
+
+				foreach (var methodNode in typeNode
+					.DescendantNodes()
+					.OfType<MethodDeclarationSyntax>())
+				{
+					var methodData = 
+
+				}
+
+			}
+		}
+
+		
+
+		private async Task<List<AsyncCounterpartMethod>> FindAsyncCounterpartMethodsWhitinMethod(MethodData methodData)
+		{
+			var result = new List<AsyncCounterpartMethod>();
+			if (methodData.Node.Body == null)
+			{
+				return result;
+			}
+			var documentData = methodData.TypeData.NamespaceData.DocumentData;
+			var semanticModel = documentData.SemanticModel;
+			foreach (var invocation in methodData.Node.Body.DescendantNodes()
+										   .OfType<InvocationExpressionSyntax>())
+			{
+				var methodSymbol = ModelExtensions.GetSymbolInfo(semanticModel, invocation.Expression).Symbol as IMethodSymbol;
+				if (methodSymbol == null)
+				{
+					continue;
+				}
+				methodSymbol = methodSymbol.OriginalDefinition;
+				IMethodSymbol asyncMethodSymbol;
+				if (!_methodAsyncConterparts.TryGetValue(methodSymbol, out asyncMethodSymbol))
+				{
+					if (_configuration.FindAsyncCounterpartDelegates.Any())
+					{
+						foreach (var findAsyncConterpart in _configuration.FindAsyncCounterpartDelegates)
+						{
+							asyncMethodSymbol = await findAsyncConterpart(documentData.ProjectData.Project, methodSymbol.OriginalDefinition, true).ConfigureAwait(false);
+							if (asyncMethodSymbol != null)
+							{
+								break;
+							}
+						}
+					}
+					else
+					{
+						asyncMethodSymbol = methodSymbol.GetAsyncCounterpart(true);
+					}
+					var value = asyncMethodSymbol?.OriginalDefinition;
+					_methodAsyncConterparts.AddOrUpdate(methodSymbol, value, (k, v) => value);
+				}
+
+				if (asyncMethodSymbol == null)
+				{
+					continue;
+				}
+
+				result.Add(new AsyncCounterpartMethod
+				{
+					MethodSymbol = methodSymbol.OriginalDefinition,
+					AsyncMethodSymbol = asyncMethodSymbol.OriginalDefinition,
+					MethodNode = invocation.Expression
+				});
+			}
+			return result;
+		}
+
+		private async Task ScanForTypeMissingAsyncMethods(TypeData typeData)
+		{
+			var documentData = typeData.NamespaceData.DocumentData;
+			var members = typeData.Node
+				.DescendantNodes()
+				.OfType<MethodDeclarationSyntax>()
+				.Select(o => new { Node = o, Symbol = documentData.SemanticModel.GetDeclaredSymbol(o)})
+				.ToLookup(o =>
+					o.Symbol.MethodKind == MethodKind.ExplicitInterfaceImplementation
+						? o.Symbol.Name.Split('.').Last()
+						: o.Symbol.Name);
+			var methodDatas = new List<MethodData>();
+
+			foreach (var asyncMember in typeData.Symbol.AllInterfaces
+												  .SelectMany(o => o.GetMembers().OfType<IMethodSymbol>()
+												  .Where(m => m.Name.EndsWith("Async"))))
+			{
+				// Skip if there is already an implementation defined
+				var impl = typeData.Symbol.FindImplementationForInterfaceMember(asyncMember);
+				if (impl != null)
+				{
+					continue;
+				}
+				var nonAsyncName = asyncMember.Name.Remove(asyncMember.Name.LastIndexOf("Async", StringComparison.InvariantCulture));
+				if (!members.Contains(nonAsyncName))
+				{
+					continue;
+				}
+				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.HaveSameParameters(asyncMember));
+				var methodData = documentData.GetOrCreateMethodData(nonAsyncMember.Node);
+				methodData.Conversion = MethodConversion.ToAsync;
+				methodDatas.Add(methodData);
+			}
+
+			// Find all abstract non implemented async methods. Descend base types until we find a non abstract one.
+			var baseType = typeData.Symbol.BaseType;
+			while (baseType != null)
+			{
+				if (!baseType.IsAbstract)
+				{
+					break;
+				}
+				foreach (var asyncMember in baseType.GetMembers()
+					.OfType<IMethodSymbol>()
+					.Where(o => o.IsAbstract && o.Name.EndsWith("Async")))
+				{
+					var nonAsyncName = asyncMember.Name.Remove(asyncMember.Name.LastIndexOf("Async", StringComparison.InvariantCulture));
+					if (!members.Contains(nonAsyncName))
+					{
+						Logger.Info($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+						continue;
+					}
+					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.HaveSameParameters(asyncMember));
+					if (nonAsyncMember == null)
+					{
+						Logger.Info($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+						continue;
+					}
+					var methodData = documentData.GetOrCreateMethodData(nonAsyncMember.Node);
+					methodData.Conversion = MethodConversion.ToAsync;
+					methodDatas.Add(methodData);
+				}
+				baseType = baseType.BaseType;
+			}
+
+			if (_configuration.ScanMethodBody)
+			{
+				var asnycCounterparts = new List<AsyncCounterpartMethod>();
+				foreach (var methodData in methodDatas)
+				{
+					asnycCounterparts.AddRange(await FindAsyncCounterpartMethodsWhitinMethod(methodData).ConfigureAwait(false));
+				}
+				foreach (var group in asnycCounterparts.GroupBy(o => o.MethodSymbol))
+				{
+					await ScanAllMethodReferenceLocations(group.Key).ConfigureAwait(false);
 				}
 			}
 		}
@@ -311,7 +522,7 @@ namespace AsyncGenerator
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
-				typeData.References.Add(refLocation);
+				typeData.TypeReferences.Add(refLocation);
 
 				// we need to find the type where the reference location is
 				var node = documentData.RootNode.DescendantNodes(descendIntoTrivia: true)
@@ -329,7 +540,7 @@ namespace AsyncGenerator
 				var methodNode = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
 				if (methodNode != null)
 				{
-					var methodInfo = documentData.GetOrCreateMethodInfo(methodNode, true);
+					var methodInfo = documentData.GetOrCreateMethodData(methodNode);
 					if (methodInfo.TypeReferences.Contains(refLocation))
 					{
 						continue;
@@ -341,7 +552,7 @@ namespace AsyncGenerator
 					var type = node.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
 					if (type != null)
 					{
-						var refTypeInfo = documentData.GetOrCreateTypeInfo(type);
+						var refTypeInfo = documentData.GetOrCreateTypeData(type);
 						if (refTypeInfo.TypeReferences.Contains(refLocation))
 						{
 							continue;
@@ -351,7 +562,7 @@ namespace AsyncGenerator
 					else // can happen when declaring a Name in a using statement
 					{
 						var namespaceNode = node.Ancestors().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
-						var namespaceInfo = documentData.GetNamespaceInfo(namespaceNode, true);
+						var namespaceInfo = documentData.GetNamespaceData(namespaceNode, true);
 						if (namespaceInfo.TypeReferences.Contains(refLocation))
 						{
 							continue;
