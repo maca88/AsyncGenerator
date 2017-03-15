@@ -191,10 +191,12 @@
     <Compile Include="Configuration\ProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\ProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\ProjectTransformConfiguration.cs" />
+    <Compile Include="Extensions\MethodKindExtensions.cs" />
     <Compile Include="Extensions\SymbolExtensions.cs" />
     <Compile Include="Internal\AsyncCounterpartMethod.cs" />
     <Compile Include="Internal\AsyncLock.cs" />
     <Compile Include="Internal\AsyncSemaphore.cs" />
+    <Compile Include="Internal\ConcurrentSet.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TypeConversion.cs" />

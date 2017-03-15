@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
+using log4net;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -30,7 +31,12 @@ namespace AsyncGenerator
 		/// <summary>
 		/// Contains references of types that are used inside this method
 		/// </summary>
-		public HashSet<ReferenceLocation> TypeReferences { get; } = new HashSet<ReferenceLocation>();
+		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+
+		/// <summary>
+		/// References to other methods that are invoked inside this method and are candidates to be async
+		/// </summary>
+		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
 		public MethodConversion Conversion { get; internal set; }
 
@@ -54,7 +60,12 @@ namespace AsyncGenerator
 		/// <summary>
 		/// Contains references of types that are used inside this type
 		/// </summary>
-		public HashSet<ReferenceLocation> TypeReferences { get; } = new HashSet<ReferenceLocation>();
+		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+
+		/// <summary>
+		/// Contains references to itself
+		/// </summary>
+		public ConcurrentSet<ReferenceLocation> SelfReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
 		public TypeData ParentTypeData { get; }
 
@@ -108,7 +119,7 @@ namespace AsyncGenerator
 		/// <summary>
 		/// Contains references of types that are used inside this namespace (alias to a type with a using statement)
 		/// </summary>
-		public HashSet<ReferenceLocation> TypeReferences { get; } = new HashSet<ReferenceLocation>();
+		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
 		public DocumentData DocumentData { get; }
 
@@ -202,15 +213,43 @@ namespace AsyncGenerator
 		{
 			return GetNamespaceData(node, true).GetTypeData(node, true).GetMethodData(node, true);
 		}
-		/*
+		
 		public MethodData GetOrCreateMethodData(IMethodSymbol symbol)
 		{
-			return GetNamespaceData(node, true).GetTypeData(node, true).GetMethodData(symbol, true);
-		}*/
+			return GetNamespaceData(symbol, true).GetTypeData(symbol, true).GetMethodData(symbol, true);
+		}
 
 		public TypeData GetOrCreateTypeData(TypeDeclarationSyntax node)
 		{
 			return GetNamespaceData(node, true).GetTypeData(node, true);
+		}
+
+		public NamespaceData GetNamespaceData(ISymbol symbol, bool create = false)
+		{
+			var namespaceSymbol = symbol.ContainingNamespace;
+			if (namespaceSymbol.IsGlobalNamespace)
+			{
+				return GlobalNamespaceData;
+			}
+
+			var location = namespaceSymbol.Locations.Single(o => o.SourceTree.FilePath == FilePath);
+			var node = RootNode.DescendantNodes()
+							   .OfType<NamespaceDeclarationSyntax>()
+							   .FirstOrDefault(
+								   o =>
+								   {
+									   var identifier = o.ChildNodes().OfType<IdentifierNameSyntax>().SingleOrDefault();
+									   if (identifier != null)
+									   {
+										   return identifier.Span == location.SourceSpan;
+									   }
+									   return o.ChildNodes().OfType<QualifiedNameSyntax>().Single().Right.Span == location.SourceSpan;
+								   });
+			if (node == null) //TODO: location.SourceSpan.Start == 0 -> a bug perhaps ???
+			{
+				node = RootNode.DescendantNodes().OfType<NamespaceDeclarationSyntax>().Single(o => o.FullSpan.End == location.SourceSpan.End);
+			}
+			return GetNamespaceData(node, namespaceSymbol, create);
 		}
 
 		public NamespaceData GetNamespaceData(SyntaxNode node, bool create = false)
@@ -236,6 +275,41 @@ namespace AsyncGenerator
 				return namespaceData;
 			}
 			return !create ? null : NamespaceData.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
+		}
+
+		// TODO: DEBUG
+		public ISymbol GetEnclosingSymbol(ReferenceLocation reference)
+		{
+			var enclosingSymbol = SemanticModel.GetEnclosingSymbol(reference.Location.SourceSpan.Start);
+
+			for (var current = enclosingSymbol; current != null; current = current.ContainingSymbol)
+			{
+				if (current.Kind == SymbolKind.Field)
+				{
+					return current;
+				}
+
+				if (current.Kind == SymbolKind.Property)
+				{
+					return current;
+				}
+
+				if (current.Kind == SymbolKind.Method)
+				{
+					var method = (IMethodSymbol)current;
+					if (method.IsAccessor())
+					{
+						return method.AssociatedSymbol;
+					}
+
+					if (method.MethodKind != MethodKind.AnonymousFunction)
+					{
+						return method;
+					}
+				}
+			}
+			// reference to a cref
+			return null;
 		}
 	}
 
@@ -265,7 +339,6 @@ namespace AsyncGenerator
 
 		public ConcurrentDictionary<string, DocumentData> DocumentData { get; } = new ConcurrentDictionary<string, DocumentData>();
 
-		
 		public DocumentData GetDocumentData(Document document)
 		{
 			DocumentData documentData;
@@ -311,6 +384,8 @@ namespace AsyncGenerator
 
 	public class ProjectAnalyzer
 	{
+		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectAnalyzer));
+
 		private IImmutableSet<Document> _analyzeDocuments;
 		private ProjectAnalyzeConfiguration _configuration;
 		private readonly ConcurrentDictionary<IMethodSymbol, IMethodSymbol> _methodAsyncConterparts = new ConcurrentDictionary<IMethodSymbol, IMethodSymbol>();
@@ -375,7 +450,331 @@ namespace AsyncGenerator
 			}
 		}
 
-		
+		private bool CanProcessSyntaxReference(SyntaxReference syntax)
+		{
+			return CanProcessDocument(ProjectData.Project.Solution.GetDocument(syntax.SyntaxTree));
+		}
+
+		private bool CanProcessDocument(Document doc)
+		{
+			if (doc.Project != ProjectData.Project)
+			{
+				return false;
+			}
+			return _analyzeDocuments.Contains(doc);
+		}
+
+		private class MethodSymbolAnalyzeResult
+		{
+			public static readonly MethodSymbolAnalyzeResult Invalid = new MethodSymbolAnalyzeResult();
+
+			public HashSet<IMethodSymbol> InterfaceMethods { get; set; }
+
+			public HashSet<IMethodSymbol> AsyncInterfaceMethods { get; set; }
+
+			public HashSet<IMethodSymbol> OverriddenMethods { get; set; }
+
+			public IMethodSymbol BaseOverriddenMethod { get; set; }
+
+			public IMethodSymbol MethodSymbol { get; set; }
+
+			public bool IsValid { get; set; }
+		}
+
+		private readonly ConcurrentDictionary<IMethodSymbol, MethodSymbolAnalyzeResult> _cachedMethodSymbolInfos = new ConcurrentDictionary<IMethodSymbol, MethodSymbolAnalyzeResult>();
+
+		private async Task<MethodSymbolAnalyzeResult> AnalyzeMethodSymbol(IMethodSymbol methodSymbol, bool forceAsync)
+		{
+			MethodSymbolAnalyzeResult result;
+			if (_cachedMethodSymbolInfos.TryGetValue(methodSymbol.OriginalDefinition, out result))
+			{
+				return result;
+			}
+
+			if (methodSymbol.Name.EndsWith("Async"))
+			{
+				if (forceAsync)
+				{
+					Logger.Warn($"Symbol {methodSymbol} is already async");
+				}
+				return MethodSymbolAnalyzeResult.Invalid;
+			}
+			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
+			{
+				if (forceAsync)
+				{
+					Logger.Warn($"Method {methodSymbol} is a {methodSymbol.MethodKind} and cannot be made async");
+				}
+				return MethodSymbolAnalyzeResult.Invalid;
+			}
+
+			if (methodSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
+			{
+				if (forceAsync)
+				{
+					Logger.Warn($"Method {methodSymbol} has out parameters and cannot be made async");
+				}
+				return MethodSymbolAnalyzeResult.Invalid;
+			}
+
+			if (methodSymbol.DeclaringSyntaxReferences.SingleOrDefault() == null)
+			{
+				if (forceAsync)
+				{
+					Logger.Warn($"Method {methodSymbol} is external and cannot be made async");
+				}
+				return MethodSymbolAnalyzeResult.Invalid;
+			}
+
+			var interfaceMethods = new HashSet<IMethodSymbol>();
+			var asyncMethods = new HashSet<IMethodSymbol>();
+			// Check if explicitly implements external interfaces
+			if (methodSymbol.MethodKind == MethodKind.ExplicitInterfaceImplementation)
+			{
+				foreach (var interfaceMember in methodSymbol.ExplicitInterfaceImplementations)
+				{
+					var syntax = interfaceMember.DeclaringSyntaxReferences.SingleOrDefault();
+					if (methodSymbol.ContainingAssembly.Name != interfaceMember.ContainingAssembly.Name)
+					{
+						// Check if the member has an async counterpart that is not implemented in the current type (missing member)
+						var asyncConterPart = interfaceMember.ContainingType.GetMembers()
+															 .OfType<IMethodSymbol>()
+															 .Where(o => o.Name == methodSymbol.Name + "Async")
+															 .SingleOrDefault(o => o.HaveSameParameters(methodSymbol));
+						if (asyncConterPart == null)
+						{
+							Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
+							return MethodSymbolAnalyzeResult.Invalid;
+						}
+						asyncMethods.Add(asyncConterPart);
+					}
+					if (!CanProcessSyntaxReference(syntax))
+					{
+						continue;
+					}
+					interfaceMethods.Add(interfaceMember.OriginalDefinition);
+				}
+			}
+
+			// Check if the method is overriding an external method
+			var overridenMethod = methodSymbol.OverriddenMethod;
+			var overrrides = new HashSet<IMethodSymbol>();
+			while (overridenMethod != null)
+			{
+				var syntax = overridenMethod.DeclaringSyntaxReferences.SingleOrDefault();
+				if (methodSymbol.ContainingAssembly.Name != overridenMethod.ContainingAssembly.Name)
+				{
+					// Check if the member has an async counterpart that is not implemented in the current type (missing member)
+					var asyncConterPart = overridenMethod.ContainingType.GetMembers()
+														 .OfType<IMethodSymbol>()
+														 .Where(o => o.Name == methodSymbol.Name + "Async" && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
+														 .SingleOrDefault(o => o.HaveSameParameters(methodSymbol));
+					if (asyncConterPart == null)
+					{
+						if (!asyncMethods.Any() || (asyncMethods.Any() && !overridenMethod.IsOverride && !overridenMethod.IsVirtual))
+						{
+							Logger.Warn($"Method {methodSymbol} overrides an external method {overridenMethod} and cannot be made async");
+							return MethodSymbolAnalyzeResult.Invalid;
+						}
+					}
+					else
+					{
+						asyncMethods.Add(asyncConterPart);
+					}
+				}
+				else if (CanProcessSyntaxReference(syntax))
+				{
+					overrrides.Add(overridenMethod.OriginalDefinition);
+				}
+
+				if (overridenMethod.OverriddenMethod != null)
+				{
+					overridenMethod = overridenMethod.OverriddenMethod;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			// Check if the method is implementing an external interface, if true skip as we cannot modify externals
+			// FindImplementationForInterfaceMember will find the first implementation method starting from the deepest base class
+			var type = methodSymbol.ContainingType;
+			foreach (var interfaceMember in type.AllInterfaces
+												.SelectMany(
+													o => o.GetMembers(methodSymbol.Name)
+														  .Where(
+															  m =>
+															  {
+																  // find out if the method implements the interface member or an override 
+																  // method that implements it
+																  var impl = type.FindImplementationForInterfaceMember(m);
+																  return methodSymbol.Equals(impl) || overrrides.Any(ov => ov.Equals(impl));
+															  }
+															))
+														  .OfType<IMethodSymbol>())
+			{
+				var syntax = interfaceMember.DeclaringSyntaxReferences.SingleOrDefault();
+				if (syntax == null || methodSymbol.ContainingAssembly.Name != interfaceMember.ContainingAssembly.Name)
+				{
+					// check if the member has an async counterpart that is not implemented in the current type (missing member)
+					var asyncConterPart = interfaceMember.ContainingType.GetMembers()
+														 .OfType<IMethodSymbol>()
+														 .Where(o => o.Name == methodSymbol.Name + "Async")
+														 .SingleOrDefault(o => o.HaveSameParameters(methodSymbol));
+					if (asyncConterPart == null)
+					{
+						Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
+						return MethodSymbolAnalyzeResult.Invalid;
+					}
+					asyncMethods.Add(asyncConterPart);
+				}
+				if (!CanProcessSyntaxReference(syntax))
+				{
+					continue;
+				}
+				interfaceMethods.Add(interfaceMember.OriginalDefinition);
+			}
+
+			// Verify if there is already an async counterpart for this method
+			IMethodSymbol asyncCounterpart = null;
+			if (_configuration.FindAsyncCounterpartDelegates.Any())
+			{
+				foreach (var findAsyncConterpart in _configuration.FindAsyncCounterpartDelegates)
+				{
+					asyncCounterpart = await findAsyncConterpart(ProjectData.Project, methodSymbol.OriginalDefinition, true).ConfigureAwait(false);
+					if (asyncCounterpart != null)
+					{
+						break;
+					}
+				}
+			}
+			else
+			{
+				asyncCounterpart = methodSymbol.GetAsyncCounterpart();
+			}
+			if (asyncCounterpart != null)
+			{
+				Logger.Debug($"Method {methodSymbol} has already an async counterpart {asyncCounterpart}");
+				_cachedMethodSymbolInfos.AddOrUpdate(methodSymbol.OriginalDefinition, MethodSymbolAnalyzeResult.Invalid, (symbol, info) => MethodSymbolAnalyzeResult.Invalid);
+				return MethodSymbolAnalyzeResult.Invalid;
+			}
+
+			var isSymbolValidFunc = _configuration.MethodSelectionPredicate;
+			if (isSymbolValidFunc != null && !isSymbolValidFunc(methodSymbol))
+			{
+				Logger.Debug($"Method {methodSymbol} will be ignored because of MethodSelectionPredicate");
+				_cachedMethodSymbolInfos.AddOrUpdate(methodSymbol.OriginalDefinition, MethodSymbolAnalyzeResult.Invalid, (symbol, info) => MethodSymbolAnalyzeResult.Invalid);
+				return MethodSymbolAnalyzeResult.Invalid;
+			}
+
+			if (methodSymbol.ContainingType.TypeKind == TypeKind.Interface)
+			{
+				interfaceMethods.Add(methodSymbol);
+			}
+			methodSymbol = methodSymbol.OriginalDefinition; // unwrap method
+
+			result = new MethodSymbolAnalyzeResult
+			{
+				IsValid = true,
+				MethodSymbol = methodSymbol,
+				AsyncInterfaceMethods = asyncMethods,
+				InterfaceMethods = interfaceMethods,
+				BaseOverriddenMethod = overridenMethod?.DeclaringSyntaxReferences.Length > 0
+					? overridenMethod.OriginalDefinition
+					: null,
+				OverriddenMethods = overrrides
+			};
+			_cachedMethodSymbolInfos.AddOrUpdate(methodSymbol, result, (symbol, info) => result);
+			return result;
+		}
+
+		#region ScanAllMethodReferenceLocations
+
+		private readonly ConcurrentDictionary<IMethodSymbol, byte> _scannedMethodReferenceSymbols = new ConcurrentDictionary<IMethodSymbol, byte>();
+
+		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth = 0)
+		{
+			if (_scannedMethodReferenceSymbols.ContainsKey(methodSymbol))
+			{
+				return;
+			}
+			_scannedMethodReferenceSymbols.AddOrUpdate(methodSymbol, 1, (symbol, b) => b);
+
+			var references = await SymbolFinder.FindReferencesAsync(methodSymbol, ProjectData.Project.Solution, _analyzeDocuments).ConfigureAwait(false);
+
+			depth++;
+			foreach (var refLocation in references.SelectMany(o => o.Locations))
+			{
+				if (refLocation.Document.Project != ProjectData.Project)
+				{
+					throw new InvalidOperationException($"Reference {refLocation} is referencing a symbol from another project");
+				}
+
+				var documentData = ProjectData.GetDocumentData(refLocation.Document);
+				if (documentData == null)
+				{
+					continue;
+				}
+				var symbol = documentData.GetEnclosingSymbol(refLocation);
+				if (symbol == null)
+				{
+					Logger.Debug($"Symbol not found for reference ${refLocation}");
+					continue;
+				}
+
+				var refMethodSymbol = symbol as IMethodSymbol;
+				if (refMethodSymbol == null)
+				{
+					continue;
+				}
+				// Do not check if the method was already analyzed as there can be many references inside one method
+				var analyzeResult = await AnalyzeMethodSymbol(refMethodSymbol, false).ConfigureAwait(false);
+				if (!analyzeResult.IsValid)
+				{
+					continue;
+				}
+				// Save the reference as it can be made async
+				var methodData = documentData.GetOrCreateMethodData(analyzeResult.MethodSymbol);
+				if (!methodData.MethodReferences.TryAdd(refLocation))
+				{
+					continue; // Reference already processed
+				}
+
+				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
+				var nameNode = methodData.Node.DescendantNodes()
+							   .OfType<SimpleNameSyntax>()
+							   .First(
+								   o =>
+								   {
+									   if (o.IsKind(SyntaxKind.GenericName))
+									   {
+										   return o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken)).Span ==
+												  refLocation.Location.SourceSpan;
+									   }
+									   return o.Span == refLocation.Location.SourceSpan;
+								   });
+				var invokedSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
+				var invokedMethodDocInfoTask = invokedSymbol.DeclaringSyntaxReferences
+																  .Select(GetOrCreateDocumentData)
+																  .SingleOrDefault();
+				if (invokedMethodDocInfoTask != null)
+				{
+					var invokedMethodDocInfo = await invokedMethodDocInfoTask;
+					if (invokedMethodDocInfo != null)
+					{
+						var invokedMethodInfo = invokedMethodDocInfo.GetOrCreateMethodInfo(invokedSymbol);
+						if (!invokedMethodInfo.InvokedBy.Contains(methodData))
+						{
+							invokedMethodInfo.InvokedBy.Add(methodData);
+						}
+					}
+				}
+				await ProcessMethodSymbolInfo(analyzeResult, documentData, depth).ConfigureAwait(false);
+			}
+		}
+
+		#endregion
 
 		private async Task<List<AsyncCounterpartMethod>> FindAsyncCounterpartMethodsWhitinMethod(MethodData methodData)
 		{
@@ -522,9 +921,12 @@ namespace AsyncGenerator
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
-				typeData.TypeReferences.Add(refLocation);
+				if (!typeData.SelfReferences.TryAdd(refLocation))
+				{
+					continue; // Reference already processed
+				}
 
-				// we need to find the type where the reference location is
+				// We need to find the type where the reference location is
 				var node = documentData.RootNode.DescendantNodes(descendIntoTrivia: true)
 					.First(
 						o =>
@@ -540,34 +942,22 @@ namespace AsyncGenerator
 				var methodNode = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
 				if (methodNode != null)
 				{
-					var methodInfo = documentData.GetOrCreateMethodData(methodNode);
-					if (methodInfo.TypeReferences.Contains(refLocation))
-					{
-						continue;
-					}
-					methodInfo.TypeReferences.Add(refLocation);
+					var methodData = documentData.GetOrCreateMethodData(methodNode);
+					methodData.TypeReferences.TryAdd(refLocation);
 				}
 				else
 				{
 					var type = node.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
 					if (type != null)
 					{
-						var refTypeInfo = documentData.GetOrCreateTypeData(type);
-						if (refTypeInfo.TypeReferences.Contains(refLocation))
-						{
-							continue;
-						}
-						refTypeInfo.TypeReferences.Add(refLocation);
+						var refTypeData = documentData.GetOrCreateTypeData(type);
+						refTypeData.TypeReferences.TryAdd(refLocation);
 					}
-					else // can happen when declaring a Name in a using statement
+					else // Can happen when declaring a Name in a using statement
 					{
 						var namespaceNode = node.Ancestors().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
-						var namespaceInfo = documentData.GetNamespaceData(namespaceNode, true);
-						if (namespaceInfo.TypeReferences.Contains(refLocation))
-						{
-							continue;
-						}
-						namespaceInfo.TypeReferences.Add(refLocation);
+						var namespaceData = documentData.GetNamespaceData(namespaceNode, true);
+						namespaceData.TypeReferences.TryAdd(refLocation);
 					}
 				}
 			}

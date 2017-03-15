@@ -68,5 +68,24 @@ namespace AsyncGenerator.Extensions
 				currType = currType.BaseType;
 			}
 		}
+
+		public static bool IsAccessor(this ISymbol symbol)
+		{
+			return symbol.IsPropertyAccessor() || symbol.IsEventAccessor();
+		}
+
+		public static bool IsPropertyAccessor(this ISymbol symbol)
+		{
+			return (symbol as IMethodSymbol)?.MethodKind.IsPropertyAccessor() == true;
+		}
+
+		public static bool IsEventAccessor(this ISymbol symbol)
+		{
+			var method = symbol as IMethodSymbol;
+			return method != null &&
+				(method.MethodKind == MethodKind.EventAdd ||
+				 method.MethodKind == MethodKind.EventRaise ||
+				 method.MethodKind == MethodKind.EventRemove);
+		}
 	}
 }
