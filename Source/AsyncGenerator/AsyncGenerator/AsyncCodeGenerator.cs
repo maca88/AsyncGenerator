@@ -19,322 +19,6 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace AsyncGenerator
 {
-	public class TypeData
-	{
-		public TypeData(NamespaceData namespaceData, INamedTypeSymbol symbol, TypeDeclarationSyntax node, TypeData parentTypeData = null)
-		{
-			NamespaceData = namespaceData;
-			ParentTypeData = parentTypeData;
-			Symbol = symbol;
-			Node = node;
-		}
-
-		/// <summary>
-		/// Contains references of types that are used inside this type
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		/// <summary>
-		/// Contains references of itself
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> SelfReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		public TypeData ParentTypeData { get; }
-
-		public NamespaceData NamespaceData { get; }
-
-		public INamedTypeSymbol Symbol { get; }
-
-		public TypeDeclarationSyntax Node { get; }
-
-		public TypeConversion Conversion { get; internal set; }
-
-		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> MethodData { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
-
-		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypeData { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
-
-		public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
-		{
-			foreach (var typeInfo in NestedTypeData.Values)
-			{
-				foreach (var subTypeInfo in typeInfo.GetDescendantTypeInfosAndSelf())
-				{
-					yield return subTypeInfo;
-				}
-			}
-			yield return this;
-		}
-
-		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, bool create = false)
-		{
-			var methodSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(methodNode);
-			return GetMethodData(methodSymbol, methodNode, create);
-		}
-
-		public async Task<MethodData> GetMethodData(IMethodSymbol symbol, bool create = false)
-		{
-			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == Node.SyntaxTree.FilePath);
-			var memberNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-
-			//var location = symbol.Locations.Single(o => o.SourceTree.FilePath == Node.SyntaxTree.FilePath);
-			//var memberNode = Node.DescendantNodes()
-			//						 .OfType<MethodDeclarationSyntax>()
-			//						 .First(o => o.ChildTokens().SingleOrDefault(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == location.SourceSpan);
-			return GetMethodData(symbol, memberNode, create);
-		}
-
-		public MethodData GetMethodData(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodNode, bool create = false)
-		{
-			MethodData methodData;
-			if (MethodData.TryGetValue(methodNode, out methodData))
-			{
-				return methodData;
-			}
-			return !create ? null : MethodData.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
-		}
-	}
-
-	public class NamespaceData
-	{
-		public NamespaceData(DocumentData documentData, INamespaceSymbol symbol, NamespaceDeclarationSyntax node)
-		{
-			DocumentData = documentData;
-			Symbol = symbol;
-			Node = node;
-		}
-
-		/// <summary>
-		/// Contains references of types that are used inside this namespace (alias to a type with a using statement)
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		public DocumentData DocumentData { get; }
-
-		public INamespaceSymbol Symbol { get; }
-
-		public NamespaceDeclarationSyntax Node { get; }
-
-		public bool IsGlobal => Node == null;
-
-		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> TypeData { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
-
-		public Task<TypeData> GetTypeData(TypeDeclarationSyntax node, bool create = false)
-		{
-			var typeSymbol = DocumentData.SemanticModel.GetDeclaredSymbol(node);
-			return GetTypeData(typeSymbol, create);
-		}
-
-		public Task<TypeData> GetTypeData(MethodDeclarationSyntax node, bool create = false)
-		{
-			var typeSymbol = DocumentData.SemanticModel.GetDeclaredSymbol(node).ContainingType;
-			return GetTypeData(typeSymbol, create);
-		}
-
-		public Task<TypeData> GetTypeData(IMethodSymbol symbol, bool create = false)
-		{
-			return GetTypeData(symbol.ContainingType, create);
-		}
-
-		public async Task<TypeData> GetTypeData(INamedTypeSymbol type, bool create = false)
-		{
-			var nestedTypes = new Stack<INamedTypeSymbol>();
-			while (type != null)
-			{
-				nestedTypes.Push(type);
-				type = type.ContainingType;
-			}
-			TypeData currentTypeData = null;
-			var path = DocumentData.FilePath;
-			while (nestedTypes.Count > 0)
-			{
-				var typeSymbol = nestedTypes.Pop().OriginalDefinition;
-				//var location = typeSymbol.Locations.Single(o => o.SourceTree.FilePath == path);
-				var syntax = typeSymbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == path);
-				var node = (TypeDeclarationSyntax) await syntax.GetSyntaxAsync().ConfigureAwait(false);
-
-				//var namespaceNode = Node ?? (SyntaxNode)DocumentData.RootNode; // Global namespace
-				//var node = namespaceNode.DescendantNodes()
-				//			   .OfType<TypeDeclarationSyntax>()
-				//			   .First(o => o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == location.SourceSpan);
-
-				var typeDataDict = currentTypeData?.NestedTypeData ?? TypeData;
-				TypeData typeData;
-				if (typeDataDict.TryGetValue(node, out typeData))
-				{
-					currentTypeData = typeData;
-					continue;
-				}
-				if (!create)
-				{
-					return null;
-				}
-				currentTypeData = typeDataDict.GetOrAdd(node, k => new TypeData(this, typeSymbol, node, currentTypeData));
-			}
-			return currentTypeData;
-		}
-	}
-
-	public class DocumentData
-	{
-		public DocumentData(ProjectData projectData, Document document, CompilationUnitSyntax rootNode, SemanticModel semanticModel)
-		{
-			ProjectData = projectData;
-			Document = document;
-			RootNode = rootNode;
-			SemanticModel = semanticModel;
-			GlobalNamespaceData = new NamespaceData(this, SemanticModel.Compilation.GlobalNamespace, null);
-		}
-
-		public Document Document { get; }
-
-		public string FilePath => Document.FilePath;
-
-		public ProjectData ProjectData { get; }
-
-		public CompilationUnitSyntax RootNode { get; }
-
-		public SemanticModel SemanticModel { get; }
-
-		public NamespaceData GlobalNamespaceData { get; }
-
-		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NamespaceData { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
-
-		public IEnumerable<MethodData> GetAllMethodDatas()
-		{
-			return NamespaceData.Values
-				.SelectMany(o => o.TypeData.Values
-					.SelectMany(t => t.GetDescendantTypeInfosAndSelf())
-					.SelectMany(t => t.MethodData.Values));
-		}
-
-		public IEnumerable<TypeData> GetAllTypeDatas()
-		{
-			return NamespaceData.Values
-				.SelectMany(o => o.TypeData.Values
-					.SelectMany(t => t.GetDescendantTypeInfosAndSelf()));
-		}
-
-		public async Task<MethodData> GetMethodData(IMethodSymbol symbol)
-		{
-			return await (await (await
-				GetNamespaceData(symbol).ConfigureAwait(false))
-				.GetTypeData(symbol).ConfigureAwait(false))
-				.GetMethodData(symbol).ConfigureAwait(false);
-		}
-
-		public async Task<MethodData> GetMethodData(MethodDeclarationSyntax node)
-		{
-			return (await GetNamespaceData(node).GetTypeData(node).ConfigureAwait(false)).GetMethodData(node);
-		}
-
-		public async Task<MethodData> GetOrCreateMethodData(MethodDeclarationSyntax node)
-		{
-			return (await GetNamespaceData(node, true).GetTypeData(node, true).ConfigureAwait(false)).GetMethodData(node, true);
-		}
-		
-		public async Task<MethodData> GetOrCreateMethodData(IMethodSymbol symbol)
-		{
-			return await (await (await 
-				GetNamespaceData(symbol, true).ConfigureAwait(false))
-				.GetTypeData(symbol, true).ConfigureAwait(false))
-				.GetMethodData(symbol, true).ConfigureAwait(false);
-		}
-
-		public Task<TypeData> GetOrCreateTypeData(TypeDeclarationSyntax node)
-		{
-			return GetNamespaceData(node, true).GetTypeData(node, true);
-		}
-
-		public async Task<NamespaceData> GetNamespaceData(ISymbol symbol, bool create = false)
-		{
-			var namespaceSymbol = symbol.ContainingNamespace;
-			if (namespaceSymbol.IsGlobalNamespace)
-			{
-				return GlobalNamespaceData;
-			}
-			var syntax = namespaceSymbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
-			var node = (NamespaceDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-			//var location = namespaceSymbol.Locations.Single(o => o.SourceTree.FilePath == FilePath);
-			//var node = RootNode.DescendantNodes()
-			//				   .OfType<NamespaceDeclarationSyntax>()
-			//				   .FirstOrDefault(
-			//					   o =>
-			//					   {
-			//						   var identifier = o.ChildNodes().OfType<IdentifierNameSyntax>().SingleOrDefault();
-			//						   if (identifier != null)
-			//						   {
-			//							   return identifier.Span == location.SourceSpan;
-			//						   }
-			//						   return o.ChildNodes().OfType<QualifiedNameSyntax>().Single().Right.Span == location.SourceSpan;
-			//					   });
-			//if (node == null) //TODO: location.SourceSpan.Start == 0 -> a bug perhaps ???
-			//{
-			//	node = RootNode.DescendantNodes().OfType<NamespaceDeclarationSyntax>().Single(o => o.FullSpan.End == location.SourceSpan.End);
-			//}
-			return GetNamespaceData(node, namespaceSymbol, create);
-		}
-
-		public NamespaceData GetNamespaceData(SyntaxNode node, bool create = false)
-		{
-			if (node == null)
-			{
-				return GlobalNamespaceData;
-			}
-			var namespaceNode = node.AncestorsAndSelf().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
-			if (namespaceNode == null)
-			{
-				return GlobalNamespaceData;
-			}
-			var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
-			return GetNamespaceData(namespaceNode, namespaceSymbol, create);
-		}
-
-		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, INamespaceSymbol namespaceSymbol, bool create = false)
-		{
-			NamespaceData namespaceData;
-			if (NamespaceData.TryGetValue(namespaceNode, out namespaceData))
-			{
-				return namespaceData;
-			}
-			return !create ? null : NamespaceData.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
-		}
-
-		// TODO: DEBUG
-		public ISymbol GetEnclosingSymbol(ReferenceLocation reference)
-		{
-			var enclosingSymbol = SemanticModel.GetEnclosingSymbol(reference.Location.SourceSpan.Start);
-
-			for (var current = enclosingSymbol; current != null; current = current.ContainingSymbol)
-			{
-				if (current.Kind == SymbolKind.Field)
-				{
-					return current;
-				}
-
-				if (current.Kind == SymbolKind.Property)
-				{
-					return current;
-				}
-
-				if (current.Kind == SymbolKind.Method)
-				{
-					var method = (IMethodSymbol)current;
-					if (method.IsAccessor())
-					{
-						return method.AssociatedSymbol;
-					}
-
-					if (method.MethodKind != MethodKind.AnonymousFunction)
-					{
-						return method;
-					}
-				}
-			}
-			// reference to a cref
-			return null;
-		}
-	}
-
 	public class ProjectData
 	{
 		private readonly SolutionData _solutionData;
@@ -445,7 +129,7 @@ namespace AsyncGenerator
 				.DescendantNodes()
 				.OfType<TypeDeclarationSyntax>())
 			{
-				var typeData = await documentData.GetOrCreateTypeData(typeNode).ConfigureAwait(false);
+				var typeData = documentData.GetOrCreateTypeData(typeNode);
 				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
 				if (typeData.Conversion == TypeConversion.Ignore)
 				{
@@ -456,7 +140,7 @@ namespace AsyncGenerator
 					.DescendantNodes()
 					.OfType<MethodDeclarationSyntax>())
 				{
-					var methodData = await documentData.GetOrCreateMethodData(methodNode).ConfigureAwait(false);
+					var methodData = documentData.GetOrCreateMethodData(methodNode);
 					await AnalyzeMethodData(methodData).ConfigureAwait(false);
 				}
 			}
@@ -486,6 +170,7 @@ namespace AsyncGenerator
 			}
 		}
 
+		//TODO: remove
 		private readonly ConcurrentSet<IMethodSymbol> _scannedMethodSymbols = new ConcurrentSet<IMethodSymbol>();
 
 		private async Task ScanMethodData(MethodData methodData, int depth = 0)
@@ -523,7 +208,7 @@ namespace AsyncGenerator
 				}
 				var documentData = ProjectData.GetDocumentData(document);
 				var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-				var interfaceMethodData = await documentData.GetOrCreateMethodData(methodNode).ConfigureAwait(false);
+				var interfaceMethodData = documentData.GetOrCreateMethodData(methodNode);
 
 				var implementations = await SymbolFinder.FindImplementationsAsync(
 					interfaceMethod.OriginalDefinition, _solution, _analyzeProjects)
@@ -533,7 +218,7 @@ namespace AsyncGenerator
 					syntax = implementation.DeclaringSyntaxReferences.Single();
 					documentData = ProjectData.GetDocumentData(document);
 					methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-					var implMethodData = await documentData.GetOrCreateMethodData(methodNode).ConfigureAwait(false);
+					var implMethodData = documentData.GetOrCreateMethodData(methodNode);
 
 					interfaceMethodData.RelatedMethods.TryAdd(implMethodData);
 					implMethodData.RelatedMethods.TryAdd(interfaceMethodData);
@@ -570,7 +255,7 @@ namespace AsyncGenerator
 					if (CanProcessDocument(document))
 					{
 						var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-						baseMethodData = await ProjectData.GetDocumentData(document).GetOrCreateMethodData(methodNode).ConfigureAwait(false);
+						baseMethodData = ProjectData.GetDocumentData(document).GetOrCreateMethodData(methodNode);
 					}
 				}
 
@@ -591,7 +276,7 @@ namespace AsyncGenerator
 					}
 					var documentData = ProjectData.GetDocumentData(document);
 					var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-					var overrideMethodData = await documentData.GetOrCreateMethodData(methodNode).ConfigureAwait(false);
+					var overrideMethodData = documentData.GetOrCreateMethodData(methodNode);
 
 					if (baseMethodData != null)
 					{
