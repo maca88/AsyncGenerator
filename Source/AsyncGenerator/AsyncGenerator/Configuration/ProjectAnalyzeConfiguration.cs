@@ -17,9 +17,9 @@ namespace AsyncGenerator.Configuration
 
 		public Predicate<Document> DocumentSelectionPredicate { get; private set; } = m => true;
 
-		public Predicate<IMethodSymbol> MethodSelectionPredicate { get; private set; } = m => true;
+		//public Predicate<IMethodSymbol> MethodSelectionPredicate { get; private set; } = m => true;
 
-		public Predicate<INamedTypeSymbol> TypeSelectionPredicate { get; private set; } = m => true;
+		//public Predicate<INamedTypeSymbol> TypeSelectionPredicate { get; private set; } = m => true;
 
 		public Predicate<IMethodSymbol> ConvertMethodPredicate { get; private set; } = m => true;
 
@@ -59,25 +59,25 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodSelectionPredicate(Predicate<IMethodSymbol> predicate)
-		{
-			if (predicate == null)
-			{
-				throw new ArgumentNullException(nameof(predicate));
-			}
-			MethodSelectionPredicate = predicate;
-			return this;
-		}
+		//IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodSelectionPredicate(Predicate<IMethodSymbol> predicate)
+		//{
+		//	if (predicate == null)
+		//	{
+		//		throw new ArgumentNullException(nameof(predicate));
+		//	}
+		//	MethodSelectionPredicate = predicate;
+		//	return this;
+		//}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.TypeSelectionPredicate(Predicate<INamedTypeSymbol> predicate)
-		{
-			if (predicate == null)
-			{
-				throw new ArgumentNullException(nameof(predicate));
-			}
-			TypeSelectionPredicate = predicate;
-			return this;
-		}
+		//IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.TypeSelectionPredicate(Predicate<INamedTypeSymbol> predicate)
+		//{
+		//	if (predicate == null)
+		//	{
+		//		throw new ArgumentNullException(nameof(predicate));
+		//	}
+		//	TypeSelectionPredicate = predicate;
+		//	return this;
+		//}
 
 		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ConvertMethodPredicate(Predicate<IMethodSymbol> predicate)
 		{

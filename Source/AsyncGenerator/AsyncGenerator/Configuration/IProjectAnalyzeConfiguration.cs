@@ -23,12 +23,12 @@ namespace AsyncGenerator.Configuration
 		/// <summary>
 		/// Set a predicate that will decide if the method will be analyzed
 		/// </summary>
-		IProjectAnalyzeConfiguration MethodSelectionPredicate(Predicate<IMethodSymbol> predicate);
+		//IProjectAnalyzeConfiguration MethodSelectionPredicate(Predicate<IMethodSymbol> predicate);
 
 		/// <summary>
 		/// Set a predicate that will decide if the type will be analyzed
 		/// </summary>
-		IProjectAnalyzeConfiguration TypeSelectionPredicate(Predicate<INamedTypeSymbol> predicate);
+		//IProjectAnalyzeConfiguration TypeSelectionPredicate(Predicate<INamedTypeSymbol> predicate);
 
 		/// <summary>
 		/// Set a predicate that will decide if the method that can be converted to async should be converted

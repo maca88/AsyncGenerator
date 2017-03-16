@@ -198,6 +198,7 @@
     <Compile Include="Internal\AsyncSemaphore.cs" />
     <Compile Include="Internal\ConcurrentSet.cs" />
     <Compile Include="MethodConversion.cs" />
+    <Compile Include="MethodData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TypeConversion.cs" />
   </ItemGroup>
