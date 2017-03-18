@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator", "AsyncGenerator\AsyncGenerator.csproj", "{9D321EA8-54AE-4741-86A8-12198551AD67}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Tests", "AsyncGenerator.Tests\AsyncGenerator.Tests.csproj", "{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.TestCases", "AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj", "{A183D706-0DBB-4F6B-92A5-6359660255D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A183D706-0DBB-4F6B-92A5-6359660255D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A183D706-0DBB-4F6B-92A5-6359660255D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A183D706-0DBB-4F6B-92A5-6359660255D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A183D706-0DBB-4F6B-92A5-6359660255D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

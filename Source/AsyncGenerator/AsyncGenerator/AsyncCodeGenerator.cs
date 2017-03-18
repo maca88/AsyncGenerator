@@ -13,13 +13,103 @@ using log4net;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.MSBuild;
 
 namespace AsyncGenerator
 {
-	public class ProjectData
+	public interface IMethodAnalyzationResult
+	{
+		MethodConversion Conversion { get; }
+
+		IMethodSymbol Symbol { get; }
+
+		MethodDeclarationSyntax Node { get; }
+
+		bool IsAsync { get; }
+
+		/// <summary>
+		/// References of types that are used inside this method
+		/// </summary>
+		IEnumerable<ReferenceLocation> TypeReferences { get; }
+
+		/// <summary>
+		/// References to other methods that are invoked inside this method and are candidates to be async
+		/// </summary>
+		IEnumerable<ReferenceLocation> MethodReferences { get; }
+
+		/// <summary>
+		/// Methods that invokes this method
+		/// </summary>
+		IEnumerable<IMethodAnalyzationResult> InvokedBy { get; }
+
+		/// <summary>
+		/// The base method that is overriden
+		/// </summary>
+		IMethodSymbol BaseOverriddenMethod { get; }
+
+		/// <summary>
+		/// Reference to the async counterpart for this method
+		/// </summary>
+		IMethodSymbol AsyncCounterpartSymbol { get; }
+	}
+
+	public interface ITypeAnalyzationResult
+	{
+		INamedTypeSymbol Symbol { get; }
+
+		TypeDeclarationSyntax Node { get; }
+
+		TypeConversion Conversion { get; }
+
+		/// <summary>
+		/// References of types that are used inside this type
+		/// </summary>
+		IEnumerable<ReferenceLocation> TypeReferences { get; }
+
+		/// <summary>
+		/// References of itself
+		/// </summary>
+		IEnumerable<ReferenceLocation> SelfReferences { get; }
+
+		IEnumerable<ITypeAnalyzationResult> NestedTypes { get; }
+
+		IEnumerable<IMethodAnalyzationResult> Methods { get; }
+	}
+
+	public interface INamespaceAnalyzationResult
+	{
+		NamespaceDeclarationSyntax Node { get; }
+
+		INamespaceSymbol Symbol { get; }
+
+		/// <summary>
+		/// References of types that are used inside this namespace (alias to a type with a using statement)
+		/// </summary>
+		IEnumerable<ReferenceLocation> TypeReferences { get; }
+
+		IEnumerable<ITypeAnalyzationResult> Types { get; }
+	}
+
+	public interface IDocumentAnalyzationResult
+	{
+		Document Document { get; }
+
+		CompilationUnitSyntax Node { get; }
+
+		IEnumerable<INamespaceAnalyzationResult> Namespaces { get; }
+
+		INamespaceAnalyzationResult GlobalNamespace { get; }
+	}
+
+	public interface IProjectAnalyzationResult
+	{
+		Project Project { get; }
+
+		IEnumerable<IDocumentAnalyzationResult> Documents { get; }
+	}
+
+	public class ProjectData : IProjectAnalyzationResult
 	{
 		private readonly SolutionData _solutionData;
 
@@ -72,6 +162,12 @@ namespace AsyncGenerator
 			return DocumentData.AddOrUpdate(document.FilePath, documentData, (s, data) => documentData);
 		}
 
+		#region IProjectAnalyzationResult
+
+		IEnumerable<IDocumentAnalyzationResult> IProjectAnalyzationResult.Documents => DocumentData.Values.ToImmutableArray();
+
+		#endregion
+
 	}
 
 	public class SolutionData
@@ -110,7 +206,7 @@ namespace AsyncGenerator
 
 		public ProjectData ProjectData { get; }
 
-		public async Task Analyze()
+		public async Task<IProjectAnalyzationResult> Analyze()
 		{
 			Setup();
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
@@ -121,11 +217,13 @@ namespace AsyncGenerator
 
 			// 3. Step - Find all references for each method and optionally scan its body for async counterparts
 			await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
+
+			return ProjectData;
 		}
 
 		private async Task AnalyzeDocumentData(DocumentData documentData)
 		{
-			foreach (var typeNode in documentData.RootNode
+			foreach (var typeNode in documentData.Node
 				.DescendantNodes()
 				.OfType<TypeDeclarationSyntax>())
 			{
@@ -170,16 +268,8 @@ namespace AsyncGenerator
 			}
 		}
 
-		//TODO: remove
-		private readonly ConcurrentSet<IMethodSymbol> _scannedMethodSymbols = new ConcurrentSet<IMethodSymbol>();
-
 		private async Task ScanMethodData(MethodData methodData, int depth = 0)
 		{
-			if (_scannedMethodSymbols.Contains(methodData.Symbol.OriginalDefinition))
-			{
-				return;
-			}
-			_scannedMethodSymbols.Add(methodData.Symbol.OriginalDefinition);
 			SyntaxReference syntax;
 			var bodyScanMethodDatas = new HashSet<MethodData> {methodData};
 			var referenceScanMethods = new HashSet<IMethodSymbol>();
@@ -192,12 +282,6 @@ namespace AsyncGenerator
 			// Get and save all interface implementations
 			foreach (var interfaceMethod in interfaceMethods)
 			{
-				if (_scannedMethodSymbols.Contains(interfaceMethod))
-				{
-					continue;
-				}
-				_scannedMethodSymbols.Add(interfaceMethod);
-
 				referenceScanMethods.Add(interfaceMethod);
 
 				syntax = interfaceMethod.DeclaringSyntaxReferences.Single();
@@ -223,29 +307,28 @@ namespace AsyncGenerator
 					interfaceMethodData.RelatedMethods.TryAdd(implMethodData);
 					implMethodData.RelatedMethods.TryAdd(interfaceMethodData);
 
-					bodyScanMethodDatas.Add(implMethodData);
+					if (_configuration.ScanMethodBody)
+					{
+						bodyScanMethodDatas.Add(implMethodData);
+					}
 				}
 			}
 
 			MethodData baseMethodData = null;
-			IMethodSymbol baseMethodSymbol;
+			IMethodSymbol baseMethodSymbol = null;
 			if (methodData.BaseOverriddenMethod?.DeclaringSyntaxReferences.Any() == true)
 			{
 				baseMethodSymbol = methodData.BaseOverriddenMethod;
 			}
-			else
+			else if(methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract)
 			{
-				baseMethodSymbol = methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract
-					? methodData.Symbol
-					: null;
+				baseMethodSymbol = methodData.Symbol;
 				baseMethodData = methodData;
 			}
 
 			// Get and save all derived methods
-			if (baseMethodSymbol != null && !_scannedMethodSymbols.Contains(baseMethodSymbol))
+			if (baseMethodSymbol != null)
 			{
-				_scannedMethodSymbols.Add(baseMethodSymbol);
-
 				referenceScanMethods.Add(baseMethodSymbol);
 
 				if (baseMethodData == null)
@@ -259,7 +342,7 @@ namespace AsyncGenerator
 					}
 				}
 
-				if (baseMethodData != null)
+				if (baseMethodData != null && _configuration.ScanMethodBody)
 				{
 					bodyScanMethodDatas.Add(baseMethodData);
 				}
@@ -288,7 +371,7 @@ namespace AsyncGenerator
 						overrideMethodData.ExternalRelatedMethods.TryAdd(baseMethodSymbol);
 					}
 
-					if (!overrideMethod.IsAbstract)
+					if (!overrideMethod.IsAbstract && _configuration.ScanMethodBody)
 					{
 						bodyScanMethodDatas.Add(overrideMethodData);
 					}
@@ -300,37 +383,23 @@ namespace AsyncGenerator
 				referenceScanMethods.Add(methodData.Symbol);
 			}
 
-			if (_configuration.ScanMethodBody)
+			if (_configuration.ScanMethodBody || methodData.Conversion == MethodConversion.Smart)
 			{
 				var asyncCounterparts = new List<AsyncCounterpartMethod>();
 				foreach (var mData in bodyScanMethodDatas)
 				{
-					asyncCounterparts.AddRange(await FindAsyncCounterpartMethodsWhitinMethod(mData).ConfigureAwait(false));
+					asyncCounterparts.AddRange(await FindNewAsyncCounterpartMethods(mData).ConfigureAwait(false));
 				}
 				foreach (var group in asyncCounterparts.GroupBy(o => o.MethodSymbol))
 				{
 					await ScanAllMethodReferenceLocations(group.Key, depth).ConfigureAwait(false);
 				}
 			}
+			else
 
 			foreach (var methodToScan in referenceScanMethods)
 			{
 				await ScanAllMethodReferenceLocations(methodToScan, depth).ConfigureAwait(false);
-			}
-		}
-
-		private async Task<bool> SmartAnalyzeMethod(MethodData methodData)
-		{
-			switch (methodData.Conversion)
-			{
-				case MethodConversion.Ignore:
-					return false;
-				case MethodConversion.ToAsync:
-					return true;
-				default:
-					var asyncConterParts = await FindAsyncCounterpartMethodsWhitinMethod(methodData).ConfigureAwait(false);
-					//TODO: check if the invocations are not invocated in a delegate
-					return asyncConterParts.Any();
 			}
 		}
 
@@ -345,12 +414,6 @@ namespace AsyncGenerator
 
 		private async Task AnalyzeMethodData(MethodData methodData)
 		{
-			if (methodData.SymbolAnalyzed)
-			{
-				return;
-			}
-			methodData.SymbolAnalyzed = true;
-
 			var methodSymbol = methodData.Symbol;
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
 			if (methodData.Conversion == MethodConversion.Ignore)
@@ -358,10 +421,10 @@ namespace AsyncGenerator
 				Logger.Debug($"Method {methodSymbol} will be ignored because of MethodConversionFunction");
 				return;
 			}
-			if (methodData.Conversion == MethodConversion.Smart && !await SmartAnalyzeMethod(methodData).ConfigureAwait(false))
-			{
-				methodData.Conversion = MethodConversion.Unknown; //TODO: is needed?
-			}
+			//if (methodData.Conversion == MethodConversion.Smart && !await SmartAnalyzeMethod(methodData).ConfigureAwait(false))
+			//{
+			//	methodData.Conversion = MethodConversion.Unknown; //TODO: is needed?
+			//}
 
 			var forceAsync = methodData.Conversion == MethodConversion.ToAsync;
 			if (methodSymbol.IsAsync || methodSymbol.Name.EndsWith("Async"))
@@ -637,7 +700,13 @@ namespace AsyncGenerator
 
 		#endregion
 
-		private async Task<List<AsyncCounterpartMethod>> FindAsyncCounterpartMethodsWhitinMethod(MethodData methodData)
+		/// <summary>
+		/// Scan all invocation expression syntaxes and tries to get a async counterpart.
+		/// The method will return only newly found async counterparts.
+		/// </summary>
+		/// <param name="methodData"></param>
+		/// <returns></returns>
+		private async Task<List<AsyncCounterpartMethod>> FindNewAsyncCounterpartMethods(MethodData methodData)
 		{
 			var result = new List<AsyncCounterpartMethod>();
 			if (methodData.Node.Body == null)
@@ -662,7 +731,10 @@ namespace AsyncGenerator
 					{
 						foreach (var findAsyncConterpart in _configuration.FindAsyncCounterpartDelegates)
 						{
-							asyncMethodSymbol = await findAsyncConterpart(documentData.ProjectData.Project, methodSymbol.OriginalDefinition, true).ConfigureAwait(false);
+							asyncMethodSymbol =
+								await
+									findAsyncConterpart(documentData.ProjectData.Project, methodSymbol.OriginalDefinition, true)
+										.ConfigureAwait(false);
 							if (asyncMethodSymbol != null)
 							{
 								break;
@@ -675,6 +747,10 @@ namespace AsyncGenerator
 					}
 					var value = asyncMethodSymbol?.OriginalDefinition;
 					_methodAsyncConterparts.AddOrUpdate(methodSymbol, value, (k, v) => value);
+				}
+				else
+				{
+					continue; // do not return an already scanned method
 				}
 
 				if (asyncMethodSymbol == null)
@@ -788,7 +864,7 @@ namespace AsyncGenerator
 				}
 
 				// We need to find the type where the reference location is
-				var node = documentData.RootNode.DescendantNodes(descendIntoTrivia: true)
+				var node = documentData.Node.DescendantNodes(descendIntoTrivia: true)
 					.First(
 						o =>
 						{
@@ -866,7 +942,11 @@ namespace AsyncGenerator
 
 		private async Task<SolutionData> CreateSolutionData(SolutionConfiguration configuration)
 		{
-			var workspace = MSBuildWorkspace.Create();
+			var props = new Dictionary<string, string>
+			{
+				["CheckForSystemRuntimeDependency"] = "true" // needed in order that project references are loaded
+			};
+			var workspace = MSBuildWorkspace.Create(props);
 			var solution = await workspace.OpenSolutionAsync(configuration.Path).ConfigureAwait(false);
 			var solutionData = new SolutionData(solution, workspace, configuration);
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public class NamespaceData
+	public class NamespaceData : INamespaceAnalyzationResult
 	{
 		public NamespaceData(DocumentData documentData, INamespaceSymbol symbol, NamespaceDeclarationSyntax node)
 		{
@@ -22,7 +23,7 @@ namespace AsyncGenerator
 		}
 
 		/// <summary>
-		/// Contains references of types that are used inside this namespace (alias to a type with a using statement)
+		/// References of types that are used inside this namespace (alias to a type with a using statement)
 		/// </summary>
 		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
@@ -52,7 +53,7 @@ namespace AsyncGenerator
 		public async Task<TypeData> GetTypeData(IMethodSymbol symbol, bool create = false)
 		{
 			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == Node.SyntaxTree.FilePath);
-			var memberNode = (TypeDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
+			var memberNode = (await syntax.GetSyntaxAsync().ConfigureAwait(false)).Ancestors().OfType<TypeDeclarationSyntax>().First();
 			return GetTypeData(memberNode, create);
 		}
 
@@ -126,5 +127,13 @@ namespace AsyncGenerator
 			}
 			return currentTypeData;
 		}
+
+		#region INamespaceAnalyzationResult
+
+		IEnumerable<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+
+		IEnumerable<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => TypeData.Values.ToImmutableArray();
+
+		#endregion
 	}
 }

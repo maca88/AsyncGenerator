@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public class TypeData
+	public class TypeData : ITypeAnalyzationResult
 	{
 		public TypeData(NamespaceData namespaceData, INamedTypeSymbol symbol, TypeDeclarationSyntax node, TypeData parentTypeData = null)
 		{
@@ -85,5 +86,17 @@ namespace AsyncGenerator
 			}
 			return !create ? null : MethodData.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
 		}
+
+		#region ITypeAnalyzationResult
+
+		IEnumerable<ReferenceLocation> ITypeAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+
+		IEnumerable<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => SelfReferences.ToImmutableArray();
+
+		IEnumerable<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => MethodData.Values.ToImmutableArray();
+
+		IEnumerable<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => NestedTypeData.Values.ToImmutableArray();
+
+		#endregion
 	}
 }

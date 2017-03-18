@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,13 +13,13 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public class DocumentData
+	public class DocumentData : IDocumentAnalyzationResult
 	{
-		public DocumentData(ProjectData projectData, Document document, CompilationUnitSyntax rootNode, SemanticModel semanticModel)
+		public DocumentData(ProjectData projectData, Document document, CompilationUnitSyntax node, SemanticModel semanticModel)
 		{
 			ProjectData = projectData;
 			Document = document;
-			RootNode = rootNode;
+			Node = node;
 			SemanticModel = semanticModel;
 			GlobalNamespaceData = new NamespaceData(this, SemanticModel.Compilation.GlobalNamespace, null);
 		}
@@ -29,7 +30,7 @@ namespace AsyncGenerator
 
 		public ProjectData ProjectData { get; }
 
-		public CompilationUnitSyntax RootNode { get; }
+		public CompilationUnitSyntax Node { get; }
 
 		public SemanticModel SemanticModel { get; }
 
@@ -171,5 +172,13 @@ namespace AsyncGenerator
 			// reference to a cref
 			return null;
 		}
+
+		#region IDocumentAnalyzationResult
+
+		IEnumerable<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => NamespaceData.Values.ToImmutableArray();
+
+		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;
+
+		#endregion
 	}
 }

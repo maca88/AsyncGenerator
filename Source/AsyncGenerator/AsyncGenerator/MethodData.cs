@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public class MethodData
+	public class MethodData : IMethodAnalyzationResult
 	{
 		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node)
 		{
@@ -23,7 +24,7 @@ namespace AsyncGenerator
 		public bool InterfaceMethod { get; }
 
 		/// <summary>
-		/// Contains references of types that are used inside this method
+		/// References of types that are used inside this method
 		/// </summary>
 		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
@@ -58,7 +59,7 @@ namespace AsyncGenerator
 		public ConcurrentSet<IMethodSymbol> OverridenMethods { get; } = new ConcurrentSet<IMethodSymbol>();
 
 		/// <summary>
-		/// 
+		/// Method datas that invokes this method
 		/// </summary>
 		public ConcurrentSet<MethodData> InvokedBy { get; } = new ConcurrentSet<MethodData>();
 
@@ -82,8 +83,15 @@ namespace AsyncGenerator
 
 		public MethodDeclarationSyntax Node { get; }
 
+		#region IMethodAnalyzationResult
 
-		//
-		internal bool SymbolAnalyzed { get; set; }
+		IEnumerable<IMethodAnalyzationResult> IMethodAnalyzationResult.InvokedBy => InvokedBy.ToImmutableArray();
+
+		IEnumerable<ReferenceLocation> IMethodAnalyzationResult.MethodReferences => MethodReferences.ToImmutableArray();
+
+		IEnumerable<ReferenceLocation> IMethodAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+
+		#endregion
+
 	}
 }
