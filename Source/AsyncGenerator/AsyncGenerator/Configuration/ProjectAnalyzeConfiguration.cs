@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration
 {
-	public delegate Task<IMethodSymbol> FindAsyncCounterpart(Project project, IMethodSymbol syncMethodSymbol, bool searchInheritedTypes);
+	public delegate Task<IMethodSymbol> FindAsyncCounterpart(Project project, IMethodSymbol syncMethodSymbol, int? argumentIndex, bool searchInheritedTypes);
 
 	public class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
 	{

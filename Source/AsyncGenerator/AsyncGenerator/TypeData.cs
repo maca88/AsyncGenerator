@@ -47,37 +47,82 @@ namespace AsyncGenerator
 
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypeData { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
 
-		public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
+		//public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
+		//{
+		//	foreach (var typeInfo in NestedTypeData.Values)
+		//	{
+		//		foreach (var subTypeInfo in typeInfo.GetDescendantTypeInfosAndSelf())
+		//		{
+		//			yield return subTypeInfo;
+		//		}
+		//	}
+		//	yield return this;
+		//}
+
+		public IEnumerable<TypeData> GetSelfAndDescendantsTypeData(Func<TypeData, bool> predicate = null)
 		{
-			foreach (var typeInfo in NestedTypeData.Values)
+			return GetSelfAndDescendantsTypeDataRecursively(this, predicate);
+		}
+
+		private IEnumerable<TypeData> GetSelfAndDescendantsTypeDataRecursively(TypeData typeData, Func<TypeData, bool> predicate = null)
+		{
+			if (predicate?.Invoke(typeData) == false)
 			{
-				foreach (var subTypeInfo in typeInfo.GetDescendantTypeInfosAndSelf())
+				yield break;
+			}
+			yield return typeData;
+			foreach (var subTypeData in typeData.NestedTypeData.Values)
+			{
+				if (predicate?.Invoke(subTypeData) == false)
 				{
-					yield return subTypeInfo;
+					yield break;
+				}
+				foreach (var td in GetSelfAndDescendantsTypeDataRecursively(subTypeData, predicate))
+				{
+					if (predicate?.Invoke(td) == false)
+					{
+						yield break;
+					}
+					yield return td;
 				}
 			}
-			yield return this;
 		}
 
-		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, bool create = false)
+		//public TypeData GetNestedTypeData(TypeDeclarationSyntax typeNode, bool create = false)
+		//{
+		//	var typeSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(typeNode);
+		//	return GetNestedTypeData(typeNode, typeSymbol, create);
+		//}
+
+		public TypeData GetNestedTypeData(TypeDeclarationSyntax node, INamedTypeSymbol symbol, bool create = false)
 		{
-			var methodSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(methodNode);
-			return GetMethodData(methodSymbol, methodNode, create);
+			TypeData typeData;
+			if (NestedTypeData.TryGetValue(node, out typeData))
+			{
+				return typeData;
+			}
+			return !create ? null : NestedTypeData.GetOrAdd(node, syntax => new TypeData(NamespaceData, symbol, node, this));
 		}
 
-		public async Task<MethodData> GetMethodData(IMethodSymbol symbol, bool create = false)
-		{
-			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == Node.SyntaxTree.FilePath);
-			var memberNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
+		//public MethodData GetMethodData(MethodDeclarationSyntax methodNode, bool create = false)
+		//{
+		//	var methodSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(methodNode);
+		//	return GetMethodData(methodNode, methodSymbol, create);
+		//}
 
-			//var location = symbol.Locations.Single(o => o.SourceTree.FilePath == Node.SyntaxTree.FilePath);
-			//var memberNode = Node.DescendantNodes()
-			//						 .OfType<MethodDeclarationSyntax>()
-			//						 .First(o => o.ChildTokens().SingleOrDefault(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == location.SourceSpan);
-			return GetMethodData(symbol, memberNode, create);
-		}
+		//public async Task<MethodData> GetMethodData(IMethodSymbol symbol, bool create = false)
+		//{
+		//	var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == Node.SyntaxTree.FilePath);
+		//	var memberNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
 
-		public MethodData GetMethodData(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodNode, bool create = false)
+		//	//var location = symbol.Locations.Single(o => o.SourceTree.FilePath == Node.SyntaxTree.FilePath);
+		//	//var memberNode = Node.DescendantNodes()
+		//	//						 .OfType<MethodDeclarationSyntax>()
+		//	//						 .First(o => o.ChildTokens().SingleOrDefault(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == location.SourceSpan);
+		//	return GetMethodData(memberNode, symbol, create);
+		//}
+
+		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, IMethodSymbol methodSymbol, bool create = false)
 		{
 			MethodData methodData;
 			if (MethodData.TryGetValue(methodNode, out methodData))

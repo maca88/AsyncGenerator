@@ -9,7 +9,7 @@ namespace AsyncGenerator.Extensions
 {
 	internal static class SymbolExtensions
 	{
-		public static bool HaveSameParameters(this IMethodSymbol m1, IMethodSymbol m2, Func<IParameterSymbol, IParameterSymbol, bool> paramCompareFunc = null)
+		public static bool HaveSameParameters(this IMethodSymbol m1, IMethodSymbol m2, Func<IParameterSymbol, IParameterSymbol, int, bool> paramCompareFunc = null)
 		{
 			if (m1.Parameters.Length != m2.Parameters.Length)
 			{
@@ -20,7 +20,7 @@ namespace AsyncGenerator.Extensions
 			{
 				if (paramCompareFunc != null)
 				{
-					if (!paramCompareFunc(m1.Parameters[i], m2.Parameters[i]))
+					if (!paramCompareFunc(m1.Parameters[i], m2.Parameters[i], i))
 					{
 						return false;
 					}
@@ -40,22 +40,73 @@ namespace AsyncGenerator.Extensions
 		/// Searches for an async counterpart method within containing type and its bases without checking the return type
 		/// </summary>
 		/// <param name="methodSymbol"></param>
+		/// <param name="indexOfArgument"></param>
 		/// <param name="inherit"></param>
 		/// <returns></returns>
-		public static IMethodSymbol GetAsyncCounterpart(this IMethodSymbol methodSymbol, bool inherit = false)
+		public static IMethodSymbol GetAsyncCounterpart(this IMethodSymbol methodSymbol, int? indexOfArgument = null, bool inherit = false)
 		{
+			Func<IParameterSymbol, IParameterSymbol, int, bool> paramCompareFunc = null;
+			if (indexOfArgument.HasValue)
+			{
+				paramCompareFunc = (candidateParam, param, index) =>
+				{
+					if (indexOfArgument != index)
+					{
+						return param.Type.Equals(candidateParam.Type);
+					}
+					var typeSymbol = (INamedTypeSymbol)param.Type;
+					var candidateTypeSymbol = (INamedTypeSymbol)candidateParam.Type;
+					var origDelegate = typeSymbol.DelegateInvokeMethod;
+					var candidateDelegate = candidateTypeSymbol.DelegateInvokeMethod;
+					if (origDelegate == null ||
+						candidateDelegate == null ||
+						!origDelegate.HaveSameParameters(candidateDelegate))
+					{
+						return false;
+					}
+					var candidateReturnType = (INamedTypeSymbol)candidateDelegate.ReturnType;
+					return candidateReturnType.Name == "Task" &&
+					       (
+						       (
+							       origDelegate.ReturnsVoid && !candidateReturnType.TypeArguments.Any()
+						       ) ||
+						       (
+							       candidateReturnType.TypeArguments.Length == 1 &&
+							       candidateReturnType.TypeArguments.First().Equals(origDelegate.ReturnType)
+						       )
+					       );
+				};
+			}
+			IMethodSymbol asyncSymbol;
 			if (inherit)
 			{
-				return methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
+				asyncSymbol = methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
 								   .SelectMany(o => o.GetMembers(methodSymbol.Name + "Async"))
 								   .OfType<IMethodSymbol>()
 								   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
-								   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol));
-			}
-			return methodSymbol.ContainingType.GetMembers(methodSymbol.Name + "Async")
+								   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
+				if (asyncSymbol == null && indexOfArgument.HasValue)
+				{
+					asyncSymbol = methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
+								   .SelectMany(o => o.GetMembers(methodSymbol.Name))
+								   .OfType<IMethodSymbol>()
+								   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
+								   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
+				}
+				return asyncSymbol;
+			} 
+			asyncSymbol = methodSymbol.ContainingType.GetMembers(methodSymbol.Name + "Async")
 							   .OfType<IMethodSymbol>()
 							   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
-							   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol));
+							   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
+			if (asyncSymbol == null && indexOfArgument.HasValue)
+			{
+				asyncSymbol = methodSymbol.ContainingType.GetMembers(methodSymbol.Name)
+							   .OfType<IMethodSymbol>()
+							   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
+							   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
+			}
+			return asyncSymbol;
 		}
 
 		public static IEnumerable<INamedTypeSymbol> EnumerateBaseTypesAndSelf(this INamedTypeSymbol type)

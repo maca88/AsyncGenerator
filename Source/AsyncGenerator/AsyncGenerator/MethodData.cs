@@ -1,17 +1,33 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public class MethodData : IMethodAnalyzationResult
+	public abstract class BaseMethodData
+	{
+		/// <summary>
+		/// References of types that are used inside this method
+		/// </summary>
+		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+
+		/// <summary>
+		/// References to other methods that are invoked inside this method and are candidates to be async
+		/// </summary>
+		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+
+		public abstract SyntaxNode GetNode();
+	}
+
+
+	public class MethodData : BaseMethodData, IMethodAnalyzationResult
 	{
 		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node)
 		{
@@ -22,16 +38,6 @@ namespace AsyncGenerator
 		}
 
 		public bool InterfaceMethod { get; }
-
-		/// <summary>
-		/// References of types that are used inside this method
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		/// <summary>
-		/// References to other methods that are invoked inside this method and are candidates to be async
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
 		/// <summary>
 		/// Methods 
@@ -61,7 +67,7 @@ namespace AsyncGenerator
 		/// <summary>
 		/// Method datas that invokes this method
 		/// </summary>
-		public ConcurrentSet<MethodData> InvokedBy { get; } = new ConcurrentSet<MethodData>();
+		public ConcurrentSet<BaseMethodData> InvokedBy { get; } = new ConcurrentSet<BaseMethodData>();
 
 		/// <summary>
 		/// The base method that is overriden
@@ -83,15 +89,79 @@ namespace AsyncGenerator
 
 		public MethodDeclarationSyntax Node { get; }
 
+		public ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData> AnonymousFunctionData { get; } = 
+			new ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData>();
+
 		#region IMethodAnalyzationResult
 
-		IEnumerable<IMethodAnalyzationResult> IMethodAnalyzationResult.InvokedBy => InvokedBy.ToImmutableArray();
+		//IEnumerable<IMethodAnalyzationResult> IMethodAnalyzationResult.InvokedBy => InvokedBy.ToImmutableArray();
 
 		IEnumerable<ReferenceLocation> IMethodAnalyzationResult.MethodReferences => MethodReferences.ToImmutableArray();
 
 		IEnumerable<ReferenceLocation> IMethodAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
 
 		#endregion
+
+		public IEnumerable<AnonymousFunctionData> GetAllAnonymousFunctionData(Func<AnonymousFunctionData, bool> predicate = null)
+		{
+			return AnonymousFunctionData.Values
+				.SelectMany(o => o.GetSelfAndDescendantsAnonymousFunctionData(predicate));
+		}
+
+		// Analyze step
+
+		public ConcurrentSet<MethodReferenceData> MethodReferenceData { get; } = new ConcurrentSet<MethodReferenceData>();
+
+		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, bool create = false)
+		//{
+		//	var symbol = TypeData.NamespaceData.DocumentData.SemanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
+		//	return GetAnonymousFunctionData(node, symbol, create);
+		//}
+
+		public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, IMethodSymbol symbol, bool create = false)
+		{
+			AnonymousFunctionData functionData;
+			if (AnonymousFunctionData.TryGetValue(node, out functionData))
+			{
+				return functionData;
+			}
+			return !create ? null : AnonymousFunctionData.GetOrAdd(node, syntax => new AnonymousFunctionData(this, symbol, node));
+		}
+
+		public override SyntaxNode GetNode()
+		{
+			return Node;
+		}
+
+		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax type, bool create = false)
+		//{
+		//	var nestedNodes = new Stack<AnonymousFunctionExpressionSyntax>();
+		//	foreach (var node in type.AncestorsAndSelf()
+		//		.TakeWhile(o => !o.IsKind(SyntaxKind.MethodDeclaration))
+		//		.OfType<AnonymousFunctionExpressionSyntax>())
+		//	{
+		//		nestedNodes.Push(node);
+		//	}
+		//	AnonymousFunctionData currentFunData = null;
+		//	while (nestedNodes.Count > 0)
+		//	{
+		//		var node = nestedNodes.Pop();
+		//		var typeDataDict = currentFunData?.NestedAnonymousFunctionData ?? AnonymousFunctionData;
+		//		AnonymousFunctionData typeData;
+		//		if (typeDataDict.TryGetValue(node, out typeData))
+		//		{
+		//			currentFunData = typeData;
+		//			continue;
+		//		}
+		//		if (!create)
+		//		{
+		//			return null;
+		//		}
+		//		var funSymbol = TypeData.NamespaceData.DocumentData.SemanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
+		//		currentFunData = typeDataDict.GetOrAdd(node, k => new AnonymousFunctionData(this, node, funSymbol, currentFunData));
+		//	}
+		//	return currentFunData;
+		//}
 
 	}
 }

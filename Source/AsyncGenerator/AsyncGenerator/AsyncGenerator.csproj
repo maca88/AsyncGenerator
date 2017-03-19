@@ -197,6 +197,7 @@
     <Compile Include="MethodConversion.cs" />
     <Compile Include="MethodData.cs" />
     <Compile Include="NamespaceData.cs" />
+    <Compile Include="ProjectAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TypeConversion.cs" />
     <Compile Include="TypeData.cs" />

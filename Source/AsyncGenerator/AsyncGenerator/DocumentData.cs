@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Extensions;
 using Microsoft.CodeAnalysis;
@@ -38,97 +37,221 @@ namespace AsyncGenerator
 
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NamespaceData { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
 
-		public IEnumerable<MethodData> GetAllMethodDatas()
+		/// <summary>
+		/// Iterate through all type data from top to bottom
+		/// </summary>
+		public IEnumerable<TypeData> GetAllTypeDatas(Func<TypeData, bool> predicate = null)
 		{
 			return NamespaceData.Values
-				.SelectMany(o => o.TypeData.Values
-					.SelectMany(t => t.GetDescendantTypeInfosAndSelf())
-					.SelectMany(t => t.MethodData.Values));
+				.SelectMany(o => o.GetSelfAndDescendantsNamespaceData())
+				.SelectMany(o => o.TypeData.Values)
+				.Union(GlobalNamespaceData.TypeData.Values)
+				.SelectMany(o => o.GetSelfAndDescendantsTypeData(predicate));
 		}
 
-		public IEnumerable<TypeData> GetAllTypeDatas()
+		public object GetNodeData(SyntaxNode node,
+			bool create = false,
+			NamespaceData namespaceData = null,
+			TypeData typeData = null,
+			MethodData methodData = null)
 		{
-			return NamespaceData.Values
-				.SelectMany(o => o.TypeData.Values
-					.SelectMany(t => t.GetDescendantTypeInfosAndSelf()));
+			AnonymousFunctionData functionData = null;
+			SyntaxNode endNode;
+			if (methodData != null)
+			{
+				endNode = methodData.Node;
+			}
+			else if (typeData != null)
+			{
+				endNode = typeData.Node;
+			}
+			else if (namespaceData != null)
+			{
+				endNode = namespaceData.Node;
+			}
+			else
+			{
+				endNode = Node;
+			}
+
+			foreach (var n in node.AncestorsAndSelf()
+				.TakeWhile(o => !ReferenceEquals(o, endNode))
+				.Where(
+					o =>
+						o.IsKind(SyntaxKind.ParenthesizedLambdaExpression) ||
+						o.IsKind(SyntaxKind.AnonymousMethodExpression) ||
+						o.IsKind(SyntaxKind.SimpleLambdaExpression) ||
+
+						o.IsKind(SyntaxKind.MethodDeclaration) ||
+
+						o.IsKind(SyntaxKind.ClassDeclaration) ||
+						o.IsKind(SyntaxKind.InterfaceDeclaration) ||
+						o.IsKind(SyntaxKind.StructDeclaration) ||
+
+						o.IsKind(SyntaxKind.NamespaceDeclaration)
+						/*
+						o is AnonymousFunctionExpressionSyntax || 
+						o is MethodDeclarationSyntax || 
+						o is TypeDeclarationSyntax ||
+						o is NamespaceDeclarationSyntax*/)
+				.Reverse())
+			{
+				switch (n.Kind())
+				{
+					case SyntaxKind.ParenthesizedLambdaExpression:
+					case SyntaxKind.AnonymousMethodExpression:
+					case SyntaxKind.SimpleLambdaExpression:
+						if (methodData == null)
+						{
+							throw new InvalidOperationException($"Anonymous function {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
+						}
+						var symbol = SemanticModel.GetSymbolInfo(n).Symbol as IMethodSymbol;
+						functionData = functionData != null 
+							? functionData.GetNestedAnonymousFunctionData((AnonymousFunctionExpressionSyntax)n, symbol, create)
+							: methodData.GetAnonymousFunctionData((AnonymousFunctionExpressionSyntax) n, symbol, create);
+						if (functionData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.MethodDeclaration:
+						if (typeData == null)
+						{
+							throw new InvalidOperationException($"Method {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
+						}
+						var methodNode = (MethodDeclarationSyntax) n;
+						var methodSymbol = SemanticModel.GetDeclaredSymbol(methodNode);
+						methodData = typeData.GetMethodData(methodNode, methodSymbol, create);
+						if (methodData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.ClassDeclaration:
+					case SyntaxKind.InterfaceDeclaration:
+					case SyntaxKind.StructDeclaration:
+						if (namespaceData == null)
+						{
+							namespaceData = GlobalNamespaceData;
+						}
+						var typeNode = (TypeDeclarationSyntax)n;
+						var typeSymbol = SemanticModel.GetDeclaredSymbol(typeNode);
+						typeData = typeData != null 
+							? typeData.GetNestedTypeData(typeNode, typeSymbol, create) 
+							: namespaceData.GetTypeData(typeNode, typeSymbol, create);
+						if (typeData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.NamespaceDeclaration:
+						var namespaceNode = (NamespaceDeclarationSyntax)n;
+						var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
+						namespaceData = namespaceData != null 
+							? namespaceData.GetNestedNamespaceData(namespaceNode, namespaceSymbol, create)
+							: GetNamespaceData(namespaceNode, namespaceSymbol, create);
+						if (namespaceData == null)
+						{
+							return null;
+						}
+						break;
+				}
+			}
+
+			switch (node.Kind())
+			{
+				case SyntaxKind.ParenthesizedLambdaExpression:
+				case SyntaxKind.AnonymousMethodExpression:
+				case SyntaxKind.SimpleLambdaExpression:
+					return functionData;
+				case SyntaxKind.MethodDeclaration:
+					return methodData;
+				case SyntaxKind.ClassDeclaration:
+				case SyntaxKind.InterfaceDeclaration:
+				case SyntaxKind.StructDeclaration:
+					return typeData;
+				case SyntaxKind.NamespaceDeclaration:
+					return namespaceData;
+				default:
+					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
+			}
 		}
+
+		public async Task<BaseMethodData> GetAnonymousFunctionOrMethodData(IMethodSymbol symbol)
+		{
+			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
+			var node = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+			if (node.IsKind(SyntaxKind.MethodDeclaration))
+			{
+				return (MethodData)GetNodeData(node);
+			}
+			return (AnonymousFunctionData)GetNodeData(node);
+		}
+
+		#region AnonymousFunctionData
+
+		public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node)
+		{
+			return (AnonymousFunctionData)GetNodeData(node);
+		}
+
+		public AnonymousFunctionData GetOrCreateAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, MethodData methodData = null)
+		{
+			return (AnonymousFunctionData)GetNodeData(node, true, methodData: methodData);
+		}
+
+		#endregion
+
+		#region MethodData
 
 		public async Task<MethodData> GetMethodData(IMethodSymbol symbol)
 		{
-			return await (await (await
-				GetNamespaceData(symbol).ConfigureAwait(false))
-				.GetTypeData(symbol).ConfigureAwait(false))
-				.GetMethodData(symbol).ConfigureAwait(false);
-		}
-
-		public async Task<MethodData> GetOrCreateMethodData(IMethodSymbol symbol)
-		{
-			return await (await (await
-				GetNamespaceData(symbol, true).ConfigureAwait(false))
-				.GetTypeData(symbol, true).ConfigureAwait(false))
-				.GetMethodData(symbol, true).ConfigureAwait(false);
+			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
+			var node = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
+			return (MethodData)GetNodeData(node);
 		}
 
 		public MethodData GetMethodData(MethodDeclarationSyntax node)
 		{
-			return GetNamespaceData(node).GetTypeData(node).GetMethodData(node);
+			return (MethodData)GetNodeData(node);
 		}
 
-		public MethodData GetOrCreateMethodData(MethodDeclarationSyntax node)
+		public MethodData GetOrCreateMethodData(MethodDeclarationSyntax node, TypeData typeData = null)
 		{
-			return GetNamespaceData(node, true).GetTypeData(node, true).GetMethodData(node, true);
+			return (MethodData)GetNodeData(node, true, typeData: typeData);
 		}
+
+		#endregion
+
+		#region TypeData
 
 		public TypeData GetOrCreateTypeData(TypeDeclarationSyntax node)
 		{
-			return GetNamespaceData(node, true).GetTypeData(node, true);
+			return (TypeData)GetNodeData(node, true);
 		}
 
-		public async Task<NamespaceData> GetNamespaceData(ISymbol symbol, bool create = false)
+		public TypeData GetTypeData(TypeDeclarationSyntax node)
 		{
-			var namespaceSymbol = symbol.ContainingNamespace;
-			if (namespaceSymbol.IsGlobalNamespace)
-			{
-				return GlobalNamespaceData;
-			}
-			var syntax = namespaceSymbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
-			var node = (NamespaceDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-			//var location = namespaceSymbol.Locations.Single(o => o.SourceTree.FilePath == FilePath);
-			//var node = RootNode.DescendantNodes()
-			//				   .OfType<NamespaceDeclarationSyntax>()
-			//				   .FirstOrDefault(
-			//					   o =>
-			//					   {
-			//						   var identifier = o.ChildNodes().OfType<IdentifierNameSyntax>().SingleOrDefault();
-			//						   if (identifier != null)
-			//						   {
-			//							   return identifier.Span == location.SourceSpan;
-			//						   }
-			//						   return o.ChildNodes().OfType<QualifiedNameSyntax>().Single().Right.Span == location.SourceSpan;
-			//					   });
-			//if (node == null) //TODO: location.SourceSpan.Start == 0 -> a bug perhaps ???
-			//{
-			//	node = RootNode.DescendantNodes().OfType<NamespaceDeclarationSyntax>().Single(o => o.FullSpan.End == location.SourceSpan.End);
-			//}
-			return GetNamespaceData(node, namespaceSymbol, create);
+			return (TypeData)GetNodeData(node);
 		}
 
-		public NamespaceData GetNamespaceData(SyntaxNode node, bool create = false)
+		#endregion
+
+		#region NamespaceData
+
+		public NamespaceData GetOrCreateNamespaceData(NamespaceDeclarationSyntax node)
 		{
-			if (node == null)
-			{
-				return GlobalNamespaceData;
-			}
-			var namespaceNode = node.AncestorsAndSelf().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
-			if (namespaceNode == null)
-			{
-				return GlobalNamespaceData;
-			}
-			var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
-			return GetNamespaceData(namespaceNode, namespaceSymbol, create);
+			return (NamespaceData)GetNodeData(node, true);
 		}
 
-		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, INamespaceSymbol namespaceSymbol, bool create = false)
+		public NamespaceData GetNamespaceData(NamespaceDeclarationSyntax node)
+		{
+			return (NamespaceData)GetNodeData(node);
+		}
+
+		#endregion
+
+		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, INamespaceSymbol namespaceSymbol, bool create)
 		{
 			NamespaceData namespaceData;
 			if (NamespaceData.TryGetValue(namespaceNode, out namespaceData))
@@ -162,14 +285,15 @@ namespace AsyncGenerator
 					{
 						return method.AssociatedSymbol;
 					}
-
+					return method;
+					/*
 					if (method.MethodKind != MethodKind.AnonymousFunction)
 					{
 						return method;
-					}
+					}*/
 				}
 			}
-			// reference to a cref
+			//TODO: reference to a cref
 			return null;
 		}
 
