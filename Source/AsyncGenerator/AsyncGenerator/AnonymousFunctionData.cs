@@ -26,12 +26,10 @@ namespace AsyncGenerator
 
 		public MethodConversion Conversion { get; set; }
 
-		public bool IsAsync { get; set; }
-
 		/// <summary>
 		/// Symbol of the method that uses this function as an argument, value represents the index of the argument
 		/// </summary>
-		public KeyValuePair<IMethodSymbol, int> ArgumentOfMethod { get; set; }
+		public Tuple<IMethodSymbol, int> ArgumentOfMethod { get; set; }
 
 		public AnonymousFunctionData ParentAnonymousFunctionData { get; }
 
@@ -91,6 +89,11 @@ namespace AsyncGenerator
 		public override SyntaxNode GetNode()
 		{
 			return Node;
+		}
+
+		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
+		{
+			return NestedAnonymousFunctionData.Values;
 		}
 	}
 }

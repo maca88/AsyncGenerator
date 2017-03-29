@@ -9,21 +9,21 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public class MethodReferenceData
+	public class FunctionReferenceData
 	{
-		public MethodReferenceData(MethodData methodData, ReferenceLocation reference, SimpleNameSyntax referenceNode,
-			IMethodSymbol referenceSymbol, MethodData referenceMethodData)
+		public FunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNode,
+			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
 		{
-			MethodData = methodData;
+			FunctionData = functionData;
 			ReferenceLocation = reference;
 			ReferenceNode = referenceNode;
 			ReferenceSymbol = referenceSymbol;
-			ReferenceMethodData = referenceMethodData;
+			ReferenceFunctionData = referenceFunctionData;
 		}
 
-		public MethodData MethodData { get; }
+		public FunctionData FunctionData { get; }
 
-		public MethodData ReferenceMethodData { get; }
+		public FunctionData ReferenceFunctionData { get; }
 
 		public SimpleNameSyntax ReferenceNode { get; }
 
@@ -31,13 +31,13 @@ namespace AsyncGenerator
 
 		public IMethodSymbol ReferenceSymbol { get; }
 
+		public IMethodSymbol ReferenceAsyncSymbol { get; set; }
+
 		public bool CanBeAsync { get; set; }
 
 		public bool CanBeAwaited { get; internal set; } = true;
 
 		public bool PassedAsArgument { get; internal set; }
-
-		public bool MakeAnonymousFunctionAsync { get; set; }
 
 		public bool UsedAsReturnValue { get; internal set; }
 
@@ -52,7 +52,7 @@ namespace AsyncGenerator
 			{
 				return false;
 			}
-			return ReferenceLocation.Equals(((MethodReferenceData)obj).ReferenceLocation);
+			return ReferenceLocation.Equals(((FunctionReferenceData)obj).ReferenceLocation);
 		}
 	}
 }

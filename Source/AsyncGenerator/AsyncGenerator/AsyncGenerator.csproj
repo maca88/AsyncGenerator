@@ -207,7 +207,7 @@
     <Compile Include="Analyzation\ITypeAnalyzationResult.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="MethodData.cs" />
-    <Compile Include="MethodReferenceData.cs" />
+    <Compile Include="FunctionReferenceData.cs" />
     <Compile Include="NamespaceData.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.cs" />
     <Compile Include="ProjectData.cs" />

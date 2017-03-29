@@ -39,6 +39,11 @@ namespace AsyncGenerator
 
 		public ConcurrentDictionary<string, DocumentData> DocumentData { get; } = new ConcurrentDictionary<string, DocumentData>();
 
+		public bool Contains(SyntaxReference syntax)
+		{
+			return Project.Solution.GetDocument(syntax.SyntaxTree).Project == Project;
+		}
+
 		public DocumentData GetDocumentData(SyntaxReference syntax)
 		{
 			return GetDocumentData(Project.Solution.GetDocument(syntax.SyntaxTree));

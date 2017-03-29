@@ -214,7 +214,9 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Partial\PartialTest.cs" />
+    <Compile Include="Partial\TestCases\MethodAsArgument.cs" />
     <Compile Include="Partial\TestCases\SimpleAnonymousFunctions.cs" />
+    <Compile Include="Partial\TestCases\SimpleCircularCall.cs" />
     <Compile Include="Partial\TestCases\SimpleReference.cs" />
     <Compile Include="Partial\SimpleClass\TestCase.cs" />
     <Compile Include="UnitTest1.cs" />

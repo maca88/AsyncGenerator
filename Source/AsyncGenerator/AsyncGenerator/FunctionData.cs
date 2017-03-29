@@ -18,6 +18,8 @@ namespace AsyncGenerator
 			Symbol = methodSymbol;
 		}
 
+		public bool IsAsync { get; set; }
+
 		public IMethodSymbol Symbol { get; }
 
 		/// <summary>
@@ -31,6 +33,14 @@ namespace AsyncGenerator
 		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
 		public abstract SyntaxNode GetNode();
+
+		public abstract IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData();
+
+		#region Analyze step
+
+		public ConcurrentSet<FunctionReferenceData> MethodReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
+
+		#endregion
 
 		#region IFunctionAnalyzationResult
 

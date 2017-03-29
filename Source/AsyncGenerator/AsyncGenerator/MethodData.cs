@@ -63,8 +63,6 @@ namespace AsyncGenerator
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
-		public bool IsAsync { get; set; }
-
 		public MethodConversion Conversion { get; internal set; }
 
 		public TypeData TypeData { get; }
@@ -97,7 +95,7 @@ namespace AsyncGenerator
 
 		// Analyze step
 
-		public ConcurrentSet<MethodReferenceData> MethodReferenceData { get; } = new ConcurrentSet<MethodReferenceData>();
+		
 
 		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, bool create = false)
 		//{
@@ -118,6 +116,11 @@ namespace AsyncGenerator
 		public override SyntaxNode GetNode()
 		{
 			return Node;
+		}
+
+		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
+		{
+			return AnonymousFunctionData.Values;
 		}
 
 		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax type, bool create = false)
