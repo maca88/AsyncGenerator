@@ -55,5 +55,10 @@ namespace AsyncGenerator.Configuration
 		/// </summary>
 		IProjectAnalyzeConfiguration ScanForMissingAsyncMembers(bool value);
 
+		/// <summary>
+		/// Callbacks that will be called in certain parts of the analyzation process
+		/// </summary>
+		IProjectAnalyzeConfiguration Callbacks(Action<IProjectAnalyzeCallbacksConfiguration> action);
+
 	}
 }

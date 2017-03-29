@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Extensions;
@@ -18,90 +17,8 @@ using IMethodSymbol = Microsoft.CodeAnalysis.IMethodSymbol;
 using Project = Microsoft.CodeAnalysis.Project;
 using Solution = Microsoft.CodeAnalysis.Solution;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Analyzation
 {
-	public class AnonymousFunctionData : BaseMethodData
-	{
-		public AnonymousFunctionData(MethodData methodData, IMethodSymbol symbol, AnonymousFunctionExpressionSyntax node, AnonymousFunctionData parent = null)
-		{
-			MethodData = methodData;
-			Node = node;
-			Symbol = symbol;
-			ParentAnonymousFunctionData = parent;
-		}
-
-		public AnonymousFunctionExpressionSyntax Node { get; }
-
-		public IMethodSymbol Symbol { get; }
-
-		public MethodData MethodData { get; }
-
-		public MethodConversion Conversion { get; set; }
-
-		public bool IsAsync { get; set; }
-
-		/// <summary>
-		/// Symbol of the method that uses this function as an argument, value represents the index of the argument
-		/// </summary>
-		public KeyValuePair<IMethodSymbol, int> ArgumentOfMethod { get; set; }
-
-		public AnonymousFunctionData ParentAnonymousFunctionData { get; }
-
-		public ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData> NestedAnonymousFunctionData { get; } = 
-			new ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData>();
-
-		//public AnonymousFunctionData GetNestedAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, bool create = false)
-		//{
-		//	var symbol = MethodData.TypeData.NamespaceData.DocumentData.SemanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-		//	return GetNestedAnonymousFunctionData(node, symbol, create);
-		//}
-
-		public AnonymousFunctionData GetNestedAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, IMethodSymbol symbol, bool create = false)
-		{
-			AnonymousFunctionData typeData;
-			if (NestedAnonymousFunctionData.TryGetValue(node, out typeData))
-			{
-				return typeData;
-			}
-			return !create ? null : NestedAnonymousFunctionData.GetOrAdd(node, syntax => new AnonymousFunctionData(MethodData, symbol, node, this));
-		}
-
-		public IEnumerable<AnonymousFunctionData> GetSelfAndDescendantsAnonymousFunctionData(Func<AnonymousFunctionData, bool> predicate = null)
-		{
-			return GetSelfAndDescendantsAnonymousFunctionDataRecursively(this, predicate);
-		}
-
-		private IEnumerable<AnonymousFunctionData> GetSelfAndDescendantsAnonymousFunctionDataRecursively(
-			AnonymousFunctionData functionData, Func<AnonymousFunctionData, bool> predicate = null)
-		{
-			if (predicate?.Invoke(functionData) == false)
-			{
-				yield break;
-			}
-			yield return functionData;
-			foreach (var subTypeData in functionData.NestedAnonymousFunctionData.Values)
-			{
-				if (predicate?.Invoke(subTypeData) == false)
-				{
-					yield break;
-				}
-				foreach (var td in GetSelfAndDescendantsAnonymousFunctionDataRecursively(subTypeData, predicate))
-				{
-					if (predicate?.Invoke(td) == false)
-					{
-						yield break;
-					}
-					yield return td;
-				}
-			}
-		}
-
-		public override SyntaxNode GetNode()
-		{
-			return Node;
-		}
-	}
-
 	public class ProjectAnalyzer
 	{
 		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectAnalyzer));
@@ -444,19 +361,20 @@ namespace AsyncGenerator
 					await ScanMethodData(methodData);
 					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
 					{
-						
+						// TODO: do we need something here?
 					}
 				}
 			}
 		}
 
-		private async Task ScanAnonymousFunctionData(AnonymousFunctionData functionData)
+		private async Task ScanMethodData(MethodData methodData, int depth = 0)
 		{
-			// Find async counterparts for all methods that use the anonymous function as an argument
-		}
+			if (methodData.Scanned)
+			{
+				return;
+			}
+			methodData.Scanned = true;
 
-		private async Task ScanMethodData(MethodData methodData)
-		{
 			SyntaxReference syntax;
 			var bodyScanMethodDatas = new HashSet<MethodData> { methodData };
 			var referenceScanMethods = new HashSet<IMethodSymbol>();
@@ -579,15 +497,13 @@ namespace AsyncGenerator
 				}
 				foreach (var group in asyncCounterparts.GroupBy(o => o.MethodSymbol))
 				{
-					await ScanAllMethodReferenceLocations(group.Key).ConfigureAwait(false);
+					await ScanAllMethodReferenceLocations(group.Key, depth).ConfigureAwait(false);
 				}
 			}
-			else
-
-				foreach (var methodToScan in referenceScanMethods)
-				{
-					await ScanAllMethodReferenceLocations(methodToScan).ConfigureAwait(false);
-				}
+			foreach (var methodToScan in referenceScanMethods)
+			{
+				await ScanAllMethodReferenceLocations(methodToScan, depth).ConfigureAwait(false);
+			}
 		}
 
 		#endregion
@@ -862,7 +778,7 @@ namespace AsyncGenerator
 
 		private readonly ConcurrentSet<IMethodSymbol> _scannedMethodReferenceSymbols = new ConcurrentSet<IMethodSymbol>();
 
-		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol)
+		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth)
 		{
 			if (_scannedMethodReferenceSymbols.Contains(methodSymbol.OriginalDefinition))
 			{
@@ -873,6 +789,7 @@ namespace AsyncGenerator
 			var references = await SymbolFinder.FindReferencesAsync(methodSymbol.OriginalDefinition,
 				_solution, _analyzeDocuments).ConfigureAwait(false);
 
+			depth++;
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
 				if (refLocation.Document.Project != ProjectData.Project)
@@ -897,19 +814,19 @@ namespace AsyncGenerator
 				{
 					continue;
 				}
-				var methodData = await documentData.GetAnonymousFunctionOrMethodData(refMethodSymbol).ConfigureAwait(false);
-				if (methodData == null)
+				var baseMethodData = await documentData.GetAnonymousFunctionOrMethodData(refMethodSymbol).ConfigureAwait(false);
+				if (baseMethodData == null)
 				{
 					continue;
 				}
 				// Save the reference as it can be made async
-				if (!methodData.MethodReferences.TryAdd(refLocation))
+				if (!baseMethodData.MethodReferences.TryAdd(refLocation))
 				{
 					continue; // Reference already processed
 				}
 
 				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
-				var nameNode = methodData.GetNode().DescendantNodes()
+				var nameNode = baseMethodData.GetNode().DescendantNodes()
 							   .OfType<SimpleNameSyntax>()
 							   .First(
 								   o =>
@@ -928,7 +845,12 @@ namespace AsyncGenerator
 				if (invokedMethodDocData != null)
 				{
 					var invokedMethodData = await invokedMethodDocData.GetMethodData(invokedSymbol).ConfigureAwait(false);
-					invokedMethodData?.InvokedBy.Add(methodData);
+					invokedMethodData?.InvokedBy.Add(baseMethodData);
+				}
+				var methodData = baseMethodData as MethodData;
+				if (methodData != null)
+				{
+					await ScanMethodData(methodData, depth).ConfigureAwait(false);
 				}
 			}
 		}

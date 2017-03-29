@@ -214,6 +214,8 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Partial\PartialTest.cs" />
+    <Compile Include="Partial\TestCases\SimpleAnonymousFunctions.cs" />
+    <Compile Include="Partial\TestCases\SimpleReference.cs" />
     <Compile Include="Partial\SimpleClass\TestCase.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -233,6 +235,9 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Partial\SimpleReference\" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

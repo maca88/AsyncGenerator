@@ -2,9 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -200,9 +198,9 @@ namespace AsyncGenerator
 
 		#region INamespaceAnalyzationResult
 
-		IEnumerable<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+		IReadOnlyList<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
 
-		IEnumerable<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => TypeData.Values.ToImmutableArray();
+		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => TypeData.Values.ToImmutableArray();
 
 		#endregion
 	}

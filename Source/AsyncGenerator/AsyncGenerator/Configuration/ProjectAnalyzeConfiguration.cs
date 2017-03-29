@@ -29,6 +29,8 @@ namespace AsyncGenerator.Configuration
 
 		public bool ScanForMissingAsyncMembers { get; private set; }
 
+		public ProjectAnalyzeCallbacksConfiguration Callbacks { get; } = new ProjectAnalyzeCallbacksConfiguration();
+
 		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodConversionFunction(Func<IMethodSymbol, MethodConversion> func)
 		{
 			if (func == null)
@@ -118,6 +120,16 @@ namespace AsyncGenerator.Configuration
 		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
 		{
 			ScanForMissingAsyncMembers = value;
+			return this;
+		}
+
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.Callbacks(Action<IProjectAnalyzeCallbacksConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			action(Callbacks);
 			return this;
 		}
 

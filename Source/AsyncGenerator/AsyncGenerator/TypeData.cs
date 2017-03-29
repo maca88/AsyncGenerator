@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -134,13 +135,13 @@ namespace AsyncGenerator
 
 		#region ITypeAnalyzationResult
 
-		IEnumerable<ReferenceLocation> ITypeAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
 
-		IEnumerable<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => SelfReferences.ToImmutableArray();
+		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => SelfReferences.ToImmutableArray();
 
-		IEnumerable<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => MethodData.Values.ToImmutableArray();
+		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => MethodData.Values.ToImmutableArray();
 
-		IEnumerable<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => NestedTypeData.Values.ToImmutableArray();
+		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => NestedTypeData.Values.ToImmutableArray();
 
 		#endregion
 	}

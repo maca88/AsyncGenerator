@@ -179,26 +179,40 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
+    <Compile Include="Configuration\IProjectAnalyzeCallbacksConfiguration.cs" />
+    <Compile Include="AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />
     <Compile Include="Configuration\AsyncCodeConfiguration.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
+    <Compile Include="Configuration\ProjectAnalyzeCallbacksConfiguration.cs" />
     <Compile Include="Configuration\ProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\ProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\ProjectTransformConfiguration.cs" />
     <Compile Include="DocumentData.cs" />
     <Compile Include="Extensions\MethodKindExtensions.cs" />
     <Compile Include="Extensions\SymbolExtensions.cs" />
+    <Compile Include="Analyzation\IAnonymousFunctionAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
+    <Compile Include="Analyzation\INamespaceAnalyzationResult.cs" />
+    <Compile Include="FunctionData.cs" />
     <Compile Include="Internal\AsyncCounterpartMethod.cs" />
     <Compile Include="Internal\AsyncLock.cs" />
     <Compile Include="Internal\AsyncSemaphore.cs" />
     <Compile Include="Internal\ConcurrentSet.cs" />
+    <Compile Include="Analyzation\IProjectAnalyzationResult.cs" />
+    <Compile Include="Analyzation\ITypeAnalyzationResult.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="MethodData.cs" />
+    <Compile Include="MethodReferenceData.cs" />
     <Compile Include="NamespaceData.cs" />
-    <Compile Include="ProjectAnalyzer.cs" />
+    <Compile Include="Analyzation\ProjectAnalyzer.cs" />
+    <Compile Include="ProjectData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SolutionData.cs" />
     <Compile Include="TypeConversion.cs" />
     <Compile Include="TypeData.cs" />
   </ItemGroup>
@@ -211,6 +225,9 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Transformation\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

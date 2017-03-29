@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -177,7 +178,7 @@ namespace AsyncGenerator
 			}
 		}
 
-		public async Task<BaseMethodData> GetAnonymousFunctionOrMethodData(IMethodSymbol symbol)
+		public async Task<FunctionData> GetAnonymousFunctionOrMethodData(IMethodSymbol symbol)
 		{
 			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
 			var node = await syntax.GetSyntaxAsync().ConfigureAwait(false);
@@ -299,7 +300,7 @@ namespace AsyncGenerator
 
 		#region IDocumentAnalyzationResult
 
-		IEnumerable<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => NamespaceData.Values.ToImmutableArray();
+		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => NamespaceData.Values.ToImmutableArray();
 
 		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;
 

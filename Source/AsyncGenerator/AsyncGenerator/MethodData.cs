@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -11,28 +12,11 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public abstract class BaseMethodData
+	public class MethodData : FunctionData, IMethodAnalyzationResult
 	{
-		/// <summary>
-		/// References of types that are used inside this method
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		/// <summary>
-		/// References to other methods that are invoked inside this method and are candidates to be async
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		public abstract SyntaxNode GetNode();
-	}
-
-
-	public class MethodData : BaseMethodData, IMethodAnalyzationResult
-	{
-		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node)
+		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node) : base(symbol)
 		{
 			TypeData = typeData;
-			Symbol = symbol;
 			Node = node;
 			InterfaceMethod = Symbol.ContainingType.TypeKind == TypeKind.Interface;
 		}
@@ -67,7 +51,7 @@ namespace AsyncGenerator
 		/// <summary>
 		/// Method datas that invokes this method
 		/// </summary>
-		public ConcurrentSet<BaseMethodData> InvokedBy { get; } = new ConcurrentSet<BaseMethodData>();
+		public ConcurrentSet<FunctionData> InvokedBy { get; } = new ConcurrentSet<FunctionData>();
 
 		/// <summary>
 		/// The base method that is overriden
@@ -85,8 +69,6 @@ namespace AsyncGenerator
 
 		public TypeData TypeData { get; }
 
-		public IMethodSymbol Symbol { get; }
-
 		public MethodDeclarationSyntax Node { get; }
 
 		public ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData> AnonymousFunctionData { get; } = 
@@ -94,11 +76,9 @@ namespace AsyncGenerator
 
 		#region IMethodAnalyzationResult
 
-		//IEnumerable<IMethodAnalyzationResult> IMethodAnalyzationResult.InvokedBy => InvokedBy.ToImmutableArray();
+		IReadOnlyList<IFunctionAnalyzationResult> IMethodAnalyzationResult.InvokedBy => InvokedBy.ToImmutableArray();
 
-		IEnumerable<ReferenceLocation> IMethodAnalyzationResult.MethodReferences => MethodReferences.ToImmutableArray();
-
-		IEnumerable<ReferenceLocation> IMethodAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+		IReadOnlyList<IAnonymousFunctionAnalyzationResult> IMethodAnalyzationResult.AnonymousFunctions => AnonymousFunctionData.Values.ToImmutableArray();
 
 		#endregion
 
@@ -107,6 +87,13 @@ namespace AsyncGenerator
 			return AnonymousFunctionData.Values
 				.SelectMany(o => o.GetSelfAndDescendantsAnonymousFunctionData(predicate));
 		}
+
+		#region Scanning step
+
+		internal bool Scanned { get; set; }
+
+		#endregion
+
 
 		// Analyze step
 
