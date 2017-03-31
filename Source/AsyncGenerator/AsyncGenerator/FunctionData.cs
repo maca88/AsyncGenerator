@@ -22,6 +22,8 @@ namespace AsyncGenerator
 
 		public IMethodSymbol Symbol { get; }
 
+		public abstract TypeData TypeData { get; }
+
 		/// <summary>
 		/// References of types that are used inside this method
 		/// </summary>

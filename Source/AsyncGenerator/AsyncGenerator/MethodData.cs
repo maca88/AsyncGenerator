@@ -65,7 +65,7 @@ namespace AsyncGenerator
 
 		public MethodConversion Conversion { get; internal set; }
 
-		public TypeData TypeData { get; }
+		public override TypeData TypeData { get; }
 
 		public MethodDeclarationSyntax Node { get; }
 

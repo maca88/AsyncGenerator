@@ -907,6 +907,12 @@ namespace AsyncGenerator.Analyzation
 			return asyncMethodSymbol;
 		}
 
+
+		private void GetAsyncCounterpart(FunctionData functionData, InvocationExpressionSyntax invocationNode)
+		{
+			
+		}
+
 		/// <summary>
 		/// Scan all invocation expression syntaxes and tries to get a async counterpart.
 		/// The method will return only newly found async counterparts.

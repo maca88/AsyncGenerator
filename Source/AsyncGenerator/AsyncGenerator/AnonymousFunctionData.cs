@@ -26,6 +26,8 @@ namespace AsyncGenerator
 
 		public MethodConversion Conversion { get; set; }
 
+		public override TypeData TypeData => MethodData.TypeData;
+
 		/// <summary>
 		/// Symbol of the method that uses this function as an argument, value represents the index of the argument
 		/// </summary>
