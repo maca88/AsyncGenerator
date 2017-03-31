@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration
 {
-	public delegate Task<IMethodSymbol> FindAsyncCounterpart(Project project, IMethodSymbol syncMethodSymbol, int? argumentIndex, bool searchInheritedTypes);
+	public delegate IEnumerable<IMethodSymbol> FindAsyncCounterpart(Project project, IMethodSymbol syncMethodSymbol, bool equalParameters, bool searchInheritedTypes);
 
 	public class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
 	{
@@ -23,7 +24,10 @@ namespace AsyncGenerator.Configuration
 
 		public Predicate<IMethodSymbol> ConvertMethodPredicate { get; private set; } = m => true;
 
-		public List<FindAsyncCounterpart> FindAsyncCounterpartDelegates { get; } = new List<FindAsyncCounterpart>();
+		public List<FindAsyncCounterpart> FindAsyncCounterpartDelegates { get; } = new List<FindAsyncCounterpart>
+		{
+			(project, symbol, equalParameters, inherit) => symbol.GetAsyncCounterparts(equalParameters, inherit)
+		};
 
 		public bool ScanMethodBody { get; private set; }
 

@@ -1,112 +1,124 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Extensions
 {
 	internal static class SymbolExtensions
 	{
-		public static bool HaveSameParameters(this IMethodSymbol m1, IMethodSymbol m2, Func<IParameterSymbol, IParameterSymbol, int, bool> paramCompareFunc = null)
+		/// <summary>
+		/// Check if the return type matches, valid cases: <see cref="Void"/> to <see cref="System.Threading.Tasks.Task"/> Task, TResult to <see cref="System.Threading.Tasks.Task{TResult}"/> and
+		/// also equals return types are ok when there is at least one delegate that can be converted to async (eg. Task.Run(<see cref="Action"/>) and Task.Run(<see cref="Func{Task}"/>))
+		/// </summary>
+		/// <param name="syncMethod"></param>
+		/// <param name="candidateAsyncMethod"></param>
+		/// <returns></returns>
+		private static bool IsAsyncCandidateForReturnType(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod)
 		{
-			if (m1.Parameters.Length != m2.Parameters.Length)
+			if (syncMethod.ReturnType.Equals(candidateAsyncMethod.ReturnType))
 			{
-				return false;
+				return true;
 			}
-
-			for (var i = 0; i < m1.Parameters.Length; i++)
+			var candidateReturnType = (INamedTypeSymbol)candidateAsyncMethod.ReturnType;
+			if (syncMethod.ReturnsVoid)
 			{
-				if (paramCompareFunc != null)
+				if (candidateReturnType.Name != "Task" || candidateReturnType.TypeArguments.Any())
 				{
-					if (!paramCompareFunc(m1.Parameters[i], m2.Parameters[i], i))
-					{
-						return false;
-					}
+					return false;
 				}
-				else
+			}
+			else
+			{
+				if (candidateReturnType.Name != "Task" || candidateReturnType.TypeArguments.Length != 1 || !candidateReturnType.TypeArguments.First().Equals(syncMethod.ReturnType))
 				{
-					if (!m1.Parameters[i].Type.Equals(m2.Parameters[i].Type))
-					{
-						return false;
-					}
+					return false;
 				}
 			}
 			return true;
 		}
 
+		public static bool IsAsyncCounterpart(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod, bool equalParameters)
+		{
+			if (syncMethod.Parameters.Length != candidateAsyncMethod.Parameters.Length || !IsAsyncCandidateForReturnType(syncMethod, candidateAsyncMethod))
+			{
+				return false;
+			}
+			// Both methods can have the same return type only if we have at least one delegate argument that can be async
+			var result = !syncMethod.ReturnType.Equals(candidateAsyncMethod.ReturnType);
+			if (!result && equalParameters)
+			{
+				return false;
+			}
+
+			for (var i = 0; i < syncMethod.Parameters.Length; i++)
+			{
+				var param = syncMethod.Parameters[i];
+				var candidateParam = candidateAsyncMethod.Parameters[i];
+				if (param.IsOptional != candidateParam.IsOptional || 
+					param.IsParams != candidateParam.IsParams || 
+					param.RefKind != candidateParam.RefKind)
+				{
+					return false;
+				}
+				if (equalParameters)
+				{
+					if (param.Type.Equals(candidateParam.Type))
+					{
+						continue;
+					}
+					return false;
+				}
+				var typeSymbol = (INamedTypeSymbol)param.Type;
+				var origDelegate = typeSymbol.DelegateInvokeMethod;
+				if (origDelegate == null)
+				{
+					if (param.Type.Equals(candidateParam.Type))
+					{
+						continue;
+					}
+					return false;
+				}
+				// Candidate delegate argument must be equal or has to be an async candidate
+				var candidateTypeSymbol = (INamedTypeSymbol)candidateParam.Type;
+				var candidateDelegate = candidateTypeSymbol.DelegateInvokeMethod;
+				if (candidateDelegate == null)
+				{
+					return false;
+				}
+				if (origDelegate.Equals(candidateDelegate))
+				{
+					continue;
+				}
+				if (!origDelegate.IsAsyncCounterpart(candidateDelegate, false))
+				{
+					return false;
+				}
+				result = true;
+			}
+			return result;
+		}
+
 		/// <summary>
-		/// Searches for an async counterpart method within containing type and its bases without checking the return type
+		/// Searches for an async counterpart methods within containing and its bases types
 		/// </summary>
 		/// <param name="methodSymbol"></param>
-		/// <param name="indexOfArgument"></param>
-		/// <param name="inherit"></param>
+		/// <param name="equalParameters"></param>
+		/// <param name="searchInheritedTypes"></param>
 		/// <returns></returns>
-		public static IMethodSymbol GetAsyncCounterpart(this IMethodSymbol methodSymbol, int? indexOfArgument = null, bool inherit = false)
+		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, bool equalParameters, bool searchInheritedTypes)
 		{
-			Func<IParameterSymbol, IParameterSymbol, int, bool> paramCompareFunc = null;
-			if (indexOfArgument.HasValue)
+			var asyncName = methodSymbol.Name + "Async";
+			if (searchInheritedTypes)
 			{
-				paramCompareFunc = (candidateParam, param, index) =>
-				{
-					if (indexOfArgument != index)
-					{
-						return param.Type.Equals(candidateParam.Type);
-					}
-					var typeSymbol = (INamedTypeSymbol)param.Type;
-					var candidateTypeSymbol = (INamedTypeSymbol)candidateParam.Type;
-					var origDelegate = typeSymbol.DelegateInvokeMethod;
-					var candidateDelegate = candidateTypeSymbol.DelegateInvokeMethod;
-					if (origDelegate == null ||
-						candidateDelegate == null ||
-						!origDelegate.HaveSameParameters(candidateDelegate))
-					{
-						return false;
-					}
-					var candidateReturnType = (INamedTypeSymbol)candidateDelegate.ReturnType;
-					return candidateReturnType.Name == "Task" &&
-					       (
-						       (
-							       origDelegate.ReturnsVoid && !candidateReturnType.TypeArguments.Any()
-						       ) ||
-						       (
-							       candidateReturnType.TypeArguments.Length == 1 &&
-							       candidateReturnType.TypeArguments.First().Equals(origDelegate.ReturnType)
-						       )
-					       );
-				};
-			}
-			IMethodSymbol asyncSymbol;
-			if (inherit)
-			{
-				asyncSymbol = methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
-								   .SelectMany(o => o.GetMembers(methodSymbol.Name + "Async"))
-								   .OfType<IMethodSymbol>()
-								   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
-								   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
-				if (asyncSymbol == null && indexOfArgument.HasValue)
-				{
-					asyncSymbol = methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
-								   .SelectMany(o => o.GetMembers(methodSymbol.Name))
-								   .OfType<IMethodSymbol>()
-								   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
-								   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
-				}
-				return asyncSymbol;
+				return methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
+					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
+					.OfType<IMethodSymbol>()
+					.Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters));
 			} 
-			asyncSymbol = methodSymbol.ContainingType.GetMembers(methodSymbol.Name + "Async")
+			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
 							   .OfType<IMethodSymbol>()
-							   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
-							   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
-			if (asyncSymbol == null && indexOfArgument.HasValue)
-			{
-				asyncSymbol = methodSymbol.ContainingType.GetMembers(methodSymbol.Name)
-							   .OfType<IMethodSymbol>()
-							   .Where(o => o.TypeParameters.Length == methodSymbol.TypeParameters.Length)
-							   .FirstOrDefault(o => o.HaveSameParameters(methodSymbol, paramCompareFunc));
-			}
-			return asyncSymbol;
+							   .Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters));
 		}
 
 		public static IEnumerable<INamedTypeSymbol> EnumerateBaseTypesAndSelf(this INamedTypeSymbol type)

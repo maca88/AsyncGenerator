@@ -31,7 +31,7 @@ namespace AsyncGenerator
 
 		public IMethodSymbol ReferenceSymbol { get; }
 
-		public IMethodSymbol ReferenceAsyncSymbol { get; set; }
+		public HashSet<IMethodSymbol> ReferenceAsyncSymbols { get; set; }
 
 		public bool CanBeAsync { get; set; }
 

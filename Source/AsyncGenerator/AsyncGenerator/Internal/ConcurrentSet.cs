@@ -10,7 +10,20 @@ namespace AsyncGenerator.Internal
 {
 	public class ConcurrentSet<T> : ISet<T>
 	{
-		private readonly ConcurrentDictionary<T, byte> _dictionary = new ConcurrentDictionary<T, byte>();
+		private readonly ConcurrentDictionary<T, byte> _dictionary;
+
+		public ConcurrentSet()
+		{
+			_dictionary = new ConcurrentDictionary<T, byte>();
+		}
+
+		public ConcurrentSet(IEnumerable<T> collection) : this()
+		{
+			foreach (var item in collection)
+			{
+				_dictionary.TryAdd(item, default(byte));
+			}
+		}
 
 		/// <summary>
 		/// Returns an enumerator that iterates through the collection.

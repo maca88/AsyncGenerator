@@ -16,9 +16,18 @@ using Document = Microsoft.CodeAnalysis.Document;
 using IMethodSymbol = Microsoft.CodeAnalysis.IMethodSymbol;
 using Project = Microsoft.CodeAnalysis.Project;
 using Solution = Microsoft.CodeAnalysis.Solution;
+using static AsyncGenerator.Analyzation.AsyncCounterpartsSearchOptions;
 
 namespace AsyncGenerator.Analyzation
 {
+	[Flags]
+	public enum AsyncCounterpartsSearchOptions
+	{
+		Default = 1,
+		EqualParamaters = 2,
+		SeachInheritTypes = 4
+	}
+
 	public class ProjectAnalyzer
 	{
 		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectAnalyzer));
@@ -28,8 +37,8 @@ namespace AsyncGenerator.Analyzation
 		private ProjectAnalyzeConfiguration _configuration;
 		private Solution _solution;
 		private const int NoArg = -1;
-		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<int, IMethodSymbol>> _methodAsyncConterparts = 
-			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<int, IMethodSymbol>>();
+		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> _methodAsyncConterparts = 
+			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>();
 
 		public ProjectAnalyzer(ProjectData projectData)
 		{
@@ -211,7 +220,7 @@ namespace AsyncGenerator.Analyzation
 						var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 							.OfType<IMethodSymbol>()
 							.Where(o => o.Name == methodSymbol.Name + "Async")
-							.SingleOrDefault(o => o.HaveSameParameters(methodSymbol));
+							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true));
 
 						if (asyncConterPart == null)
 						{
@@ -245,7 +254,7 @@ namespace AsyncGenerator.Analyzation
 					var asyncConterPart = overridenMethod.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
 						.Where(o => o.Name == methodSymbol.Name + "Async" && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
-						.SingleOrDefault(o => o.HaveSameParameters(methodSymbol));
+						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true));
 					if (asyncConterPart == null)
 					{
 						Logger.Warn(
@@ -305,7 +314,7 @@ namespace AsyncGenerator.Analyzation
 					var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
 						.Where(o => o.Name == methodSymbol.Name + "Async")
-						.SingleOrDefault(o => o.HaveSameParameters(methodSymbol));
+						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true));
 					if (asyncConterPart == null)
 					{
 						Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
@@ -327,7 +336,7 @@ namespace AsyncGenerator.Analyzation
 			}
 
 			// Verify if there is already an async counterpart for this method
-			var asyncCounterpart = await GetAsyncCounterpart(methodSymbol, null, false).ConfigureAwait(false);
+			var asyncCounterpart = GetAsyncCounterparts(methodSymbol.OriginalDefinition, EqualParamaters).SingleOrDefault();
 			if (asyncCounterpart != null)
 			{
 				Logger.Debug($"Method {methodSymbol} has already an async counterpart {asyncCounterpart}");
@@ -491,14 +500,12 @@ namespace AsyncGenerator.Analyzation
 
 			if (_configuration.ScanMethodBody || methodData.Conversion == MethodConversion.Smart)
 			{
-				var asyncCounterparts = new List<AsyncCounterpartMethod>();
 				foreach (var mData in bodyScanMethodDatas)
 				{
-					asyncCounterparts.AddRange(await FindNewAsyncCounterpartMethods(mData).ConfigureAwait(false));
-				}
-				foreach (var group in asyncCounterparts.GroupBy(o => o.MethodSymbol))
-				{
-					await ScanAllMethodReferenceLocations(group.Key, depth).ConfigureAwait(false);
+					foreach (var method in FindNewlyInvokedMethodsWithAsyncCounterpart(mData))
+					{
+						await ScanAllMethodReferenceLocations(method, depth).ConfigureAwait(false);
+					}
 				}
 			}
 			foreach (var methodToScan in referenceScanMethods)
@@ -665,73 +672,30 @@ namespace AsyncGenerator.Analyzation
 				return;
 			}
 			var methodSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
-
-			ConcurrentDictionary<int, IMethodSymbol> asynMethodSymbols;
-			if (_methodAsyncConterparts.TryGetValue(methodSymbol.OriginalDefinition, out asynMethodSymbols))
+			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, SeachInheritTypes));
+			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
-				var indexOfArgument = NoArg;
-				// Find out if the invoked method uses any delegate arguments
-				var invocationNode = (InvocationExpressionSyntax)node;
-				var delegateParamNodes = invocationNode.ArgumentList.Arguments
-					.Select((o, i) => new
-					{
-						o.Expression,
-						Index = i,
-						MethodSymbol = documentData.SemanticModel.GetSymbolInfo(o.Expression).Symbol as IMethodSymbol
-					})
-					.Where(o => o.MethodSymbol != null)
-					.ToList();
-				if (delegateParamNodes.Count > 1)
+				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || o.ReturnType.Name != "Task"))
 				{
-					functionReferenceData.CanBeAsync = false;
-					Logger.Warn($"Method {methodSymbol} has more than one delegate argument which is not supported");
+					functionReferenceData.CanBeAwaited = false;
+					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
-				else if (delegateParamNodes.Count == 1)
-				{
-					var delegateParam = delegateParamNodes.First();
-					if (delegateParam.MethodSymbol.DeclaringSyntaxReferences.Any(o => documentData.ProjectData.Contains(o)))
-					{
-
-					}
-					else
-					{
-						
-					}
-
-
-					var anonymousFunctionDatas = functionData.GetAnonymousFunctionData().ToList();
-
-
-				}
-				else
-				{
-					
-				}
-
-				IMethodSymbol asyncMethodSymbol;
-				if (asynMethodSymbols.TryGetValue(indexOfArgument, out asyncMethodSymbol))
-				{
-					if (asyncMethodSymbol.ReturnsVoid || asyncMethodSymbol.ReturnType.Name != "Task")
-					{
-						functionReferenceData.CanBeAwaited = false;
-						Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
-					}
-					//TODO: do we need this?
-					// Check if the invocation expression takes any func as a parameter, we will allow to rename the method only if there is an awaitable invocation
-					//var invocationNode = (InvocationExpressionSyntax)node;
-					//var delegateParamNodes = invocationNode.ArgumentList.Arguments
-					//	.Select((o, i) => new { o.Expression, Index = i })
-					//	.Where(o => indexOfArgument == NoArg || indexOfArgument == o.Index)
-					//	.Where(o => functionData.MethodReferences.Any(r => o.Expression.Span.Contains(r.Location.SourceSpan)))
-					//	.ToList();
-					//if (!delegateParamNodes.Any())
-					//{
-					//	functionReferenceData.CanBeAsync = false;
-					//	Logger.Warn($"Cannot convert method to async as it is either void or do not return a Task and has not any parameters that can be async:\r\n{methodSymbol}\r\n");
-					//}
-				}
-				
 			}
+
+
+			//TODO: do we need this?
+			// Check if the invocation expression takes any func as a parameter, we will allow to rename the method only if there is an awaitable invocation
+			//var invocationNode = (InvocationExpressionSyntax)node;
+			//var delegateParamNodes = invocationNode.ArgumentList.Arguments
+			//	.Select((o, i) => new { o.Expression, Index = i })
+			//	.Where(o => indexOfArgument == NoArg || indexOfArgument == o.Index)
+			//	.Where(o => functionData.MethodReferences.Any(r => o.Expression.Span.Contains(r.Location.SourceSpan)))
+			//	.ToList();
+			//if (!delegateParamNodes.Any())
+			//{
+			//	functionReferenceData.CanBeAsync = false;
+			//	Logger.Warn($"Cannot convert method to async as it is either void or do not return a Task and has not any parameters that can be async:\r\n{methodSymbol}\r\n");
+			//}
 
 			// Custom code TODO: move
 			if (nameNode.Identifier.ToString() == "ToList")
@@ -884,54 +848,43 @@ namespace AsyncGenerator.Analyzation
 
 		#endregion
 
-
-		private async Task<IMethodSymbol> GetAsyncCounterpart(IMethodSymbol methodSymbol, int? indexOfArgument, bool inherit)
+		private IEnumerable<IMethodSymbol> GetAsyncCounterparts(IMethodSymbol methodSymbol, AsyncCounterpartsSearchOptions options, bool onlyNew = false)
 		{
-			IMethodSymbol asyncMethodSymbol = null;
-			if (_configuration.FindAsyncCounterpartDelegates.Any())
+			var dict = _methodAsyncConterparts.GetOrAdd(methodSymbol, new ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>());
+			HashSet<IMethodSymbol> asyncMethodSymbols;
+			if (dict.TryGetValue(options, out asyncMethodSymbols))
 			{
-				foreach (var findAsyncConterpart in _configuration.FindAsyncCounterpartDelegates)
+				return onlyNew ? Enumerable.Empty<IMethodSymbol>() : asyncMethodSymbols;
+			}
+			var equalParameters = options.HasFlag(EqualParamaters);
+			var searchInheritTypes = options.HasFlag(SeachInheritTypes);
+			asyncMethodSymbols = new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartDelegates
+				.SelectMany(fn => fn(ProjectData.Project, methodSymbol, equalParameters, searchInheritTypes)));
+			return dict.AddOrUpdate(
+				options,
+				asyncMethodSymbols,
+				(k, v) =>
 				{
-					asyncMethodSymbol = await findAsyncConterpart(ProjectData.Project,
-						methodSymbol, indexOfArgument, inherit).ConfigureAwait(false);
-					if (asyncMethodSymbol != null)
-					{
-						break;
-					}
-				}
-			}
-			else
-			{
-				asyncMethodSymbol = methodSymbol.GetAsyncCounterpart(indexOfArgument, inherit);
-			}
-			return asyncMethodSymbol;
-		}
-
-
-		private void GetAsyncCounterpart(FunctionData functionData, InvocationExpressionSyntax invocationNode)
-		{
-			
+					Logger.Warn($"Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
+					return asyncMethodSymbols;
+				});
 		}
 
 		/// <summary>
-		/// Scan all invocation expression syntaxes and tries to get a async counterpart.
-		/// The method will return only newly found async counterparts.
+		/// Scan all invocation expression nodes and tries to get the invoked methods that have an async counterpart.
+		/// The method will return only methods that have not been searched.
 		/// </summary>
 		/// <param name="methodData"></param>
 		/// <returns></returns>
-		private async Task<List<AsyncCounterpartMethod>> FindNewAsyncCounterpartMethods(MethodData methodData)
+		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(MethodData methodData)
 		{
-			var result = new List<AsyncCounterpartMethod>();
+			var result = new HashSet<IMethodSymbol>();
 			if (methodData.Node.Body == null)
 			{
 				return result;
 			}
 			var documentData = methodData.TypeData.NamespaceData.DocumentData;
 			var semanticModel = documentData.SemanticModel;
-			/*
-			var indexLookup = methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore)
-				.Select(o => o.ArgumentOfMethod)
-				.ToLookup(o => o.Item1, o => o.Item2);*/
 
 			foreach (var invocation in methodData.Node.Body.DescendantNodes()
 										   .OfType<InvocationExpressionSyntax>())
@@ -941,38 +894,15 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				var indexesOfArgument = new [] { NoArg };
-				if (indexLookup.Contains(methodSymbol))
-				{
-					indexesOfArgument = indexLookup[methodSymbol].ToArray();
-				}
 				methodSymbol = methodSymbol.OriginalDefinition;
-				var asyncMethodSymbols = _methodAsyncConterparts.GetOrAdd(methodSymbol,
-					symbol => new ConcurrentDictionary<int, IMethodSymbol>());
-				foreach (var indexOfArgument in indexesOfArgument)
+				if (result.Contains(methodSymbol))
 				{
-					IMethodSymbol asyncMethodSymbol;
-					if (!asyncMethodSymbols.TryGetValue(indexOfArgument, out asyncMethodSymbol))
-					{
-						asyncMethodSymbol = await GetAsyncCounterpart(methodSymbol, indexOfArgument == NoArg ? null : (int?)indexOfArgument, true).ConfigureAwait(false);
-						var value = asyncMethodSymbol?.OriginalDefinition;
-						asyncMethodSymbols.AddOrUpdate(indexOfArgument, value, (k, v) => value);
-					}
-					else
-					{
-						continue; // do not return an already scanned method
-					}
-					if (asyncMethodSymbol == null)
-					{
-						continue;
-					}
-
-					result.Add(new AsyncCounterpartMethod
-					{
-						MethodSymbol = methodSymbol.OriginalDefinition,
-						AsyncMethodSymbol = asyncMethodSymbol.OriginalDefinition,
-						MethodNode = invocation.Expression
-					});
+					continue;
+				}
+				var asyncCounterparts = GetAsyncCounterparts(methodSymbol, SeachInheritTypes, true).ToList();
+				if (asyncCounterparts.Any())
+				{
+					result.Add(methodSymbol);
 				}
 			}
 			return result;
@@ -1006,7 +936,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.HaveSameParameters(asyncMember));
+				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true));
 				var methodData = documentData.GetMethodData(nonAsyncMember.Node);
 				methodData.Conversion = MethodConversion.ToAsync;
 				//methodDatas.Add(methodData);
@@ -1030,7 +960,7 @@ namespace AsyncGenerator.Analyzation
 						Logger.Info($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
-					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.HaveSameParameters(asyncMember));
+					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true));
 					if (nonAsyncMember == null)
 					{
 						Logger.Info($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");

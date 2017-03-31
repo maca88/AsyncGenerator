@@ -9,7 +9,22 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 {
 	public class MyTask
 	{
-		public static Task Run(Action action)
+		public static Task Run(Action action, Action action2 = null)
+		{
+			return Task.Run(action);
+		}
+
+		public static Task RunAsync(Func<Task> action, Action action2 = null)
+		{
+			return Task.Run(action);
+		}
+
+		public static Task RunAsync(Action action, Func<Task> action2 = null)
+		{
+			return Task.Run(action);
+		}
+
+		public static Task RunAsync(Func<Task> action, Func<Task> action2 = null)
 		{
 			return Task.Run(action);
 		}
@@ -25,6 +40,7 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 		public void Run()
 		{
 			MyTask.Run(ReadFile);
+			MyTask.Run(ReadFile, ReadFile);
 		}
 
 		public void ReadFile()
