@@ -42,6 +42,8 @@ namespace AsyncGenerator
 
 		public ConcurrentSet<FunctionReferenceData> MethodReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
 
+		public bool CanBeAsnyc { get; set; }
+
 		#endregion
 
 		#region IFunctionAnalyzationResult

@@ -29,7 +29,7 @@ namespace AsyncGenerator
 		public ConcurrentSet<IMethodSymbol> ExternalAsyncMethods { get; } = new ConcurrentSet<IMethodSymbol>();
 
 		/// <summary>
-		/// Interface members within project that the method implements (internal and external)
+		/// Interface members within project that the method implements
 		/// </summary>
 		public ConcurrentSet<IMethodSymbol> ImplementedInterfaces { get; } = new ConcurrentSet<IMethodSymbol>();
 
@@ -54,6 +54,14 @@ namespace AsyncGenerator
 		public ConcurrentSet<FunctionData> InvokedBy { get; } = new ConcurrentSet<FunctionData>();
 
 		/// <summary>
+		/// Related and invoked by methods
+		/// </summary>
+		public IEnumerable<FunctionData> Dependencies
+		{
+			get { return InvokedBy.Union(RelatedMethods); }
+		}
+
+		/// <summary>
 		/// The base method that is overriden
 		/// </summary>
 		public IMethodSymbol BaseOverriddenMethod { get; set; }
@@ -64,6 +72,8 @@ namespace AsyncGenerator
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
 		public MethodConversion Conversion { get; internal set; }
+
+		public MethodConversion CalculatedConversion { get; internal set; }
 
 		public override TypeData TypeData { get; }
 
@@ -93,9 +103,32 @@ namespace AsyncGenerator
 		#endregion
 
 
-		// Analyze step
+		public IEnumerable<MethodData> GetAllRelatedMethods()
+		{
+			var result = new HashSet<MethodData>();
+			var deps = new HashSet<MethodData>();
+			var depsQueue = new Queue<MethodData>(RelatedMethods);
+			while (depsQueue.Count > 0)
+			{
+				var dependency = depsQueue.Dequeue();
+				if (deps.Contains(dependency))
+				{
+					continue;
+				}
+				deps.Add(dependency);
+				foreach (var subDependency in dependency.RelatedMethods)
+				{
+					if (!deps.Contains(subDependency))
+					{
+						depsQueue.Enqueue(subDependency);
+					}
+				}
+				//yield return dependency;
+				result.Add(dependency);
+			}
+			return result;
+		}
 
-		
 
 		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, bool create = false)
 		//{

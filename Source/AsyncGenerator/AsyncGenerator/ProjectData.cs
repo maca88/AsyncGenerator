@@ -44,6 +44,12 @@ namespace AsyncGenerator
 			return Project.Solution.GetDocument(syntax.SyntaxTree).Project == Project;
 		}
 
+		public bool Contains(IMethodSymbol methodSymbol)
+		{
+			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
+			return syntaxReference != null && Contains(syntaxReference);
+		}
+
 		public DocumentData GetDocumentData(SyntaxReference syntax)
 		{
 			return GetDocumentData(Project.Solution.GetDocument(syntax.SyntaxTree));

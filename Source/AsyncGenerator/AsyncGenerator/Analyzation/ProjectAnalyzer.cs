@@ -36,7 +36,6 @@ namespace AsyncGenerator.Analyzation
 		private IImmutableSet<Project> _analyzeProjects;
 		private ProjectAnalyzeConfiguration _configuration;
 		private Solution _solution;
-		private const int NoArg = -1;
 		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> _methodAsyncConterparts = 
 			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>();
 
@@ -57,7 +56,8 @@ namespace AsyncGenerator.Analyzation
 
 			Logger.Info("Pre-analyzing documents started");
 			// 2. Step - Each method in a document will be pre-analyzed and saved in a structural tree
-			await Task.WhenAll(documentData.Select(PreAnalyzeDocumentData)).ConfigureAwait(false);
+			Parallel.ForEach(documentData, PreAnalyzeDocumentData);
+			//await Task.WhenAll(documentData.AsParallel()..Select(PreAnalyzeDocumentData)).ConfigureAwait(false);
 			Logger.Info("Pre-analyzing documents completed");
 
 			Logger.Info("Scanning references started");
@@ -72,7 +72,7 @@ namespace AsyncGenerator.Analyzation
 
 		#region PreAnalyze methods
 
-		private async Task PreAnalyzeDocumentData(DocumentData documentData)
+		private void PreAnalyzeDocumentData(DocumentData documentData)
 		{
 			foreach (var typeNode in documentData.Node
 				.DescendantNodes()
@@ -90,7 +90,7 @@ namespace AsyncGenerator.Analyzation
 					.OfType<MethodDeclarationSyntax>())
 				{
 					var methodData = documentData.GetOrCreateMethodData(methodNode, typeData);
-					await PreAnalyzeMethodData(methodData).ConfigureAwait(false);
+					PreAnalyzeMethodData(methodData);
 
 					foreach (var funNode in methodNode
 						.DescendantNodes()
@@ -152,12 +152,13 @@ namespace AsyncGenerator.Analyzation
 			
 		}
 
-		private async Task PreAnalyzeMethodData(MethodData methodData)
+		private void PreAnalyzeMethodData(MethodData methodData)
 		{
 			var methodSymbol = methodData.Symbol;
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
 			if (methodData.Conversion == MethodConversion.Ignore)
 			{
+				methodData.CalculatedConversion = MethodConversion.Ignore;
 				Logger.Debug($"Method {methodSymbol} will be ignored because of MethodConversionFunction");
 				return;
 			}
@@ -173,7 +174,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Symbol {methodSymbol} is already async");
 				}
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.CalculatedConversion = MethodConversion.Ignore;
 				methodData.IsAsync = true;
 				return;
 			}
@@ -183,7 +184,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Method {methodSymbol} is a {methodSymbol.MethodKind} and cannot be made async");
 				}
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.CalculatedConversion = MethodConversion.Ignore;
 				return;
 			}
 
@@ -193,7 +194,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Method {methodSymbol} has out parameters and cannot be made async");
 				}
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.CalculatedConversion = MethodConversion.Ignore;
 				return;
 			}
 
@@ -203,7 +204,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Method {methodSymbol} is external and cannot be made async");
 				}
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.CalculatedConversion = MethodConversion.Ignore;
 				return;
 			}
 
@@ -225,7 +226,7 @@ namespace AsyncGenerator.Analyzation
 						if (asyncConterPart == null)
 						{
 							Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
-							methodData.Conversion = MethodConversion.Ignore;
+							methodData.CalculatedConversion = MethodConversion.Ignore;
 							return;
 						}
 						methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -259,7 +260,7 @@ namespace AsyncGenerator.Analyzation
 					{
 						Logger.Warn(
 							$"Method {methodSymbol} overrides an external method {overridenMethod} that has not an async counterpart... method will not be converted");
-						methodData.Conversion = MethodConversion.Ignore;
+						methodData.CalculatedConversion = MethodConversion.Ignore;
 						return;
 						//if (!asyncMethods.Any() || (asyncMethods.Any() && !overridenMethod.IsOverride && !overridenMethod.IsVirtual))
 						//{
@@ -318,7 +319,7 @@ namespace AsyncGenerator.Analyzation
 					if (asyncConterPart == null)
 					{
 						Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
-						methodData.Conversion = MethodConversion.Ignore;
+						methodData.CalculatedConversion = MethodConversion.Ignore;
 						return;
 					}
 					methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -341,7 +342,7 @@ namespace AsyncGenerator.Analyzation
 			{
 				Logger.Debug($"Method {methodSymbol} has already an async counterpart {asyncCounterpart}");
 				methodData.AsyncCounterpartSymbol = asyncCounterpart;
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.CalculatedConversion = MethodConversion.Ignore;
 				return;
 			}
 		}
@@ -366,7 +367,7 @@ namespace AsyncGenerator.Analyzation
 				}
 
 				foreach (var methodData in typeData.MethodData.Values
-					.Where(o => o.Conversion != MethodConversion.Ignore))
+					.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
 				{
 					await ScanMethodData(methodData);
 					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
@@ -520,10 +521,11 @@ namespace AsyncGenerator.Analyzation
 
 		private async Task AnalyzeDocumentData(DocumentData documentData)
 		{
+			//TODO: return methods that will be converted to async
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
 				foreach (var methodData in typeData.MethodData.Values
-					.Where(o => o.Conversion != MethodConversion.Ignore))
+					.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
 				{
 					await AnalyzeMethodData(documentData, methodData).ConfigureAwait(false);
 					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
@@ -540,6 +542,23 @@ namespace AsyncGenerator.Analyzation
 			{
 				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
 			}
+
+			if (methodData.Conversion == MethodConversion.ToAsync)
+			{
+				return;
+			}
+
+			// If a method is never invoked and there is no invocations inside the method body that can be async and there is no related methods we can ignore it 
+			if (!methodData.InvokedBy.Any() && !methodData.MethodReferenceData.Any(o => o.CanBeAsync) && !methodData.RelatedMethods.Any())
+			{
+				// If we have to create a new type we need to consider also the external related methods
+				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
+				{
+					methodData.CalculatedConversion = MethodConversion.Ignore;
+				}
+				
+			}
+
 		}
 
 		private async Task AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)
@@ -550,13 +569,13 @@ namespace AsyncGenerator.Analyzation
 			}
 		}
 
-		private async Task AnalyzeFunctionData(DocumentData documentData, FunctionData functionData)
-		{
-			foreach (var reference in functionData.MethodReferences)
-			{
-				functionData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, functionData, reference).ConfigureAwait(false));
-			}
-		}
+		//private async Task AnalyzeFunctionData(DocumentData documentData, FunctionData functionData)
+		//{
+		//	foreach (var reference in functionData.MethodReferences)
+		//	{
+		//		functionData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, functionData, reference).ConfigureAwait(false));
+		//	}
+		//}
 
 		private async Task<FunctionReferenceData> AnalyzeMethodReference(DocumentData documentData, FunctionData functionData, ReferenceLocation reference)
 		{
@@ -672,7 +691,7 @@ namespace AsyncGenerator.Analyzation
 				return;
 			}
 			var methodSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
-			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, SeachInheritTypes));
+			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, Default));
 			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
 				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || o.ReturnType.Name != "Task"))
@@ -681,7 +700,6 @@ namespace AsyncGenerator.Analyzation
 					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
 			}
-
 
 			//TODO: do we need this?
 			// Check if the invocation expression takes any func as a parameter, we will allow to rename the method only if there is an awaitable invocation
@@ -714,6 +732,14 @@ namespace AsyncGenerator.Analyzation
 				}
 			}
 			// End custom code
+
+			// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
+			if (!functionReferenceData.ReferenceAsyncSymbols.Any() && !ProjectData.Contains(functionReferenceData.ReferenceSymbol))
+			{
+				functionReferenceData.CanBeAsync = false;
+				Logger.Warn($"Method {methodSymbol} can not be async as there is no async counterparts for it");
+				return;
+			}
 
 		}
 
@@ -752,6 +778,65 @@ namespace AsyncGenerator.Analyzation
 					//result.MustBeAwaited = true;
 				}
 			}
+		}
+
+		#endregion
+
+		#region PostAnalyze
+
+		private async Task PostAnalyzeDocumentData(DocumentData documentData)
+		{
+			// TODO: should we start with the async methods?
+			// By default a method can be async if there is at least one async invocation
+			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
+			{
+				foreach (var methodData in typeData.MethodData.Values
+					.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
+				{
+					await PostAnalyzeMethodData(documentData, methodData).ConfigureAwait(false);
+					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
+					{
+						await AnalyzeAnonymousFunctionData(documentData, functionData).ConfigureAwait(false);
+					}
+				}
+			}
+		}
+
+		private async Task PostAnalyzeMethodData(DocumentData documentData, MethodData methodData)
+		{
+
+		}
+
+		/// <summary>
+		/// Calculates if the method can be ignored. 
+		/// Steps:
+		/// 
+		/// 
+		/// 
+		/// </summary>
+		/// <param name="methodData"></param>
+		private void CalculateIgnore(MethodData methodData)
+		{
+			var processingMetodData = new Queue<MethodData>();
+			processingMetodData.Enqueue(methodData);
+
+			while (processingMetodData.Any())
+			{
+				var currentMethodData = processingMetodData.Dequeue();
+
+				foreach (var referenceData in currentMethodData.MethodReferenceData.Where(o => o.CanBeAsync))
+				{
+					var refMethodData = (MethodData)referenceData.FunctionData;
+					if (refMethodData != null)
+					{
+						processingMetodData.Enqueue(refMethodData);
+					}
+					
+				}
+			}
+
+			
+
 		}
 
 		#endregion
@@ -865,7 +950,7 @@ namespace AsyncGenerator.Analyzation
 				asyncMethodSymbols,
 				(k, v) =>
 				{
-					Logger.Warn($"Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
+					Logger.Debug($"Performance hit: Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
 					return asyncMethodSymbols;
 				});
 		}
@@ -899,7 +984,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				var asyncCounterparts = GetAsyncCounterparts(methodSymbol, SeachInheritTypes, true).ToList();
+				var asyncCounterparts = GetAsyncCounterparts(methodSymbol, Default, true).ToList();
 				if (asyncCounterparts.Any())
 				{
 					result.Add(methodSymbol);
@@ -934,6 +1019,7 @@ namespace AsyncGenerator.Analyzation
 				var nonAsyncName = asyncMember.Name.Remove(asyncMember.Name.LastIndexOf("Async", StringComparison.InvariantCulture));
 				if (!members.Contains(nonAsyncName))
 				{
+					Logger.Debug($"Sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 					continue;
 				}
 				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true));
@@ -957,13 +1043,13 @@ namespace AsyncGenerator.Analyzation
 					var nonAsyncName = asyncMember.Name.Remove(asyncMember.Name.LastIndexOf("Async", StringComparison.InvariantCulture));
 					if (!members.Contains(nonAsyncName))
 					{
-						Logger.Info($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
 					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true));
 					if (nonAsyncMember == null)
 					{
-						Logger.Info($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
 					var methodData = documentData.GetMethodData(nonAsyncMember.Node);
