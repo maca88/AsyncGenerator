@@ -6,8 +6,6 @@ namespace AsyncGenerator.Analyzation
 {
 	public interface IMethodAnalyzationResult : IFunctionAnalyzationResult
 	{
-		MethodConversion Conversion { get; }
-
 		MethodDeclarationSyntax Node { get; }
 
 		bool IsAsync { get; }

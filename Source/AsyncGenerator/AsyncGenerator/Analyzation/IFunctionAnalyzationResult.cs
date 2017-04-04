@@ -11,6 +11,8 @@ namespace AsyncGenerator.Analyzation
 		/// </summary>
 		IMethodSymbol Symbol { get; }
 
+		MethodConversion Conversion { get; }
+
 		/// <summary>
 		/// Get the syntax node of the function
 		/// </summary>

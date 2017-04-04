@@ -13,16 +13,16 @@ namespace AsyncGenerator
 		/// </summary>
 		Unknown = 0,
 		/// <summary>
-		/// The method will be converted to async
-		/// </summary>
-		ToAsync = 1,
-		/// <summary>
 		/// The method will not be modified
 		/// </summary>
-		Ignore = 2,
+		Ignore = 1,
 		/// <summary>
 		/// The method will be converted to async only if there is at least one method within the method body that has an async counterpart
 		/// </summary>
-		Smart = 3
+		Smart = 2,
+		/// <summary>
+		/// The method will be converted to async only if the analyzer will be able to convert it
+		/// </summary>
+		ToAsync = 3
 	}
 }

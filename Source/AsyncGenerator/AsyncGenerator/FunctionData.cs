@@ -24,6 +24,8 @@ namespace AsyncGenerator
 
 		public abstract TypeData TypeData { get; }
 
+		public MethodConversion Conversion { get; set; }
+
 		/// <summary>
 		/// References of types that are used inside this method
 		/// </summary>

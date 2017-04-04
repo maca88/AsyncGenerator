@@ -140,6 +140,10 @@
       <HintPath>..\packages\System.Diagnostics.StackTrace.4.3.0\lib\net46\System.Diagnostics.StackTrace.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Interactive.Async, Version=3.0.3000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Interactive.Async.3.1.1\lib\net46\System.Interactive.Async.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.Compression.4.3.0\lib\net46\System.IO.Compression.dll</HintPath>
       <Private>True</Private>
@@ -215,7 +219,8 @@
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
     <Compile Include="Partial\PartialTest.cs" />
-    <Compile Include="Partial\TestCases\AsyncOverloadWithDifferentParamaters.cs" />
+    <Compile Include="Partial\TestCases\OverloadWithDifferentParamaters.cs" />
+    <Compile Include="Partial\TestCases\CustomReturnType.cs" />
     <Compile Include="Partial\TestCases\MethodAsArgument.cs" />
     <Compile Include="Partial\TestCases\SimpleAnonymousFunctions.cs" />
     <Compile Include="Partial\TestCases\SimpleCircularCall.cs" />

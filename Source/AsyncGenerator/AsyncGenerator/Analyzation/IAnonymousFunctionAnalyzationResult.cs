@@ -5,7 +5,5 @@ namespace AsyncGenerator.Analyzation
 	public interface IAnonymousFunctionAnalyzationResult : IFunctionAnalyzationResult
 	{
 		AnonymousFunctionExpressionSyntax Node { get; }
-
-		MethodConversion Conversion { get; }
 	}
 }

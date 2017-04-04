@@ -71,9 +71,7 @@ namespace AsyncGenerator
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
-		public MethodConversion Conversion { get; internal set; }
-
-		public MethodConversion CalculatedConversion { get; internal set; }
+		//public MethodConversion CalculatedConversion { get; internal set; }
 
 		public override TypeData TypeData { get; }
 

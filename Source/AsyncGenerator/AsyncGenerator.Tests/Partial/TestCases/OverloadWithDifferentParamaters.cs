@@ -32,7 +32,7 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 		}
 	}
 
-	public class AsyncOverloadWithDifferentParamaters
+	public class OverloadWithDifferentParamaters
 	{
 		public void ReadData(DataReader dataReader)
 		{

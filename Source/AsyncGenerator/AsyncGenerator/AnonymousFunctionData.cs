@@ -24,7 +24,7 @@ namespace AsyncGenerator
 
 		public MethodData MethodData { get; }
 
-		public MethodConversion Conversion { get; set; }
+		
 
 		public override TypeData TypeData => MethodData.TypeData;
 

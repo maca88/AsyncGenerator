@@ -65,7 +65,11 @@ namespace AsyncGenerator.Analyzation
 			await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
 			Logger.Info("Scanning references completed");
 
-			await Task.WhenAll(documentData.Select(AnalyzeDocumentData)).ConfigureAwait(false);
+			var allAsyncMethodData = await Task.WhenAll(documentData.Select(AnalyzeDocumentData)).ConfigureAwait(false);
+			foreach (var asyncMethodData in allAsyncMethodData.SelectMany(o => o).OrderByDescending(o => o.Conversion))
+			{
+				PostAnalyzeMethodData(asyncMethodData);
+			}
 
 			return ProjectData;
 		}
@@ -158,7 +162,6 @@ namespace AsyncGenerator.Analyzation
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
 			if (methodData.Conversion == MethodConversion.Ignore)
 			{
-				methodData.CalculatedConversion = MethodConversion.Ignore;
 				Logger.Debug($"Method {methodSymbol} will be ignored because of MethodConversionFunction");
 				return;
 			}
@@ -174,8 +177,17 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Symbol {methodSymbol} is already async");
 				}
-				methodData.CalculatedConversion = MethodConversion.Ignore;
+				methodData.Conversion = MethodConversion.Ignore;
 				methodData.IsAsync = true;
+				return;
+			}
+			if (!ProjectData.Contains(methodSymbol))
+			{
+				if (forceAsync)
+				{
+					Logger.Warn($"Method {methodSymbol} is external and cannot be made async");
+				}
+				methodData.Conversion = MethodConversion.Ignore;
 				return;
 			}
 			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
@@ -184,7 +196,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Method {methodSymbol} is a {methodSymbol.MethodKind} and cannot be made async");
 				}
-				methodData.CalculatedConversion = MethodConversion.Ignore;
+				methodData.Conversion = MethodConversion.Ignore;
 				return;
 			}
 
@@ -194,17 +206,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					Logger.Warn($"Method {methodSymbol} has out parameters and cannot be made async");
 				}
-				methodData.CalculatedConversion = MethodConversion.Ignore;
-				return;
-			}
-
-			if (methodSymbol.DeclaringSyntaxReferences.FirstOrDefault() == null)
-			{
-				if (forceAsync)
-				{
-					Logger.Warn($"Method {methodSymbol} is external and cannot be made async");
-				}
-				methodData.CalculatedConversion = MethodConversion.Ignore;
+				methodData.Conversion = MethodConversion.Ignore;
 				return;
 			}
 
@@ -226,7 +228,7 @@ namespace AsyncGenerator.Analyzation
 						if (asyncConterPart == null)
 						{
 							Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
-							methodData.CalculatedConversion = MethodConversion.Ignore;
+							methodData.Conversion = MethodConversion.Ignore;
 							return;
 						}
 						methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -260,7 +262,7 @@ namespace AsyncGenerator.Analyzation
 					{
 						Logger.Warn(
 							$"Method {methodSymbol} overrides an external method {overridenMethod} that has not an async counterpart... method will not be converted");
-						methodData.CalculatedConversion = MethodConversion.Ignore;
+						methodData.Conversion = MethodConversion.Ignore;
 						return;
 						//if (!asyncMethods.Any() || (asyncMethods.Any() && !overridenMethod.IsOverride && !overridenMethod.IsVirtual))
 						//{
@@ -319,7 +321,7 @@ namespace AsyncGenerator.Analyzation
 					if (asyncConterPart == null)
 					{
 						Logger.Warn($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
-						methodData.CalculatedConversion = MethodConversion.Ignore;
+						methodData.Conversion = MethodConversion.Ignore;
 						return;
 					}
 					methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -342,7 +344,7 @@ namespace AsyncGenerator.Analyzation
 			{
 				Logger.Debug($"Method {methodSymbol} has already an async counterpart {asyncCounterpart}");
 				methodData.AsyncCounterpartSymbol = asyncCounterpart;
-				methodData.CalculatedConversion = MethodConversion.Ignore;
+				methodData.Conversion = MethodConversion.Ignore;
 				return;
 			}
 		}
@@ -367,7 +369,7 @@ namespace AsyncGenerator.Analyzation
 				}
 
 				foreach (var methodData in typeData.MethodData.Values
-					.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
+					.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					await ScanMethodData(methodData);
 					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
@@ -519,21 +521,26 @@ namespace AsyncGenerator.Analyzation
 
 		#region Analyze methods
 
-		private async Task AnalyzeDocumentData(DocumentData documentData)
+		private async Task<IList<MethodData>> AnalyzeDocumentData(DocumentData documentData)
 		{
-			//TODO: return methods that will be converted to async
+			var asyncMethods = new List<MethodData>();
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
 				foreach (var methodData in typeData.MethodData.Values
-					.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
+					.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					await AnalyzeMethodData(documentData, methodData).ConfigureAwait(false);
 					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
 					{
 						await AnalyzeAnonymousFunctionData(documentData, functionData).ConfigureAwait(false);
 					}
+					if (methodData.Conversion == MethodConversion.ToAsync || methodData.Conversion == MethodConversion.Smart)
+					{
+						asyncMethods.Add(methodData);
+					}
 				}
 			}
+			return asyncMethods;
 		}
 
 		private async Task AnalyzeMethodData(DocumentData documentData, MethodData methodData)
@@ -542,7 +549,6 @@ namespace AsyncGenerator.Analyzation
 			{
 				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
 			}
-
 			if (methodData.Conversion == MethodConversion.ToAsync)
 			{
 				return;
@@ -554,11 +560,19 @@ namespace AsyncGenerator.Analyzation
 				// If we have to create a new type we need to consider also the external related methods
 				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
 				{
-					methodData.CalculatedConversion = MethodConversion.Ignore;
+					methodData.Conversion = MethodConversion.Ignore;
+					return;
 				}
 				
 			}
 
+			// At this point a smart method can be converted to async if we have atleast one external method invocation that can be asnyc or one internal method that is marked to be async.
+			if (methodData.Conversion == MethodConversion.Smart && methodData.MethodReferenceData
+				.Any(o => o.CanBeAsync && !ProjectData.Contains(o.ReferenceSymbol) || o.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync))
+			{
+				methodData.Conversion = MethodConversion.ToAsync;
+				return;
+			}
 		}
 
 		private async Task AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)
@@ -784,26 +798,51 @@ namespace AsyncGenerator.Analyzation
 
 		#region PostAnalyze
 
-		private async Task PostAnalyzeDocumentData(DocumentData documentData)
-		{
-			// TODO: should we start with the async methods?
-			// By default a method can be async if there is at least one async invocation
-			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
-			{
-				foreach (var methodData in typeData.MethodData.Values
-					.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
-				{
-					await PostAnalyzeMethodData(documentData, methodData).ConfigureAwait(false);
-					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
-					{
-						await AnalyzeAnonymousFunctionData(documentData, functionData).ConfigureAwait(false);
-					}
-				}
-			}
-		}
+		//private async Task PostAnalyzeDocumentData(DocumentData documentData)
+		//{
+		//	// TODO: should we start with the async methods?
+		//	// By default a method can be async if there is at least one async invocation
+		//	foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
+		//	{
+		//		foreach (var methodData in typeData.MethodData.Values
+		//			.Where(o => o.CalculatedConversion != MethodConversion.Ignore))
+		//		{
+		//			await PostAnalyzeMethodData(documentData, methodData).ConfigureAwait(false);
+		//			foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
+		//			{
+		//				await AnalyzeAnonymousFunctionData(documentData, functionData).ConfigureAwait(false);
+		//			}
+		//		}
+		//	}
+		//}
 
-		private async Task PostAnalyzeMethodData(DocumentData documentData, MethodData methodData)
+		private void PostAnalyzeMethodData(MethodData methodData)
 		{
+			var processedMethodData = new HashSet<MethodData>();
+			var processingMetodData = new Queue<MethodData>();
+			processingMetodData.Enqueue(methodData);
+
+			while (processingMetodData.Any())
+			{
+				var currentMethodData = processingMetodData.Dequeue();
+				if (currentMethodData.Conversion == MethodConversion.ToAsync)
+				{
+					processedMethodData.Add(currentMethodData);
+					foreach (var depMethodData in currentMethodData.Dependencies.OfType<MethodData>()
+						.Where(o => !processedMethodData.Contains(o)))
+					{
+						processingMetodData.Enqueue(depMethodData);
+					}
+				} else if (currentMethodData.Conversion == MethodConversion.Smart)
+				{
+					
+				} else if (currentMethodData.Conversion == MethodConversion.Unknown)
+				{
+					
+				}
+				
+
+			}
 
 		}
 
