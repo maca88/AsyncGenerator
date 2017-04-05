@@ -179,7 +179,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzation\AsyncCounterpartsSearchOptions.cs" />
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
+    <Compile Include="Analyzation\ProjectAnalyzer.Analyze.cs" />
+    <Compile Include="Analyzation\ProjectAnalyzer.PostAnalyze.cs" />
+    <Compile Include="Analyzation\ProjectAnalyzer.PreAnalyze.cs" />
+    <Compile Include="Analyzation\ProjectAnalyzer.Scan.cs" />
     <Compile Include="Configuration\IProjectAnalyzeCallbacksConfiguration.cs" />
     <Compile Include="AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />

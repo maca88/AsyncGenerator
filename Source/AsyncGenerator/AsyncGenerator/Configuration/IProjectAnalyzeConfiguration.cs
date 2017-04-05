@@ -8,17 +8,17 @@ namespace AsyncGenerator.Configuration
 		/// <summary>
 		/// Set a function that will decide what type of conversion to apply for a given method
 		/// </summary>
-		IProjectAnalyzeConfiguration MethodConversionFunction(Func<IMethodSymbol, MethodConversion> func);
+		IProjectAnalyzeConfiguration MethodConversion(Func<IMethodSymbol, MethodConversion> func);
 
 		/// <summary>
 		/// Set a function that will decide what type of conversion to apply for a given type
 		/// </summary>
-		IProjectAnalyzeConfiguration TypeConversionFunction(Func<INamedTypeSymbol, TypeConversion> func);
+		IProjectAnalyzeConfiguration TypeConversion(Func<INamedTypeSymbol, TypeConversion> func);
 
 		/// <summary>
 		/// Set a predicate that will decide if the document will be analyzed
 		/// </summary>
-		IProjectAnalyzeConfiguration DocumentSelectionPredicate(Predicate<Document> predicate);
+		IProjectAnalyzeConfiguration DocumentSelection(Predicate<Document> predicate);
 
 		/// <summary>
 		/// Set a predicate that will decide if the method will be analyzed

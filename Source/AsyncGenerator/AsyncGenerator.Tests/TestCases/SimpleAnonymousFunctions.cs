@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Partial.TestCases
+namespace AsyncGenerator.Tests.TestCases
 {
 	public class SimpleAnonymousFunctions
 	{
@@ -12,7 +13,7 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 		{
 			var namedDelegateFunction = new GetMessage((out string message) =>
 			{
-				ReadFile("");
+				ReadFile();
 				message = "Success";
 			});
 			return namedDelegateFunction;
@@ -22,15 +23,16 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 		{
 			return delegate
 			{
-				ReadFile("");
+				ReadFile();
 			};
 		}
 
-		public Func<string, int> DeclareFunction()
+		public Func<string, bool> DeclareFunction()
 		{
-			Func<string, int> function = path =>
+			Func<string, bool> function = path =>
 			{
-				return ReadFile(path);
+				ReadFile();
+				return true;
 			};
 			return function;
 		}
@@ -40,7 +42,7 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 		{
 			Action delegateFunction = delegate
 			{
-				ReadFile("");
+				ReadFile();
 			};
 			return delegateFunction;
 		}
@@ -49,14 +51,13 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 		{
 			Task.Run(() =>
 			{
-				ReadFile("");
-			});
+				ReadFile();
+			}).Wait();
 		}
 
-		public int ReadFile(string path)
+		public void ReadFile()
 		{
-			var stream = File.OpenRead(path);
-			return stream.Read(new byte[0], 0, 0);
+			SimpleFile.Read();
 		}
 	}
 }

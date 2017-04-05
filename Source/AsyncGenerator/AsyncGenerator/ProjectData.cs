@@ -55,6 +55,29 @@ namespace AsyncGenerator
 			return GetDocumentData(Project.Solution.GetDocument(syntax.SyntaxTree));
 		}
 
+		public async Task<MethodData> GetMethodData(IMethodSymbol methodSymbol)
+		{
+			var syntax = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntax == null || !Contains(syntax))
+			{
+				return null;
+			}
+			var documentData = GetDocumentData(syntax);
+			var node = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
+			return documentData.GetMethodData(node);
+		}
+
+		public Task<FunctionData> GetAnonymousFunctionOrMethodData(IMethodSymbol methodSymbol)
+		{
+			var syntax = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntax == null || !Contains(syntax))
+			{
+				return Task.FromResult<FunctionData>(null);
+			}
+			var documentData = GetDocumentData(syntax);
+			return documentData.GetAnonymousFunctionOrMethodData(methodSymbol);
+		}
+
 		public DocumentData GetDocumentData(Document document)
 		{
 			DocumentData documentData;

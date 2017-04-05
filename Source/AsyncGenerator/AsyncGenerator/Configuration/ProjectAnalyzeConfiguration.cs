@@ -35,7 +35,7 @@ namespace AsyncGenerator.Configuration
 
 		public ProjectAnalyzeCallbacksConfiguration Callbacks { get; } = new ProjectAnalyzeCallbacksConfiguration();
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodConversionFunction(Func<IMethodSymbol, MethodConversion> func)
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
 		{
 			if (func == null)
 			{
@@ -45,7 +45,7 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.TypeConversionFunction(Func<INamedTypeSymbol, TypeConversion> func)
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.TypeConversion(Func<INamedTypeSymbol, TypeConversion> func)
 		{
 			if (func == null)
 			{
@@ -55,7 +55,7 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.DocumentSelectionPredicate(Predicate<Document> predicate)
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.DocumentSelection(Predicate<Document> predicate)
 		{
 			if (predicate == null)
 			{

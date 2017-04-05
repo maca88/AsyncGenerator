@@ -9,7 +9,7 @@ public class TestCase2
 {
 }
 
-namespace AsyncGenerator.Tests.Partial.SimpleClass
+namespace AsyncGenerator.Tests.TestCases
 {
 	namespace MyNamespace
 	{
@@ -19,7 +19,7 @@ namespace AsyncGenerator.Tests.Partial.SimpleClass
 	}
 }
 
-namespace AsyncGenerator.Tests.Partial.SimpleClass
+namespace AsyncGenerator.Tests.TestCases
 {
 	namespace MyNamespace
 	{

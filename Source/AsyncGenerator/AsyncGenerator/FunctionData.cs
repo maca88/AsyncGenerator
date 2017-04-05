@@ -18,6 +18,7 @@ namespace AsyncGenerator
 			Symbol = methodSymbol;
 		}
 
+		//TODO: remove if not needed
 		public bool IsAsync { get; set; }
 
 		public IMethodSymbol Symbol { get; }
@@ -44,13 +45,11 @@ namespace AsyncGenerator
 
 		public ConcurrentSet<FunctionReferenceData> MethodReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
 
-		public bool CanBeAsnyc { get; set; }
-
 		#endregion
 
 		#region IFunctionAnalyzationResult
 
-		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.MethodReferences => MethodReferences.ToImmutableArray();
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => MethodReferenceData.ToImmutableArray();
 
 		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
 

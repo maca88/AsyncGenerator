@@ -1,6 +1,7 @@
 ﻿using System.IO;
+using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Partial.TestCases
+namespace AsyncGenerator.Tests.TestCases
 {
 	public class SimpleReference
 	{
@@ -16,8 +17,7 @@ namespace AsyncGenerator.Tests.Partial.TestCases
 
 		public void ReadFile()
 		{
-			var stream = File.OpenRead("");
-			stream.Read(new byte[0], 0, 0);
+			SimpleFile.Read();
 		}
 
 	}

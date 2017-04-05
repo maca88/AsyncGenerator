@@ -26,6 +26,6 @@ namespace AsyncGenerator.Analyzation
 		/// <summary>
 		/// References to other methods that are invoked inside this function and are candidates to be async
 		/// </summary>
-		IReadOnlyList<ReferenceLocation> MethodReferences { get; }
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> MethodReferences { get; }
 	}
 }

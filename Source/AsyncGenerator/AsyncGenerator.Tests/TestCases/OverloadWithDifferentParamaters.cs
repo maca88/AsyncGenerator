@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsyncGenerator.Tests.Partial.TestCases
+namespace AsyncGenerator.Tests.TestCases
 {
 	public class DataReader
 	{

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace AsyncGenerator.Tests.Partial.TestCases
+namespace AsyncGenerator.Tests.TestCases
 {
 	public class MyTask
 	{

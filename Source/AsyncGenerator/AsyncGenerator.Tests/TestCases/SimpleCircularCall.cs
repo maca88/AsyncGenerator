@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace AsyncGenerator.Tests.Partial.TestCases
+namespace AsyncGenerator.Tests.TestCases
 {
 	public class SimpleCircularCall
 	{

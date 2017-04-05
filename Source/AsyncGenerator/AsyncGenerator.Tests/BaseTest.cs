@@ -10,24 +10,27 @@ using AsyncGenerator.Configuration;
 
 namespace AsyncGenerator.Tests
 {
-	public abstract class BaseTest
+	public abstract class BaseTest<T>
 	{
-		protected BaseTest(string folderPath)
+		protected BaseTest(string folderPath = null, string fileName = null)
 		{
-			FolderPath = folderPath;
+			FolderPath = folderPath ?? "TestCases";
+			FileName = fileName ?? typeof(T).Name;
 		}
 
 		public string FolderPath { get; }
 
-		public IAsyncCodeConfiguration Configure(string fileName, Action<IProjectConfiguration> action = null)
+		public string FileName { get; }
+
+		public IAsyncCodeConfiguration Configure(Action<IProjectConfiguration> action = null)
 		{
 			var slnFilePath = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + @"..\..\..\..\AsyncGenerator.sln");
 			return AsyncCodeConfiguration.Create()
-				.ConfigureSolution(slnFilePath, c =>
-					c.ConfigureProject("AsyncGenerator.Tests", p =>
+				.ConfigureSolution(slnFilePath, c => c
+					.ConfigureProject("AsyncGenerator.Tests", p =>
 					{
 						p.ConfigureAnalyzation(a => a
-							.DocumentSelectionPredicate(o => string.Join("/", o.Folders) == FolderPath && o.Name == fileName + ".cs")
+							.DocumentSelection(o => string.Join("/", o.Folders) == FolderPath && o.Name == FileName + ".cs")
 							//.ScanMethodBody(true)
 							);
 						action?.Invoke(p);
@@ -36,17 +39,42 @@ namespace AsyncGenerator.Tests
 				);
 		}
 
-		public string GetMethodName<T>(Expression<Func<T, object>> expression)
+		public string GetMethodName(Expression<Action<T>> expression)
 		{
 			return GetMethodName((LambdaExpression)expression);
 		}
 
-		public string GetMethodName<T>(Expression<Func<T, Action>> expression)
+		public string GetMethodName(Expression<Func<T, object>> expression)
 		{
 			return GetMethodName((LambdaExpression)expression);
 		}
 
-		public string GetMethodName<T>(Expression<Func<T, Delegate>> expression)
+		public string GetMethodName(Expression<Func<T, Action>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName(Expression<Func<T, Delegate>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName<TType>(Expression<Action<TType>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName<TType>(Expression<Func<TType, object>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName<TType>(Expression<Func<TType, Action>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName<TType>(Expression<Func<TType, Delegate>> expression)
 		{
 			return GetMethodName((LambdaExpression)expression);
 		}
@@ -59,18 +87,18 @@ namespace AsyncGenerator.Tests
 				return methodCallExpression.Method.Name;
 			}
 			var unaryExpression = expression.Body as UnaryExpression;
-			if (unaryExpression != null)
+			if (unaryExpression == null)
 			{
-				methodCallExpression = (MethodCallExpression)unaryExpression.Operand;
-				var constantExpression = methodCallExpression.Object as ConstantExpression;
-				if (constantExpression == null)
-				{
-					return methodCallExpression.Method.Name;
-				}
-				var methodInfo = (MethodInfo)constantExpression.Value;
-				return methodInfo.Name;
+				throw new NotSupportedException();
 			}
-			throw new NotSupportedException();
+			methodCallExpression = (MethodCallExpression)unaryExpression.Operand;
+			var constantExpression = methodCallExpression.Object as ConstantExpression;
+			if (constantExpression == null)
+			{
+				return methodCallExpression.Method.Name;
+			}
+			var methodInfo = (MethodInfo)constantExpression.Value;
+			return methodInfo.Name;
 		}
 
 	}

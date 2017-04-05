@@ -218,15 +218,16 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
-    <Compile Include="Partial\PartialTest.cs" />
-    <Compile Include="Partial\TestCases\OverloadWithDifferentParamaters.cs" />
-    <Compile Include="Partial\TestCases\CustomReturnType.cs" />
-    <Compile Include="Partial\TestCases\MethodAsArgument.cs" />
-    <Compile Include="Partial\TestCases\SimpleAnonymousFunctions.cs" />
-    <Compile Include="Partial\TestCases\SimpleCircularCall.cs" />
-    <Compile Include="Partial\TestCases\SimpleReference.cs" />
-    <Compile Include="Partial\SimpleClass\TestCase.cs" />
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="SimpleAnonymousFunctionsTests.cs" />
+    <Compile Include="SimpleCircularCallTests.cs" />
+    <Compile Include="SimpleReferenceTests.cs" />
+    <Compile Include="TestCases\OverloadWithDifferentParamaters.cs" />
+    <Compile Include="TestCases\CustomReturnType.cs" />
+    <Compile Include="TestCases\MethodAsArgument.cs" />
+    <Compile Include="TestCases\SimpleAnonymousFunctions.cs" />
+    <Compile Include="TestCases\SimpleCircularCall.cs" />
+    <Compile Include="TestCases\SimpleReference.cs" />
+    <Compile Include="TestCases\TestCase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -236,6 +237,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj">
+      <Project>{a183d706-0dbb-4f6b-92a5-6359660255d7}</Project>
+      <Name>AsyncGenerator.TestCases</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AsyncGenerator\AsyncGenerator.csproj">
       <Project>{9d321ea8-54ae-4741-86a8-12198551ad67}</Project>
       <Name>AsyncGenerator</Name>
@@ -245,9 +250,7 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Partial\SimpleReference\" />
-  </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

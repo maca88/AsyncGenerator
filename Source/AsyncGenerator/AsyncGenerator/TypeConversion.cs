@@ -9,20 +9,21 @@ namespace AsyncGenerator
 	public enum TypeConversion
 	{
 		/// <summary>
-		/// The type conversion will be decided by the analyzer
+		/// Conversion will be decided by the analyzer. The final conversion can be <see cref="Partial"/> if the type contains at least one
+		/// method with the conversion <see cref="MethodConversion.ToAsync"/> otherwise <see cref="Ignore"/>
 		/// </summary>
 		Unknown = 0,
 		/// <summary>
-		/// A partial type will be created that will contains the async counterparts
-		/// </summary>
-		Partial = 1,
-		/// <summary>
-		/// A new type will be created with an Async postfix that will contains the async counterparts
-		/// </summary>
-		NewType = 2,
-		/// <summary>
 		/// The type will not be modified
 		/// </summary>
-		Ignore = 3,
+		Ignore = 1,
+		/// <summary>
+		/// A partial type will be created that could contain one or more async methods
+		/// </summary>
+		Partial = 2,
+		/// <summary>
+		/// A new type will be created with an Async postfix that could contain one or more async methods
+		/// </summary>
+		NewType = 3
 	}
 }
