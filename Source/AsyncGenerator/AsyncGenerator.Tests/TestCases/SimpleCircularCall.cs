@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TestCases
 {
@@ -11,16 +12,16 @@ namespace AsyncGenerator.Tests.TestCases
 
 		public void Method2()
 		{
-			if (ReadFile() > 0)
+			if (!ReadFile())
 			{
 				Method1();
 			}
 		}
 
-		public int ReadFile()
+		public bool ReadFile()
 		{
-			var stream = File.OpenRead("");
-			return stream.Read(new byte[0], 0, 0);
+			SimpleFile.Read();
+			return true;
 		}
 	}
 }

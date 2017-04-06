@@ -203,6 +203,7 @@
     <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
     <Compile Include="Analyzation\INamespaceAnalyzationResult.cs" />
+    <Compile Include="Extensions\SyntaxNodeExtensions.cs" />
     <Compile Include="FunctionData.cs" />
     <Compile Include="Internal\AsyncCounterpartMethod.cs" />
     <Compile Include="Internal\AsyncLock.cs" />
@@ -215,6 +216,7 @@
     <Compile Include="FunctionReferenceData.cs" />
     <Compile Include="NamespaceData.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.cs" />
+    <Compile Include="Plugins\IAsyncCounterpartsSearcher.cs" />
     <Compile Include="ProjectData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SolutionData.cs" />

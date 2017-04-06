@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
@@ -36,6 +37,8 @@ namespace AsyncGenerator
 		/// References to other methods that are invoked inside this method and are candidates to be async
 		/// </summary>
 		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+
+		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 
 		public abstract SyntaxNode GetNode();
 

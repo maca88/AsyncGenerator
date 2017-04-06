@@ -37,10 +37,23 @@ namespace AsyncGenerator.Analyzation
 
 		private async Task AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
+			int? firstRefStartLocation = null;
 			foreach (var reference in methodData.MethodReferences)
 			{
+				var startSpan = reference.Location.SourceSpan.Start;
+				if (!firstRefStartLocation.HasValue || firstRefStartLocation.Value > startSpan)
+				{
+					firstRefStartLocation = startSpan;
+				}
 				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
 			}
+			// Find out if the method has preconditions. Search only statements that its end location is lower that the first 
+			// method reference start location
+			foreach (var statement in methodData.Node.DescendantNodes().OfType<StatementSyntax>().TakeWhile(o => o.Span.End < firstRefStartLocation))
+			{
+				
+			}
+
 			if (methodData.Conversion == MethodConversion.ToAsync)
 			{
 				return;
@@ -58,14 +71,15 @@ namespace AsyncGenerator.Analyzation
 
 			}
 
+			// Done in the post analyzation step
 			// At this point a method can be converted to async if we have atleast one external method invocation that can be asnyc
 			// or one internal method that is marked to be async.
-			if (methodData.MethodReferenceData.Any(o => o.CanBeAsync &&
-				!ProjectData.Contains(o.ReferenceSymbol) || o.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync))
-			{
-				methodData.Conversion = MethodConversion.ToAsync;
-				return;
-			}
+			//if (methodData.MethodReferenceData.Any(o => o.CanBeAsync &&
+			//	!ProjectData.Contains(o.ReferenceSymbol) || o.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync))
+			//{
+			//	methodData.Conversion = MethodConversion.ToAsync;
+			//	return;
+			//}
 		}
 
 		private async Task AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)

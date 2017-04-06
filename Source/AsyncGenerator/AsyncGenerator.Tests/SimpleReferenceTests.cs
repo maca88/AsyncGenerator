@@ -14,7 +14,7 @@ namespace AsyncGenerator.Tests
 	public class SimpleReferenceTests : BaseTest<SimpleReference>
 	{
 		[Test]
-		public void TestSimpleReferenceAfterAnalyzation()
+		public void TestAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 			var callReadFile = GetMethodName(o => o.CallReadFile);

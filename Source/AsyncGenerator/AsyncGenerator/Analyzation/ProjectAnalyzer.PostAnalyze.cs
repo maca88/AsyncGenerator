@@ -53,10 +53,13 @@ namespace AsyncGenerator.Analyzation
 		/// <param name="documentData">All project documents</param>
 		private void PostAnalyze(IEnumerable<DocumentData> documentData)
 		{
-			var toProcessMethodData = new HashSet<MethodData>(documentData
+			// If a type data is ignored then also its method data are ignored
+			var allTypeData = documentData
 				.SelectMany(o => o.GetAllTypeDatas())
+				.Where(o => o.Conversion != TypeConversion.Ignore)
+				.ToList();
+			var toProcessMethodData = new HashSet<MethodData>(allTypeData
 				.SelectMany(o => o.MethodData.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
-			//TODO: We need to consider also the type transformation when calculating the final method transformation!
 
 			// 1. Step - Go through all async methods and set their dependencies to be also async
 			var asyncMethodDatas = toProcessMethodData.Where(o => o.Conversion == MethodConversion.ToAsync).ToList();
@@ -64,7 +67,7 @@ namespace AsyncGenerator.Analyzation
 			{
 				if (toProcessMethodData.Count == 0)
 				{
-					return;
+					break;
 				}
 				PostAnalyzeAsyncMethodData(asyncMethodData, toProcessMethodData);
 			}
@@ -88,7 +91,7 @@ namespace AsyncGenerator.Analyzation
 					PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
 					if (toProcessMethodData.Count == 0)
 					{
-						return;
+						break;
 					}
 				}
 			}
@@ -98,6 +101,22 @@ namespace AsyncGenerator.Analyzation
 			{
 				methodData.Conversion = MethodConversion.Ignore;
 			}
+
+			// 4. Step - Calculate the final type conversion
+			foreach (var typeData in allTypeData)
+			{
+				if (typeData.Conversion != TypeConversion.Unknown)
+				{
+					continue;
+				}
+				// A type can be ignored only if it has no async methods and no dependencies that will get converted
+				//TODO: take care of circular dependencies (related types and nested/parent)
+				/*
+				if(typeData.MethodData.Values.All(o => o.Conversion == MethodConversion.Ignore) &&
+					typeData.
+					)*/
+			}
+
 		}
 	}
 }

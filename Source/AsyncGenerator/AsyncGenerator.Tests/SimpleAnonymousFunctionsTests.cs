@@ -12,7 +12,7 @@ namespace AsyncGenerator.Tests
 	public class SimpleAnonymousFunctionsTests : BaseTest<SimpleAnonymousFunctions>
 	{
 		[Test]
-		public void TestSimpleAnonymousFunctionsAfterAnalyzation()
+		public void TestAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile());
 			var declareAction = GetMethodName(o => o.DeclareAction());
