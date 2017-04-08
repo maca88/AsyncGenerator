@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Analyzation
 {
@@ -72,14 +73,11 @@ namespace AsyncGenerator.Analyzation
 				PostAnalyzeAsyncMethodData(asyncMethodData, toProcessMethodData);
 			}
 
-			// 2. Step - Go through remaing methods and set them to be async if there is at least one method invocation that has an async counterpart
+			// 2. Step - Go through remaining methods and set them to be async if there is at least one method invocation that will get converted
 			var remainingMethodData = toProcessMethodData.ToList();
 			foreach (var methodData in remainingMethodData)
 			{
-				if (methodData.MethodReferenceData
-					.Any(o => o.CanBeAsync && (
-						o.ReferenceAsyncSymbols?.Count > 0 ||
-						o.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync)))
+				if (methodData.MethodReferenceData.Any(o => o.GetConversion() == FunctionReferenceDataConversion.ToAsync))
 				{
 					if (methodData.Conversion == MethodConversion.Ignore)
 					{
@@ -109,14 +107,44 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				// A type can be ignored only if it has no async methods and no dependencies that will get converted
-				//TODO: take care of circular dependencies (related types and nested/parent)
-				/*
-				if(typeData.MethodData.Values.All(o => o.Conversion == MethodConversion.Ignore) &&
-					typeData.
-					)*/
+				// A type can be ignored only if it has no async methods that will get converted
+				if (typeData.MethodData.Values.All(o => o.Conversion == MethodConversion.Ignore))
+				{
+					typeData.Conversion = TypeConversion.Ignore;
+				}
+				else
+				{
+					typeData.Conversion = TypeConversion.Partial;
+				}
 			}
 
+			// 5. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
+			foreach (var methodData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
+				.SelectMany(o => o.MethodData.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
+			{
+				if (methodData.Node.Body == null)
+				{
+					continue;
+				}
+				// Some async method may not have any async invocations because is a dependency of another async method (overloads) or was forced to be async
+				var methodRefSpan = methodData.MethodReferenceData
+					.Where(o => o.GetConversion() == FunctionReferenceDataConversion.ToAsync)
+					.Select(o => o.ReferenceLocation.Location)
+					.OrderBy(o => o.SourceSpan.Start)
+					.FirstOrDefault();
+				if (methodRefSpan == null)
+				{
+					continue;
+				}
+				var semanticModel = methodData.TypeData.NamespaceData.DocumentData.SemanticModel;
+				foreach (var statement in methodData.Node.Body.Statements.TakeWhile(o => o.Span.End < methodRefSpan.SourceSpan.Start))
+				{
+					if (_configuration.PreconditionCheckers.Any(o => o.IsPrecondition(statement, semanticModel)))
+					{
+						methodData.Preconditions.Add(statement);
+					}
+				}
+			}
 		}
 	}
 }

@@ -37,26 +37,11 @@ namespace AsyncGenerator.Analyzation
 
 		private async Task AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
-			int? firstRefStartLocation = null;
 			foreach (var reference in methodData.MethodReferences)
 			{
-				var startSpan = reference.Location.SourceSpan.Start;
-				if (!firstRefStartLocation.HasValue || firstRefStartLocation.Value > startSpan)
-				{
-					firstRefStartLocation = startSpan;
-				}
 				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
 			}
-			// Find out if the method has preconditions. Search only statements that its end location is lower that the first 
-			// method reference start location
-			foreach (var statement in methodData.Node.DescendantNodes().OfType<StatementSyntax>().TakeWhile(o => o.Span.End < firstRefStartLocation))
-			{
-				if (_configuration.PreconditionCheckers.Any(o => o.IsPrecondition(statement)))
-				{
-					methodData.Preconditions.Add(statement);
-				}
-			}
-
+			
 			if (methodData.Conversion == MethodConversion.ToAsync)
 			{
 				return;

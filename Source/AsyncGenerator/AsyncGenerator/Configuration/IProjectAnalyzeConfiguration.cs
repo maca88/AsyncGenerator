@@ -46,7 +46,7 @@ namespace AsyncGenerator.Configuration
 		/// <summary>
 		/// Append a predicate that will check if the given statement is a precondition
 		/// </summary>
-		IProjectAnalyzeConfiguration IsPrecondition(Predicate<StatementSyntax> predicate);
+		IProjectAnalyzeConfiguration IsPrecondition(Func<StatementSyntax, SemanticModel, bool> predicate);
 
 		/// <summary>
 		/// Enable or disable scanning for async counterparts within a method body

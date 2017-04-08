@@ -218,6 +218,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
+    <Compile Include="PreconditionsTests.cs" />
     <Compile Include="SimpleAnonymousFunctionsTests.cs" />
     <Compile Include="SimpleCircularCallTests.cs" />
     <Compile Include="SimpleClassInheritanceTests.cs" />

@@ -13,7 +13,7 @@ namespace AsyncGenerator.Internal
 {
 	internal class DefaultPreconditionChecker : AbstractPlugin, IPreconditionChecker
 	{
-		public bool IsPrecondition(StatementSyntax statement)
+		public bool IsPrecondition(StatementSyntax statement, SemanticModel semanticModel)
 		{
 			return statement.IsPrecondition();
 		}

@@ -4,22 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Plugins;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
 	internal class DelegatePreconditionChecker : AbstractPlugin, IPreconditionChecker
 	{
-		private readonly Predicate<StatementSyntax> _predicate;
+		private readonly Func<StatementSyntax, SemanticModel, bool> _func;
 
-		public DelegatePreconditionChecker(Predicate<StatementSyntax> predicate)
+		public DelegatePreconditionChecker(Func<StatementSyntax, SemanticModel, bool> func)
 		{
-			_predicate = predicate;
+			_func = func;
 		}
 
-		public bool IsPrecondition(StatementSyntax statement)
+		public bool IsPrecondition(StatementSyntax statement, SemanticModel semanticModel)
 		{
-			return _predicate(statement);
+			return _func(statement, semanticModel);
 		}
 	}
 }

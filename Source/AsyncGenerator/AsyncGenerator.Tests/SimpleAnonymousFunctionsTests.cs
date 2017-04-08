@@ -27,6 +27,7 @@ namespace AsyncGenerator.Tests
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
+				Assert.AreEqual(TypeConversion.Partial, result.Documents[0].Namespaces[0].Types[0].Conversion);
 				Assert.AreEqual(6, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
 				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 

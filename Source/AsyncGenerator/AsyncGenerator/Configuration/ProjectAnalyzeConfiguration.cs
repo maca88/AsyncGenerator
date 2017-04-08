@@ -90,7 +90,7 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.IsPrecondition(Predicate<StatementSyntax> predicate)
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.IsPrecondition(Func<StatementSyntax, SemanticModel, bool> predicate)
 		{
 			if (predicate == null)
 			{

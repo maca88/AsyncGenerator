@@ -56,6 +56,8 @@ namespace AsyncGenerator
 
 		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
 
+		IReadOnlyList<StatementSyntax> IFunctionAnalyzationResult.Preconditions => Preconditions.ToImmutableArray();
+
 		#endregion
 	}
 }

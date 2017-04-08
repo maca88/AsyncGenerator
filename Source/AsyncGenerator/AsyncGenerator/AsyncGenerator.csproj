@@ -181,6 +181,7 @@
   <ItemGroup>
     <Compile Include="Analyzation\AsyncCounterpartsSearchOptions.cs" />
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.Analyze.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.PostAnalyze.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.PreAnalyze.cs" />

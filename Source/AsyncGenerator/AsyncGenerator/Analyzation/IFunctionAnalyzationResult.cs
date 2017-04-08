@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Analyzation
@@ -27,5 +28,11 @@ namespace AsyncGenerator.Analyzation
 		/// References to other methods that are invoked inside this function and are candidates to be async
 		/// </summary>
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> MethodReferences { get; }
+
+		/// <summary>
+		/// Statements inside the function that were qualified as preconditions. Preconditions may be filled only for functions that 
+		/// are going to be converted
+		/// </summary>
+		IReadOnlyList<StatementSyntax> Preconditions { get; }
 	}
 }

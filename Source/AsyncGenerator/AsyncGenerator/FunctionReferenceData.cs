@@ -12,23 +12,10 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public interface IFunctionReferenceAnalyzationResult
+	public enum FunctionReferenceDataConversion
 	{
-		IFunctionAnalyzationResult ReferenceFunctionData { get; }
-
-		SimpleNameSyntax ReferenceNode { get; }
-
-		ReferenceLocation ReferenceLocation { get; }
-
-		IMethodSymbol ReferenceSymbol { get; }
-
-		IReadOnlyList<IMethodSymbol> ReferenceAsyncSymbols { get; }
-
-		SyntaxKind ReferenceKind { get; }
-
-		bool CanBeAsync { get; }
-
-		bool CanBeAwaited { get; }
+		Ignore,
+		ToAsync
 	}
 
 	public class FunctionReferenceData : IFunctionReferenceAnalyzationResult
@@ -65,6 +52,14 @@ namespace AsyncGenerator
 		//public bool PassedAsArgument { get; internal set; }
 
 		public bool UsedAsReturnValue { get; internal set; }
+
+		public FunctionReferenceDataConversion GetConversion()
+		{
+			return CanBeAsync &&
+			       (ReferenceAsyncSymbols?.Count > 0 || ReferenceFunctionData?.Conversion == MethodConversion.ToAsync)
+				? FunctionReferenceDataConversion.ToAsync
+				: FunctionReferenceDataConversion.Ignore;
+		}
 
 		public override int GetHashCode()
 		{
