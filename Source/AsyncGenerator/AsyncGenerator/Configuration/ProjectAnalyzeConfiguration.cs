@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Internal;
+using AsyncGenerator.Plugins;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration
 {
-	public delegate IEnumerable<IMethodSymbol> FindAsyncCounterpart(Project project, IMethodSymbol syncMethodSymbol, bool equalParameters, bool searchInheritedTypes);
-
 	public class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
 	{
 		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
@@ -18,15 +20,16 @@ namespace AsyncGenerator.Configuration
 
 		public Predicate<Document> DocumentSelectionPredicate { get; private set; } = m => true;
 
-		//public Predicate<IMethodSymbol> MethodSelectionPredicate { get; private set; } = m => true;
-
-		//public Predicate<INamedTypeSymbol> TypeSelectionPredicate { get; private set; } = m => true;
-
 		public Predicate<IMethodSymbol> ConvertMethodPredicate { get; private set; } = m => true;
 
-		public List<FindAsyncCounterpart> FindAsyncCounterpartDelegates { get; } = new List<FindAsyncCounterpart>
+		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>()
 		{
-			(project, symbol, equalParameters, inherit) => symbol.GetAsyncCounterparts(equalParameters, inherit)
+			new DefaultAsyncCounterpartsFinder()
+		};
+
+		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>()
+		{
+			new DefaultPreconditionChecker()
 		};
 
 		public bool ScanMethodBody { get; private set; }
@@ -34,6 +37,8 @@ namespace AsyncGenerator.Configuration
 		public bool ScanForMissingAsyncMembers { get; private set; }
 
 		public ProjectAnalyzeCallbacksConfiguration Callbacks { get; } = new ProjectAnalyzeCallbacksConfiguration();
+
+		#region IProjectAnalyzeConfiguration
 
 		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
 		{
@@ -65,26 +70,6 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		//IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodSelectionPredicate(Predicate<IMethodSymbol> predicate)
-		//{
-		//	if (predicate == null)
-		//	{
-		//		throw new ArgumentNullException(nameof(predicate));
-		//	}
-		//	MethodSelectionPredicate = predicate;
-		//	return this;
-		//}
-
-		//IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.TypeSelectionPredicate(Predicate<INamedTypeSymbol> predicate)
-		//{
-		//	if (predicate == null)
-		//	{
-		//		throw new ArgumentNullException(nameof(predicate));
-		//	}
-		//	TypeSelectionPredicate = predicate;
-		//	return this;
-		//}
-
 		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ConvertMethodPredicate(Predicate<IMethodSymbol> predicate)
 		{
 			if (predicate == null)
@@ -95,23 +80,23 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.AppendFindAsyncCounterpartDelegate(FindAsyncCounterpart func)
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.FindAsyncCounterparts(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func)
 		{
 			if (func == null)
 			{
 				throw new ArgumentNullException(nameof(func));
 			}
-			FindAsyncCounterpartDelegates.Add(func);
+			FindAsyncCounterpartsFinders.Add(new DelegateAsyncCounterpartsFinder(func));
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.PrependFindAsyncCounterpartDelegate(FindAsyncCounterpart func)
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.IsPrecondition(Predicate<StatementSyntax> predicate)
 		{
-			if (func == null)
+			if (predicate == null)
 			{
-				throw new ArgumentNullException(nameof(func));
+				throw new ArgumentNullException(nameof(predicate));
 			}
-			FindAsyncCounterpartDelegates.Insert(0, func);
+			PreconditionCheckers.Add(new DelegatePreconditionChecker(predicate));
 			return this;
 		}
 
@@ -136,6 +121,8 @@ namespace AsyncGenerator.Configuration
 			action(Callbacks);
 			return this;
 		}
+
+		#endregion
 
 	}
 }

@@ -87,10 +87,8 @@ namespace AsyncGenerator.Analyzation
 			{
 				return onlyNew ? Enumerable.Empty<IMethodSymbol>() : asyncMethodSymbols;
 			}
-			var equalParameters = options.HasFlag(EqualParameters);
-			var searchInheritTypes = options.HasFlag(SearchInheritTypes);
-			asyncMethodSymbols = new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartDelegates
-				.SelectMany(fn => fn(ProjectData.Project, methodSymbol, equalParameters, searchInheritTypes)));
+			asyncMethodSymbols = new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartsFinders
+				.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, options)));
 			return dict.AddOrUpdate(
 				options,
 				asyncMethodSymbols,

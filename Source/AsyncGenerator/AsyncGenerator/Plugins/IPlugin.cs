@@ -7,8 +7,8 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Plugins
 {
-	public interface IAsyncCounterpartsFinder
+	public interface IPlugin
 	{
-		IEnumerable<IMethodSymbol> FindAsyncCounterparts(Project project, IMethodSymbol syncMethodSymbol, bool equalParameters bool );
+		Task Initialize(Project project);
 	}
 }

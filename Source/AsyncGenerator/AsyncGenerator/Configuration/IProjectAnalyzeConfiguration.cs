@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration
 {
@@ -38,12 +41,12 @@ namespace AsyncGenerator.Configuration
 		/// <summary>
 		/// Append a function that will try to find an async counterpart for the given method
 		/// </summary>
-		IProjectAnalyzeConfiguration AppendFindAsyncCounterpartDelegate(FindAsyncCounterpart func);
+		IProjectAnalyzeConfiguration FindAsyncCounterparts(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func);
 
 		/// <summary>
-		/// Prepend a function that will try to find an async counterpart for the given method
+		/// Append a predicate that will check if the given statement is a precondition
 		/// </summary>
-		IProjectAnalyzeConfiguration PrependFindAsyncCounterpartDelegate(FindAsyncCounterpart func);
+		IProjectAnalyzeConfiguration IsPrecondition(Predicate<StatementSyntax> predicate);
 
 		/// <summary>
 		/// Enable or disable scanning for async counterparts within a method body

@@ -11,10 +11,12 @@ namespace AsyncGenerator.Analyzation
 	public enum AsyncCounterpartsSearchOptions
 	{
 		/// <summary>
-		/// With this option a method should be qualified as an async counterpart if the following conditions are met:
-		/// 1. The async method is defined in the same type
-		/// 2. The async method has the same number of parameters and they should be the same, except for delegates that should be an async counterpart of the original
-		/// 3. The async method return type should be the same type as the original wrapped in a <see cref="Task"/>
+		/// <para>With this option a method should be qualified as an async counterpart if the following conditions are met:</para>
+		/// <para>1. The async method is defined in the same type</para>
+		/// <para>2. The async method has the same number of parameters and they should be the same, except for delegates that can be an async counterpart of the original</para>
+		/// <para>3. The async method return type should be the same type as the original wrapped in a <see cref="Task"/>. 
+		/// The async method can also return the same type, but it should have at least one delegate parameter that has an async 
+		/// counterpart (eg. <see cref="Task.Run(System.Action)"/> and <see cref="Task.Run(Func{Task})"/>).</para>
 		/// </summary>
 		Default = 1,
 		/// <summary>
@@ -28,7 +30,7 @@ namespace AsyncGenerator.Analyzation
 		/// </summary>
 		SearchInheritTypes = 4,
 		/// <summary>
-		/// With this option a method should be qualified as an async counterpart if has a parameter of type <see cref="System.Threading.CancellationToken"/>.
+		/// With this option a method should be qualified as an async counterpart if has a parameter of type <see cref="System.Threading.CancellationToken"/>, even if do not exist in original method.
 		/// This options should extend the <see cref="Default"/> constraints.
 		/// </summary>
 		HasCancellationToken = 8

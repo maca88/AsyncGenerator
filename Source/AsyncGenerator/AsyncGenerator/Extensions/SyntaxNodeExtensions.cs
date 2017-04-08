@@ -17,7 +17,7 @@ namespace AsyncGenerator.Extensions
 		/// </summary>
 		/// <param name="statement">The statement to be checked</param>
 		/// <returns></returns>
-		public static bool IsPrecondition(StatementSyntax statement)
+		public static bool IsPrecondition(this StatementSyntax statement)
 		{
 			var ifStatement = statement as IfStatementSyntax;
 			if (ifStatement?.Statement == null)

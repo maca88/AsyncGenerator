@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Extensions
@@ -23,14 +25,14 @@ namespace AsyncGenerator.Extensions
 			var candidateReturnType = (INamedTypeSymbol)candidateAsyncMethod.ReturnType;
 			if (syncMethod.ReturnsVoid)
 			{
-				if (candidateReturnType.Name != "Task" || candidateReturnType.TypeArguments.Any())
+				if (candidateReturnType.Name != nameof(Task) || candidateReturnType.TypeArguments.Any())
 				{
 					return false;
 				}
 			}
 			else
 			{
-				if (candidateReturnType.Name != "Task" || candidateReturnType.TypeArguments.Length != 1 || !candidateReturnType.TypeArguments.First().Equals(syncMethod.ReturnType))
+				if (candidateReturnType.Name != nameof(Task) || candidateReturnType.TypeArguments.Length != 1 || !candidateReturnType.TypeArguments.First().Equals(syncMethod.ReturnType))
 				{
 					return false;
 				}
@@ -38,9 +40,28 @@ namespace AsyncGenerator.Extensions
 			return true;
 		}
 
-		public static bool IsAsyncCounterpart(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod, bool equalParameters)
+		/// <summary>
+		/// Check if the candidate asynchronous method is an asynchronous counterpart of the synchronous method.
+		/// </summary>
+		/// <param name="syncMethod">The synchronous method</param>
+		/// <param name="candidateAsyncMethod">The candidate asynchronous method</param>
+		/// <param name="equalParameters">When true, both methods must have the same parameters, except when <see cref="hasCancellationToken"/> is set to true</param>
+		/// <param name="hasCancellationToken">When true, the asynchronous method can contain one more parameter which must be of type <see cref="System.Threading.CancellationToken"/>
+		/// and has to be the last parameter</param>
+		/// <returns></returns>
+		public static bool IsAsyncCounterpart(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod, bool equalParameters, bool hasCancellationToken)
 		{
-			if (syncMethod.Parameters.Length != candidateAsyncMethod.Parameters.Length || !IsAsyncCandidateForReturnType(syncMethod, candidateAsyncMethod))
+			// Check if the length of the parameters matches
+			if (syncMethod.Parameters.Length != candidateAsyncMethod.Parameters.Length)
+			{
+				// For symplicity, we suppose that the sync method does not have a cancellation token as a parameter
+				if (!hasCancellationToken || syncMethod.Parameters.Length + 1 != candidateAsyncMethod.Parameters.Length)
+				{
+					return false;
+				}
+			}
+			// Check if the return type matches
+			if (!IsAsyncCandidateForReturnType(syncMethod, candidateAsyncMethod))
 			{
 				return false;
 			}
@@ -90,13 +111,17 @@ namespace AsyncGenerator.Extensions
 				{
 					continue;
 				}
-				if (!origDelegate.IsAsyncCounterpart(candidateDelegate, false))
+				if (!origDelegate.IsAsyncCounterpart(candidateDelegate, false, hasCancellationToken))
 				{
 					return false;
 				}
 				result = true;
 			}
-			return result;
+			if (syncMethod.Parameters.Length >= candidateAsyncMethod.Parameters.Length)
+			{
+				return result;
+			}
+			return candidateAsyncMethod.Parameters.Last().Type.Name == nameof(CancellationToken) && result;
 		}
 
 		/// <summary>
@@ -105,8 +130,9 @@ namespace AsyncGenerator.Extensions
 		/// <param name="methodSymbol"></param>
 		/// <param name="equalParameters"></param>
 		/// <param name="searchInheritedTypes"></param>
+		/// <param name="hasCancellationToken"></param>
 		/// <returns></returns>
-		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, bool equalParameters, bool searchInheritedTypes)
+		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, bool equalParameters, bool searchInheritedTypes, bool hasCancellationToken)
 		{
 			var asyncName = methodSymbol.Name + "Async";
 			if (searchInheritedTypes)
@@ -114,11 +140,11 @@ namespace AsyncGenerator.Extensions
 				return methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
 					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
 					.OfType<IMethodSymbol>()
-					.Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters));
+					.Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters, hasCancellationToken));
 			} 
 			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
 							   .OfType<IMethodSymbol>()
-							   .Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters));
+							   .Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters, hasCancellationToken));
 		}
 
 		public static IEnumerable<INamedTypeSymbol> EnumerateBaseTypesAndSelf(this INamedTypeSymbol type)

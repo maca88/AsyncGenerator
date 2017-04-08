@@ -51,7 +51,10 @@ namespace AsyncGenerator.Analyzation
 			// method reference start location
 			foreach (var statement in methodData.Node.DescendantNodes().OfType<StatementSyntax>().TakeWhile(o => o.Span.End < firstRefStartLocation))
 			{
-				
+				if (_configuration.PreconditionCheckers.Any(o => o.IsPrecondition(statement)))
+				{
+					methodData.Preconditions.Add(statement);
+				}
 			}
 
 			if (methodData.Conversion == MethodConversion.ToAsync)

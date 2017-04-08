@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AsyncGenerator.TestCases
@@ -17,6 +18,11 @@ namespace AsyncGenerator.TestCases
 		}
 
 		public static Task ReadAsync()
+		{
+			return Task.CompletedTask;
+		}
+
+		public static Task ReadAsync(CancellationToken cancellationToken)
 		{
 			return Task.CompletedTask;
 		}

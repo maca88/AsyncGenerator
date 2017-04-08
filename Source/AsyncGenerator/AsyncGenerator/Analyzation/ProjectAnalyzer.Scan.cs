@@ -268,7 +268,7 @@ namespace AsyncGenerator.Analyzation
 					Logger.Debug($"Sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 					continue;
 				}
-				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true));
+				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, false));
 				var methodData = documentData.GetMethodData(nonAsyncMember.Node);
 				methodData.Conversion = MethodConversion.ToAsync;
 				//methodDatas.Add(methodData);
@@ -292,7 +292,7 @@ namespace AsyncGenerator.Analyzation
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
-					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true));
+					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, false));
 					if (nonAsyncMember == null)
 					{
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");

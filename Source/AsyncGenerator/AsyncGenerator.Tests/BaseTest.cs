@@ -22,7 +22,7 @@ namespace AsyncGenerator.Tests
 
 		public string FileName { get; }
 
-		public IAsyncCodeConfiguration Configure(Action<IProjectConfiguration> action = null)
+		public AsyncCodeConfiguration Configure(Action<IProjectConfiguration> action = null)
 		{
 			var slnFilePath = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + @"..\..\..\..\AsyncGenerator.sln");
 			return AsyncCodeConfiguration.Create()

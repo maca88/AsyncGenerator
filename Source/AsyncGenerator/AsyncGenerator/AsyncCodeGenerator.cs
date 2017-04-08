@@ -21,25 +21,31 @@ namespace AsyncGenerator
 {
 	public class AsyncCodeGenerator
 	{
-		public async Task GenerateAsync(IAsyncCodeConfiguration configuration)
+		public async Task GenerateAsync(AsyncCodeConfiguration configuration)
 		{
 			if (configuration == null)
 			{
 				throw new ArgumentNullException(nameof(configuration));
 			}
-			var conf = configuration.Build();
-
-			foreach (var config in conf.SolutionConfigurations)
+			foreach (var config in configuration.SolutionConfigurations)
 			{
 				var solutionData = await CreateSolutionData(config).ConfigureAwait(false);
 				foreach (var projectData in solutionData.ProjectData.Values)
 				{
+					// Initialize plugins
+					foreach (var registeredPlugin in projectData.Configuration.RegisteredPlugins)
+					{
+						await registeredPlugin.Initialize(projectData.Project).ConfigureAwait(false);
+					}
+					// Analyze project
 					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
 					var result = await AnalyzeProject(projectData).ConfigureAwait(false);
 					foreach (var action in analyzeConfig.Callbacks.AfterAnalyzation)
 					{
 						action(result);
 					}
+
+					// Transform documents
 				}
 			}
 
