@@ -227,7 +227,12 @@ namespace AsyncGenerator.Analyzation
 			}
 
 			// Verify if there is already an async counterpart for this method
-			var asyncCounterpart = GetAsyncCounterparts(methodSymbol.OriginalDefinition, EqualParameters).SingleOrDefault();
+			var searchOptions = EqualParameters;
+			if (_configuration.UseCancellationTokenOverload)
+			{
+				searchOptions |= HasCancellationToken;
+			}
+			var asyncCounterpart = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).SingleOrDefault();
 			if (asyncCounterpart != null)
 			{
 				log($"Method {methodSymbol} has already an async counterpart {asyncCounterpart}");

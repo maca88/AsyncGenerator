@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -29,5 +30,10 @@ namespace AsyncGenerator.Analyzation
 		/// Anonymous functions that are declared inside the method
 		/// </summary>
 		IReadOnlyList<IAnonymousFunctionAnalyzationResult> AnonymousFunctions { get; }
+
+		/// <summary>
+		/// When true, the method has at least one invocation that needs a <see cref="CancellationToken"/> as a parameter.
+		/// </summary>
+		bool CancellationTokenRequired { get; }
 	}
 }

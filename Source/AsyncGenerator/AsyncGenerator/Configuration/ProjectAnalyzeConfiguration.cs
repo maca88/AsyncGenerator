@@ -36,6 +36,8 @@ namespace AsyncGenerator.Configuration
 
 		public bool ScanForMissingAsyncMembers { get; private set; }
 
+		public bool UseCancellationTokenOverload { get; private set; }
+
 		public ProjectAnalyzeCallbacksConfiguration Callbacks { get; } = new ProjectAnalyzeCallbacksConfiguration();
 
 		#region IProjectAnalyzeConfiguration
@@ -109,6 +111,12 @@ namespace AsyncGenerator.Configuration
 		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
 		{
 			ScanForMissingAsyncMembers = value;
+			return this;
+		}
+
+		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.UseCancellationTokenOverload(bool value)
+		{
+			UseCancellationTokenOverload = value;
 			return this;
 		}
 

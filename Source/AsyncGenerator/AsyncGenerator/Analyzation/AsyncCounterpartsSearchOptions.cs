@@ -30,7 +30,7 @@ namespace AsyncGenerator.Analyzation
 		/// </summary>
 		SearchInheritTypes = 4,
 		/// <summary>
-		/// With this option a method should be qualified as an async counterpart if has a parameter of type <see cref="System.Threading.CancellationToken"/>, even if do not exist in original method.
+		/// With this option a method should be qualified as an async counterpart if has an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
 		/// This options should extend the <see cref="Default"/> constraints.
 		/// </summary>
 		HasCancellationToken = 8

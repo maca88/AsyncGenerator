@@ -97,5 +97,10 @@ namespace AsyncGenerator
 		{
 			return NestedAnonymousFunctionData.Values;
 		}
+
+		public override MethodData GetMethodData()
+		{
+			return MethodData;
+		}
 	}
 }

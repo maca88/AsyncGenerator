@@ -48,6 +48,8 @@ namespace AsyncGenerator
 
 		public bool CanBeAwaited { get; internal set; } = true;
 
+		public bool CancellationTokenRequired { get; set; }
+
 		// Replaced by ReferenceKind
 		//public bool PassedAsArgument { get; internal set; }
 

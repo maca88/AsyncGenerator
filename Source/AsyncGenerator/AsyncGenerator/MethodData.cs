@@ -71,6 +71,8 @@ namespace AsyncGenerator
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
+		public bool CancellationTokenRequired { get; set; }
+
 		//public MethodConversion CalculatedConversion { get; internal set; }
 
 		public override TypeData TypeData { get; }
@@ -152,6 +154,11 @@ namespace AsyncGenerator
 		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
 		{
 			return AnonymousFunctionData.Values;
+		}
+
+		public override MethodData GetMethodData()
+		{
+			return this;
 		}
 
 		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax type, bool create = false)

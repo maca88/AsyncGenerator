@@ -43,7 +43,17 @@ namespace AsyncGenerator.Analyzation
 						continue;
 					}
 					depFunctionData.Conversion = MethodConversion.ToAsync;
-					
+
+					// We need to update the CancellationTokenRequired for all invocations of the current method
+					foreach (var depFunctionRefData in depFunctionData.MethodReferenceData.Where(o => o.ReferenceFunctionData == currentMethodData))
+					{
+						depFunctionRefData.CancellationTokenRequired = currentMethodData.CancellationTokenRequired;
+					}
+					// Propagate the CancellationTokenRequired for the dependency method data
+					if (depMethodData != null)
+					{
+						depMethodData.CancellationTokenRequired = currentMethodData.CancellationTokenRequired;
+					}
 				}
 			}
 		}
@@ -63,6 +73,7 @@ namespace AsyncGenerator.Analyzation
 				.SelectMany(o => o.MethodData.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
 
 			// 1. Step - Go through all async methods and set their dependencies to be also async
+			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
 			var asyncMethodDatas = toProcessMethodData.Where(o => o.Conversion == MethodConversion.ToAsync).ToList();
 			foreach (var asyncMethodData in asyncMethodDatas)
 			{
@@ -74,6 +85,7 @@ namespace AsyncGenerator.Analyzation
 			}
 
 			// 2. Step - Go through remaining methods and set them to be async if there is at least one method invocation that will get converted
+			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
 			var remainingMethodData = toProcessMethodData.ToList();
 			foreach (var methodData in remainingMethodData)
 			{

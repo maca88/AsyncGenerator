@@ -27,5 +27,7 @@ namespace AsyncGenerator.Analyzation
 		bool CanBeAsync { get; }
 
 		bool CanBeAwaited { get; }
+
+		bool CancellationTokenRequired { get; }
 	}
 }

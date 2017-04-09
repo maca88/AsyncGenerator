@@ -193,7 +193,12 @@ namespace AsyncGenerator.Analyzation
 				return;
 			}
 			var methodSymbol = (IMethodSymbol)ModelExtensions.GetSymbolInfo(documentData.SemanticModel, nameNode).Symbol;
-			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, Default));
+			var searchOptions = Default;
+			if (_configuration.UseCancellationTokenOverload)
+			{
+				searchOptions |= HasCancellationToken;
+			}
+			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions));
 			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
 				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || o.ReturnType.Name != "Task"))
@@ -202,6 +207,16 @@ namespace AsyncGenerator.Analyzation
 					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
 			}
+			// Set CancellationTokenRequired if we detect that one of the async counterparts has a cancellation token as a parameter
+			if (_configuration.UseCancellationTokenOverload &&
+			    functionReferenceData.ReferenceAsyncSymbols.Any(o => o.Parameters.Length > methodSymbol.Parameters.Length))
+			{
+				functionReferenceData.CancellationTokenRequired = true;
+				// We need to set CancellationTokenRequired to true for the method that contains this invocation
+				var methodData = functionReferenceData.FunctionData.GetMethodData();
+				methodData.CancellationTokenRequired = true;
+			}
+
 
 			//TODO: do we need this?
 			// Check if the invocation expression takes any func as a parameter, we will allow to rename the method only if there is an awaitable invocation

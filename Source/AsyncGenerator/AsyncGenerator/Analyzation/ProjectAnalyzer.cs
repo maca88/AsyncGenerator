@@ -113,6 +113,11 @@ namespace AsyncGenerator.Analyzation
 			}
 			var documentData = methodData.TypeData.NamespaceData.DocumentData;
 			var semanticModel = documentData.SemanticModel;
+			var searchOptions = Default;
+			if (_configuration.UseCancellationTokenOverload)
+			{
+				searchOptions |= HasCancellationToken;
+			}
 
 			foreach (var invocation in methodData.Node.Body.DescendantNodes()
 										   .OfType<InvocationExpressionSyntax>())
@@ -127,7 +132,7 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				var asyncCounterparts = GetAsyncCounterparts(methodSymbol, Default, true).ToList();
+				var asyncCounterparts = GetAsyncCounterparts(methodSymbol, searchOptions, true).ToList();
 				if (asyncCounterparts.Any())
 				{
 					result.Add(methodSymbol);

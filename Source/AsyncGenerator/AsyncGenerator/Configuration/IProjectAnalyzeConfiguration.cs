@@ -54,6 +54,12 @@ namespace AsyncGenerator.Configuration
 		IProjectAnalyzeConfiguration ScanMethodBody(bool value);
 
 		/// <summary>
+		/// Enable or disable scanning for async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
+		/// When true, the <see cref="AsyncCounterpartsSearchOptions.HasCancellationToken"/> option will be passed for all registered async counterpart finders.
+		/// </summary>
+		IProjectAnalyzeConfiguration UseCancellationTokenOverload(bool value);
+
+		/// <summary>
 		/// Enable or disable scanning for missing async counterparts
 		/// </summary>
 		IProjectAnalyzeConfiguration ScanForMissingAsyncMembers(bool value);

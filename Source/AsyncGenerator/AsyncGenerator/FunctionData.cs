@@ -44,6 +44,8 @@ namespace AsyncGenerator
 
 		public abstract IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData();
 
+		public abstract MethodData GetMethodData();
+
 		#region Analyze step
 
 		public ConcurrentSet<FunctionReferenceData> MethodReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
