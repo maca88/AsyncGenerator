@@ -111,7 +111,7 @@ namespace AsyncGenerator.Analyzation
 						var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 							.OfType<IMethodSymbol>()
 							.Where(o => o.Name == methodSymbol.Name + "Async")
-							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false));
+							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 
 						if (asyncConterPart == null)
 						{
@@ -145,7 +145,7 @@ namespace AsyncGenerator.Analyzation
 					var asyncConterPart = overridenMethod.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
 						.Where(o => o.Name == methodSymbol.Name + "Async" && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
-						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false));
+						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 					if (asyncConterPart == null)
 					{
 						log(
@@ -205,7 +205,7 @@ namespace AsyncGenerator.Analyzation
 					var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
 						.Where(o => o.Name == methodSymbol.Name + "Async")
-						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false));
+						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 					if (asyncConterPart == null)
 					{
 						log($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
@@ -227,7 +227,7 @@ namespace AsyncGenerator.Analyzation
 			}
 
 			// Verify if there is already an async counterpart for this method
-			var searchOptions = EqualParameters;
+			var searchOptions = EqualParameters | IgnoreReturnType;
 			if (_configuration.UseCancellationTokenOverload)
 			{
 				searchOptions |= HasCancellationToken;
@@ -276,7 +276,7 @@ namespace AsyncGenerator.Analyzation
 				var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
 				var argumentListNode = (ArgumentListSyntax)argumentNode.Parent;
 				var index = argumentListNode.Arguments.IndexOf(argumentNode);
-				var symbol = (IMethodSymbol)ModelExtensions.GetSymbolInfo(semanticModel, invocationNode.Expression).Symbol;
+				var symbol = (IMethodSymbol)semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
 				functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(symbol, index);
 			}
 

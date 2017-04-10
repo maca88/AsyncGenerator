@@ -15,7 +15,8 @@ namespace AsyncGenerator.Internal
 	{
 		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, AsyncCounterpartsSearchOptions options)
 		{
-			return syncMethodSymbol.GetAsyncCounterparts(options.HasFlag(EqualParameters), options.HasFlag(SearchInheritTypes), options.HasFlag(HasCancellationToken));
+			return syncMethodSymbol.GetAsyncCounterparts(options.HasFlag(EqualParameters), options.HasFlag(SearchInheritTypes), 
+				options.HasFlag(HasCancellationToken), options.HasFlag(IgnoreReturnType));
 		}
 	}
 }

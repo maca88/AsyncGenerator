@@ -18,7 +18,7 @@ namespace AsyncGenerator
 		ToAsync
 	}
 
-	public class FunctionReferenceData : IFunctionReferenceAnalyzationResult
+	public class FunctionReferenceData : IFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
 	{
 		public FunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
@@ -47,6 +47,8 @@ namespace AsyncGenerator
 		public bool CanBeAsync { get; set; }
 
 		public bool CanBeAwaited { get; internal set; } = true;
+
+		public bool? ConfigureAwait { get; set; }
 
 		public bool CancellationTokenRequired { get; set; }
 
@@ -82,6 +84,14 @@ namespace AsyncGenerator
 		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.ReferenceFunctionData => ReferenceFunctionData;
 
 		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols => ReferenceAsyncSymbols.ToImmutableArray();
+
+		#endregion
+
+		#region IFunctionReferenceAnalyzation
+
+		IFunctionAnalyzationResult IFunctionReferenceAnalyzation.ReferenceFunctionData => ReferenceFunctionData;
+
+		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzation.ReferenceAsyncSymbols => ReferenceAsyncSymbols.ToImmutableArray();
 
 		#endregion
 	}

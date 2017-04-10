@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Tests.TestCases;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 
@@ -116,20 +117,22 @@ namespace AsyncGenerator.Tests
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 			};
 
-			var methodConversions = new[] { MethodConversion.ToAsync, MethodConversion.Smart };
+			var methodConversions = new Func<IMethodSymbol, MethodConversion>[] {
+				s =>  s.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown,
+				s =>  s.Name == readFile ? MethodConversion.Smart : MethodConversion.Unknown,
+				s =>  s.Name == callCallReadFile ? MethodConversion.ToAsync : MethodConversion.Smart
+			};
 			foreach (var methodConversion in methodConversions)
 			{
 				var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == readFile ? methodConversion : MethodConversion.Unknown;
-					})
+					.MethodConversion(methodConversion)
 					.UseCancellationTokenOverload(true)
 					.Callbacks(c => c.AfterAnalyzation(afterAnalyzationFn))
 				)
 				);
 				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+				Console.WriteLine("Passed");
 			}
 		}
 

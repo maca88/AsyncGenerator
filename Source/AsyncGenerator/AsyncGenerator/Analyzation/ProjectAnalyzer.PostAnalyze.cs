@@ -71,7 +71,23 @@ namespace AsyncGenerator.Analyzation
 				.ToList();
 			var toProcessMethodData = new HashSet<MethodData>(allTypeData
 				.SelectMany(o => o.MethodData.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
+			//TODO: optimize steps for better performance
 
+			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
+			// to dependency methods
+			if (_configuration.UseCancellationTokenOverload)
+			{
+				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired).ToList();
+				foreach (var tokenMethodData in tokenMethodDatas)
+				{
+					if (toProcessMethodData.Count == 0)
+					{
+						break;
+					}
+					PostAnalyzeAsyncMethodData(tokenMethodData, toProcessMethodData);
+				}
+			}
+			
 			// 1. Step - Go through all async methods and set their dependencies to be also async
 			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
 			var asyncMethodDatas = toProcessMethodData.Where(o => o.Conversion == MethodConversion.ToAsync).ToList();

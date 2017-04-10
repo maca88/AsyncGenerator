@@ -32,6 +32,8 @@ namespace AsyncGenerator.Configuration
 			new DefaultPreconditionChecker()
 		};
 
+		public List<IInvocationExpressionAnalyzer> InvocationExpressionAnalyzers { get; } = new List<IInvocationExpressionAnalyzer>();
+
 		public bool ScanMethodBody { get; private set; }
 
 		public bool ScanForMissingAsyncMembers { get; private set; }

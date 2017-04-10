@@ -13,6 +13,8 @@ namespace AsyncGenerator.Analyzation
 {
 	public partial class ProjectAnalyzer
 	{
+		private readonly string[] _taskResultMethods = {"Wait", "GetResult"};
+
 		private async Task<IList<MethodData>> AnalyzeDocumentData(DocumentData documentData)
 		{
 			var validMethodData = new List<MethodData>();
@@ -100,7 +102,7 @@ namespace AsyncGenerator.Analyzation
 									   }
 									   return o.Span == reference.Location.SourceSpan;
 								   });
-			var refMethodSymbol = (IMethodSymbol)ModelExtensions.GetSymbolInfo(documentData.SemanticModel, nameNode).Symbol;
+			var refMethodSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
 			var refFunctionData = await ProjectData.GetAnonymousFunctionOrMethodData(refMethodSymbol).ConfigureAwait(false);
 			var refData = new FunctionReferenceData(functionData, reference, nameNode, refMethodSymbol, refFunctionData)
 			{
@@ -118,7 +120,7 @@ namespace AsyncGenerator.Analyzation
 					case SyntaxKind.ConditionalExpression:
 						break;
 					case SyntaxKind.InvocationExpression:
-						AnalyzeInvocationExpression(documentData, currNode, nameNode, refData);
+						AnalyzeInvocationExpression(documentData, (InvocationExpressionSyntax)currNode, refData);
 						break;
 					case SyntaxKind.Argument:
 						AnalyzeArgumentExpression(currNode, nameNode, refData);
@@ -178,9 +180,10 @@ namespace AsyncGenerator.Analyzation
 			return refData;
 		}
 
-		private void AnalyzeInvocationExpression(DocumentData documentData, SyntaxNode node, SimpleNameSyntax nameNode, FunctionReferenceData functionReferenceData)
+		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, FunctionReferenceData functionReferenceData)
 		{
 			var functionData = functionReferenceData.FunctionData;
+			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionNode = functionData.GetNode();
 			var queryExpression = node.Ancestors()
 				.TakeWhile(o => o != functionNode)
@@ -192,7 +195,6 @@ namespace AsyncGenerator.Analyzation
 				Logger.Warn($"Cannot await async method in a query expression:\r\n{queryExpression}\r\n");
 				return;
 			}
-			var methodSymbol = (IMethodSymbol)ModelExtensions.GetSymbolInfo(documentData.SemanticModel, nameNode).Symbol;
 			var searchOptions = Default;
 			if (_configuration.UseCancellationTokenOverload)
 			{
@@ -207,16 +209,79 @@ namespace AsyncGenerator.Analyzation
 					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
 			}
+			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
+			if (methodSymbol.ReturnType.Name == nameof(Task) && methodSymbol.ReturnType.ContainingNamespace.ToString() == "System.Threading.Tasks")
+			{
+				var retrunType = (INamedTypeSymbol) methodSymbol.ReturnType;
+				var canBeAwaited = false;
+				var currNode = node.Parent;
+				while (true)
+				{
+					var memberExpression = currNode as MemberAccessExpressionSyntax;
+					if (memberExpression == null)
+					{
+						break;
+					}
+					var memberName = memberExpression.Name.ToString();
+					if (retrunType.IsGenericType && memberName == "Result")
+					{
+						canBeAwaited = true;
+						break;
+					}
+					if (memberName == "ConfigureAwait")
+					{
+						var invocationNode = currNode.Parent as InvocationExpressionSyntax;
+						if (invocationNode != null)
+						{
+							functionReferenceData.ConfigureAwait =
+								invocationNode.ArgumentList.Arguments.First().Expression.IsKind(SyntaxKind.TrueLiteralExpression);
+							currNode = invocationNode.Parent;
+							continue;
+						}
+						break;
+					}
+					if (memberName == "GetAwaiter")
+					{
+						var invocationNode = currNode.Parent as InvocationExpressionSyntax;
+						if (invocationNode != null)
+						{
+							currNode = invocationNode.Parent;
+							continue;
+						}
+						break;
+					}
+					if (_taskResultMethods.Contains(memberName))
+					{
+						var invocationNode = currNode.Parent as InvocationExpressionSyntax;
+						if (invocationNode != null)
+						{
+							canBeAwaited = true;
+						}
+					}
+					break;
+				}
+				if (!canBeAwaited)
+				{
+					functionReferenceData.CanBeAwaited = false;
+					Logger.Info($"Cannot await invocation of a method that returns a Task without be synchronously awaited:\r\n{methodSymbol}\r\n");
+				}
+			}
+
+
 			// Set CancellationTokenRequired if we detect that one of the async counterparts has a cancellation token as a parameter
 			if (_configuration.UseCancellationTokenOverload &&
 			    functionReferenceData.ReferenceAsyncSymbols.Any(o => o.Parameters.Length > methodSymbol.Parameters.Length))
 			{
 				functionReferenceData.CancellationTokenRequired = true;
-				// We need to set CancellationTokenRequired to true for the method that contains this invocation
-				var methodData = functionReferenceData.FunctionData.GetMethodData();
-				methodData.CancellationTokenRequired = true;
 			}
 
+			// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
+			if (!functionReferenceData.ReferenceAsyncSymbols.Any() && !ProjectData.Contains(functionReferenceData.ReferenceSymbol))
+			{
+				functionReferenceData.CanBeAsync = false;
+				Logger.Warn($"Method {methodSymbol} can not be async as there is no async counterparts for it");
+				return;
+			}
 
 			//TODO: do we need this?
 			// Check if the invocation expression takes any func as a parameter, we will allow to rename the method only if there is an awaitable invocation
@@ -232,39 +297,25 @@ namespace AsyncGenerator.Analyzation
 			//	Logger.Warn($"Cannot convert method to async as it is either void or do not return a Task and has not any parameters that can be async:\r\n{methodSymbol}\r\n");
 			//}
 
-			// Custom code TODO: move
-			if (nameNode.Identifier.ToString() == "ToList")
+			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)
 			{
-				var beforeToListExpression = ((MemberAccessExpressionSyntax)((InvocationExpressionSyntax)node).Expression).Expression;
-				var operation = documentData.SemanticModel.GetOperation(beforeToListExpression);
-				if (operation == null)
-				{
-					functionReferenceData.CanBeAsync = false;
-					Logger.Warn($"Cannot find operation for previous node of ToList:\r\n{beforeToListExpression}\r\n");
-				}
-				else if (operation.Type.Name != "IQueryable")
-				{
-					functionReferenceData.CanBeAsync = false;
-					Logger.Warn($"Operation for previous node of ToList is not IQueryable:\r\n{operation.Type.Name}\r\n");
-				}
-			}
-			// End custom code
-
-			// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
-			if (!functionReferenceData.ReferenceAsyncSymbols.Any() && !ProjectData.Contains(functionReferenceData.ReferenceSymbol))
-			{
-				functionReferenceData.CanBeAsync = false;
-				Logger.Warn($"Method {methodSymbol} can not be async as there is no async counterparts for it");
-				return;
+				analyzer.Analyze(node, functionReferenceData, documentData.SemanticModel);
 			}
 
+			// Propagate CancellationTokenRequired to the method data only if the invocation can be async 
+			if (functionReferenceData.CancellationTokenRequired && functionReferenceData.GetConversion() == FunctionReferenceDataConversion.ToAsync)
+			{
+				// We need to set CancellationTokenRequired to true for the method that contains this invocation
+				var methodData = functionReferenceData.FunctionData.GetMethodData();
+				methodData.CancellationTokenRequired = true;
+			}
 		}
 
 		private void AnalyzeArgumentExpression(SyntaxNode node, SimpleNameSyntax nameNode, FunctionReferenceData result)
 		{
 			//result.PassedAsArgument = true;
 			var documentData = result.FunctionData.TypeData.NamespaceData.DocumentData;
-			var methodArgTypeInfo = ModelExtensions.GetTypeInfo(documentData.SemanticModel, nameNode);
+			var methodArgTypeInfo = documentData.SemanticModel.GetTypeInfo(nameNode);
 			if (methodArgTypeInfo.ConvertedType?.TypeKind != TypeKind.Delegate)
 			{
 				// TODO: debug and document
@@ -289,7 +340,7 @@ namespace AsyncGenerator.Analyzation
 			}
 			else
 			{
-				var argumentMethodSymbol = (IMethodSymbol)ModelExtensions.GetSymbolInfo(documentData.SemanticModel, nameNode).Symbol;
+				var argumentMethodSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
 				if (!argumentMethodSymbol.ReturnType.Equals(delegateMethod.ReturnType)) // i.e IList<T> -> IEnumerable<T>
 				{
 					//result.MustBeAwaited = true;

@@ -181,6 +181,7 @@
   <ItemGroup>
     <Compile Include="Analyzation\AsyncCounterpartsSearchOptions.cs" />
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.Analyze.cs" />
     <Compile Include="Analyzation\ProjectAnalyzer.PostAnalyze.cs" />
@@ -226,6 +227,7 @@
     <Compile Include="Analyzation\ProjectAnalyzer.cs" />
     <Compile Include="Plugins\AbstractPlugin.cs" />
     <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
+    <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPreconditionChecker.cs" />
     <Compile Include="ProjectData.cs" />

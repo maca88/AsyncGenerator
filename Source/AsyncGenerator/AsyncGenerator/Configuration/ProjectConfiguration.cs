@@ -86,6 +86,7 @@ namespace AsyncGenerator.Configuration
 		{
 			TryAdd(plugin, AnalyzeConfiguration.FindAsyncCounterpartsFinders);
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
+			TryAdd(plugin, AnalyzeConfiguration.InvocationExpressionAnalyzers);
 			RegisteredPlugins.Add(plugin);
 		}
 
