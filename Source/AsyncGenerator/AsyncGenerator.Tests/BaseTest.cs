@@ -39,6 +39,11 @@ namespace AsyncGenerator.Tests
 				);
 		}
 
+		public string GetMethodName(Expression<Action> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
 		public string GetMethodName(Expression<Action<T>> expression)
 		{
 			return GetMethodName((LambdaExpression)expression);

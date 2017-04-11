@@ -41,7 +41,7 @@ namespace AsyncGenerator.Tests
 				var methodReference = methods[readFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceKind);
 				Assert.IsTrue(methodReference.CanBeAsync);
-				Assert.IsTrue(methodReference.CanBeAwaited);
+				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsNull(methodReference.ReferenceFunctionData);
 				Assert.AreEqual("Read", methodReference.ReferenceSymbol.Name);
 				Assert.AreEqual(1, methodReference.ReferenceAsyncSymbols.Count);
@@ -96,7 +96,7 @@ namespace AsyncGenerator.Tests
 				var methodReference = methods[readFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceKind);
 				Assert.IsTrue(methodReference.CanBeAsync);
-				Assert.IsTrue(methodReference.CanBeAwaited);
+				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 				Assert.IsNull(methodReference.ReferenceFunctionData);
 				Assert.AreEqual("Read", methodReference.ReferenceSymbol.Name);
@@ -107,13 +107,13 @@ namespace AsyncGenerator.Tests
 				methodReference = methods[callReadFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceKind);
 				Assert.IsTrue(methodReference.CanBeAsync);
-				Assert.IsTrue(methodReference.CanBeAwaited);
+				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 
 				methodReference = methods[callCallReadFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceKind);
 				Assert.IsTrue(methodReference.CanBeAsync);
-				Assert.IsTrue(methodReference.CanBeAwaited);
+				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 			};
 

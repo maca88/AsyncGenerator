@@ -26,6 +26,11 @@ namespace AsyncGenerator.Extensions
 			       parameterSymbol.ConstraintTypes.All(o => candParamType.ConstraintTypes.Contains(o));
 		}
 
+		internal static bool IsTaskType(this ITypeSymbol typeSymbol)
+		{
+			return typeSymbol.Name == nameof(Task) &&
+					typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
+		}
 
 		/// <summary>
 		/// Check if the return type matches, valid cases: <see cref="Void"/> to <see cref="System.Threading.Tasks.Task"/> Task, TResult to <see cref="System.Threading.Tasks.Task{TResult}"/> and

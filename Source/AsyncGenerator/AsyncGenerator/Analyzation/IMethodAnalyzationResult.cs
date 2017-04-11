@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -35,5 +36,11 @@ namespace AsyncGenerator.Analyzation
 		/// When true, the method has at least one invocation that needs a <see cref="CancellationToken"/> as a parameter.
 		/// </summary>
 		bool CancellationTokenRequired { get; }
+
+		/// <summary>
+		/// When true, the method body must be wrapped within a async lock as <see cref="MethodImplOptions.Synchronized"/> 
+		/// is not supported for async methods
+		/// </summary>
+		bool MustRunSynchronized { get; }
 	}
 }

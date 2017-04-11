@@ -28,6 +28,11 @@ namespace AsyncGenerator.Tests.TestCases
 			Task.Run(() => SimpleFile.Read()).Wait();
 		}
 
+		public void RunSynchronouslyActionTask()
+		{
+			Task.Run(() => SimpleFile.Read()).RunSynchronously();
+		}
+
 		public void WaitFunctionTask()
 		{
 			var result = Task.Run(() =>

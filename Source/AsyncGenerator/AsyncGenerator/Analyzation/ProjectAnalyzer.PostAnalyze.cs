@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Analyzation
@@ -154,9 +156,64 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				// Some async method may not have any async invocations because is a dependency of another async method (overloads) or was forced to be async
-				var methodRefSpan = methodData.MethodReferenceData
+
+				var asyncMethodReferences = methodData.MethodReferenceData
 					.Where(o => o.GetConversion() == FunctionReferenceDataConversion.ToAsync)
+					.ToList();
+
+				if (!asyncMethodReferences.Any())
+				{
+					continue;
+				}
+				// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
+				var canSkipAwait = true;
+				foreach (var methodReference in asyncMethodReferences)
+				{
+					if (!methodReference.UsedAsReturnValue)
+					{
+						canSkipAwait = false;
+						break;
+					}
+					var functionData = methodReference.FunctionData;
+					var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskType();
+					// We need to check the return value of the async counterpart
+					// eg. Task<IList<string>> to Task<IEnumerable<string>>, Task<long> -> Task<int> are not valid
+					// eg. Task<int> to Task is valid
+					if (!isReturnTypeTask &&
+						(
+							(
+								methodReference.ReferenceAsyncSymbols.Any() &&
+								!methodReference.ReferenceAsyncSymbols.All(o =>
+								{
+									var returnType = o.ReturnType as INamedTypeSymbol;
+									if (returnType == null || !returnType.IsGenericType)
+									{
+										return o.ReturnType.Equals(functionData.Symbol.ReturnType);
+									}
+									return returnType.TypeArguments.First().Equals(functionData.Symbol.ReturnType);
+								})
+								) ||
+							(
+								methodReference.ReferenceFunctionData != null &&
+								!methodReference.ReferenceFunctionData.Symbol.ReturnType.Equals(functionData.Symbol.ReturnType)
+								)
+							)
+						)
+					{
+						canSkipAwait = false;
+						break;
+					}
+				}
+				if (canSkipAwait)
+				{
+					foreach (var methodReference in asyncMethodReferences)
+					{
+						methodReference.AwaitInvocation = false;
+					}
+				}
+
+				// Some async method may not have any async invocations because is a dependency of another async method (overloads) or was forced to be async
+				var methodRefSpan = asyncMethodReferences
 					.Select(o => o.ReferenceLocation.Location)
 					.OrderBy(o => o.SourceSpan.Start)
 					.FirstOrDefault();
@@ -172,6 +229,8 @@ namespace AsyncGenerator.Analyzation
 						methodData.Preconditions.Add(statement);
 					}
 				}
+
+				//TODO: calculate method SkipAsync
 			}
 		}
 	}

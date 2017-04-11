@@ -26,8 +26,15 @@ namespace AsyncGenerator.Analyzation
 
 		bool CanBeAsync { get; }
 
-		bool CanBeAwaited { get; }
+		bool AwaitInvocation { get; }
 
 		bool CancellationTokenRequired { get; }
+
+		ExpressionSyntax ConfigureAwaitParameter { get; }
+
+		bool SynchronouslyAwaited { get; }
+
+		bool UsedAsReturnValue { get; }
+
 	}
 }

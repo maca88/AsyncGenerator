@@ -102,6 +102,20 @@ namespace AsyncGenerator
 
 		#endregion
 
+		#region Analyzation step
+
+		public bool HasYields { get; set; }
+
+		public bool MustRunSynchronized { get; set; }
+
+		#endregion
+
+		#region Post analyzation step
+
+		public bool SkipAsync { get; set; }
+
+		#endregion
+
 
 		public IEnumerable<MethodData> GetAllRelatedMethods()
 		{

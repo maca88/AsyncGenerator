@@ -26,5 +26,15 @@ namespace AsyncGenerator.TestCases
 		{
 			return Task.CompletedTask;
 		}
+
+		public static bool Write(string content)
+		{
+			return true;
+		}
+
+		public static Task<bool> WriteAsync(string content)
+		{
+			return Task.FromResult(true);
+		}
 	}
 }

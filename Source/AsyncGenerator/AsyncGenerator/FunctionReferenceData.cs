@@ -46,9 +46,11 @@ namespace AsyncGenerator
 
 		public bool CanBeAsync { get; set; }
 
-		public bool CanBeAwaited { get; internal set; } = true;
+		public bool AwaitInvocation { get; internal set; } = true;
 
-		public bool? ConfigureAwait { get; set; }
+		public ExpressionSyntax ConfigureAwaitParameter { get; set; }
+
+		public bool SynchronouslyAwaited { get; set; }
 
 		public bool CancellationTokenRequired { get; set; }
 

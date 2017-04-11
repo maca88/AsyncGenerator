@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.Isam.Esent.Interop;
 using static AsyncGenerator.Analyzation.AsyncCounterpartsSearchOptions;
 
 namespace AsyncGenerator.Analyzation
 {
 	public partial class ProjectAnalyzer
 	{
-		private readonly string[] _taskResultMethods = {"Wait", "GetResult"};
+		private readonly string[] _taskResultMethods = {"Wait", "GetResult", "RunSynchronously"};
 
 		private async Task<IList<MethodData>> AnalyzeDocumentData(DocumentData documentData)
 		{
@@ -43,7 +46,12 @@ namespace AsyncGenerator.Analyzation
 			{
 				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
 			}
-			
+
+			methodData.HasYields = methodData.Node.Body?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
+				.Where(o => o.AttributeClass.Name == "MethodImplAttribute")
+				.Any(o => ((MethodImplOptions)(int)o.ConstructorArguments.First().Value).HasFlag(MethodImplOptions.Synchronized));
+
 			if (methodData.Conversion == MethodConversion.ToAsync)
 			{
 				return;
@@ -61,15 +69,7 @@ namespace AsyncGenerator.Analyzation
 
 			}
 
-			// Done in the post analyzation step
-			// At this point a method can be converted to async if we have atleast one external method invocation that can be asnyc
-			// or one internal method that is marked to be async.
-			//if (methodData.MethodReferenceData.Any(o => o.CanBeAsync &&
-			//	!ProjectData.Contains(o.ReferenceSymbol) || o.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync))
-			//{
-			//	methodData.Conversion = MethodConversion.ToAsync;
-			//	return;
-			//}
+			
 		}
 
 		private async Task AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)
@@ -157,11 +157,7 @@ namespace AsyncGenerator.Analyzation
 				}
 			}
 			refData.ReferenceKind = currNode.Kind();
-			var statementNode = currNode.AncestorsAndSelf().OfType<StatementSyntax>().First();
-			if (statementNode.IsKind(SyntaxKind.ReturnStatement))
-			{
-				refData.UsedAsReturnValue = true;
-			}
+
 			//else if (Symbol.ReturnsVoid && statementNode.IsKind(SyntaxKind.ExpressionStatement))
 			//{
 			//	// Check if the reference is the last statement to execute
@@ -205,12 +201,13 @@ namespace AsyncGenerator.Analyzation
 			{
 				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || o.ReturnType.Name != "Task"))
 				{
-					functionReferenceData.CanBeAwaited = false;
+					functionReferenceData.AwaitInvocation = false;
 					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
 			}
+
 			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
-			if (methodSymbol.ReturnType.Name == nameof(Task) && methodSymbol.ReturnType.ContainingNamespace.ToString() == "System.Threading.Tasks")
+			if (methodSymbol.ReturnType.IsTaskType())
 			{
 				var retrunType = (INamedTypeSymbol) methodSymbol.ReturnType;
 				var canBeAwaited = false;
@@ -233,8 +230,7 @@ namespace AsyncGenerator.Analyzation
 						var invocationNode = currNode.Parent as InvocationExpressionSyntax;
 						if (invocationNode != null)
 						{
-							functionReferenceData.ConfigureAwait =
-								invocationNode.ArgumentList.Arguments.First().Expression.IsKind(SyntaxKind.TrueLiteralExpression);
+							functionReferenceData.ConfigureAwaitParameter = invocationNode.ArgumentList.Arguments.First().Expression;
 							currNode = invocationNode.Parent;
 							continue;
 						}
@@ -262,9 +258,19 @@ namespace AsyncGenerator.Analyzation
 				}
 				if (!canBeAwaited)
 				{
-					functionReferenceData.CanBeAwaited = false;
-					Logger.Info($"Cannot await invocation of a method that returns a Task without be synchronously awaited:\r\n{methodSymbol}\r\n");
+					functionReferenceData.AwaitInvocation = false;
+					Logger.Info(
+						$"Cannot await invocation of a method that returns a Task without be synchronously awaited:\r\n{methodSymbol}\r\n");
 				}
+				else
+				{
+					functionReferenceData.SynchronouslyAwaited = true;
+				}
+			}
+
+			if (node.Parent.IsKind(SyntaxKind.ReturnStatement))
+			{
+				functionReferenceData.UsedAsReturnValue = true;
 			}
 
 
@@ -283,20 +289,6 @@ namespace AsyncGenerator.Analyzation
 				return;
 			}
 
-			//TODO: do we need this?
-			// Check if the invocation expression takes any func as a parameter, we will allow to rename the method only if there is an awaitable invocation
-			//var invocationNode = (InvocationExpressionSyntax)node;
-			//var delegateParamNodes = invocationNode.ArgumentList.Arguments
-			//	.Select((o, i) => new { o.Expression, Index = i })
-			//	.Where(o => indexOfArgument == NoArg || indexOfArgument == o.Index)
-			//	.Where(o => functionData.MethodReferences.Any(r => o.Expression.Span.Contains(r.Location.SourceSpan)))
-			//	.ToList();
-			//if (!delegateParamNodes.Any())
-			//{
-			//	functionReferenceData.CanBeAsync = false;
-			//	Logger.Warn($"Cannot convert method to async as it is either void or do not return a Task and has not any parameters that can be async:\r\n{methodSymbol}\r\n");
-			//}
-
 			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)
 			{
 				analyzer.Analyze(node, functionReferenceData, documentData.SemanticModel);
@@ -313,7 +305,6 @@ namespace AsyncGenerator.Analyzation
 
 		private void AnalyzeArgumentExpression(SyntaxNode node, SimpleNameSyntax nameNode, FunctionReferenceData result)
 		{
-			//result.PassedAsArgument = true;
 			var documentData = result.FunctionData.TypeData.NamespaceData.DocumentData;
 			var methodArgTypeInfo = documentData.SemanticModel.GetTypeInfo(nameNode);
 			if (methodArgTypeInfo.ConvertedType?.TypeKind != TypeKind.Delegate)
@@ -321,15 +312,6 @@ namespace AsyncGenerator.Analyzation
 				// TODO: debug and document
 				return;
 			}
-
-			// Custom code TODO: move
-			//var convertedType = methodArgTypeInfo.ConvertedType;
-			//if (convertedType.ContainingAssembly.Name == "nunit.framework" && convertedType.Name == "TestDelegate")
-			//{
-			//	result.WrapInsideAsyncFunction = true;
-			//	return;
-			//}
-			// End custom code
 
 			var delegateMethod = (IMethodSymbol)methodArgTypeInfo.ConvertedType.GetMembers("Invoke").First();
 

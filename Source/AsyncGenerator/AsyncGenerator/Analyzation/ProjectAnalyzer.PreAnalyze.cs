@@ -227,6 +227,8 @@ namespace AsyncGenerator.Analyzation
 			}
 
 			// Verify if there is already an async counterpart for this method
+			//TODO: this is not correct when generating methods with a cancellation token as here we do not know
+			// if the generated method will have the cancellation token parameter or not
 			var searchOptions = EqualParameters | IgnoreReturnType;
 			if (_configuration.UseCancellationTokenOverload)
 			{
