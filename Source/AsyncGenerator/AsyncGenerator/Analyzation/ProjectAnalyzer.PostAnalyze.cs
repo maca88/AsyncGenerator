@@ -166,12 +166,12 @@ namespace AsyncGenerator.Analyzation
 					continue;
 				}
 				// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
-				var canSkipAwait = true;
+				var canSkipAwaits = true;
 				foreach (var methodReference in asyncMethodReferences)
 				{
 					if (!methodReference.UsedAsReturnValue)
 					{
-						canSkipAwait = false;
+						canSkipAwaits = false;
 						break;
 					}
 					var functionData = methodReference.FunctionData;
@@ -200,11 +200,11 @@ namespace AsyncGenerator.Analyzation
 							)
 						)
 					{
-						canSkipAwait = false;
+						canSkipAwaits = false;
 						break;
 					}
 				}
-				if (canSkipAwait)
+				if (canSkipAwaits)
 				{
 					foreach (var methodReference in asyncMethodReferences)
 					{
@@ -212,7 +212,7 @@ namespace AsyncGenerator.Analyzation
 					}
 				}
 
-				// Some async method may not have any async invocations because is a dependency of another async method (overloads) or was forced to be async
+				// Some async methods may not have any async invocations because were forced to be async (overloads)
 				var methodRefSpan = asyncMethodReferences
 					.Select(o => o.ReferenceLocation.Location)
 					.OrderBy(o => o.SourceSpan.Start)
@@ -230,7 +230,17 @@ namespace AsyncGenerator.Analyzation
 					}
 				}
 
-				//TODO: calculate method SkipAsync
+				// TODO: calculate if the method shall be tail splitted. 
+				// A method shall be tail splitted when has at least one precondition and there is at least one awaitable invocation
+
+				//TODO: calculate if the async keyword shall be omitted
+				// The async keyword shall be omitted when the method does not have any awaitable invocation
+
+				// TODO: If the async keyword is omitted then calculate if we need to wrap the code into a try/catch statement
+				// We shall skip wrapping a method into a try/catch only when we have one statement (except preconditions) that is an invocation
+				// which returns a Task. This statement shall have only one invocation.
+
+
 			}
 		}
 	}
