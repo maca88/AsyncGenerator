@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
@@ -67,9 +68,14 @@ namespace AsyncGenerator
 		public IMethodSymbol BaseOverriddenMethod { get; set; }
 
 		/// <summary>
-		/// Reference to the async counterpart for this method
+		/// Reference to the async counterpart
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
+
+		/// <summary>
+		/// Reference to the async counterpart that has a <see cref="CancellationToken"/>
+		/// </summary>
+		public IMethodSymbol AsyncCounterpartWithTokenSymbol { get; set; }
 
 		public bool CancellationTokenRequired { get; set; }
 
@@ -84,9 +90,12 @@ namespace AsyncGenerator
 
 		#region IMethodAnalyzationResult
 
-		IReadOnlyList<IFunctionAnalyzationResult> IMethodAnalyzationResult.InvokedBy => InvokedBy.ToImmutableArray();
+		private IReadOnlyList<IFunctionAnalyzationResult> _cachedInvokedBy;
+		IReadOnlyList<IFunctionAnalyzationResult> IMethodAnalyzationResult.InvokedBy => _cachedInvokedBy ?? (_cachedInvokedBy = InvokedBy.ToImmutableArray());
 
-		IReadOnlyList<IAnonymousFunctionAnalyzationResult> IMethodAnalyzationResult.AnonymousFunctions => AnonymousFunctionData.Values.ToImmutableArray();
+		private IReadOnlyList<IAnonymousFunctionAnalyzationResult> _cachedAnonymousFunctions;
+		IReadOnlyList<IAnonymousFunctionAnalyzationResult> IMethodAnalyzationResult.AnonymousFunctions =>
+			_cachedAnonymousFunctions ?? (_cachedAnonymousFunctions = AnonymousFunctionData.Values.ToImmutableArray());
 
 		#endregion
 
@@ -104,18 +113,9 @@ namespace AsyncGenerator
 
 		#region Analyzation step
 
-		public bool HasYields { get; set; }
-
 		public bool MustRunSynchronized { get; set; }
 
 		#endregion
-
-		#region Post analyzation step
-
-		public bool SkipAsync { get; set; }
-
-		#endregion
-
 
 		public IEnumerable<MethodData> GetAllRelatedMethods()
 		{
@@ -165,15 +165,17 @@ namespace AsyncGenerator
 			return Node;
 		}
 
+		public override SyntaxNode GetBodyNode()
+		{
+			return Node.Body ?? (SyntaxNode)Node.ExpressionBody;
+		}
+
 		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
 		{
 			return AnonymousFunctionData.Values;
 		}
 
-		public override MethodData GetMethodData()
-		{
-			return this;
-		}
+		public override MethodData GetMethodData() => this;
 
 		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax type, bool create = false)
 		//{

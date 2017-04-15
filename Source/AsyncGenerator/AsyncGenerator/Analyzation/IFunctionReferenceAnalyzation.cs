@@ -17,7 +17,7 @@ namespace AsyncGenerator.Analyzation
 	{
 		IFunctionAnalyzationResult ReferenceFunctionData { get; }
 
-		SimpleNameSyntax ReferenceNode { get; }
+		SimpleNameSyntax ReferenceNameNode { get; }
 
 		ReferenceLocation ReferenceLocation { get; }
 
@@ -25,6 +25,6 @@ namespace AsyncGenerator.Analyzation
 
 		IReadOnlyList<IMethodSymbol> ReferenceAsyncSymbols { get; }
 
-		bool CanBeAsync { get; set; }
+		bool Ignore { get; set; }
 	}
 }

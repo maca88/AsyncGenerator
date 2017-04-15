@@ -42,6 +42,8 @@ namespace AsyncGenerator
 
 		public abstract SyntaxNode GetNode();
 
+		public abstract SyntaxNode GetBodyNode();
+
 		public abstract IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData();
 
 		public abstract MethodData GetMethodData();
@@ -50,15 +52,30 @@ namespace AsyncGenerator
 
 		public ConcurrentSet<FunctionReferenceData> MethodReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
 
+		public bool HasYields { get; set; }
+
+		#endregion
+
+		#region Post analyze step
+
+		public bool SplitTail { get; set; }
+
+		public bool OmitAsync { get; set; }
+
+		public bool WrapInTryCatch { get; set; }
+
 		#endregion
 
 		#region IFunctionAnalyzationResult
 
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => MethodReferenceData.ToImmutableArray();
+		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodReferences;
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = MethodReferenceData.ToImmutableArray());
 
-		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
+		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
-		IReadOnlyList<StatementSyntax> IFunctionAnalyzationResult.Preconditions => Preconditions.ToImmutableArray();
+		private IReadOnlyList<StatementSyntax> _cachedPreconditions;
+		IReadOnlyList<StatementSyntax> IFunctionAnalyzationResult.Preconditions => _cachedPreconditions ?? (_cachedPreconditions = Preconditions.ToImmutableArray());
 
 		#endregion
 	}

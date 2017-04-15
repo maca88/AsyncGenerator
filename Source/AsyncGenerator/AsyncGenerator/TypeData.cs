@@ -89,12 +89,6 @@ namespace AsyncGenerator
 			}
 		}
 
-		//public TypeData GetNestedTypeData(TypeDeclarationSyntax typeNode, bool create = false)
-		//{
-		//	var typeSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(typeNode);
-		//	return GetNestedTypeData(typeNode, typeSymbol, create);
-		//}
-
 		public TypeData GetNestedTypeData(TypeDeclarationSyntax node, INamedTypeSymbol symbol, bool create = false)
 		{
 			TypeData typeData;
@@ -104,24 +98,6 @@ namespace AsyncGenerator
 			}
 			return !create ? null : NestedTypeData.GetOrAdd(node, syntax => new TypeData(NamespaceData, symbol, node, this));
 		}
-
-		//public MethodData GetMethodData(MethodDeclarationSyntax methodNode, bool create = false)
-		//{
-		//	var methodSymbol = NamespaceData.DocumentData.SemanticModel.GetDeclaredSymbol(methodNode);
-		//	return GetMethodData(methodNode, methodSymbol, create);
-		//}
-
-		//public async Task<MethodData> GetMethodData(IMethodSymbol symbol, bool create = false)
-		//{
-		//	var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == Node.SyntaxTree.FilePath);
-		//	var memberNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-
-		//	//var location = symbol.Locations.Single(o => o.SourceTree.FilePath == Node.SyntaxTree.FilePath);
-		//	//var memberNode = Node.DescendantNodes()
-		//	//						 .OfType<MethodDeclarationSyntax>()
-		//	//						 .First(o => o.ChildTokens().SingleOrDefault(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == location.SourceSpan);
-		//	return GetMethodData(memberNode, symbol, create);
-		//}
 
 		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, IMethodSymbol methodSymbol, bool create = false)
 		{
@@ -135,13 +111,17 @@ namespace AsyncGenerator
 
 		#region ITypeAnalyzationResult
 
-		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
+		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
-		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => SelfReferences.ToImmutableArray();
+		private IReadOnlyList<ReferenceLocation> _cachedSelfReferences;
+		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
 
-		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => MethodData.Values.ToImmutableArray();
+		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
+		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = MethodData.Values.ToImmutableArray());
 
-		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => NestedTypeData.Values.ToImmutableArray();
+		private IReadOnlyList<ITypeAnalyzationResult> _cachedNestedTypes;
+		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => _cachedNestedTypes ?? (_cachedNestedTypes = NestedTypeData.Values.ToImmutableArray());
 
 		#endregion
 	}

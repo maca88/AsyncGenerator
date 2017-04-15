@@ -102,7 +102,8 @@ namespace AsyncGenerator
 
 		#region IProjectAnalyzationResult
 
-		IReadOnlyList<IDocumentAnalyzationResult> IProjectAnalyzationResult.Documents => DocumentData.Values.ToImmutableArray();
+		private IReadOnlyList<IDocumentAnalyzationResult> _cachedDocuments;
+		IReadOnlyList<IDocumentAnalyzationResult> IProjectAnalyzationResult.Documents => _cachedDocuments ?? (_cachedDocuments = DocumentData.Values.ToImmutableArray());
 
 		#endregion
 

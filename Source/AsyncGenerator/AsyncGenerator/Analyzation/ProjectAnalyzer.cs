@@ -107,7 +107,8 @@ namespace AsyncGenerator.Analyzation
 		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(MethodData methodData)
 		{
 			var result = new HashSet<IMethodSymbol>();
-			if (methodData.Node.Body == null)
+			var methodDataBody = methodData.GetBodyNode();
+			if (methodDataBody == null)
 			{
 				return result;
 			}
@@ -119,7 +120,7 @@ namespace AsyncGenerator.Analyzation
 				searchOptions |= HasCancellationToken;
 			}
 
-			foreach (var invocation in methodData.Node.Body.DescendantNodes()
+			foreach (var invocation in methodDataBody.DescendantNodes()
 										   .OfType<InvocationExpressionSyntax>())
 			{
 				var methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;

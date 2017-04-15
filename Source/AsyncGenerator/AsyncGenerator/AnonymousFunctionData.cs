@@ -93,6 +93,11 @@ namespace AsyncGenerator
 			return Node;
 		}
 
+		public override SyntaxNode GetBodyNode()
+		{
+			return Node.Body;
+		}
+
 		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
 		{
 			return NestedAnonymousFunctionData.Values;

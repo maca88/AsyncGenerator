@@ -7,7 +7,7 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TestCases
 {
-	public class SimpleSkipAsync
+	public class SimpleOmitAsync
 	{
 		public bool SimpleReturn()
 		{
@@ -23,6 +23,21 @@ namespace AsyncGenerator.Tests.TestCases
 		{
 			return SyncReadFile();
 		}
+
+		public void SimpleVoid()
+		{
+			SimpleFile.Read();
+		}
+
+		public void DoubleCallVoid()
+		{
+			SyncReadFile();
+			SimpleFile.Read();
+		}
+
+		public void ExpressionVoid() => SimpleFile.Read();
+
+		public bool ExpressionReturn() => SimpleFile.Write("");
 
 		public string ReadFile()
 		{

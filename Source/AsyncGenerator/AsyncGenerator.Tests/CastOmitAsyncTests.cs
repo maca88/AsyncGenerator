@@ -9,7 +9,7 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
 {
-	public class CastSkipAsyncTests : BaseTest<CastSkipAsync>
+	public class CastOmitAsyncTests : BaseTest<CastOmitAsync>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -39,6 +39,7 @@ namespace AsyncGenerator.Tests
 				foreach (var awaitRequiredMethod in awaitRequiredMethods)
 				{
 					method = methods[awaitRequiredMethod];
+					Assert.IsFalse(method.OmitAsync);
 					Assert.AreEqual(1, method.MethodReferences.Count);
 					methodReference = method.MethodReferences[0];
 					Assert.IsTrue(methodReference.AwaitInvocation);
@@ -53,6 +54,7 @@ namespace AsyncGenerator.Tests
 				foreach (var awaitNotRequiredMethod in awaitNotRequiredMethods)
 				{
 					method = methods[awaitNotRequiredMethod];
+					Assert.IsTrue(method.OmitAsync);
 					Assert.AreEqual(1, method.MethodReferences.Count);
 					methodReference = method.MethodReferences[0];
 					Assert.IsFalse(methodReference.AwaitInvocation);

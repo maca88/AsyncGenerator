@@ -234,13 +234,41 @@ namespace AsyncGenerator.Analyzation
 			{
 				searchOptions |= HasCancellationToken;
 			}
-			var asyncCounterpart = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).SingleOrDefault();
-			if (asyncCounterpart != null)
+			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).ToList();
+			if (asyncCounterparts.Any())
 			{
-				log($"Method {methodSymbol} has already an async counterpart {asyncCounterpart}");
-				methodData.AsyncCounterpartSymbol = asyncCounterpart;
-				methodData.Conversion = MethodConversion.Ignore;
-				return;
+				if (!_configuration.UseCancellationTokenOverload && asyncCounterparts.Count > 1)
+				{
+					throw new InvalidOperationException($"Method {methodSymbol} has more than one async counterpart");
+				}
+				// We shall get a maximum of two async counterparts when the HasCancellationToken flag is used
+				if (_configuration.UseCancellationTokenOverload && asyncCounterparts.Count > 2)
+				{
+					throw new InvalidOperationException($"Method {methodSymbol} has more than two async counterparts");
+				}
+
+				foreach (var asyncCounterpart in asyncCounterparts)
+				{
+					// Check if the async counterpart has a cancellation token
+					if (asyncCounterpart.Parameters.Length > methodSymbol.Parameters.Length)
+					{
+						methodData.AsyncCounterpartWithTokenSymbol = asyncCounterpart;
+					}
+					else
+					{
+						methodData.AsyncCounterpartSymbol = asyncCounterpart;
+					}
+				}
+
+				if (
+					(_configuration.UseCancellationTokenOverload && asyncCounterparts.Count == 2) ||
+					(!_configuration.UseCancellationTokenOverload && asyncCounterparts.Count == 1)
+				)
+				{
+					log($"Method {methodSymbol} has already an async counterpart {asyncCounterparts.First()}");
+					methodData.Conversion = MethodConversion.Ignore;
+					return;
+				}
 			}
 		}
 

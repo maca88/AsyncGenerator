@@ -198,9 +198,11 @@ namespace AsyncGenerator
 
 		#region INamespaceAnalyzationResult
 
-		IReadOnlyList<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => TypeReferences.ToImmutableArray();
+		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
+		IReadOnlyList<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
-		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => TypeData.Values.ToImmutableArray();
+		private IReadOnlyList<ITypeAnalyzationResult> _cachedTypes;
+		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => _cachedTypes ?? (_cachedTypes = TypeData.Values.ToImmutableArray());
 
 		#endregion
 	}

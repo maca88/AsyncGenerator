@@ -6,7 +6,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
 {
@@ -37,6 +39,15 @@ namespace AsyncGenerator.Tests
 					})
 
 				);
+		}
+
+		public void CheckMethodsConversion(IEnumerable<IMethodAnalyzationResult> methodAnalyzationResults)
+		{
+			foreach (var method in methodAnalyzationResults)
+			{
+				Assert.AreNotEqual(MethodConversion.Smart, method.Conversion);
+				Assert.AreNotEqual(MethodConversion.Unknown, method.Conversion);
+			}
 		}
 
 		public string GetMethodName(Expression<Action> expression)

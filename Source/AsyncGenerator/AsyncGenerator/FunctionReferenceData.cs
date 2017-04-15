@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator
 {
-	public enum FunctionReferenceDataConversion
+	public enum FunctionReferenceConversion
 	{
 		Ignore,
 		ToAsync
@@ -20,12 +20,12 @@ namespace AsyncGenerator
 
 	public class FunctionReferenceData : IFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
 	{
-		public FunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNode,
+		public FunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
 		{
 			FunctionData = functionData;
 			ReferenceLocation = reference;
-			ReferenceNode = referenceNode;
+			ReferenceNameNode = referenceNameNode;
 			ReferenceSymbol = referenceSymbol;
 			ReferenceFunctionData = referenceFunctionData;
 		}
@@ -34,9 +34,9 @@ namespace AsyncGenerator
 
 		public FunctionData ReferenceFunctionData { get; }
 
-		public SimpleNameSyntax ReferenceNode { get; }
+		public SimpleNameSyntax ReferenceNameNode { get; }
 
-		public SyntaxKind ReferenceKind { get; internal set; }
+		public SyntaxNode ReferenceNode { get; internal set; }
 
 		public ReferenceLocation ReferenceLocation { get; }
 
@@ -44,9 +44,9 @@ namespace AsyncGenerator
 
 		public HashSet<IMethodSymbol> ReferenceAsyncSymbols { get; set; }
 
-		public bool CanBeAsync { get; set; }
+		public bool Ignore { get; set; }
 
-		public bool AwaitInvocation { get; internal set; } = true;
+		public bool? AwaitInvocation { get; internal set; }
 
 		public ExpressionSyntax ConfigureAwaitParameter { get; set; }
 
@@ -54,17 +54,16 @@ namespace AsyncGenerator
 
 		public bool CancellationTokenRequired { get; set; }
 
-		// Replaced by ReferenceKind
-		//public bool PassedAsArgument { get; internal set; }
-
 		public bool UsedAsReturnValue { get; internal set; }
 
-		public FunctionReferenceDataConversion GetConversion()
+		public bool LastInvocation { get; internal set; }
+
+		public FunctionReferenceConversion GetConversion()
 		{
-			return CanBeAsync &&
+			return !Ignore &&
 			       (ReferenceAsyncSymbols?.Count > 0 || ReferenceFunctionData?.Conversion == MethodConversion.ToAsync)
-				? FunctionReferenceDataConversion.ToAsync
-				: FunctionReferenceDataConversion.Ignore;
+				? FunctionReferenceConversion.ToAsync
+				: FunctionReferenceConversion.Ignore;
 		}
 
 		public override int GetHashCode()
@@ -85,15 +84,19 @@ namespace AsyncGenerator
 
 		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.ReferenceFunctionData => ReferenceFunctionData;
 
-		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols => ReferenceAsyncSymbols.ToImmutableArray();
+		private IReadOnlyList<IMethodSymbol> _cachedReferenceAsyncSymbols;
+		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols => 
+			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
+
+		bool IFunctionReferenceAnalyzationResult.AwaitInvocation => AwaitInvocation.GetValueOrDefault();
 
 		#endregion
 
 		#region IFunctionReferenceAnalyzation
 
 		IFunctionAnalyzationResult IFunctionReferenceAnalyzation.ReferenceFunctionData => ReferenceFunctionData;
-
-		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzation.ReferenceAsyncSymbols => ReferenceAsyncSymbols.ToImmutableArray();
+		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzation.ReferenceAsyncSymbols => 
+			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
 
 		#endregion
 	}

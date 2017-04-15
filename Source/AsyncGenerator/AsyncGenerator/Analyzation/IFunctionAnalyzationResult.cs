@@ -20,6 +20,11 @@ namespace AsyncGenerator.Analyzation
 		SyntaxNode GetNode();
 
 		/// <summary>
+		/// Get the syntax node of the function body
+		/// </summary>
+		SyntaxNode GetBodyNode();
+
+		/// <summary>
 		/// References of types that are used inside this function
 		/// </summary>
 		IReadOnlyList<ReferenceLocation> TypeReferences { get; }
@@ -34,5 +39,20 @@ namespace AsyncGenerator.Analyzation
 		/// are going to be converted
 		/// </summary>
 		IReadOnlyList<StatementSyntax> Preconditions { get; }
+
+		/// <summary>
+		/// When true, the async keyword will be omitted
+		/// </summary>
+		bool OmitAsync { get; }
+
+		/// <summary>
+		/// When true, the method will be splitted into two. 
+		/// </summary>
+		bool SplitTail { get; }
+
+		/// <summary>
+		/// When true, the method will be wrapped in a try/catch block
+		/// </summary>
+		bool WrapInTryCatch { get; }
 	}
 }

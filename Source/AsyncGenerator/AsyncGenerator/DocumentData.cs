@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
@@ -287,11 +288,6 @@ namespace AsyncGenerator
 						return method.AssociatedSymbol;
 					}
 					return method;
-					/*
-					if (method.MethodKind != MethodKind.AnonymousFunction)
-					{
-						return method;
-					}*/
 				}
 			}
 			//TODO: reference to a cref
@@ -300,7 +296,9 @@ namespace AsyncGenerator
 
 		#region IDocumentAnalyzationResult
 
-		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => NamespaceData.Values.ToImmutableArray();
+		private IReadOnlyList<INamespaceAnalyzationResult> _cachedNamespaces;
+		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => _cachedNamespaces ?? (_cachedNamespaces = NamespaceData.Values.ToImmutableArray());
+
 
 		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;
 

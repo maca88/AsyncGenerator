@@ -14,7 +14,7 @@ namespace AsyncGenerator.Analyzation
 	{
 		IFunctionAnalyzationResult ReferenceFunctionData { get; }
 
-		SimpleNameSyntax ReferenceNode { get; }
+		SimpleNameSyntax ReferenceNameNode { get; }
 
 		ReferenceLocation ReferenceLocation { get; }
 
@@ -22,9 +22,11 @@ namespace AsyncGenerator.Analyzation
 
 		IReadOnlyList<IMethodSymbol> ReferenceAsyncSymbols { get; }
 
-		SyntaxKind ReferenceKind { get; }
+		SyntaxNode ReferenceNode { get; }
 
-		bool CanBeAsync { get; }
+		FunctionReferenceConversion GetConversion();
+
+		bool Ignore { get; }
 
 		bool AwaitInvocation { get; }
 
@@ -36,5 +38,6 @@ namespace AsyncGenerator.Analyzation
 
 		bool UsedAsReturnValue { get; }
 
+		bool LastInvocation { get; }
 	}
 }

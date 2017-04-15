@@ -7,7 +7,7 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TestCases
 {
-	public class PreconditionSkipAsync
+	public class PreconditionOmitAsync
 	{
 		public string PreconditionReturn(string name)
 		{
@@ -16,6 +16,15 @@ namespace AsyncGenerator.Tests.TestCases
 				throw new ArgumentNullException(nameof(name));
 			}
 			return ReadFile();
+		}
+
+		public void PreconditionVoid(string name)
+		{
+			if (name == null)
+			{
+				throw new ArgumentNullException(nameof(name));
+			}
+			SimpleFile.Read();
 		}
 
 		public string PreconditionToSplit(string name)

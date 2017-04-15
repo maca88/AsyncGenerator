@@ -39,7 +39,7 @@ namespace AsyncGenerator.Tests.TestCases
 			dataReader.Read();
 		}
 
-		public void ReadData(CustomDataReader dataReader)
+		public void CustomReadData(CustomDataReader dataReader)
 		{
 			dataReader.Read();
 		}

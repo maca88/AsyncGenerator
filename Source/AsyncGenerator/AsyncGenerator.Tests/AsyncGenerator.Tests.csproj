@@ -218,21 +218,23 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
-    <Compile Include="CastSkipAsyncTests.cs" />
+    <Compile Include="CastOmitAsyncTests.cs" />
     <Compile Include="CustomReturnTypeTests.cs" />
+    <Compile Include="OverloadWithDifferentParamatersTests.cs" />
+    <Compile Include="PreconditionOmitAsyncTests.cs" />
     <Compile Include="PreconditionsTests.cs" />
     <Compile Include="SimpleAnonymousFunctionsTests.cs" />
     <Compile Include="SimpleCircularCallTests.cs" />
     <Compile Include="SimpleClassInheritanceTests.cs" />
     <Compile Include="SimpleReferenceTests.cs" />
-    <Compile Include="SimpleSkipAsyncTests.cs" />
+    <Compile Include="SimpleOmitAsyncTests.cs" />
     <Compile Include="SynhronizedMethodTests.cs" />
-    <Compile Include="TestCases\CastSkipAsync.cs" />
+    <Compile Include="TestCases\CastOmitAsync.cs" />
     <Compile Include="TestCases\OverloadWithDifferentParamaters.cs" />
     <Compile Include="TestCases\CustomReturnType.cs" />
     <Compile Include="TestCases\MethodAsArgument.cs" />
     <Compile Include="TestCases\Preconditions.cs" />
-    <Compile Include="TestCases\PreconditionSkipAsync.cs" />
+    <Compile Include="TestCases\PreconditionOmitAsync.cs" />
     <Compile Include="TestCases\SimpleAnonymousFunctions.cs" />
     <Compile Include="TestCases\SimpleCircularCall.cs" />
     <Compile Include="TestCases\SimpleClassInheritance.cs" />
@@ -240,7 +242,7 @@
     <Compile Include="TestCases\SynhronizedMethod.cs" />
     <Compile Include="TestCases\TestCase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestCases\SimpleSkipAsync.cs" />
+    <Compile Include="TestCases\SimpleOmitAsync.cs" />
     <Compile Include="TestCases\VariousTaskRunUsages.cs" />
     <Compile Include="VariousTaskRunUsagesTests.cs" />
   </ItemGroup>

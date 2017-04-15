@@ -7,7 +7,7 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TestCases
 {
-	public class CastSkipAsync
+	public class CastOmitAsync
 	{
 		public long LongCastReturn()
 		{
