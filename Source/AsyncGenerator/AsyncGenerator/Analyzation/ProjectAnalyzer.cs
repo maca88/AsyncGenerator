@@ -59,7 +59,7 @@ namespace AsyncGenerator.Analyzation
 
 			// 4. Step - Analyze all references found in the previous step
 			Logger.Info("Analyzing documents started");
-			await Task.WhenAll(documentData.Select(AnalyzeDocumentData)).ConfigureAwait(false);
+			Parallel.ForEach(documentData, AnalyzeDocumentData);
 			Logger.Info("Analyzing documents completed");
 
 			// 5. Step - Calculate the final conversion for all method data

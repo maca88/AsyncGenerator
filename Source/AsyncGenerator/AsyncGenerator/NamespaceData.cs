@@ -36,9 +36,9 @@ namespace AsyncGenerator
 
 		public bool IsGlobal => Node == null;
 
-		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> TypeData { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
+		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> Types { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
 
-		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NestedNamespaceData { get; } = 
+		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NestedNamespaces { get; } = 
 			new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
 
 		public IEnumerable<NamespaceData> GetSelfAndDescendantsNamespaceData(Func<NamespaceData, bool> predicate = null)
@@ -53,7 +53,7 @@ namespace AsyncGenerator
 				yield break;
 			}
 			yield return namespaceData;
-			foreach (var subTypeData in namespaceData.NestedNamespaceData.Values)
+			foreach (var subTypeData in namespaceData.NestedNamespaces.Values)
 			{
 				if (predicate?.Invoke(subTypeData) == false)
 				{
@@ -138,11 +138,11 @@ namespace AsyncGenerator
 		public TypeData GetTypeData(TypeDeclarationSyntax node, INamedTypeSymbol symbol, bool create = false)
 		{
 			TypeData typeData;
-			if (TypeData.TryGetValue(node, out typeData))
+			if (Types.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
-			return !create ? null : TypeData.GetOrAdd(node, syntax => new TypeData(this, symbol, node));
+			return !create ? null : Types.GetOrAdd(node, syntax => new TypeData(this, symbol, node));
 		}
 
 		public NamespaceData GetNestedNamespaceData(NamespaceDeclarationSyntax node, bool create = false)
@@ -154,11 +154,11 @@ namespace AsyncGenerator
 		public NamespaceData GetNestedNamespaceData(NamespaceDeclarationSyntax node, INamespaceSymbol symbol, bool create = false)
 		{
 			NamespaceData typeData;
-			if (NestedNamespaceData.TryGetValue(node, out typeData))
+			if (NestedNamespaces.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
-			return !create ? null : NestedNamespaceData.GetOrAdd(node, syntax => new NamespaceData(DocumentData, symbol, node, this));
+			return !create ? null : NestedNamespaces.GetOrAdd(node, syntax => new NamespaceData(DocumentData, symbol, node, this));
 		}
 
 		//public TypeData GetTypeData(TypeDeclarationSyntax type, bool create = false)
@@ -202,7 +202,7 @@ namespace AsyncGenerator
 		IReadOnlyList<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedTypes;
-		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => _cachedTypes ?? (_cachedTypes = TypeData.Values.ToImmutableArray());
+		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => _cachedTypes ?? (_cachedTypes = Types.Values.ToImmutableArray());
 
 		#endregion
 	}

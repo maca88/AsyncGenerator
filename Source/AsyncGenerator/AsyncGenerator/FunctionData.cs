@@ -36,7 +36,9 @@ namespace AsyncGenerator
 		/// <summary>
 		/// References to other methods that are invoked inside this method and are candidates to be async
 		/// </summary>
-		public ConcurrentSet<ReferenceLocation> MethodReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+		public ConcurrentSet<FunctionReferenceData> MethodReferences { get; } = new ConcurrentSet<FunctionReferenceData>();
+
+		public ConcurrentSet<CrefReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceData>();
 
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 
@@ -49,8 +51,6 @@ namespace AsyncGenerator
 		public abstract MethodData GetMethodData();
 
 		#region Analyze step
-
-		public ConcurrentSet<FunctionReferenceData> MethodReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
 
 		public bool HasYields { get; set; }
 
@@ -69,7 +69,7 @@ namespace AsyncGenerator
 		#region IFunctionAnalyzationResult
 
 		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodReferences;
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = MethodReferenceData.ToImmutableArray());
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = MethodReferences.ToImmutableArray());
 
 		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
 		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());

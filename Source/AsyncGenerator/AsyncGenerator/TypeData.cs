@@ -29,6 +29,8 @@ namespace AsyncGenerator
 		/// </summary>
 		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
+		public ConcurrentSet<CrefReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceData>();
+
 		/// <summary>
 		/// Contains references of itself
 		/// </summary>
@@ -44,9 +46,11 @@ namespace AsyncGenerator
 
 		public TypeConversion Conversion { get; internal set; }
 
-		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> MethodData { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
+		public bool IsPartial { get; set; }
 
-		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypeData { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
+		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> Methods { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
+
+		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypes { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
 
 		//public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
 		//{
@@ -72,7 +76,7 @@ namespace AsyncGenerator
 				yield break;
 			}
 			yield return typeData;
-			foreach (var subTypeData in typeData.NestedTypeData.Values)
+			foreach (var subTypeData in typeData.NestedTypes.Values)
 			{
 				if (predicate?.Invoke(subTypeData) == false)
 				{
@@ -92,21 +96,21 @@ namespace AsyncGenerator
 		public TypeData GetNestedTypeData(TypeDeclarationSyntax node, INamedTypeSymbol symbol, bool create = false)
 		{
 			TypeData typeData;
-			if (NestedTypeData.TryGetValue(node, out typeData))
+			if (NestedTypes.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
-			return !create ? null : NestedTypeData.GetOrAdd(node, syntax => new TypeData(NamespaceData, symbol, node, this));
+			return !create ? null : NestedTypes.GetOrAdd(node, syntax => new TypeData(NamespaceData, symbol, node, this));
 		}
 
 		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, IMethodSymbol methodSymbol, bool create = false)
 		{
 			MethodData methodData;
-			if (MethodData.TryGetValue(methodNode, out methodData))
+			if (Methods.TryGetValue(methodNode, out methodData))
 			{
 				return methodData;
 			}
-			return !create ? null : MethodData.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
+			return !create ? null : Methods.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
 		}
 
 		#region ITypeAnalyzationResult
@@ -118,10 +122,10 @@ namespace AsyncGenerator
 		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
 
 		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
-		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = MethodData.Values.ToImmutableArray());
+		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = Methods.Values.ToImmutableArray());
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedNestedTypes;
-		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => _cachedNestedTypes ?? (_cachedNestedTypes = NestedTypeData.Values.ToImmutableArray());
+		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => _cachedNestedTypes ?? (_cachedNestedTypes = NestedTypes.Values.ToImmutableArray());
 
 		#endregion
 	}

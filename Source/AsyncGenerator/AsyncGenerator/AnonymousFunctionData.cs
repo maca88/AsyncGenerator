@@ -35,7 +35,7 @@ namespace AsyncGenerator
 
 		public AnonymousFunctionData ParentAnonymousFunctionData { get; }
 
-		public ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData> NestedAnonymousFunctionData { get; }
+		public ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData> NestedAnonymousFunctions { get; }
 			= new ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData>();
 
 		//public AnonymousFunctionData GetNestedAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, bool create = false)
@@ -48,13 +48,13 @@ namespace AsyncGenerator
 			IMethodSymbol symbol, bool create = false)
 		{
 			AnonymousFunctionData typeData;
-			if (NestedAnonymousFunctionData.TryGetValue(node, out typeData))
+			if (NestedAnonymousFunctions.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
 			return !create
 				? null
-				: NestedAnonymousFunctionData.GetOrAdd(node, syntax => new AnonymousFunctionData(MethodData, symbol, node, this));
+				: NestedAnonymousFunctions.GetOrAdd(node, syntax => new AnonymousFunctionData(MethodData, symbol, node, this));
 		}
 
 		public IEnumerable<AnonymousFunctionData> GetSelfAndDescendantsAnonymousFunctionData(
@@ -71,7 +71,7 @@ namespace AsyncGenerator
 				yield break;
 			}
 			yield return functionData;
-			foreach (var subTypeData in functionData.NestedAnonymousFunctionData.Values)
+			foreach (var subTypeData in functionData.NestedAnonymousFunctions.Values)
 			{
 				if (predicate?.Invoke(subTypeData) == false)
 				{
@@ -100,7 +100,7 @@ namespace AsyncGenerator
 
 		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
 		{
-			return NestedAnonymousFunctionData.Values;
+			return NestedAnonymousFunctions.Values;
 		}
 
 		public override MethodData GetMethodData()

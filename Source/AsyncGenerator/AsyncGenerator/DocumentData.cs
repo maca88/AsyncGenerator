@@ -37,17 +37,17 @@ namespace AsyncGenerator
 
 		public NamespaceData GlobalNamespaceData { get; }
 
-		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NamespaceData { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
+		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> Namespaces { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
 
 		/// <summary>
 		/// Iterate through all type data from top to bottom
 		/// </summary>
 		public IEnumerable<TypeData> GetAllTypeDatas(Func<TypeData, bool> predicate = null)
 		{
-			return NamespaceData.Values
+			return Namespaces.Values
 				.SelectMany(o => o.GetSelfAndDescendantsNamespaceData())
-				.SelectMany(o => o.TypeData.Values)
-				.Union(GlobalNamespaceData.TypeData.Values)
+				.SelectMany(o => o.Types.Values)
+				.Union(GlobalNamespaceData.Types.Values)
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData(predicate));
 		}
 
@@ -256,11 +256,11 @@ namespace AsyncGenerator
 		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, INamespaceSymbol namespaceSymbol, bool create)
 		{
 			NamespaceData namespaceData;
-			if (NamespaceData.TryGetValue(namespaceNode, out namespaceData))
+			if (Namespaces.TryGetValue(namespaceNode, out namespaceData))
 			{
 				return namespaceData;
 			}
-			return !create ? null : NamespaceData.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
+			return !create ? null : Namespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
 		}
 
 		// TODO: DEBUG
@@ -289,6 +289,10 @@ namespace AsyncGenerator
 					}
 					return method;
 				}
+				if (current.Kind == SymbolKind.NamedType)
+				{
+					return current;
+				}
 			}
 			//TODO: reference to a cref
 			return null;
@@ -297,7 +301,7 @@ namespace AsyncGenerator
 		#region IDocumentAnalyzationResult
 
 		private IReadOnlyList<INamespaceAnalyzationResult> _cachedNamespaces;
-		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => _cachedNamespaces ?? (_cachedNamespaces = NamespaceData.Values.ToImmutableArray());
+		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => _cachedNamespaces ?? (_cachedNamespaces = Namespaces.Values.ToImmutableArray());
 
 
 		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;

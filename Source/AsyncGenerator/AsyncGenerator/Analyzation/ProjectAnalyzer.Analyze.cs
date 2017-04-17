@@ -18,34 +18,29 @@ namespace AsyncGenerator.Analyzation
 	{
 		private readonly string[] _taskResultMethods = {"Wait", "GetResult", "RunSynchronously"};
 
-		private async Task<IList<MethodData>> AnalyzeDocumentData(DocumentData documentData)
+		private void AnalyzeDocumentData(DocumentData documentData)
 		{
-			var validMethodData = new List<MethodData>();
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
-				foreach (var methodData in typeData.MethodData.Values
+				foreach (var methodData in typeData.Methods.Values
 					.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
-					await AnalyzeMethodData(documentData, methodData).ConfigureAwait(false);
+					AnalyzeMethodData(documentData, methodData);
 					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
 					{
-						await AnalyzeAnonymousFunctionData(documentData, functionData).ConfigureAwait(false);
-					}
-					if (methodData.Conversion != MethodConversion.Ignore)
-					{
-						validMethodData.Add(methodData);
+						AnalyzeAnonymousFunctionData(documentData, functionData);
 					}
 				}
 			}
-			return validMethodData;
 		}
 
-		private async Task AnalyzeMethodData(DocumentData documentData, MethodData methodData)
+		private void AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
 			foreach (var reference in methodData.MethodReferences)
 			{
-				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
+				AnalyzeMethodReference(documentData, reference);
 			}
+
 			var methodBody = methodData.GetBodyNode();
 			methodData.HasYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
@@ -56,13 +51,15 @@ namespace AsyncGenerator.Analyzation
 				methodData.OmitAsync = true;
 			}
 
+			// Check if there is any 
+
 			if (methodData.Conversion == MethodConversion.ToAsync)
 			{
 				return;
 			}
 
 			// If a method is never invoked and there is no invocations inside the method body that can be async and there is no related methods we can ignore it 
-			if (!methodData.InvokedBy.Any() && methodData.MethodReferenceData.All(o => o.Ignore) && !methodData.RelatedMethods.Any())
+			if (!methodData.InvokedBy.Any() && methodData.MethodReferences.All(o => o.Ignore) && !methodData.RelatedMethods.Any())
 			{
 				// If we have to create a new type we need to consider also the external related methods
 				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
@@ -72,44 +69,20 @@ namespace AsyncGenerator.Analyzation
 				}
 
 			}
-
-			
 		}
 
-		private async Task AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)
+		private void AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)
 		{
 			foreach (var reference in methodData.MethodReferences)
 			{
-				methodData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, methodData, reference).ConfigureAwait(false));
+				AnalyzeMethodReference(documentData, reference);
 			}
 			methodData.HasYields = methodData.Node.Body?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
-		//private async Task AnalyzeFunctionData(DocumentData documentData, FunctionData functionData)
-		//{
-		//	foreach (var reference in functionData.MethodReferences)
-		//	{
-		//		functionData.MethodReferenceData.TryAdd(await AnalyzeMethodReference(documentData, functionData, reference).ConfigureAwait(false));
-		//	}
-		//}
-
-		private async Task<FunctionReferenceData> AnalyzeMethodReference(DocumentData documentData, FunctionData functionData, ReferenceLocation reference)
+		private void AnalyzeMethodReference(DocumentData documentData, FunctionReferenceData refData)
 		{
-			var nameNode = functionData.GetNode().DescendantNodes()
-							   .OfType<SimpleNameSyntax>()
-							   .First(
-								   o =>
-								   {
-									   if (o.IsKind(SyntaxKind.GenericName))
-									   {
-										   return o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken)).Span ==
-												  reference.Location.SourceSpan;
-									   }
-									   return o.Span == reference.Location.SourceSpan;
-								   });
-			var refMethodSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
-			var refFunctionData = await ProjectData.GetAnonymousFunctionOrMethodData(refMethodSymbol).ConfigureAwait(false);
-			var refData = new FunctionReferenceData(functionData, reference, nameNode, refMethodSymbol, refFunctionData);
+			var nameNode = refData.ReferenceNameNode;
 
 			// Find the actual usage of the method
 			var currNode = nameNode.Parent;
@@ -163,8 +136,6 @@ namespace AsyncGenerator.Analyzation
 			{
 				refData.AwaitInvocation = !refData.Ignore;
 			}
-
-			return refData;
 		}
 
 		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, FunctionReferenceData functionReferenceData)

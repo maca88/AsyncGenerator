@@ -30,7 +30,7 @@ namespace AsyncGenerator.Analyzation
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
 
-				foreach (var methodData in typeData.MethodData.Values
+				foreach (var methodData in typeData.Methods.Values
 					.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					await ScanMethodData(methodData);
@@ -198,17 +198,7 @@ namespace AsyncGenerator.Analyzation
 				}
 
 				// We need to find the type where the reference location is
-				var node = documentData.Node.DescendantNodes(descendIntoTrivia: true)
-					.First(
-						o =>
-						{
-							if (o.IsKind(SyntaxKind.GenericName))
-							{
-								return o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken)).Span ==
-									   refLocation.Location.SourceSpan;
-							}
-							return o.Span == refLocation.Location.SourceSpan;
-						});
+				var node = documentData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
 
 				var funcNode = node.Ancestors().OfType<AnonymousFunctionExpressionSyntax>().FirstOrDefault();
 				if (funcNode != null)
@@ -344,6 +334,33 @@ namespace AsyncGenerator.Analyzation
 				var refMethodSymbol = symbol as IMethodSymbol;
 				if (refMethodSymbol == null)
 				{
+					if (symbol.Kind != SymbolKind.NamedType)
+					{
+						continue;
+					}
+					// A cref can be on a method or type trivia but we get always the type symbol
+					var crefTypeData = documentData.GetAllTypeDatas(o => o.Symbol.Equals(symbol)).FirstOrDefault();
+					if (crefTypeData == null)
+					{
+						continue;
+					}
+					// Try to find the real node where the cref is located
+					var crefReferenceNameNode = crefTypeData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
+					var crefReferenceSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(crefReferenceNameNode).Symbol;
+					var crefReferenceMethodData = await ProjectData.GetMethodData(crefReferenceSymbol).ConfigureAwait(false);
+					var crefReferenceData = new CrefReferenceData(refLocation, crefReferenceNameNode, crefReferenceSymbol, crefReferenceMethodData);
+
+					var memberNode = crefReferenceNameNode.Ancestors().OfType<MemberDeclarationSyntax>().First();
+					var methodNode = memberNode as MethodDeclarationSyntax;
+					if (methodNode != null)
+					{
+						var crefMethodData = (MethodData)documentData.GetNodeData(methodNode, typeData: crefTypeData);
+						crefMethodData.CrefReferences.TryAdd(crefReferenceData);
+					}
+					else
+					{
+						crefTypeData.CrefReferences.TryAdd(crefReferenceData);
+					}
 					continue;
 				}
 				var baseMethodData = await documentData.GetAnonymousFunctionOrMethodData(refMethodSymbol).ConfigureAwait(false);
@@ -351,29 +368,18 @@ namespace AsyncGenerator.Analyzation
 				{
 					continue;
 				}
-				// Save the reference as it can be made async
-				if (!baseMethodData.MethodReferences.TryAdd(refLocation))
-				{
-					continue; // Reference already processed
-				}
-
 				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
-				var nameNode = baseMethodData.GetNode().DescendantNodes()
-							   .OfType<SimpleNameSyntax>()
-							   .First(
-								   o =>
-								   {
-									   if (o.IsKind(SyntaxKind.GenericName))
-									   {
-										   return o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken)).Span ==
-												  refLocation.Location.SourceSpan;
-									   }
-									   return o.Span == refLocation.Location.SourceSpan;
-								   });
-				var invokedSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
-
+				// Save the reference as it can be made async
+				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
+				var invokedSymbol = (IMethodSymbol) documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
 				var invokedMethodData = await ProjectData.GetMethodData(invokedSymbol).ConfigureAwait(false);
 				invokedMethodData?.InvokedBy.Add(baseMethodData);
+				var methodReferenceData = new FunctionReferenceData(baseMethodData, refLocation, nameNode, invokedSymbol, invokedMethodData);
+				if (!baseMethodData.MethodReferences.TryAdd(methodReferenceData))
+				{
+					Logger.Debug($"Performance hit: method reference {invokedSymbol} already processed");
+					continue; // Reference already processed
+				}
 
 				var methodData = baseMethodData as MethodData;
 				if (methodData != null)

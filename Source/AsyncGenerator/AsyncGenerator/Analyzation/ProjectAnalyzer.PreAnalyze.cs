@@ -26,6 +26,7 @@ namespace AsyncGenerator.Analyzation
 			{
 				var typeData = documentData.GetOrCreateTypeData(typeNode);
 				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
+				PreAnalyzeType(typeData);
 
 				foreach (var methodNode in typeNode
 					.DescendantNodes()
@@ -57,6 +58,15 @@ namespace AsyncGenerator.Analyzation
 					}
 				}
 			}
+		}
+
+		private void PreAnalyzeType(TypeData typeData)
+		{
+			if (typeData.Conversion == TypeConversion.Ignore)
+			{
+				return;
+			}
+			typeData.IsPartial = typeData.Node.IsPartial();
 		}
 
 		private void PreAnalyzeMethodData(MethodData methodData)

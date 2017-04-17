@@ -37,7 +37,7 @@ namespace AsyncGenerator
 			set { _solutionData.Solution = value.Solution; }
 		}
 
-		public ConcurrentDictionary<string, DocumentData> DocumentData { get; } = new ConcurrentDictionary<string, DocumentData>();
+		public ConcurrentDictionary<string, DocumentData> Documents { get; } = new ConcurrentDictionary<string, DocumentData>();
 
 		public bool Contains(SyntaxReference syntax)
 		{
@@ -81,7 +81,7 @@ namespace AsyncGenerator
 		public DocumentData GetDocumentData(Document document)
 		{
 			DocumentData documentData;
-			if (!DocumentData.TryGetValue(document.FilePath, out documentData))
+			if (!Documents.TryGetValue(document.FilePath, out documentData))
 			{
 				throw new InvalidOperationException($"Document {document.FilePath} was not found in the project {Project.Name}");
 			}
@@ -97,13 +97,13 @@ namespace AsyncGenerator
 			var rootNode = (CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false);
 			var semanticModel = await document.GetSemanticModelAsync().ConfigureAwait(false);
 			var documentData = new DocumentData(this, document, rootNode, semanticModel);
-			return DocumentData.AddOrUpdate(document.FilePath, documentData, (s, data) => documentData);
+			return Documents.AddOrUpdate(document.FilePath, documentData, (s, data) => documentData);
 		}
 
 		#region IProjectAnalyzationResult
 
 		private IReadOnlyList<IDocumentAnalyzationResult> _cachedDocuments;
-		IReadOnlyList<IDocumentAnalyzationResult> IProjectAnalyzationResult.Documents => _cachedDocuments ?? (_cachedDocuments = DocumentData.Values.ToImmutableArray());
+		IReadOnlyList<IDocumentAnalyzationResult> IProjectAnalyzationResult.Documents => _cachedDocuments ?? (_cachedDocuments = Documents.Values.ToImmutableArray());
 
 		#endregion
 

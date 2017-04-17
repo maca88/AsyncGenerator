@@ -10,6 +10,7 @@ using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
+using AsyncGenerator.Transformation;
 using log4net;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -39,13 +40,15 @@ namespace AsyncGenerator
 					}
 					// Analyze project
 					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
-					var result = await AnalyzeProject(projectData).ConfigureAwait(false);
+					var analyzationResult = await AnalyzeProject(projectData).ConfigureAwait(false);
 					foreach (var action in analyzeConfig.Callbacks.AfterAnalyzation)
 					{
-						action(result);
+						action(analyzationResult);
 					}
 
 					// Transform documents
+					var transformConfig = projectData.Configuration.TransformConfiguration;
+					//TransformProject(analyzationResult, transformConfig);
 				}
 			}
 
@@ -56,6 +59,12 @@ namespace AsyncGenerator
 		{
 			var analyzer = new ProjectAnalyzer(projectData);
 			return analyzer.Analyze();
+		}
+
+		protected virtual void TransformProject(IProjectAnalyzationResult analyzationResult, ProjectTransformConfiguration configuration)
+		{
+			var transformer = new ProjectTransformer(configuration);
+			transformer.Transform(analyzationResult);
 		}
 
 

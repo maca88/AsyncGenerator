@@ -49,7 +49,7 @@ namespace AsyncGenerator.Tests
 					Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
 					Assert.AreEqual(1, method.AnonymousFunctions.Count);
 					Assert.AreEqual(MethodConversion.Ignore, method.AnonymousFunctions[0].Conversion);
-					Assert.AreEqual(0, method.AnonymousFunctions[0].MethodReferences.Count);
+					Assert.AreEqual(1, method.AnonymousFunctions[0].MethodReferences.Count);
 					Assert.IsTrue(readFileMethod.InvokedBy.Any(o => o == method.AnonymousFunctions[0]));
 				}
 

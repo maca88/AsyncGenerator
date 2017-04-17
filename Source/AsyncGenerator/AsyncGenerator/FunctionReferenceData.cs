@@ -18,6 +18,42 @@ namespace AsyncGenerator
 		ToAsync
 	}
 
+	public class CrefReferenceData
+	{
+		public CrefReferenceData(ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
+			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
+		{
+			ReferenceLocation = reference;
+			ReferenceNameNode = referenceNameNode;
+			ReferenceSymbol = referenceSymbol;
+			ReferenceFunctionData = referenceFunctionData;
+		}
+
+		public FunctionData ReferenceFunctionData { get; }
+
+		public SimpleNameSyntax ReferenceNameNode { get; }
+
+		public SyntaxNode ReferenceNode { get; internal set; }
+
+		public ReferenceLocation ReferenceLocation { get; }
+
+		public IMethodSymbol ReferenceSymbol { get; }
+
+		public override int GetHashCode()
+		{
+			return ReferenceLocation.GetHashCode();
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj == null || obj.GetType() != GetType())
+			{
+				return false;
+			}
+			return ReferenceLocation.Equals(((FunctionReferenceData)obj).ReferenceLocation);
+		}
+	}
+
 	public class FunctionReferenceData : IFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
 	{
 		public FunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,

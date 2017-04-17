@@ -13,6 +13,8 @@ namespace AsyncGenerator.Analyzation
 
 		TypeConversion Conversion { get; }
 
+		bool IsPartial { get; }
+
 		/// <summary>
 		/// References of types that are used inside this type
 		/// </summary>
