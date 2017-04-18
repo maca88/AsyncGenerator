@@ -9,12 +9,12 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Analyzation
 {
-	public interface IFunctionReferenceAnalyzationResult : IReferenceAnalyzationResult<IMethodSymbol>
+	public interface IReferenceAnalyzationResult<out TSymbol> where TSymbol : ISymbol
 	{
-		IFunctionAnalyzationResult ReferenceFunctionData { get; }
+		SimpleNameSyntax ReferenceNameNode { get; }
 
-		SyntaxNode ReferenceNode { get; }
+		ReferenceLocation ReferenceLocation { get; }
 
-		ReferenceConversion GetConversion();
+		TSymbol ReferenceSymbol { get; }
 	}
 }

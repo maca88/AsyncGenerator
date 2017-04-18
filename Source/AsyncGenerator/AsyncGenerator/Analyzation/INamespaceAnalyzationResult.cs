@@ -14,7 +14,7 @@ namespace AsyncGenerator.Analyzation
 		/// <summary>
 		/// References of types that are used inside this namespace (alias to a type with a using statement)
 		/// </summary>
-		IReadOnlyList<ReferenceLocation> TypeReferences { get; }
+		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 
 		IReadOnlyList<ITypeAnalyzationResult> Types { get; }
 	}

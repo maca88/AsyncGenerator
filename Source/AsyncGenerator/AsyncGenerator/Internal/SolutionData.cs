@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AsyncGenerator.Configuration;
+﻿using System.Collections.Concurrent;
+using AsyncGenerator.Configuration.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class SolutionData
+	internal class SolutionData
 	{
 		public SolutionData(Solution solution, MSBuildWorkspace buildWorkspace, SolutionConfiguration configuration)
 		{

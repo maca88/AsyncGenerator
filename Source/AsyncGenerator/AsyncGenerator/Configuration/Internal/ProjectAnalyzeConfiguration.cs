@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace AsyncGenerator.Configuration
+namespace AsyncGenerator.Configuration.Internal
 {
-	public class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
+	internal class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
 	{
 		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
 

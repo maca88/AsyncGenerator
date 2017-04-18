@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class AnonymousFunctionData : FunctionData, IAnonymousFunctionAnalyzationResult
+	internal class AnonymousFunctionData : FunctionData, IAnonymousFunctionAnalyzationResult
 	{
 		public AnonymousFunctionData(MethodData methodData, IMethodSymbol symbol, AnonymousFunctionExpressionSyntax node,
 			AnonymousFunctionData parent = null) : base(symbol)

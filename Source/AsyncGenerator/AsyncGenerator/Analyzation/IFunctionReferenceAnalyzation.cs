@@ -13,7 +13,7 @@ namespace AsyncGenerator.Analyzation
 	/// <summary>
 	/// Used by <see cref="IInvocationExpressionAnalyzer"/> in order to customize the analyzation process of a reference
 	/// </summary>
-	public interface IFunctionReferenceAnalyzation
+	public interface IFunctionReferenceAnalyzation 
 	{
 		IFunctionAnalyzationResult ReferenceFunctionData { get; }
 

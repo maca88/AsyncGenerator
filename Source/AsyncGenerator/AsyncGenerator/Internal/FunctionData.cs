@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.FindSymbols;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public abstract class FunctionData : IFunctionAnalyzationResult
+	internal abstract class FunctionData : AbstractData, IFunctionAnalyzationResult
 	{
 		protected FunctionData(IMethodSymbol methodSymbol)
 		{
@@ -29,14 +23,9 @@ namespace AsyncGenerator
 		public MethodConversion Conversion { get; set; }
 
 		/// <summary>
-		/// References of types that are used inside this method
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
-		/// <summary>
 		/// References to other methods that are invoked inside this method and are candidates to be async
 		/// </summary>
-		public ConcurrentSet<FunctionReferenceData> MethodReferences { get; } = new ConcurrentSet<FunctionReferenceData>();
+		public ConcurrentSet<InvokeFunctionReferenceData> InvokedMethodReferences { get; } = new ConcurrentSet<InvokeFunctionReferenceData>();
 
 		public ConcurrentSet<CrefReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceData>();
 
@@ -68,11 +57,11 @@ namespace AsyncGenerator
 
 		#region IFunctionAnalyzationResult
 
-		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodReferences;
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = MethodReferences.ToImmutableArray());
+		private IReadOnlyList<IInvokeFunctionReferenceAnalyzationResult> _cachedMethodReferences;
+		IReadOnlyList<IInvokeFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = InvokedMethodReferences.ToImmutableArray());
 
-		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
-		IReadOnlyList<ReferenceLocation> IFunctionAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
+		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
+		IReadOnlyList<ITypeReferenceAnalyzationResult> IFunctionAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
 		private IReadOnlyList<StatementSyntax> _cachedPreconditions;
 		IReadOnlyList<StatementSyntax> IFunctionAnalyzationResult.Preconditions => _cachedPreconditions ?? (_cachedPreconditions = Preconditions.ToImmutableArray());

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
@@ -11,9 +10,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 
-namespace AsyncGenerator.Analyzation
+namespace AsyncGenerator.Analyzation.Internal
 {
-	public partial class ProjectAnalyzer
+	internal partial class ProjectAnalyzer
 	{
 		private async Task ScanDocumentData(DocumentData documentData)
 		{
@@ -192,40 +191,16 @@ namespace AsyncGenerator.Analyzation
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
-				if (!typeData.SelfReferences.TryAdd(refLocation))
-				{
-					continue; // Reference already processed
-				}
-
 				// We need to find the type where the reference location is
 				var node = documentData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
-
-				var funcNode = node.Ancestors().OfType<AnonymousFunctionExpressionSyntax>().FirstOrDefault();
-				if (funcNode != null)
+				var typeReference = new TypeReferenceData(refLocation, node, typeData.Symbol);
+				if (!typeData.SelfReferences.TryAdd(typeReference))
 				{
-					var functionData = documentData.GetAnonymousFunctionData(funcNode);
-					functionData.TypeReferences.TryAdd(refLocation);
-					continue;
+					Logger.Debug($"Performance hit: Self reference for type {typeData.Symbol} already exists");
+					continue; // Reference already processed
 				}
-
-				var methodNode = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-				if (methodNode != null)
-				{
-					var methodData = documentData.GetMethodData(methodNode);
-					methodData.TypeReferences.TryAdd(refLocation);
-					continue;
-				}
-				var type = node.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
-				if (type != null)
-				{
-					var refTypeData = documentData.GetTypeData(type);
-					refTypeData.TypeReferences.TryAdd(refLocation);
-					continue;
-				}
-				// Can happen when declaring a Name in a using statement
-				var namespaceNode = node.Ancestors().OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
-				var namespaceData = documentData.GetNamespaceData(namespaceNode);
-				namespaceData.TypeReferences.TryAdd(refLocation);
+				var dataNode = documentData.GetNearestNodeData(node.Parent);
+				dataNode?.TypeReferences.TryAdd(typeReference);
 			}
 		}
 
@@ -374,8 +349,8 @@ namespace AsyncGenerator.Analyzation
 				var invokedSymbol = (IMethodSymbol) documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
 				var invokedMethodData = await ProjectData.GetMethodData(invokedSymbol).ConfigureAwait(false);
 				invokedMethodData?.InvokedBy.Add(baseMethodData);
-				var methodReferenceData = new FunctionReferenceData(baseMethodData, refLocation, nameNode, invokedSymbol, invokedMethodData);
-				if (!baseMethodData.MethodReferences.TryAdd(methodReferenceData))
+				var methodReferenceData = new InvokeFunctionReferenceData(baseMethodData, refLocation, nameNode, invokedSymbol, invokedMethodData);
+				if (!baseMethodData.InvokedMethodReferences.TryAdd(methodReferenceData))
 				{
 					Logger.Debug($"Performance hit: method reference {invokedSymbol} already processed");
 					continue; // Reference already processed

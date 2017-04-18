@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Plugins;
 
-namespace AsyncGenerator.Configuration
+namespace AsyncGenerator.Configuration.Internal
 {
-	public class ProjectConfiguration : IProjectConfiguration
+	internal class ProjectConfiguration : IProjectConfiguration
 	{
 		public ProjectConfiguration(string name)
 		{

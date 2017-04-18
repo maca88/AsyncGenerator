@@ -40,7 +40,7 @@ namespace AsyncGenerator.Tests
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
 				var methodReference = method.MethodReferences.First();
-				Assert.AreEqual(FunctionReferenceConversion.ToAsync,  methodReference.GetConversion());
+				Assert.AreEqual(ReferenceConversion.ToAsync,  methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UsedAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
@@ -52,7 +52,7 @@ namespace AsyncGenerator.Tests
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
 				methodReference = method.MethodReferences.First();
-				Assert.AreEqual(FunctionReferenceConversion.ToAsync, methodReference.GetConversion());
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UsedAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
@@ -64,7 +64,7 @@ namespace AsyncGenerator.Tests
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsTrue(method.SplitTail);
 				methodReference = method.MethodReferences.First();
-				Assert.AreEqual(FunctionReferenceConversion.ToAsync, methodReference.GetConversion());
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsFalse(methodReference.UsedAsReturnValue);
 				Assert.IsFalse(methodReference.LastInvocation);

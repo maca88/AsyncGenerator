@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace AsyncGenerator.Configuration
+namespace AsyncGenerator.Configuration.Internal
 {
-	public class ProjectCompileConfiguration : IProjectCompileConfiguration
+	internal class ProjectCompileConfiguration : IProjectCompileConfiguration
 	{
 		public ProjectCompileConfiguration(string outputPath)
 		{

@@ -3,15 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.FindSymbols;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class NamespaceData : INamespaceAnalyzationResult
+	internal class NamespaceData : AbstractData, INamespaceAnalyzationResult
 	{
 		public NamespaceData(DocumentData documentData, INamespaceSymbol symbol, NamespaceDeclarationSyntax node, NamespaceData parent = null)
 		{
@@ -20,11 +18,6 @@ namespace AsyncGenerator
 			Node = node;
 			ParentNamespaceData = parent;
 		}
-
-		/// <summary>
-		/// References of types that are used inside this namespace (alias to a type with a using statement)
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
 
 		public DocumentData DocumentData { get; }
 
@@ -198,8 +191,8 @@ namespace AsyncGenerator
 
 		#region INamespaceAnalyzationResult
 
-		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
-		IReadOnlyList<ReferenceLocation> INamespaceAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
+		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
+		IReadOnlyList<ITypeReferenceAnalyzationResult> INamespaceAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedTypes;
 		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => _cachedTypes ?? (_cachedTypes = Types.Values.ToImmutableArray());

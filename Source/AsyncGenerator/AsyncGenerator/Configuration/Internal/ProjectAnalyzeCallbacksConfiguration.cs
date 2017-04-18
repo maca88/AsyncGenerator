@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 
-namespace AsyncGenerator.Configuration
+namespace AsyncGenerator.Configuration.Internal
 {
-	public class ProjectAnalyzeCallbacksConfiguration : IProjectAnalyzeCallbacksConfiguration
+	internal class ProjectAnalyzeCallbacksConfiguration : IProjectAnalyzeCallbacksConfiguration
 	{
 		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 

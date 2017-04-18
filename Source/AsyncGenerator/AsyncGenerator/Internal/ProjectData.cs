@@ -4,16 +4,15 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Configuration;
+using AsyncGenerator.Configuration.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class ProjectData : IProjectAnalyzationResult
+	internal class ProjectData : IProjectAnalyzationResult
 	{
 		private readonly SolutionData _solutionData;
 

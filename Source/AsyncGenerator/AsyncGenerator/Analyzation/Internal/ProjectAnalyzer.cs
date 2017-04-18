@@ -1,26 +1,22 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
-using AsyncGenerator.Extensions;
+using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Internal;
 using log4net;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.FindSymbols;
 using Document = Microsoft.CodeAnalysis.Document;
 using IMethodSymbol = Microsoft.CodeAnalysis.IMethodSymbol;
 using Project = Microsoft.CodeAnalysis.Project;
 using Solution = Microsoft.CodeAnalysis.Solution;
-using static AsyncGenerator.Analyzation.AsyncCounterpartsSearchOptions;
 
-namespace AsyncGenerator.Analyzation
+namespace AsyncGenerator.Analyzation.Internal
 {
-	public partial class ProjectAnalyzer
+	internal partial class ProjectAnalyzer
 	{
 		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectAnalyzer));
 
@@ -114,10 +110,10 @@ namespace AsyncGenerator.Analyzation
 			}
 			var documentData = methodData.TypeData.NamespaceData.DocumentData;
 			var semanticModel = documentData.SemanticModel;
-			var searchOptions = Default;
+			var searchOptions = AsyncCounterpartsSearchOptions.Default;
 			if (_configuration.UseCancellationTokenOverload)
 			{
-				searchOptions |= HasCancellationToken;
+				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 
 			foreach (var invocation in methodDataBody.DescendantNodes()

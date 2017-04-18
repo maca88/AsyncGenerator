@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace AsyncGenerator.Configuration
+namespace AsyncGenerator.Configuration.Internal
 {
-	public class SolutionConfiguration : ISolutionConfiguration
+	internal class SolutionConfiguration : ISolutionConfiguration
 	{
 		public SolutionConfiguration(string path)
 		{

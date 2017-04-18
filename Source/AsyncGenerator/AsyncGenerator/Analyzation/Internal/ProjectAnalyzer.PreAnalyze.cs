@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static AsyncGenerator.Analyzation.AsyncCounterpartsSearchOptions;
 
-namespace AsyncGenerator.Analyzation
+namespace AsyncGenerator.Analyzation.Internal
 {
-	public partial class ProjectAnalyzer
+	internal partial class ProjectAnalyzer
 	{
 		/// <summary>
 		/// Set the method conversion to Ignore for all method data that are inside the given document and can not be
@@ -239,10 +236,10 @@ namespace AsyncGenerator.Analyzation
 			// Verify if there is already an async counterpart for this method
 			//TODO: this is not correct when generating methods with a cancellation token as here we do not know
 			// if the generated method will have the cancellation token parameter or not
-			var searchOptions = EqualParameters | IgnoreReturnType;
+			var searchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
 			if (_configuration.UseCancellationTokenOverload)
 			{
-				searchOptions |= HasCancellationToken;
+				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).ToList();
 			if (asyncCounterparts.Any())

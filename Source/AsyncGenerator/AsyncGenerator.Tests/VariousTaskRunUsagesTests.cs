@@ -34,7 +34,7 @@ namespace AsyncGenerator.Tests
 				Assert.AreEqual(10, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
 
 				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
-				IFunctionReferenceAnalyzationResult methodReference;
+				IInvokeFunctionReferenceAnalyzationResult methodReference;
 				var awaitableMethods = new[]
 				{
 					waitActionTask,

@@ -5,15 +5,12 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.FindSymbols;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class MethodData : FunctionData, IMethodAnalyzationResult
+	internal class MethodData : FunctionData, IMethodAnalyzationResult
 	{
 		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node) : base(symbol)
 		{
@@ -53,6 +50,8 @@ namespace AsyncGenerator
 		/// Method datas that invokes this method
 		/// </summary>
 		public ConcurrentSet<FunctionData> InvokedBy { get; } = new ConcurrentSet<FunctionData>();
+
+		public ConcurrentSet<CrefReferenceData> CrefMethodReferences { get; } = new ConcurrentSet<CrefReferenceData>();
 
 		/// <summary>
 		/// Related and invoked by methods
@@ -97,6 +96,11 @@ namespace AsyncGenerator
 		IReadOnlyList<IAnonymousFunctionAnalyzationResult> IMethodAnalyzationResult.AnonymousFunctions =>
 			_cachedAnonymousFunctions ?? (_cachedAnonymousFunctions = AnonymousFunctions.Values.ToImmutableArray());
 
+		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodCrefReferences;
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodAnalyzationResult.CrefMethodReferences =>
+			_cachedMethodCrefReferences ?? (_cachedMethodCrefReferences = CrefMethodReferences.ToImmutableArray());
+
+
 		#endregion
 
 		public IEnumerable<AnonymousFunctionData> GetAllAnonymousFunctionData(Func<AnonymousFunctionData, bool> predicate = null)
@@ -114,8 +118,6 @@ namespace AsyncGenerator
 		#region Analyzation step
 
 		public bool MustRunSynchronized { get; set; }
-
-		public ConcurrentSet<FunctionReferenceData> CrefReferenceData { get; } = new ConcurrentSet<FunctionReferenceData>();
 
 		#endregion
 

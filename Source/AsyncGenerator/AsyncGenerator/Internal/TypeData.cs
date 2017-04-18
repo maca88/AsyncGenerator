@@ -2,19 +2,13 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.FindSymbols;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class TypeData : ITypeAnalyzationResult
+	internal class TypeData : AbstractData, ITypeAnalyzationResult
 	{
 		public TypeData(NamespaceData namespaceData, INamedTypeSymbol symbol, TypeDeclarationSyntax node, TypeData parentTypeData = null)
 		{
@@ -24,17 +18,12 @@ namespace AsyncGenerator
 			Node = node;
 		}
 
-		/// <summary>
-		/// Contains references of types that are used inside this type
-		/// </summary>
-		public ConcurrentSet<ReferenceLocation> TypeReferences { get; } = new ConcurrentSet<ReferenceLocation>();
-
 		public ConcurrentSet<CrefReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceData>();
 
 		/// <summary>
 		/// Contains references of itself
 		/// </summary>
-		public ConcurrentSet<ReferenceLocation> SelfReferences { get; } = new ConcurrentSet<ReferenceLocation>();
+		public ConcurrentSet<TypeReferenceData> SelfReferences { get; } = new ConcurrentSet<TypeReferenceData>();
 
 		public TypeData ParentTypeData { get; }
 
@@ -115,11 +104,11 @@ namespace AsyncGenerator
 
 		#region ITypeAnalyzationResult
 
-		private IReadOnlyList<ReferenceLocation> _cachedTypeReferences;
-		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
+		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
+		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
 
-		private IReadOnlyList<ReferenceLocation> _cachedSelfReferences;
-		IReadOnlyList<ReferenceLocation> ITypeAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
+		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedSelfReferences;
+		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
 
 		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
 		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = Methods.Values.ToImmutableArray());

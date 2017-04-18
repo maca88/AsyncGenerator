@@ -34,7 +34,7 @@ namespace AsyncGenerator.Tests
 					enumerableCastReturn
 				};
 
-				IFunctionReferenceAnalyzationResult methodReference;
+				IInvokeFunctionReferenceAnalyzationResult methodReference;
 				IMethodAnalyzationResult method;
 				foreach (var awaitRequiredMethod in awaitRequiredMethods)
 				{

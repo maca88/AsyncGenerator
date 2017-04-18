@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
@@ -12,10 +11,25 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
 
-namespace AsyncGenerator
+namespace AsyncGenerator.Internal
 {
-	public class DocumentData : IDocumentAnalyzationResult
+	internal class DocumentData : IDocumentAnalyzationResult
 	{
+		private readonly SyntaxKind[] _validDataKinds = {
+			// Function
+			SyntaxKind.ParenthesizedLambdaExpression,
+			SyntaxKind.AnonymousMethodExpression,
+			SyntaxKind.SimpleLambdaExpression,
+			// Method
+			SyntaxKind.MethodDeclaration,
+			// Type
+			SyntaxKind.ClassDeclaration,
+			SyntaxKind.InterfaceDeclaration,
+			SyntaxKind.StructDeclaration,
+			// Namespace
+			SyntaxKind.NamespaceDeclaration
+		};
+
 		public DocumentData(ProjectData projectData, Document document, CompilationUnitSyntax node, SemanticModel semanticModel)
 		{
 			ProjectData = projectData;
@@ -51,7 +65,21 @@ namespace AsyncGenerator
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData(predicate));
 		}
 
-		public object GetNodeData(SyntaxNode node,
+		public AbstractData GetNearestNodeData(SyntaxNode node)
+		{
+			var currentNode = node;
+			while (currentNode != null)
+			{
+				if (_validDataKinds.Contains(currentNode.Kind()))
+				{
+					return GetNodeData(currentNode);
+				}
+				currentNode = currentNode.Parent;
+			}
+			return null;
+		}
+
+		public AbstractData GetNodeData(SyntaxNode node,
 			bool create = false,
 			NamespaceData namespaceData = null,
 			TypeData typeData = null,
@@ -79,23 +107,7 @@ namespace AsyncGenerator
 			foreach (var n in node.AncestorsAndSelf()
 				.TakeWhile(o => !ReferenceEquals(o, endNode))
 				.Where(
-					o =>
-						o.IsKind(SyntaxKind.ParenthesizedLambdaExpression) ||
-						o.IsKind(SyntaxKind.AnonymousMethodExpression) ||
-						o.IsKind(SyntaxKind.SimpleLambdaExpression) ||
-
-						o.IsKind(SyntaxKind.MethodDeclaration) ||
-
-						o.IsKind(SyntaxKind.ClassDeclaration) ||
-						o.IsKind(SyntaxKind.InterfaceDeclaration) ||
-						o.IsKind(SyntaxKind.StructDeclaration) ||
-
-						o.IsKind(SyntaxKind.NamespaceDeclaration)
-						/*
-						o is AnonymousFunctionExpressionSyntax || 
-						o is MethodDeclarationSyntax || 
-						o is TypeDeclarationSyntax ||
-						o is NamespaceDeclarationSyntax*/)
+					o => _validDataKinds.Contains(o.Kind()))
 				.Reverse())
 			{
 				switch (n.Kind())

@@ -18,12 +18,12 @@ namespace AsyncGenerator.Analyzation
 		/// <summary>
 		/// References of types that are used inside this type
 		/// </summary>
-		IReadOnlyList<ReferenceLocation> TypeReferences { get; }
+		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 
 		/// <summary>
 		/// References of itself
 		/// </summary>
-		IReadOnlyList<ReferenceLocation> SelfReferences { get; }
+		IReadOnlyList<ITypeReferenceAnalyzationResult> SelfReferences { get; }
 
 		IReadOnlyList<ITypeAnalyzationResult> NestedTypes { get; }
 

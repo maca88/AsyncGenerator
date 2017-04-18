@@ -42,7 +42,7 @@ namespace AsyncGenerator.Tests
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				var methodReference = method.MethodReferences.First();
-				Assert.AreEqual(FunctionReferenceConversion.ToAsync, methodReference.GetConversion());
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UsedAsReturnValue);

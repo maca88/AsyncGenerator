@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Analyzation.Internal;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation;
@@ -55,13 +57,13 @@ namespace AsyncGenerator
 			//conf.SolutionConfigurations.First().ProjectConfigurations.First().TransformConfiguration.
 		}
 
-		protected virtual Task<IProjectAnalyzationResult> AnalyzeProject(ProjectData projectData)
+		private Task<IProjectAnalyzationResult> AnalyzeProject(ProjectData projectData)
 		{
 			var analyzer = new ProjectAnalyzer(projectData);
 			return analyzer.Analyze();
 		}
 
-		protected virtual void TransformProject(IProjectAnalyzationResult analyzationResult, ProjectTransformConfiguration configuration)
+		private void TransformProject(IProjectAnalyzationResult analyzationResult, ProjectTransformConfiguration configuration)
 		{
 			var transformer = new ProjectTransformer(configuration);
 			transformer.Transform(analyzationResult);

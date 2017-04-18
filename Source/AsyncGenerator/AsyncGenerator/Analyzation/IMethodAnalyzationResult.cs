@@ -33,6 +33,11 @@ namespace AsyncGenerator.Analyzation
 		IReadOnlyList<IAnonymousFunctionAnalyzationResult> AnonymousFunctions { get; }
 
 		/// <summary>
+		/// References to other methods that are referenced in trivias
+		/// </summary>
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> CrefMethodReferences { get; }
+
+		/// <summary>
 		/// When true, the method has at least one invocation that needs a <see cref="CancellationToken"/> as a parameter.
 		/// </summary>
 		bool CancellationTokenRequired { get; }

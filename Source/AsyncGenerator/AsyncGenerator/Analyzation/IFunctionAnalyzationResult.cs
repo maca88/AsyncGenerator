@@ -27,12 +27,12 @@ namespace AsyncGenerator.Analyzation
 		/// <summary>
 		/// References of types that are used inside this function
 		/// </summary>
-		IReadOnlyList<ReferenceLocation> TypeReferences { get; }
+		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 
 		/// <summary>
 		/// References to other methods that are invoked inside this function and are candidates to be async
 		/// </summary>
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> MethodReferences { get; }
+		IReadOnlyList<IInvokeFunctionReferenceAnalyzationResult> MethodReferences { get; }
 
 		/// <summary>
 		/// Statements inside the function that were qualified as preconditions. Preconditions may be filled only for functions that 
