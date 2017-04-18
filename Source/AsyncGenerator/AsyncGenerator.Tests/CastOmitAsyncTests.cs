@@ -43,7 +43,7 @@ namespace AsyncGenerator.Tests
 					Assert.AreEqual(1, method.MethodReferences.Count);
 					methodReference = method.MethodReferences[0];
 					Assert.IsTrue(methodReference.AwaitInvocation);
-					Assert.IsTrue(methodReference.UsedAsReturnValue);
+					Assert.IsTrue(methodReference.UseAsReturnValue);
 				}
 
 				var awaitNotRequiredMethods = new[]
@@ -58,7 +58,7 @@ namespace AsyncGenerator.Tests
 					Assert.AreEqual(1, method.MethodReferences.Count);
 					methodReference = method.MethodReferences[0];
 					Assert.IsFalse(methodReference.AwaitInvocation);
-					Assert.IsTrue(methodReference.UsedAsReturnValue);
+					Assert.IsTrue(methodReference.UseAsReturnValue);
 				}
 			};
 			var config = Configure(p => p

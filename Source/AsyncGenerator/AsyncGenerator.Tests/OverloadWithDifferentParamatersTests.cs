@@ -45,7 +45,7 @@ namespace AsyncGenerator.Tests
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsNotNull(methodReference.ReferenceFunctionData);
 
 				method = methods[customReadData].First();

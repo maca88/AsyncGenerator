@@ -16,5 +16,7 @@ namespace AsyncGenerator.Analyzation
 		SyntaxNode ReferenceNode { get; }
 
 		ReferenceConversion GetConversion();
+
+		string AsyncCounterpartName { get; }
 	}
 }

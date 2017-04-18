@@ -24,7 +24,7 @@ namespace AsyncGenerator.Analyzation
 
 		bool SynchronouslyAwaited { get; }
 
-		bool UsedAsReturnValue { get; }
+		bool UseAsReturnValue { get; }
 
 		bool LastInvocation { get; }
 	}

@@ -157,10 +157,29 @@ namespace AsyncGenerator.Analyzation.Internal
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions));
-			if (functionReferenceData.ReferenceAsyncSymbols.Any() && functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))
+			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
-				functionReferenceData.AwaitInvocation = false;
-				Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
+				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))
+				{
+					functionReferenceData.AwaitInvocation = false;
+					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
+				}
+				var nameGroups = functionReferenceData.ReferenceAsyncSymbols.GroupBy(o => o.Name).ToList();
+				if (nameGroups.Count == 1)
+				{
+					functionReferenceData.AsyncCounterpartName = nameGroups[0].Key;
+				}
+			}
+			else if (!ProjectData.Contains(functionReferenceData.ReferenceSymbol))
+			{
+				// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
+				functionReferenceData.Ignore = true;
+				Logger.Info($"Method {methodSymbol} can not be async as there is no async counterparts for it");
+				return;
+			}
+			else if(functionReferenceData.ReferenceFunctionData != null)
+			{
+				functionReferenceData.AsyncCounterpartName = functionReferenceData.ReferenceSymbol.Name + "Async";
 			}
 
 			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
@@ -227,7 +246,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			if (node.Parent.IsKind(SyntaxKind.ReturnStatement))
 			{
-				functionReferenceData.UsedAsReturnValue = true;
+				functionReferenceData.UseAsReturnValue = true;
 			}
 
 			// Calculate if node is the last statement
@@ -236,7 +255,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			)
 			{
 				functionReferenceData.LastInvocation = true;
-				functionReferenceData.UsedAsReturnValue = !methodSymbol.ReturnsVoid;
+				functionReferenceData.UseAsReturnValue = !methodSymbol.ReturnsVoid;
 			}
 			var bodyBlock = functionBodyNode as BlockSyntax;
 			if (bodyBlock?.Statements.Last() == node.Parent)
@@ -249,14 +268,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			    functionReferenceData.ReferenceAsyncSymbols.Any(o => o.Parameters.Length > methodSymbol.Parameters.Length))
 			{
 				functionReferenceData.CancellationTokenRequired = true;
-			}
-
-			// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
-			if (!functionReferenceData.ReferenceAsyncSymbols.Any() && !ProjectData.Contains(functionReferenceData.ReferenceSymbol))
-			{
-				functionReferenceData.Ignore = true;
-				Logger.Info($"Method {methodSymbol} can not be async as there is no async counterparts for it");
-				return;
 			}
 
 			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)

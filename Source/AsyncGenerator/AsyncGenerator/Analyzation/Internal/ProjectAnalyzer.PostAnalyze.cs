@@ -217,7 +217,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 
-					if (!methodReference.UsedAsReturnValue && !methodReference.LastInvocation)
+					if (!methodReference.UseAsReturnValue && !methodReference.LastInvocation)
 					{
 						canSkipAwaits = false;
 						break;
@@ -266,7 +266,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					foreach (var methodReference in asyncMethodReferences)
 					{
 						methodReference.AwaitInvocation = false;
-						methodReference.UsedAsReturnValue = true;
+						methodReference.UseAsReturnValue = true;
 					}
 				}
 

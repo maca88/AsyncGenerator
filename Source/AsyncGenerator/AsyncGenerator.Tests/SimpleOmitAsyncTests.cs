@@ -46,7 +46,7 @@ namespace AsyncGenerator.Tests
 				methodReference = method.MethodReferences[0];
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 
 				method = methods[doubleCallReturn];
@@ -58,12 +58,12 @@ namespace AsyncGenerator.Tests
 				methodReference = methodReferences[write].First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsTrue(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 				methodReference = methodReferences[readFile].First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsTrue(methodReference.AwaitInvocation);
-				Assert.IsFalse(methodReference.UsedAsReturnValue);
+				Assert.IsFalse(methodReference.UseAsReturnValue);
 				Assert.IsFalse(methodReference.LastInvocation);
 
 				method = methods[syncReturn];
@@ -75,7 +75,7 @@ namespace AsyncGenerator.Tests
 				methodReference = method.MethodReferences.First();
 				Assert.AreEqual(ReferenceConversion.Ignore, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 
 				method = methods[simpleVoid];
@@ -87,7 +87,7 @@ namespace AsyncGenerator.Tests
 				methodReference = method.MethodReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 
 				method = methods[doubleCallVoid];
@@ -99,12 +99,12 @@ namespace AsyncGenerator.Tests
 				methodReference = methodReferences[read].First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 				methodReference = methodReferences[syncReadFile].First();
 				Assert.AreEqual(ReferenceConversion.Ignore, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsFalse(methodReference.UsedAsReturnValue);
+				Assert.IsFalse(methodReference.UseAsReturnValue);
 				Assert.IsFalse(methodReference.LastInvocation);
 
 				method = methods[expressionVoid];
@@ -116,7 +116,7 @@ namespace AsyncGenerator.Tests
 				methodReference = method.MethodReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 
 				method = methods[expressionReturn];
@@ -128,7 +128,7 @@ namespace AsyncGenerator.Tests
 				methodReference = method.MethodReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
 			};
 			var config = Configure(p => p

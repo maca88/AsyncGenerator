@@ -155,10 +155,12 @@ namespace AsyncGenerator.Transformation
 				}
 				if (typeNodes.Any())
 				{
+					var leadingTrivia = namespaceResult.Types.First().Node.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+
 					//TODO: check if Task is conflicted inside namespace
 					if (!hasTaskUsing && namespaceNode.Usings.All(o => o.Name.ToString() != "System.Threading.Tasks"))
 					{
-						namespaceNode = namespaceNode.AddUsing("System.Threading.Tasks");
+						namespaceNode = namespaceNode.AddUsing("System.Threading.Tasks", TriviaList(leadingTrivia));
 					}
 					// TODO: add locking namespaces
 
@@ -335,6 +337,8 @@ namespace AsyncGenerator.Transformation
 				}
 			}
 
+			result.TransformedNode = rootTypeNode;
+
 			return result;
 		}
 
@@ -395,15 +399,31 @@ namespace AsyncGenerator.Transformation
 			foreach (var pair in referenceAnnotations)
 			{
 				var nameNode = methodNode.GetAnnotatedNodes(pair.Key).OfType<SimpleNameSyntax>().First();
-				var referenceResult = pair.Value;
-				var functionReferenceResult = referenceResult as IInvokeFunctionReferenceAnalyzationResult;
+				var funReferenceResult = pair.Value;
+				var invokeFuncReferenceResult = funReferenceResult as IInvokeFunctionReferenceAnalyzationResult;
 				// If we have a cref or a non awaitable invocation just change the name to the async counterpart
-				if (functionReferenceResult == null || !functionReferenceResult.AwaitInvocation)
+				if (invokeFuncReferenceResult == null || !invokeFuncReferenceResult.AwaitInvocation)
 				{
-					
+					var statement = nameNode.Ancestors().OfType<StatementSyntax>().First();
+					var newNameNode = nameNode.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName));
+					var newStatement = statement.ReplaceNode(nameNode, newNameNode);
+
+					if (invokeFuncReferenceResult?.UseAsReturnValue == true)
+					{
+						newStatement = newStatement.ToReturnStatement();
+					}
+					methodNode = methodNode
+							.ReplaceNode(statement, newStatement);
 				}
 
 			}
+
+			if (methodResult.OmitAsync)
+			{
+				// TODO: wrap in a task when calling non taskable method or throwing an exception in a non precondition statement
+			}
+
+			result.TransformedNode = methodNode;
 
 			return result;
 		}

@@ -47,7 +47,7 @@ namespace AsyncGenerator.Tests
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsNull(methodReference.ReferenceFunctionData);
 				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
 				Assert.AreEqual(1, methodReference.ReferenceAsyncSymbols.Count);
@@ -110,7 +110,7 @@ namespace AsyncGenerator.Tests
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 				Assert.IsNull(methodReference.ReferenceFunctionData);
 				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
@@ -122,14 +122,14 @@ namespace AsyncGenerator.Tests
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 
 				methodReference = methods[callCallReadFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UsedAsReturnValue);
+				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 			};
 

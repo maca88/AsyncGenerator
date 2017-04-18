@@ -30,7 +30,7 @@ namespace AsyncGenerator.Internal
 
 		public bool CancellationTokenRequired { get; set; }
 
-		public bool UsedAsReturnValue { get; internal set; }
+		public bool UseAsReturnValue { get; internal set; }
 
 		public bool LastInvocation { get; internal set; }
 
