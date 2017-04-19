@@ -37,6 +37,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				AnalyzeMethodReference(documentData, reference);
 			}
 
+			foreach (var reference in methodData.CrefMethodReferences)
+			{
+				AnalyzeCrefMethodReference(documentData, methodData, reference);
+			}
+
 			var methodBody = methodData.GetBodyNode();
 			methodData.HasYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
@@ -74,6 +79,12 @@ namespace AsyncGenerator.Analyzation.Internal
 				AnalyzeMethodReference(documentData, reference);
 			}
 			methodData.HasYields = methodData.Node.Body?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+		}
+
+		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodData methoData, CrefFunctionReferenceData crefData)
+		{
+			crefData.RelatedInvokeFunctionReferences.AddRange(
+				methoData.InvokedMethodReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
 		}
 
 		private void AnalyzeMethodReference(DocumentData documentData, InvokeFunctionReferenceData refData)

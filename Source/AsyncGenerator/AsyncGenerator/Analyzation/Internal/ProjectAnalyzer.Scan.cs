@@ -323,14 +323,14 @@ namespace AsyncGenerator.Analyzation.Internal
 					var crefReferenceNameNode = crefTypeData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
 					var crefReferenceSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(crefReferenceNameNode).Symbol;
 					var crefReferenceMethodData = await ProjectData.GetMethodData(crefReferenceSymbol).ConfigureAwait(false);
-					var crefReferenceData = new CrefReferenceData(refLocation, crefReferenceNameNode, crefReferenceSymbol, crefReferenceMethodData);
+					var crefReferenceData = new CrefFunctionReferenceData(refLocation, crefReferenceNameNode, crefReferenceSymbol, crefReferenceMethodData);
 
 					var memberNode = crefReferenceNameNode.Ancestors().OfType<MemberDeclarationSyntax>().First();
 					var methodNode = memberNode as MethodDeclarationSyntax;
 					if (methodNode != null)
 					{
 						var crefMethodData = (MethodData)documentData.GetNodeData(methodNode, typeData: crefTypeData);
-						crefMethodData.CrefReferences.TryAdd(crefReferenceData);
+						crefMethodData.CrefMethodReferences.TryAdd(crefReferenceData);
 					}
 					else
 					{

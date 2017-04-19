@@ -18,7 +18,7 @@ namespace AsyncGenerator.Internal
 
 		public SyntaxNode ReferenceNode { get; internal set; }
 
-		public string AsyncCounterpartName { get; set; }
+		public abstract string AsyncCounterpartName { get; set; }
 
 		public abstract ReferenceConversion GetConversion();
 

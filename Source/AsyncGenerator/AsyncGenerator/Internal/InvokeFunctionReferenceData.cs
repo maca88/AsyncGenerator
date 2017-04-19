@@ -58,6 +58,8 @@ namespace AsyncGenerator.Internal
 		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzation.ReferenceAsyncSymbols => 
 			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
 
+		public override string AsyncCounterpartName { get; set; }
+
 		#endregion
 	}
 }

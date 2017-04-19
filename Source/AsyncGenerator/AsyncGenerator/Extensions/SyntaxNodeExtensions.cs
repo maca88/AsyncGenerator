@@ -176,10 +176,10 @@ namespace AsyncGenerator.Extensions
 			throw new InvalidOperationException($"Cannot convert statement {statement} to ReturnStatementSyntax");
 		}
 
-		internal static SimpleNameSyntax GetSimpleName(this SyntaxNode node, int spanStart, int spanLength)
+		internal static SimpleNameSyntax GetSimpleName(this SyntaxNode node, int spanStart, int spanLength, bool descendIntoTrivia = false)
 		{
 			return node
-				.DescendantNodes()
+				.DescendantNodes(descendIntoTrivia: descendIntoTrivia)
 				.OfType<SimpleNameSyntax>()
 				.First(
 					o =>

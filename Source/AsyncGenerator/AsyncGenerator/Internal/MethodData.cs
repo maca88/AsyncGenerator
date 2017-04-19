@@ -51,8 +51,6 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public ConcurrentSet<FunctionData> InvokedBy { get; } = new ConcurrentSet<FunctionData>();
 
-		public ConcurrentSet<CrefReferenceData> CrefMethodReferences { get; } = new ConcurrentSet<CrefReferenceData>();
-
 		/// <summary>
 		/// Related and invoked by methods
 		/// </summary>

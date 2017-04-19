@@ -8,6 +8,7 @@ using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -382,7 +383,7 @@ namespace AsyncGenerator.Transformation
 			{
 				var reference = referenceResult.ReferenceLocation;
 				var startSpan = reference.Location.SourceSpan.Start - startMethodSpan;
-				var nameNode = methodNode.GetSimpleName(startSpan, reference.Location.SourceSpan.Length);
+				var nameNode = methodNode.GetSimpleName(startSpan, reference.Location.SourceSpan.Length, referenceResult is CrefFunctionReferenceData);
 				var annotation = Guid.NewGuid().ToString();
 				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
 				referenceAnnotations.Add(annotation, referenceResult);
@@ -401,11 +402,21 @@ namespace AsyncGenerator.Transformation
 				var nameNode = methodNode.GetAnnotatedNodes(pair.Key).OfType<SimpleNameSyntax>().First();
 				var funReferenceResult = pair.Value;
 				var invokeFuncReferenceResult = funReferenceResult as IInvokeFunctionReferenceAnalyzationResult;
-				// If we have a cref or a non awaitable invocation just change the name to the async counterpart
-				if (invokeFuncReferenceResult == null || !invokeFuncReferenceResult.AwaitInvocation)
+				// If we have a cref just change the name to the async counterpart
+				if (invokeFuncReferenceResult == null)
+				{
+					methodNode = methodNode
+						.ReplaceNode(nameNode, nameNode
+							.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
+							.WithTriviaFrom(nameNode));
+					continue;
+				}
+				if (!invokeFuncReferenceResult.AwaitInvocation)
 				{
 					var statement = nameNode.Ancestors().OfType<StatementSyntax>().First();
-					var newNameNode = nameNode.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName));
+					var newNameNode = nameNode
+						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
+						.WithTriviaFrom(nameNode);
 					var newStatement = statement.ReplaceNode(nameNode, newNameNode);
 
 					if (invokeFuncReferenceResult?.UseAsReturnValue == true)
@@ -422,7 +433,8 @@ namespace AsyncGenerator.Transformation
 			{
 				// TODO: wrap in a task when calling non taskable method or throwing an exception in a non precondition statement
 			}
-
+			methodNode = methodNode.ReturnAsTask(methodResult.Symbol)
+				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 			result.TransformedNode = methodNode;
 
 			return result;

@@ -27,7 +27,7 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public ConcurrentSet<InvokeFunctionReferenceData> InvokedMethodReferences { get; } = new ConcurrentSet<InvokeFunctionReferenceData>();
 
-		public ConcurrentSet<CrefReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceData>();
+		public ConcurrentSet<CrefFunctionReferenceData> CrefMethodReferences { get; } = new ConcurrentSet<CrefFunctionReferenceData>();
 
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 

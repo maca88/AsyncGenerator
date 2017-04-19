@@ -18,7 +18,7 @@ namespace AsyncGenerator.Internal
 			Node = node;
 		}
 
-		public ConcurrentSet<CrefReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceData>();
+		public ConcurrentSet<CrefFunctionReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefFunctionReferenceData>();
 
 		/// <summary>
 		/// Contains references of itself

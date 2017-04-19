@@ -209,7 +209,7 @@
     <Compile Include="Configuration\Internal\ProjectConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\Internal\SolutionConfiguration.cs" />
-    <Compile Include="Internal\CrefReferenceData.cs" />
+    <Compile Include="Internal\CrefFunctionReferenceData.cs" />
     <Compile Include="Internal\DocumentData.cs" />
     <Compile Include="Extensions\TypeAnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\MethodKindExtensions.cs" />

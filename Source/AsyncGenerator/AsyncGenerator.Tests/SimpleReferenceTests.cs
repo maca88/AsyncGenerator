@@ -77,6 +77,25 @@ namespace AsyncGenerator.Tests
 		}
 
 		[Test]
+		public void TestAfterTransformation()
+		{
+			var readFile = GetMethodName(o => o.ReadFile);
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol =>
+					{
+						return symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown;
+					})
+				)
+				//.ConfigureTransformation(t => t)
+				);
+			//TODO: define AfterTransformation callback
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
 		public void TestUseCancellationTokenOverloadAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);

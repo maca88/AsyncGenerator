@@ -19,12 +19,12 @@ namespace AsyncGenerator.Tests.TestCases
 	/// </summary>
 	public partial class SimpleReference
 	{
-		public Task CallCallReadFile()
+		public Task CallCallReadFileAsync()
 		{
 			return CallReadFileAsync();
 		}
 
-		public Task CallReadFile()
+		public Task CallReadFileAsync()
 		{
 			return ReadFileAsync();
 		}
@@ -32,7 +32,7 @@ namespace AsyncGenerator.Tests.TestCases
 		/// <summary>
 		/// Use <see cref="SimpleFile.ReadAsync"/> to read a file
 		/// </summary>
-		public Task ReadFile()
+		public Task ReadFileAsync()
 		{
 			return SimpleFile.ReadAsync();
 		}
