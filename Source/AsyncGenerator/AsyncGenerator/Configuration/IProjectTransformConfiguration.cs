@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Transformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -39,6 +40,13 @@ namespace AsyncGenerator.Configuration
 		/// Indent all generated code using the provided indentation
 		/// </summary>
 		IProjectTransformConfiguration IndentationForGeneratedCode(string indentation);
+
+		/// <summary>
+		/// Add a callback that is called when the transformation for the project is completed
+		/// </summary>
+		/// <param name="action">The action to call</param>
+		/// <returns></returns>
+		IProjectTransformConfiguration AfterTransformation(Action<IProjectTransformationResult> action);
 
 
 	}

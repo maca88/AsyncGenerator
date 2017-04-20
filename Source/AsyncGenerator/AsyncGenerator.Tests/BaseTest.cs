@@ -41,6 +41,18 @@ namespace AsyncGenerator.Tests
 				);
 		}
 
+		public string GetOutputFile(string fileName)
+		{
+			var asm = Assembly.GetExecutingAssembly();
+			var resource = $"{nameof(AsyncGenerator)}.{nameof(Tests)}.{nameof(TestCases)}.Output.{fileName}.txt";
+			using (var stream = asm.GetManifestResourceStream(resource))
+			{
+				if (stream == null) return string.Empty;
+				var reader = new StreamReader(stream);
+				return reader.ReadToEnd();
+			}
+		}
+
 		public void CheckMethodsConversion(IEnumerable<IMethodAnalyzationResult> methodAnalyzationResults)
 		{
 			foreach (var method in methodAnalyzationResults)

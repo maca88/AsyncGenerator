@@ -13,6 +13,7 @@ using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation;
+using AsyncGenerator.Transformation.Internal;
 using log4net;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -50,7 +51,11 @@ namespace AsyncGenerator
 
 					// Transform documents
 					var transformConfig = projectData.Configuration.TransformConfiguration;
-					//TransformProject(analyzationResult, transformConfig);
+					var transformResult = TransformProject(analyzationResult, transformConfig);
+					foreach (var action in transformConfig.AfterTransformation)
+					{
+						action(transformResult);
+					}
 				}
 			}
 
@@ -63,10 +68,10 @@ namespace AsyncGenerator
 			return analyzer.Analyze();
 		}
 
-		private void TransformProject(IProjectAnalyzationResult analyzationResult, ProjectTransformConfiguration configuration)
+		private IProjectTransformationResult TransformProject(IProjectAnalyzationResult analyzationResult, ProjectTransformConfiguration configuration)
 		{
 			var transformer = new ProjectTransformer(configuration);
-			transformer.Transform(analyzationResult);
+			return transformer.Transform(analyzationResult);
 		}
 
 

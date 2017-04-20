@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using AsyncGenerator.Analyzation;
+using AsyncGenerator.Transformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -19,6 +21,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public string DirectiveForGeneratedCode { get; private set; }
 
 		public string IndentationForGeneratedCode { get; private set; }
+
+		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
 
 		IProjectTransformConfiguration IProjectTransformConfiguration.AsyncFolder(string folderName)
 		{
@@ -82,6 +86,16 @@ namespace AsyncGenerator.Configuration.Internal
 				throw new ArgumentNullException(nameof(indentation));
 			}
 			IndentationForGeneratedCode = indentation;
+			return this;
+		}
+
+		IProjectTransformConfiguration IProjectTransformConfiguration.AfterTransformation(Action<IProjectTransformationResult> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			AfterTransformation.Add(action);
 			return this;
 		}
 	}

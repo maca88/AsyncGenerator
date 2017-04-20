@@ -88,8 +88,16 @@ namespace AsyncGenerator.Tests
 						return symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown;
 					})
 				)
-				//.ConfigureTransformation(t => t)
-				);
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(SimpleReference)), document.Transformed.ToFullString());
+					})
+				)
+			);
 			//TODO: define AfterTransformation callback
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
