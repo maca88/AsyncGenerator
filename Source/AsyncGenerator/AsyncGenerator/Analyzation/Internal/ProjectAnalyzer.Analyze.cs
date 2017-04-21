@@ -22,7 +22,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					AnalyzeMethodData(documentData, methodData);
-					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
+					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
 					{
 						AnalyzeAnonymousFunctionData(documentData, functionData);
 					}
@@ -72,13 +72,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeAnonymousFunctionData(DocumentData documentData, AnonymousFunctionData methodData)
+		private void AnalyzeAnonymousFunctionData(DocumentData documentData, FunctionData methodData)
 		{
 			foreach (var reference in methodData.InvokedMethodReferences)
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
-			methodData.HasYields = methodData.Node.Body?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodData.HasYields = methodData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodData methoData, CrefFunctionReferenceData crefData)

@@ -20,6 +20,7 @@ namespace AsyncGenerator.Internal
 			SyntaxKind.ParenthesizedLambdaExpression,
 			SyntaxKind.AnonymousMethodExpression,
 			SyntaxKind.SimpleLambdaExpression,
+			SyntaxKind.LocalFunctionStatement,
 			// Method
 			SyntaxKind.MethodDeclaration,
 			// Type
@@ -85,7 +86,7 @@ namespace AsyncGenerator.Internal
 			TypeData typeData = null,
 			MethodData methodData = null)
 		{
-			AnonymousFunctionData functionData = null;
+			ChildFunctionData functionData = null;
 			SyntaxNode endNode;
 			if (methodData != null)
 			{
@@ -115,14 +116,15 @@ namespace AsyncGenerator.Internal
 					case SyntaxKind.ParenthesizedLambdaExpression:
 					case SyntaxKind.AnonymousMethodExpression:
 					case SyntaxKind.SimpleLambdaExpression:
+					case SyntaxKind.LocalFunctionStatement:
 						if (methodData == null)
 						{
 							throw new InvalidOperationException($"Anonymous function {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
 						}
 						var symbol = SemanticModel.GetSymbolInfo(n).Symbol as IMethodSymbol;
 						functionData = functionData != null 
-							? functionData.GetNestedAnonymousFunctionData((AnonymousFunctionExpressionSyntax)n, symbol, create)
-							: methodData.GetAnonymousFunctionData((AnonymousFunctionExpressionSyntax) n, symbol, create);
+							? functionData.GetChildFunction(n, symbol, create)
+							: methodData.GetChildFunction(n, symbol, create);
 						if (functionData == null)
 						{
 							return null;
@@ -177,6 +179,7 @@ namespace AsyncGenerator.Internal
 				case SyntaxKind.ParenthesizedLambdaExpression:
 				case SyntaxKind.AnonymousMethodExpression:
 				case SyntaxKind.SimpleLambdaExpression:
+				case SyntaxKind.LocalFunctionStatement:
 					return functionData;
 				case SyntaxKind.MethodDeclaration:
 					return methodData;
@@ -191,15 +194,11 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public async Task<FunctionData> GetAnonymousFunctionOrMethodData(IMethodSymbol symbol)
+		public async Task<FunctionData> GetFunctionData(IMethodSymbol symbol)
 		{
 			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
 			var node = await syntax.GetSyntaxAsync().ConfigureAwait(false);
-			if (node.IsKind(SyntaxKind.MethodDeclaration))
-			{
-				return (MethodData)GetNodeData(node);
-			}
-			return (AnonymousFunctionData)GetNodeData(node);
+			return (FunctionData)GetNodeData(node);
 		}
 
 		#region AnonymousFunctionData
@@ -212,6 +211,11 @@ namespace AsyncGenerator.Internal
 		public AnonymousFunctionData GetOrCreateAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, MethodData methodData = null)
 		{
 			return (AnonymousFunctionData)GetNodeData(node, true, methodData: methodData);
+		}
+
+		public LocalFunctionData GetOrCreateLocalFunctionData(LocalFunctionStatementSyntax node, MethodData methodData = null)
+		{
+			return (LocalFunctionData)GetNodeData(node, true, methodData: methodData);
 		}
 
 		#endregion

@@ -82,17 +82,10 @@ namespace AsyncGenerator.Internal
 
 		public MethodDeclarationSyntax Node { get; }
 
-		public ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData> AnonymousFunctions { get; } = 
-			new ConcurrentDictionary<AnonymousFunctionExpressionSyntax, AnonymousFunctionData>();
-
 		#region IMethodAnalyzationResult
 
 		private IReadOnlyList<IFunctionAnalyzationResult> _cachedInvokedBy;
 		IReadOnlyList<IFunctionAnalyzationResult> IMethodAnalyzationResult.InvokedBy => _cachedInvokedBy ?? (_cachedInvokedBy = InvokedBy.ToImmutableArray());
-
-		private IReadOnlyList<IAnonymousFunctionAnalyzationResult> _cachedAnonymousFunctions;
-		IReadOnlyList<IAnonymousFunctionAnalyzationResult> IMethodAnalyzationResult.AnonymousFunctions =>
-			_cachedAnonymousFunctions ?? (_cachedAnonymousFunctions = AnonymousFunctions.Values.ToImmutableArray());
 
 		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodCrefReferences;
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodAnalyzationResult.CrefMethodReferences =>
@@ -100,12 +93,6 @@ namespace AsyncGenerator.Internal
 
 
 		#endregion
-
-		public IEnumerable<AnonymousFunctionData> GetAllAnonymousFunctionData(Func<AnonymousFunctionData, bool> predicate = null)
-		{
-			return AnonymousFunctions.Values
-				.SelectMany(o => o.GetSelfAndDescendantsAnonymousFunctionData(predicate));
-		}
 
 		#region Scanning step
 
@@ -145,23 +132,6 @@ namespace AsyncGenerator.Internal
 			return result;
 		}
 
-
-		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, bool create = false)
-		//{
-		//	var symbol = TypeData.NamespaceData.DocumentData.SemanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-		//	return GetAnonymousFunctionData(node, symbol, create);
-		//}
-
-		public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, IMethodSymbol symbol, bool create = false)
-		{
-			AnonymousFunctionData functionData;
-			if (AnonymousFunctions.TryGetValue(node, out functionData))
-			{
-				return functionData;
-			}
-			return !create ? null : AnonymousFunctions.GetOrAdd(node, syntax => new AnonymousFunctionData(this, symbol, node));
-		}
-
 		public override SyntaxNode GetNode()
 		{
 			return Node;
@@ -170,11 +140,6 @@ namespace AsyncGenerator.Internal
 		public override SyntaxNode GetBodyNode()
 		{
 			return Node.Body ?? (SyntaxNode)Node.ExpressionBody;
-		}
-
-		public override IEnumerable<AnonymousFunctionData> GetAnonymousFunctionData()
-		{
-			return AnonymousFunctions.Values;
 		}
 
 		public override MethodData GetMethodData() => this;

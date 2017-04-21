@@ -66,7 +66,7 @@ namespace AsyncGenerator.Internal
 			return documentData.GetMethodData(node);
 		}
 
-		public Task<FunctionData> GetAnonymousFunctionOrMethodData(IMethodSymbol methodSymbol)
+		public Task<FunctionData> GetFunctionData(IMethodSymbol methodSymbol)
 		{
 			var syntax = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
 			if (syntax == null || !Contains(syntax))
@@ -74,7 +74,7 @@ namespace AsyncGenerator.Internal
 				return Task.FromResult<FunctionData>(null);
 			}
 			var documentData = GetDocumentData(syntax);
-			return documentData.GetAnonymousFunctionOrMethodData(methodSymbol);
+			return documentData.GetFunctionData(methodSymbol);
 		}
 
 		public DocumentData GetDocumentData(Document document)

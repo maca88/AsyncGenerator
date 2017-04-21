@@ -193,6 +193,8 @@
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PostAnalyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PreAnalyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.Scan.cs" />
+    <Compile Include="Internal\ChildFunctionData.cs" />
+    <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="ReferenceConversion.cs" />
     <Compile Include="Configuration\IProjectAnalyzeCallbacksConfiguration.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
@@ -214,7 +216,7 @@
     <Compile Include="Extensions\TypeAnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\MethodKindExtensions.cs" />
     <Compile Include="Extensions\SymbolExtensions.cs" />
-    <Compile Include="Analyzation\IAnonymousFunctionAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
     <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
     <Compile Include="Analyzation\INamespaceAnalyzationResult.cs" />

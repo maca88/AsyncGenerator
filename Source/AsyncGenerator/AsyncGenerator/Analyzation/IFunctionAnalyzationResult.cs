@@ -41,6 +41,11 @@ namespace AsyncGenerator.Analyzation
 		IReadOnlyList<StatementSyntax> Preconditions { get; }
 
 		/// <summary>
+		/// Anonymous/local functions that are declared inside this function/method
+		/// </summary>
+		IReadOnlyList<IChildFunctionAnalyzationResult> ChildFunctions { get; }
+
+		/// <summary>
 		/// When true, the async keyword will be omitted
 		/// </summary>
 		bool OmitAsync { get; }

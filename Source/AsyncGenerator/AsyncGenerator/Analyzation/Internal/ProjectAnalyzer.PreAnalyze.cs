@@ -39,18 +39,35 @@ namespace AsyncGenerator.Analyzation.Internal
 						PreAnalyzeMethodData(methodData);
 					}
 					
-					foreach (var funNode in methodNode
-						.DescendantNodes()
-						.OfType<AnonymousFunctionExpressionSyntax>())
+					foreach (var node in methodNode
+						.DescendantNodes())
 					{
-						var funData = documentData.GetOrCreateAnonymousFunctionData(funNode, methodData);
-						if (typeData.Conversion == TypeConversion.Ignore)
+						switch (node.Kind())
 						{
-							methodData.Conversion = MethodConversion.Ignore;
-						}
-						else
-						{
-							PreAnalyzeAnonymousFunction(funData, documentData.SemanticModel);
+							case SyntaxKind.ParenthesizedLambdaExpression:
+							case SyntaxKind.AnonymousMethodExpression:
+							case SyntaxKind.SimpleLambdaExpression:
+								var anonFunData = documentData.GetOrCreateAnonymousFunctionData((AnonymousFunctionExpressionSyntax)node, methodData);
+								if (typeData.Conversion == TypeConversion.Ignore)
+								{
+									methodData.Conversion = MethodConversion.Ignore;
+								}
+								else
+								{
+									PreAnalyzeAnonymousFunction(anonFunData, documentData.SemanticModel);
+								}
+								break;
+							case SyntaxKind.LocalFunctionStatement:
+								var localFunData = documentData.GetOrCreateLocalFunctionData((LocalFunctionStatementSyntax)node, methodData);
+								if (typeData.Conversion == TypeConversion.Ignore)
+								{
+									methodData.Conversion = MethodConversion.Ignore;
+								}
+								else
+								{
+									PreAnalyzeLocalFunction(localFunData, documentData.SemanticModel);
+								}
+								break;
 						}
 					}
 				}
@@ -317,6 +334,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(symbol, index);
 			}
 
+		}
+
+		private void PreAnalyzeLocalFunction(LocalFunctionData functionData, SemanticModel semanticModel)
+		{
+			//TODO
 		}
 	}
 }

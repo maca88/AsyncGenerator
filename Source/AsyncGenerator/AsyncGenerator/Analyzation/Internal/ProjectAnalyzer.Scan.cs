@@ -33,7 +33,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					await ScanMethodData(methodData);
-					foreach (var functionData in methodData.GetAllAnonymousFunctionData(o => o.Conversion != MethodConversion.Ignore))
+					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
 					{
 						// TODO: do we need something here?
 					}
@@ -338,7 +338,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					continue;
 				}
-				var baseMethodData = await documentData.GetAnonymousFunctionOrMethodData(refMethodSymbol).ConfigureAwait(false);
+				var baseMethodData = await documentData.GetFunctionData(refMethodSymbol).ConfigureAwait(false);
 				if (baseMethodData == null)
 				{
 					continue;

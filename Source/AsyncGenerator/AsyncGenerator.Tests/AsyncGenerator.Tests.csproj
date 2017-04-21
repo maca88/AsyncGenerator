@@ -220,6 +220,8 @@
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
+    <Compile Include="LocalFunctions\Fixture.cs" />
+    <Compile Include="LocalFunctions\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParamaters\Fixture.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
     <Compile Include="Preconditions\Fixture.cs" />
@@ -272,6 +274,7 @@
   <ItemGroup>
     <Folder Include="CastOmitAsync\Output\" />
     <Folder Include="CustomReturnType\Output\" />
+    <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParamaters\Output\" />
     <Folder Include="PreconditionOmitAsync\Output\" />

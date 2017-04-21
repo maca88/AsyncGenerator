@@ -28,11 +28,6 @@ namespace AsyncGenerator.Analyzation
 		IMethodSymbol AsyncCounterpartSymbol { get; }
 
 		/// <summary>
-		/// Anonymous functions that are declared inside the method
-		/// </summary>
-		IReadOnlyList<IAnonymousFunctionAnalyzationResult> AnonymousFunctions { get; }
-
-		/// <summary>
 		/// References to other methods that are referenced in trivias
 		/// </summary>
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> CrefMethodReferences { get; }

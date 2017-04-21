@@ -1,31 +1,27 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using AsyncGenerator.Analyzation;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
-	internal class AnonymousFunctionData : ChildFunctionData
+	internal class LocalFunctionData : ChildFunctionData
 	{
-		public AnonymousFunctionData(MethodData methodData, IMethodSymbol symbol, AnonymousFunctionExpressionSyntax node,
+		public LocalFunctionData(MethodData methodData, IMethodSymbol symbol, LocalFunctionStatementSyntax node,
 			FunctionData parent = null) : base(symbol, parent ?? methodData)
 		{
 			MethodData = methodData;
 			Node = node;
 		}
 
-		public AnonymousFunctionExpressionSyntax Node { get; }
+		public LocalFunctionStatementSyntax Node { get; }
 
 		public MethodData MethodData { get; }
 
 		public override TypeData TypeData => MethodData.TypeData;
-
-		/// <summary>
-		/// Symbol of the method that uses this function as an argument, value represents the index of the argument
-		/// </summary>
-		public Tuple<IMethodSymbol, int> ArgumentOfMethod { get; set; }
 
 		public override SyntaxNode GetNode()
 		{
@@ -34,7 +30,7 @@ namespace AsyncGenerator.Internal
 
 		public override SyntaxNode GetBodyNode()
 		{
-			return Node.Body;
+			return Node.Body ?? (SyntaxNode)Node.ExpressionBody;
 		}
 
 		public override MethodData GetMethodData()
