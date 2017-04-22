@@ -14,27 +14,28 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SimpleReference.Input
 {
 	using System.Threading.Tasks;
+	using System.Threading;
 	/// <summary>
 	/// A simple example of using <see cref="SimpleFile.Read"/>
 	/// </summary>
 	public partial class TestCase
 	{
-		public Task CallCallReadFileAsync()
+		public Task CallCallReadFileAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return CallReadFileAsync();
+			return CallReadFileAsync(cancellationToken);
 		}
 
-		public Task CallReadFileAsync()
+		public Task CallReadFileAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return ReadFileAsync();
+			return ReadFileAsync(cancellationToken);
 		}
 
 		/// <summary>
-		/// Use <see cref="SimpleFile.ReadAsync()"/> to read a file
+		/// Use <see cref="SimpleFile.ReadAsync(CancellationToken)"/> to read a file
 		/// </summary>
-		public Task ReadFileAsync()
+		public Task ReadFileAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.ReadAsync();
+			return SimpleFile.ReadAsync(cancellationToken);
 		}
 
 	}

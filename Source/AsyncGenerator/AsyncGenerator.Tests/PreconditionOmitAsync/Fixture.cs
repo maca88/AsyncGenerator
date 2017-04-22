@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.PreconditionOmitAsync
 {
 	[TestFixture]
-	public class Fixture : BaseTest<Input.TestCase>
+	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -41,7 +41,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
-				Assert.AreEqual(methods[readFile], methodReference.ReferenceFunctionData);
+				Assert.AreEqual(methods[readFile], methodReference.ReferenceFunction);
 
 				method = methods[preconditionVoid];
 				Assert.AreEqual(1, method.Preconditions.Count);
@@ -53,7 +53,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
-				Assert.IsNull(methodReference.ReferenceFunctionData);
+				Assert.IsNull(methodReference.ReferenceFunction);
 
 				method = methods[preconditionToSplit];
 				Assert.AreEqual(1, method.Preconditions.Count);
@@ -65,7 +65,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsFalse(methodReference.UseAsReturnValue);
 				Assert.IsFalse(methodReference.LastInvocation);
-				Assert.IsNull(methodReference.ReferenceFunctionData);
+				Assert.IsNull(methodReference.ReferenceFunction);
 
 				method = methods[syncPrecondition];
 				Assert.AreEqual(1, method.Preconditions.Count);

@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.CastOmitAsync
 {
 	[TestFixture]
-	public class Fixture : BaseTest<Input.TestCase>
+	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -31,7 +31,7 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 					enumerableCastReturn
 				};
 
-				IInvokeFunctionReferenceAnalyzationResult methodReference;
+				IBodyFunctionReferenceAnalyzationResult methodReference;
 				IMethodAnalyzationResult method;
 				foreach (var awaitRequiredMethod in awaitRequiredMethods)
 				{

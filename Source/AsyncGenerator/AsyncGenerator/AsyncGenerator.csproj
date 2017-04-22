@@ -185,7 +185,7 @@
     <Compile Include="Analyzation\AsyncCounterpartsSearchOptions.cs" />
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
-    <Compile Include="Analyzation\IInvokeFunctionReferenceAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\IReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\ITypeReferenceAnalyzationResult.cs" />
@@ -233,7 +233,7 @@
     <Compile Include="Internal\DelegatePreconditionChecker.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="Internal\MethodData.cs" />
-    <Compile Include="Internal\InvokeFunctionReferenceData.cs" />
+    <Compile Include="Internal\BodyFunctionReferenceData.cs" />
     <Compile Include="Internal\NamespaceData.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.cs" />
     <Compile Include="Plugins\AbstractPlugin.cs" />

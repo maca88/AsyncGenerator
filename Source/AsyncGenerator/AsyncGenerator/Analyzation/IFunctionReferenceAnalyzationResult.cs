@@ -11,12 +11,16 @@ namespace AsyncGenerator.Analyzation
 {
 	public interface IFunctionReferenceAnalyzationResult : IReferenceAnalyzationResult<IMethodSymbol>
 	{
-		IFunctionAnalyzationResult ReferenceFunctionData { get; }
+		IFunctionAnalyzationResult ReferenceFunction { get; }
 
 		SyntaxNode ReferenceNode { get; }
 
 		ReferenceConversion GetConversion();
 
 		string AsyncCounterpartName { get; }
+
+		IMethodSymbol AsyncCounterpartSymbol { get; }
+
+		IFunctionAnalyzationResult AsyncCounterpartFunction { get; }
 	}
 }

@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.LocalFunctions
 {
 	[TestFixture]
-	public class Fixture : BaseTest<Input.TestCase>
+	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()

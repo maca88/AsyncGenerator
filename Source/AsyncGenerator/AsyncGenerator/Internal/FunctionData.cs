@@ -9,8 +9,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
-	
-
 	internal abstract class FunctionData : AbstractData, IFunctionAnalyzationResult
 	{
 		protected FunctionData(IMethodSymbol methodSymbol)
@@ -28,9 +26,9 @@ namespace AsyncGenerator.Internal
 		public MethodConversion Conversion { get; set; }
 
 		/// <summary>
-		/// References to other methods that are invoked inside this method and are candidates to be async
+		/// References to other methods that are referenced/invoked inside this function/method and are candidates to be async
 		/// </summary>
-		public ConcurrentSet<InvokeFunctionReferenceData> InvokedMethodReferences { get; } = new ConcurrentSet<InvokeFunctionReferenceData>();
+		public ConcurrentSet<BodyFunctionReferenceData> BodyMethodReferences { get; } = new ConcurrentSet<BodyFunctionReferenceData>();
 
 		public ConcurrentSet<CrefFunctionReferenceData> CrefMethodReferences { get; } = new ConcurrentSet<CrefFunctionReferenceData>();
 
@@ -120,8 +118,10 @@ namespace AsyncGenerator.Internal
 
 		#region IFunctionAnalyzationResult
 
-		private IReadOnlyList<IInvokeFunctionReferenceAnalyzationResult> _cachedMethodReferences;
-		IReadOnlyList<IInvokeFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = InvokedMethodReferences.ToImmutableArray());
+		IMethodAnalyzationResult IFunctionAnalyzationResult.GetMethod() => GetMethodData();
+
+		private IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> _cachedMethodReferences;
+		IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = BodyMethodReferences.ToImmutableArray());
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
 		IReadOnlyList<ITypeReferenceAnalyzationResult> IFunctionAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());

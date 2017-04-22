@@ -12,9 +12,9 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
 {
-	public abstract class BaseTest<T>
+	public abstract class BaseFixture<T>
 	{
-		protected BaseTest(string folderPath = null)
+		protected BaseFixture(string folderPath = null)
 		{
 			var ns = GetType().Namespace ?? "";
 			InputFolderPath = folderPath ?? $"{string.Join("/", ns.Split('.').Skip(2))}/Input";

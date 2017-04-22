@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsyncGenerator.Tests.OverloadWithDifferentParamaters.Input
+namespace AsyncGenerator.Tests.OverloadWithDifferentParameters.Input
 {
 	public class DataReader
 	{

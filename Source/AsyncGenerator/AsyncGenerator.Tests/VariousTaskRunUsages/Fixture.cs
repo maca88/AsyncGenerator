@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.VariousTaskRunUsages
 {
 	[TestFixture]
-	public class Fixture : BaseTest<Input.TestCase>
+	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -31,7 +31,7 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				Assert.AreEqual(10, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
 
 				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
-				IInvokeFunctionReferenceAnalyzationResult methodReference;
+				IBodyFunctionReferenceAnalyzationResult methodReference;
 				var awaitableMethods = new[]
 				{
 					waitActionTask,

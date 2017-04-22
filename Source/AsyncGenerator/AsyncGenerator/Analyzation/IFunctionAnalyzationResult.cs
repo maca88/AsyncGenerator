@@ -25,14 +25,20 @@ namespace AsyncGenerator.Analyzation
 		SyntaxNode GetBodyNode();
 
 		/// <summary>
+		/// Get the method that contains this function
+		/// </summary>
+		/// <returns></returns>
+		IMethodAnalyzationResult GetMethod();
+
+		/// <summary>
 		/// References of types that are used inside this function
 		/// </summary>
 		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 
 		/// <summary>
-		/// References to other methods that are invoked inside this function and are candidates to be async
+		/// References to other methods that are referenced/invoked inside this function and are candidates to be async
 		/// </summary>
-		IReadOnlyList<IInvokeFunctionReferenceAnalyzationResult> MethodReferences { get; }
+		IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> MethodReferences { get; }
 
 		/// <summary>
 		/// Statements inside the function that were qualified as preconditions. Preconditions may be filled only for functions that 

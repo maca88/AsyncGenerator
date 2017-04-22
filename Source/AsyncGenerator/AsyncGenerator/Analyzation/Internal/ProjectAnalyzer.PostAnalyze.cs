@@ -45,7 +45,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					depFunctionData.Conversion = MethodConversion.ToAsync;
 
 					// We need to update the CancellationTokenRequired for all invocations of the current method
-					foreach (var depFunctionRefData in depFunctionData.InvokedMethodReferences.Where(o => o.ReferenceFunctionData == currentMethodData))
+					foreach (var depFunctionRefData in depFunctionData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == currentMethodData))
 					{
 						depFunctionRefData.CancellationTokenRequired = currentMethodData.CancellationTokenRequired;
 					}
@@ -93,7 +93,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			var invocationExpr = invocationExps[0];
-			var refData = methodData.InvokedMethodReferences.FirstOrDefault(o => o.ReferenceNode == invocationExpr);
+			var refData = methodData.BodyMethodReferences.FirstOrDefault(o => o.ReferenceNode == invocationExpr);
 			if (refData == null)
 			{
 				methodData.WrapInTryCatch = true;
@@ -153,7 +153,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var remainingMethodData = toProcessMethodData.ToList();
 			foreach (var methodData in remainingMethodData)
 			{
-				if (methodData.InvokedMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
+				if (methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
 				{
 					if (methodData.Conversion == MethodConversion.Ignore)
 					{
@@ -203,13 +203,13 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 
-				var asyncMethodReferences = methodData.InvokedMethodReferences
+				var asyncMethodReferences = methodData.BodyMethodReferences
 					.Where(o => o.GetConversion() == ReferenceConversion.ToAsync)
 					.ToList();
 				// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
 				// or we have only one async invocation that is the last to be invoked
 				var canSkipAwaits = true;
-				foreach (var methodReference in methodData.InvokedMethodReferences)
+				foreach (var methodReference in methodData.BodyMethodReferences)
 				{
 					if (methodReference.GetConversion() == ReferenceConversion.Ignore)
 					{
@@ -293,14 +293,14 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 
 					// A method shall be tail splitted when has at least one precondition and there is at least one awaitable invocation
-					if (methodData.Preconditions.Any() && methodData.InvokedMethodReferences.Any(o => o.AwaitInvocation == true))
+					if (methodData.Preconditions.Any() && methodData.BodyMethodReferences.Any(o => o.AwaitInvocation == true))
 					{
 						methodData.SplitTail = true;
 					}
 				}
 
 				// The async keyword shall be omitted when the method does not have any awaitable invocation
-				if (!methodData.InvokedMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
+				if (!methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
 				{
 					methodData.OmitAsync = true;
 				}

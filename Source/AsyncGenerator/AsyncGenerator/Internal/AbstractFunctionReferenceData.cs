@@ -20,11 +20,17 @@ namespace AsyncGenerator.Internal
 
 		public abstract string AsyncCounterpartName { get; set; }
 
+		public abstract IMethodSymbol AsyncCounterpartSymbol { get; set; }
+
+		public abstract FunctionData AsyncCounterpartFunction { get; set; }
+
 		public abstract ReferenceConversion GetConversion();
 
 		#region IReferenceAnalyzationResult
 
-		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.ReferenceFunctionData => ReferenceFunctionData;
+		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.ReferenceFunction => ReferenceFunctionData;
+
+		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.AsyncCounterpartFunction => AsyncCounterpartFunction;
 
 		#endregion
 	}

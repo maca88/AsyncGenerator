@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class InvokeFunctionReferenceData : AbstractFunctionReferenceData, IInvokeFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
+	internal class BodyFunctionReferenceData : AbstractFunctionReferenceData, IBodyFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
 	{
-		public InvokeFunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
+		public BodyFunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
 			: base(reference, referenceNameNode, referenceSymbol, referenceFunctionData)
 		{
@@ -45,10 +45,10 @@ namespace AsyncGenerator.Internal
 		#region IFunctionReferenceAnalyzationResult
 
 		private IReadOnlyList<IMethodSymbol> _cachedReferenceAsyncSymbols;
-		IReadOnlyList<IMethodSymbol> IInvokeFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols => 
+		IReadOnlyList<IMethodSymbol> IBodyFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols => 
 			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
 
-		bool IInvokeFunctionReferenceAnalyzationResult.AwaitInvocation => AwaitInvocation.GetValueOrDefault();
+		bool IBodyFunctionReferenceAnalyzationResult.AwaitInvocation => AwaitInvocation.GetValueOrDefault();
 
 		#endregion
 
@@ -59,6 +59,10 @@ namespace AsyncGenerator.Internal
 			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
 
 		public override string AsyncCounterpartName { get; set; }
+
+		public override IMethodSymbol AsyncCounterpartSymbol { get; set; }
+
+		public override FunctionData AsyncCounterpartFunction { get; set; }
 
 		#endregion
 	}

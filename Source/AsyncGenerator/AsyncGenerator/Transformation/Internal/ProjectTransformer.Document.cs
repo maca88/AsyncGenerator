@@ -22,11 +22,13 @@ namespace AsyncGenerator.Transformation.Internal
 			var rewrittenNodes = new List<TransformationResult>();
 			var namespaceNodes = new List<MemberDeclarationSyntax>();
 			var hasTaskUsing = rootNode.Usings.Any(o => o.Name.ToString() == "System.Threading.Tasks");
+			var hasThreadingUsing = rootNode.Usings.Any(o => o.Name.ToString() == "System.Threading");
 
 			foreach (var namespaceResult in documentResult.Namespaces.OrderBy(o => o.Node.SpanStart))
 			{
 				var namespaceNode = namespaceResult.Node;
 				var typeNodes = new List<MemberDeclarationSyntax>();
+				var threadingUsingRequired = false;
 				foreach (var typeResult in namespaceResult.Types.Where(o => o.Conversion != TypeConversion.Ignore).OrderBy(o => o.Node.SpanStart))
 				{
 					var transformResult = TransformType(typeResult);
@@ -35,6 +37,8 @@ namespace AsyncGenerator.Transformation.Internal
 						continue;
 					}
 					typeNodes.Add(transformResult.TransformedNode);
+
+					threadingUsingRequired |= typeResult.Methods.Any(o => o.CancellationTokenRequired);
 
 					// We need to update the original file if it was modified
 					if (transformResult.OriginalModifiedNode != null)
@@ -70,6 +74,10 @@ namespace AsyncGenerator.Transformation.Internal
 					if (!hasTaskUsing && namespaceNode.Usings.All(o => o.Name.ToString() != "System.Threading.Tasks"))
 					{
 						namespaceNode = namespaceNode.AddUsing("System.Threading.Tasks", TriviaList(leadingTrivia), endOfLineTrivia);
+					}
+					if (threadingUsingRequired && !hasThreadingUsing && namespaceNode.Usings.All(o => o.Name.ToString() != "System.Threading"))
+					{
+						namespaceNode = namespaceNode.AddUsing("System.Threading", TriviaList(leadingTrivia), endOfLineTrivia);
 					}
 					// TODO: add locking namespaces
 

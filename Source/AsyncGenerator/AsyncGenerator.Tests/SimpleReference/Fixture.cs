@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.SimpleReference
 {
 	[TestFixture]
-	public class Fixture : BaseTest<TestCase>
+	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -45,7 +45,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsNull(methodReference.ReferenceFunctionData);
+				Assert.IsNull(methodReference.ReferenceFunction);
 				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
 				Assert.AreEqual(1, methodReference.ReferenceAsyncSymbols.Count);
 				Assert.AreEqual(readAsync, methodReference.ReferenceAsyncSymbols[0].Name);
@@ -136,7 +136,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
-				Assert.IsNull(methodReference.ReferenceFunctionData);
+				Assert.IsNull(methodReference.ReferenceFunction);
 				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
 				Assert.AreEqual(2, methodReference.ReferenceAsyncSymbols.Count);
 				Assert.AreEqual(readAsync, methodReference.ReferenceAsyncSymbols[0].Name);
@@ -196,7 +196,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						// TODO
+						Assert.AreEqual(GetOutputFile("TestCaseWithToken"), document.Transformed.ToFullString());
 					})
 				)
 			);

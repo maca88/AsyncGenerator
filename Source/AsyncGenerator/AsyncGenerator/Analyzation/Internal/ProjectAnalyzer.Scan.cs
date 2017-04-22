@@ -330,13 +330,19 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (methodNode != null)
 					{
 						var crefMethodData = (MethodData)documentData.GetNodeData(methodNode, typeData: crefTypeData);
-						crefMethodData.CrefMethodReferences.TryAdd(crefReferenceData);
+						if (!crefMethodData.CrefMethodReferences.TryAdd(crefReferenceData))
+						{
+							Logger.Debug($"Performance hit: CrefFunctionReferenceData {crefReferenceNameNode} already added");
+						}
 					}
 					else
 					{
-						crefTypeData.CrefReferences.TryAdd(crefReferenceData);
+						if (!crefTypeData.CrefReferences.TryAdd(crefReferenceData))
+						{
+							Logger.Debug($"Performance hit: CrefFunctionReferenceData {crefReferenceNameNode} already added");
+						}
 					}
-					continue;
+					continue; // No need to further scan a cref reference
 				}
 				var baseMethodData = await documentData.GetFunctionData(refMethodSymbol).ConfigureAwait(false);
 				if (baseMethodData == null)
@@ -346,13 +352,23 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
 				// Save the reference as it can be made async
 				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
-				var invokedSymbol = (IMethodSymbol) documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
-				var invokedMethodData = await ProjectData.GetMethodData(invokedSymbol).ConfigureAwait(false);
-				invokedMethodData?.InvokedBy.Add(baseMethodData);
-				var methodReferenceData = new InvokeFunctionReferenceData(baseMethodData, refLocation, nameNode, invokedSymbol, invokedMethodData);
-				if (!baseMethodData.InvokedMethodReferences.TryAdd(methodReferenceData))
+				var referenceSymbol = (IMethodSymbol) documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
+				var referenceMethodData = await ProjectData.GetMethodData(referenceSymbol).ConfigureAwait(false);
+				// Check if the reference is a cref reference
+				if (nameNode.Parent.IsKind(SyntaxKind.NameMemberCref))
 				{
-					Logger.Debug($"Performance hit: method reference {invokedSymbol} already processed");
+					var crefReferenceData = new CrefFunctionReferenceData(refLocation, nameNode, referenceSymbol, referenceMethodData);
+					if (!baseMethodData.CrefMethodReferences.TryAdd(crefReferenceData))
+					{
+						Logger.Debug($"Performance hit: CrefFunctionReferenceData {nameNode} already added");
+					}
+					continue; // No need to further scan a cref reference
+				}
+				referenceMethodData?.InvokedBy.Add(baseMethodData);
+				var methodReferenceData = new BodyFunctionReferenceData(baseMethodData, refLocation, nameNode, referenceSymbol, referenceMethodData);
+				if (!baseMethodData.BodyMethodReferences.TryAdd(methodReferenceData))
+				{
+					Logger.Debug($"Performance hit: method reference {referenceSymbol} already processed");
 					continue; // Reference already processed
 				}
 

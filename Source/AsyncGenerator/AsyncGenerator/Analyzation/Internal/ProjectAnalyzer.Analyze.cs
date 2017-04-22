@@ -32,7 +32,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
-			foreach (var reference in methodData.InvokedMethodReferences)
+			foreach (var reference in methodData.BodyMethodReferences)
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
@@ -60,7 +60,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// If a method is never invoked and there is no invocations inside the method body that can be async and there is no related methods we can ignore it 
-			if (!methodData.InvokedBy.Any() && methodData.InvokedMethodReferences.All(o => o.Ignore) && !methodData.RelatedMethods.Any())
+			if (!methodData.InvokedBy.Any() && methodData.BodyMethodReferences.All(o => o.Ignore) && !methodData.RelatedMethods.Any())
 			{
 				// If we have to create a new type we need to consider also the external related methods
 				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
@@ -74,7 +74,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void AnalyzeAnonymousFunctionData(DocumentData documentData, FunctionData methodData)
 		{
-			foreach (var reference in methodData.InvokedMethodReferences)
+			foreach (var reference in methodData.BodyMethodReferences)
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
@@ -83,11 +83,11 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodData methoData, CrefFunctionReferenceData crefData)
 		{
-			crefData.RelatedInvokeFunctionReferences.AddRange(
-				methoData.InvokedMethodReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
+			crefData.RelatedBodyFunctionReferences.AddRange(
+				methoData.BodyMethodReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
 		}
 
-		private void AnalyzeMethodReference(DocumentData documentData, InvokeFunctionReferenceData refData)
+		private void AnalyzeMethodReference(DocumentData documentData, BodyFunctionReferenceData refData)
 		{
 			var nameNode = refData.ReferenceNameNode;
 
@@ -145,7 +145,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, InvokeFunctionReferenceData functionReferenceData)
+		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, BodyFunctionReferenceData functionReferenceData)
 		{
 			var functionData = functionReferenceData.FunctionData;
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
@@ -175,13 +175,33 @@ namespace AsyncGenerator.Analyzation.Internal
 					functionReferenceData.AwaitInvocation = false;
 					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
-				var nameGroups = functionReferenceData.ReferenceAsyncSymbols.GroupBy(o => o.Name).ToList();
-				if (nameGroups.Count == 1)
+				// Set CancellationTokenRequired if we detect that one of the async counterparts has a cancellation token as a parameter
+				if (_configuration.UseCancellationTokenOverload)
 				{
-					functionReferenceData.AsyncCounterpartName = nameGroups[0].Key;
+					var tokenOverload = functionReferenceData.ReferenceAsyncSymbols
+						.SingleOrDefault(o => o.Parameters.Length > methodSymbol.Parameters.Length); // TODO: select the right one if we have more than one
+					if (tokenOverload != null)
+					{
+						functionReferenceData.CancellationTokenRequired = true;
+						functionReferenceData.AsyncCounterpartSymbol = tokenOverload;
+						functionReferenceData.AsyncCounterpartName = tokenOverload.Name;
+					}
+				}
+				if (functionReferenceData.AsyncCounterpartSymbol == null)
+				{
+					var nameGroups = functionReferenceData.ReferenceAsyncSymbols.GroupBy(o => o.Name).ToList();
+					if (nameGroups.Count == 1)
+					{
+						functionReferenceData.AsyncCounterpartName = nameGroups[0].Key;
+						functionReferenceData.AsyncCounterpartSymbol = nameGroups[0].Single(); // TODO: select the right one
+					}
+					else
+					{
+						// TODO: select the right one
+					}
 				}
 			}
-			else if (!ProjectData.Contains(functionReferenceData.ReferenceSymbol))
+			else if (!ProjectData.Contains(methodSymbol))
 			{
 				// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
 				functionReferenceData.Ignore = true;
@@ -190,7 +210,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			else if(functionReferenceData.ReferenceFunctionData != null)
 			{
-				functionReferenceData.AsyncCounterpartName = functionReferenceData.ReferenceSymbol.Name + "Async";
+				functionReferenceData.AsyncCounterpartName = methodSymbol.Name + "Async";
+				functionReferenceData.AsyncCounterpartSymbol = methodSymbol;
 			}
 
 			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
@@ -274,13 +295,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				functionReferenceData.LastInvocation = true;
 			}
 
-			// Set CancellationTokenRequired if we detect that one of the async counterparts has a cancellation token as a parameter
-			if (_configuration.UseCancellationTokenOverload &&
-			    functionReferenceData.ReferenceAsyncSymbols.Any(o => o.Parameters.Length > methodSymbol.Parameters.Length))
-			{
-				functionReferenceData.CancellationTokenRequired = true;
-			}
-
 			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)
 			{
 				analyzer.Analyze(node, functionReferenceData, documentData.SemanticModel);
@@ -290,12 +304,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (functionReferenceData.CancellationTokenRequired && functionReferenceData.GetConversion() == ReferenceConversion.ToAsync)
 			{
 				// We need to set CancellationTokenRequired to true for the method that contains this invocation
-				var methodData = functionReferenceData.FunctionData.GetMethodData();
+				var methodData = functionData.GetMethodData();
 				methodData.CancellationTokenRequired = true;
 			}
 		}
 
-		private void AnalyzeArgumentExpression(SyntaxNode node, SimpleNameSyntax nameNode, InvokeFunctionReferenceData result)
+		private void AnalyzeArgumentExpression(SyntaxNode node, SimpleNameSyntax nameNode, BodyFunctionReferenceData result)
 		{
 			var documentData = result.FunctionData.TypeData.NamespaceData.DocumentData;
 			var methodArgTypeInfo = documentData.SemanticModel.GetTypeInfo(nameNode);

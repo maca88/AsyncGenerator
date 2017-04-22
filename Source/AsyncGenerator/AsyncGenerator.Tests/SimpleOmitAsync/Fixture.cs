@@ -7,7 +7,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.SimpleOmitAsync
 {
 	[TestFixture]
-	public class Fixture : BaseTest<Input.TestCase>
+	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -33,7 +33,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.AreEqual(9, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
 				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				IInvokeFunctionReferenceAnalyzationResult methodReference;
+				IBodyFunctionReferenceAnalyzationResult methodReference;
 				IMethodAnalyzationResult method;
 
 				method = methods[simpleReturn];

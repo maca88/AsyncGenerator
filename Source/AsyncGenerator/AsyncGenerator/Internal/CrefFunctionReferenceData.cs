@@ -15,27 +15,37 @@ namespace AsyncGenerator.Internal
 		{
 		}
 
-		public List<InvokeFunctionReferenceData> RelatedInvokeFunctionReferences { get; } = new List<InvokeFunctionReferenceData>();
+		public List<BodyFunctionReferenceData> RelatedBodyFunctionReferences { get; } = new List<BodyFunctionReferenceData>();
 
 		public override ReferenceConversion GetConversion()
 		{
-			return (ReferenceFunctionData?.Conversion == MethodConversion.ToAsync) || RelatedInvokeFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync)
+			return (ReferenceFunctionData?.Conversion == MethodConversion.ToAsync) || RelatedBodyFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync)
 				? ReferenceConversion.ToAsync
 				: ReferenceConversion.Ignore;
 		}
 
 		public override string AsyncCounterpartName
 		{
-			get
-			{
-				return (ReferenceFunctionData?.Conversion == MethodConversion.ToAsync)
-					? ReferenceFunctionData.Symbol.Name + "Async"
-					: RelatedInvokeFunctionReferences.FirstOrDefault()?.AsyncCounterpartName;
-			}
-			set
-			{
-				throw new NotSupportedException($"Setting {nameof(AsyncCounterpartName)} for {nameof(CrefFunctionReferenceData)} is not supported");
-			}
+			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+				? ReferenceFunctionData.Symbol.Name + "Async"
+				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartName;
+			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartName)} for {nameof(CrefFunctionReferenceData)} is not supported");
+		}
+
+		public override IMethodSymbol AsyncCounterpartSymbol
+		{
+			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+				? ReferenceFunctionData.Symbol
+				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartSymbol;
+			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartSymbol)} for {nameof(CrefFunctionReferenceData)} is not supported");
+		}
+
+		public override FunctionData AsyncCounterpartFunction
+		{
+			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+				? ReferenceFunctionData
+				: null;
+			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartFunction)} for {nameof(CrefFunctionReferenceData)} is not supported");
 		}
 	}
 }

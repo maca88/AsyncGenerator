@@ -222,7 +222,7 @@
     <Compile Include="CustomReturnType\Fixture.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
     <Compile Include="LocalFunctions\Input\TestCase.cs" />
-    <Compile Include="OverloadWithDifferentParamaters\Fixture.cs" />
+    <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
     <Compile Include="Preconditions\Fixture.cs" />
     <Compile Include="SimpleAnonymousFunctions\Fixture.cs" />
@@ -232,7 +232,7 @@
     <Compile Include="SimpleOmitAsync\Fixture.cs" />
     <Compile Include="SynhronizedMethod\Fixture.cs" />
     <Compile Include="CastOmitAsync\Input\TestCase.cs" />
-    <Compile Include="OverloadWithDifferentParamaters\Input\TestCase.cs" />
+    <Compile Include="OverloadWithDifferentParameters\Input\TestCase.cs" />
     <Compile Include="CustomReturnType\Input\TestCase.cs" />
     <Compile Include="MethodAsArgument\Input\TestCase.cs" />
     <Compile Include="Preconditions\Input\TestCase.cs" />
@@ -276,7 +276,7 @@
     <Folder Include="CustomReturnType\Output\" />
     <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
-    <Folder Include="OverloadWithDifferentParamaters\Output\" />
+    <Folder Include="OverloadWithDifferentParameters\Output\" />
     <Folder Include="PreconditionOmitAsync\Output\" />
     <Folder Include="Preconditions\Output\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
@@ -285,6 +285,9 @@
     <Folder Include="SimpleOmitAsync\Output\" />
     <Folder Include="SynhronizedMethod\Output\" />
     <Folder Include="VariousTaskRunUsages\Output\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleReference\Output\TestCaseWithToken.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

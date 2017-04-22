@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Analyzation;
-using AsyncGenerator.Tests.OverloadWithDifferentParamaters.Input;
+using AsyncGenerator.Tests.OverloadWithDifferentParameters.Input;
 using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.OverloadWithDifferentParamaters
+namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 {
 	[TestFixture]
-	public class Fixture : BaseTest<TestCase>
+	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -42,7 +42,7 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParamaters
 				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsNotNull(methodReference.ReferenceFunctionData);
+				Assert.IsNotNull(methodReference.ReferenceFunction);
 
 				method = methods[customReadData].First();
 				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);

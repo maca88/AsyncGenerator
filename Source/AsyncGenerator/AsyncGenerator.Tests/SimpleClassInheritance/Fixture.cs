@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.SimpleClassInheritance
 {
 	[TestFixture]
-	public class Fixture : BaseTest<TestCase>
+	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
