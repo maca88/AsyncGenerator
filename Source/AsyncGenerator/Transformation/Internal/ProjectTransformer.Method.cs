@@ -151,12 +151,11 @@ namespace AsyncGenerator.Transformation.Internal
 					var newNameNode = nameNode
 						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
 						.WithTriviaFrom(nameNode);
-					// We need to annotate the invocation as the AddAwait method requires the parent of the invocation expression to be set
 					var invokeParent = invokeNode.Parent;
 					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode
 						.ReplaceNode(nameNode, newNameNode)
 						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired)
-						.AddAwait(invokeParent)
+						.AddAwait(invokeParent, _configuration.ConfigureAwaitArgument)
 					);
 				}
 

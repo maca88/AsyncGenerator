@@ -17,9 +17,16 @@ namespace AsyncGenerator.Configuration
 		IProjectTransformConfiguration AsyncFolder(string folderName);
 
 		/// <summary>
+		/// Set the syntax node that will be used as an argument to the method <see cref="Task.ConfigureAwait"/>, if null the invocation is not generated.
+		/// Default is null.
+		/// </summary>
+		/// <param name="node">The node that will be used as an argument to the <see cref="Task.ConfigureAwait"/> method.</param>
+		IProjectTransformConfiguration ConfigureAwaitArgument(ExpressionSyntax node);
+
+		/// <summary>
 		/// Set a function that can return a number of namespaces to import in a given document
 		/// </summary>
-		IProjectTransformConfiguration AdditionalDocumentNamespacesFunction(Func<CompilationUnitSyntax, IEnumerable<string>> func);
+		IProjectTransformConfiguration AdditionalDocumentNamespaces(Func<CompilationUnitSyntax, IEnumerable<string>> func);
 
 		/// <summary>
 		/// Add a assembly reference to the project

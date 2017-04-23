@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.SimpleCircularCall
@@ -66,6 +67,30 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(Input.TestCase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestConfigureAwaitAfterTransformation()
+		{
+			var readFile = GetMethodName(o => o.ReadFile());
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
+				)
+				.ConfigureTransformation(t => t
+					.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseWithConfigureAwait"), document.Transformed.ToFullString());
 					})
 				)
 			);

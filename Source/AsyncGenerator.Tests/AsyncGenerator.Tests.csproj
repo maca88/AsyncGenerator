@@ -294,6 +294,9 @@
   <ItemGroup>
     <EmbeddedResource Include="SimpleCircularCall\Output\TestCaseWithTokens.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleCircularCall\Output\TestCaseWithConfigureAwait.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

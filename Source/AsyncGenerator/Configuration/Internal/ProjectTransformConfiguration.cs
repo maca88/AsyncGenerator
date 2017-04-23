@@ -12,7 +12,7 @@ namespace AsyncGenerator.Configuration.Internal
 	{
 		public string AsyncFolder { get; private set; } = "Async";
 
-		public Func<CompilationUnitSyntax, IEnumerable<string>> AdditionalDocumentNamespacesFunction { get; private set; }
+		public Func<CompilationUnitSyntax, IEnumerable<string>> AdditionalDocumentNamespaces { get; private set; }
 
 		public HashSet<string> AssemblyReferences { get; } = new HashSet<string>();
 
@@ -22,26 +22,26 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public string IndentationForGeneratedCode { get; private set; }
 
+		public ExpressionSyntax ConfigureAwaitArgument { get; private set; }
+
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
 
 		IProjectTransformConfiguration IProjectTransformConfiguration.AsyncFolder(string folderName)
 		{
-			if (folderName == null)
-			{
-				throw new ArgumentNullException(nameof(folderName));
-			}
-			AsyncFolder = folderName;
+			AsyncFolder = folderName ?? throw new ArgumentNullException(nameof(folderName));
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.AdditionalDocumentNamespacesFunction(
+		IProjectTransformConfiguration IProjectTransformConfiguration.ConfigureAwaitArgument(ExpressionSyntax value)
+		{
+			ConfigureAwaitArgument = value;
+			return this;
+		}
+
+		IProjectTransformConfiguration IProjectTransformConfiguration.AdditionalDocumentNamespaces(
 			Func<CompilationUnitSyntax, IEnumerable<string>> func)
 		{
-			if (func == null)
-			{
-				throw new ArgumentNullException(nameof(func));
-			}
-			AdditionalDocumentNamespacesFunction = func;
+			AdditionalDocumentNamespaces = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
 		}
 
@@ -61,31 +61,19 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IProjectTransformConfiguration IProjectTransformConfiguration.ParseOptions(ParseOptions parseOptions)
 		{
-			if (parseOptions == null)
-			{
-				throw new ArgumentNullException(nameof(parseOptions));
-			}
-			ParseOptions = parseOptions;
+			ParseOptions = parseOptions ?? throw new ArgumentNullException(nameof(parseOptions));
 			return this;
 		}
 
 		IProjectTransformConfiguration IProjectTransformConfiguration.DirectiveForGeneratedCode(string directiveName)
 		{
-			if (directiveName == null)
-			{
-				throw new ArgumentNullException(nameof(directiveName));
-			}
-			DirectiveForGeneratedCode = directiveName;
+			DirectiveForGeneratedCode = directiveName ?? throw new ArgumentNullException(nameof(directiveName));
 			return this;
 		}
 
 		IProjectTransformConfiguration IProjectTransformConfiguration.IndentationForGeneratedCode(string indentation)
 		{
-			if (indentation == null)
-			{
-				throw new ArgumentNullException(nameof(indentation));
-			}
-			IndentationForGeneratedCode = indentation;
+			IndentationForGeneratedCode = indentation ?? throw new ArgumentNullException(nameof(indentation));
 			return this;
 		}
 

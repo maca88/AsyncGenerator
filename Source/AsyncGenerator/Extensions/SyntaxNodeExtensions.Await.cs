@@ -14,9 +14,20 @@ namespace AsyncGenerator.Extensions
 {
 	static partial class SyntaxNodeExtensions
 	{
-		internal static ExpressionSyntax AddAwait(this ExpressionSyntax expression, SyntaxNode parent)
+		internal static ExpressionSyntax AddAwait(this ExpressionSyntax expression, SyntaxNode parent, ExpressionSyntax configureAwaitArgument)
 		{
 			var awaitNode = ConvertToAwaitExpression(expression);
+			if (configureAwaitArgument != null)
+			{
+				awaitNode = InvocationExpression(
+						MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, awaitNode, IdentifierName("ConfigureAwait")))
+					.WithArgumentList(
+						ArgumentList(
+							SingletonSeparatedList(
+								Argument(configureAwaitArgument))
+						));
+			}
+
 			var nextToken = (parent ?? expression.Parent).ChildNodesAndTokens().FirstOrDefault(o => o.SpanStart >= expression.Span.End); // token can be in a new line
 			if (nextToken.IsKind(SyntaxKind.DotToken) || nextToken.IsKind(SyntaxKind.BracketedArgumentList))
 			{
