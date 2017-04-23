@@ -22,7 +22,8 @@ namespace AsyncGenerator.Tests.SimpleReference
 			var readAsync = GetMethodName(() => SimpleFile.ReadAsync());
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -54,19 +55,15 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.AreEqual(MethodConversion.ToAsync, methods[readFile].Conversion);
 				Assert.AreEqual(MethodConversion.ToAsync, methods[callReadFile].Conversion);
 				Assert.AreEqual(MethodConversion.ToAsync, methods[callCallReadFile].Conversion);
-
-			};
+			}
 
 			var methodConversions = new[] {MethodConversion.ToAsync, MethodConversion.Smart};
 			foreach (var methodConversion in methodConversions)
 			{
 				var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == readFile ? methodConversion : MethodConversion.Unknown;
-					})
-					.Callbacks(c => c.AfterAnalyzation(afterAnalyzationFn))
+					.MethodConversion(symbol => symbol.Name == readFile ? methodConversion : MethodConversion.Unknown)
+					.Callbacks(c => c.AfterAnalyzation(AfterAnalyzation))
 				)
 				);
 				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
@@ -80,10 +77,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown;
-					})
+					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -95,7 +89,6 @@ namespace AsyncGenerator.Tests.SimpleReference
 					})
 				)
 			);
-			//TODO: define AfterTransformation callback
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
@@ -110,7 +103,8 @@ namespace AsyncGenerator.Tests.SimpleReference
 			var readAsync = GetMethodName(() => SimpleFile.ReadAsync());
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -155,7 +149,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
-			};
+			}
 
 			var methodConversions = new Func<IMethodSymbol, MethodConversion>[] {
 				s =>  s.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown,
@@ -168,7 +162,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(methodConversion)
 					.UseCancellationTokenOverload(true)
-					.Callbacks(c => c.AfterAnalyzation(afterAnalyzationFn))
+					.Callbacks(c => c.AfterAnalyzation(AfterAnalyzation))
 				)
 				);
 				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
@@ -185,10 +179,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.UseCancellationTokenOverload(true)
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown;
-					})
+					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>

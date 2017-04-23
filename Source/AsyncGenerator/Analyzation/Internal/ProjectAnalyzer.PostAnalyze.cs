@@ -44,15 +44,25 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					depFunctionData.Conversion = MethodConversion.ToAsync;
 
+					if (!currentMethodData.CancellationTokenRequired)
+					{
+						continue;
+					}
+
 					// We need to update the CancellationTokenRequired for all invocations of the current method
 					foreach (var depFunctionRefData in depFunctionData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == currentMethodData))
 					{
-						depFunctionRefData.CancellationTokenRequired = currentMethodData.CancellationTokenRequired;
+						depFunctionRefData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+					}
+					// Update also references of the dependency function into the current one (circular dependency) if any
+					foreach (var functionRefData in currentMethodData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == depFunctionData))
+					{
+						functionRefData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
 					// Propagate the CancellationTokenRequired for the dependency method data
 					if (depMethodData != null)
 					{
-						depMethodData.CancellationTokenRequired = currentMethodData.CancellationTokenRequired;
+						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
 				}
 			}

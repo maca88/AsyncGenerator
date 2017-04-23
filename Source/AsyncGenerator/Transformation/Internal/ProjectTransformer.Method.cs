@@ -71,14 +71,9 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 			}
 			
-			string cancellationTokenParamName = null;
-			if (methodResult.CancellationTokenRequired)
-			{
-				cancellationTokenParamName = "cancellationToken";
-				// TODO: handle variable collision for token
-				methodNode = methodNode
-					.AddCancellationTokenParameter(cancellationTokenParamName);
-			}
+			var cancellationTokenParamName = "cancellationToken";
+			// TODO: handle variable collision for token
+			methodNode = methodNode.AddCancellationTokenParameterIf(cancellationTokenParamName, methodResult.CancellationTokenRequired);
 
 			foreach (var pair in referenceAnnotations)
 			{
@@ -109,7 +104,7 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				InvocationExpressionSyntax invokeNode = null;
-				if (bodyFuncReferenceResult.CancellationTokenRequired)
+				if (bodyFuncReferenceResult.CancellationTokenRequired || bodyFuncReferenceResult.AwaitInvocation)
 				{
 					invokeNode = nameNode.Ancestors().OfType<InvocationExpressionSyntax>().First();
 				}
@@ -118,7 +113,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					//TODO: arrow method
 					var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
-					
+
 					var newNameNode = nameNode
 						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
 						.WithTriviaFrom(nameNode);
@@ -130,20 +125,39 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					else
 					{
-						var newStatement = invokeNode != null
-							? statement.ReplaceNode(invokeNode, invokeNode
+						StatementSyntax newStatement;
+						if (invokeNode != null)
+						{
+							newStatement = statement.ReplaceNode(invokeNode, invokeNode
 								.ReplaceNode(nameNode, newNameNode)
-								.AddArgumentListArguments(Argument(IdentifierName(cancellationTokenParamName)))
-							)
-							: statement.ReplaceNode(nameNode, newNameNode);
+								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired));
+						}
+						else
+						{
+							newStatement = statement.ReplaceNode(nameNode, newNameNode);
+						}
+
 						if (bodyFuncReferenceResult.UseAsReturnValue)
 						{
 							newStatement = newStatement.ToReturnStatement();
 						}
-						
+
 						methodNode = methodNode
 							.ReplaceNode(statement, newStatement);
 					}
+				}
+				else
+				{
+					var newNameNode = nameNode
+						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
+						.WithTriviaFrom(nameNode);
+					// We need to annotate the invocation as the AddAwait method requires the parent of the invocation expression to be set
+					var invokeParent = invokeNode.Parent;
+					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode
+						.ReplaceNode(nameNode, newNameNode)
+						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired)
+						.AddAwait(invokeParent)
+					);
 				}
 
 			}
@@ -151,6 +165,10 @@ namespace AsyncGenerator.Transformation.Internal
 			if (methodResult.OmitAsync)
 			{
 				// TODO: wrap in a task when calling non taskable method or throwing an exception in a non precondition statement
+			}
+			else
+			{
+				methodNode = methodNode.AddAsync();
 			}
 			methodNode = methodNode.ReturnAsTask(methodResult.Symbol)
 				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));

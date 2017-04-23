@@ -4,13 +4,19 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9D321EA8-54AE-4741-86A8-12198551AD67}</ProjectGuid>
+    <ProjectGuid>{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AsyncGenerator</RootNamespace>
-    <AssemblyName>AsyncGenerator</AssemblyName>
+    <RootNamespace>AsyncGenerator.Tests</RootNamespace>
+    <AssemblyName>AsyncGenerator.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <ReferencePath>$(ProgramFiles)\Common Files\microsoft shared\VSTT\$(VisualStudioVersion)\UITestExtensionPackages</ReferencePath>
+    <IsCodedUITest>False</IsCodedUITest>
+    <TestProjectType>UnitTest</TestProjectType>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -35,8 +41,20 @@
       <HintPath>..\packages\ManagedEsent.1.9.4\lib\net40\Esent.Interop.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+    <Reference Include="Microsoft.Build, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Build.15.1.548\lib\net46\Microsoft.Build.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Framework, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Build.Framework.15.1.548\lib\net46\Microsoft.Build.Framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Build.Tasks.Core.15.1.548\lib\net46\Microsoft.Build.Tasks.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Build.Utilities.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Build.Utilities.Core.15.1.548\lib\net46\Microsoft.Build.Utilities.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -63,8 +81,21 @@
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.2.0.0\lib\net46\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Web.XmlTransform, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NuGet.Core, Version=2.14.0.832, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\NuGet.Core.2.14.0\lib\net40-Client\NuGet.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="nunit.framework, Version=3.6.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.6.1\lib\net45\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -101,13 +132,16 @@
       <HintPath>..\packages\System.Console.4.3.0\lib\net46\System.Console.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Core" />
     <Reference Include="System.Diagnostics.FileVersionInfo, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.FileVersionInfo.4.3.0\lib\net46\System.Diagnostics.FileVersionInfo.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Diagnostics.StackTrace, Version=4.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.StackTrace.4.3.0\lib\net46\System.Diagnostics.StackTrace.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Interactive.Async, Version=3.0.3000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Interactive.Async.3.1.1\lib\net46\System.Interactive.Async.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
@@ -155,12 +189,8 @@
       <HintPath>..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Xml.ReaderWriter, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Xml.ReaderWriter.4.3.0\lib\net46\System.Xml.ReaderWriter.dll</HintPath>
       <Private>True</Private>
@@ -178,95 +208,111 @@
       <Private>True</Private>
     </Reference>
   </ItemGroup>
+  <Choose>
+    <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
+      <ItemGroup>
+        <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+      </ItemGroup>
+    </When>
+    <Otherwise />
+  </Choose>
   <ItemGroup>
-    <Compile Include="Internal\AbstractData.cs" />
-    <Compile Include="Internal\AbstractFunctionReferenceData.cs" />
-    <Compile Include="Internal\AbstractReferenceData.cs" />
-    <Compile Include="Analyzation\AsyncCounterpartsSearchOptions.cs" />
-    <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
-    <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\ITypeReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\Internal\ProjectAnalyzer.Analyze.cs" />
-    <Compile Include="Analyzation\Internal\ProjectAnalyzer.PostAnalyze.cs" />
-    <Compile Include="Analyzation\Internal\ProjectAnalyzer.PreAnalyze.cs" />
-    <Compile Include="Analyzation\Internal\ProjectAnalyzer.Scan.cs" />
-    <Compile Include="Internal\ChildFunctionData.cs" />
-    <Compile Include="Internal\LocalFunctionData.cs" />
-    <Compile Include="ReferenceConversion.cs" />
-    <Compile Include="Configuration\IProjectAnalyzeCallbacksConfiguration.cs" />
-    <Compile Include="Internal\AnonymousFunctionData.cs" />
-    <Compile Include="AsyncCodeGenerator.cs" />
-    <Compile Include="Configuration\AsyncCodeConfiguration.cs" />
-    <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
-    <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
-    <Compile Include="Configuration\IProjectConfiguration.cs" />
-    <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
-    <Compile Include="Configuration\ISolutionConfiguration.cs" />
-    <Compile Include="Configuration\Internal\ProjectAnalyzeCallbacksConfiguration.cs" />
-    <Compile Include="Configuration\Internal\ProjectAnalyzeConfiguration.cs" />
-    <Compile Include="Configuration\Internal\ProjectCompileConfiguration.cs" />
-    <Compile Include="Configuration\Internal\ProjectConfiguration.cs" />
-    <Compile Include="Configuration\Internal\ProjectTransformConfiguration.cs" />
-    <Compile Include="Configuration\Internal\SolutionConfiguration.cs" />
-    <Compile Include="Internal\CrefFunctionReferenceData.cs" />
-    <Compile Include="Internal\DocumentData.cs" />
-    <Compile Include="Extensions\TypeAnalyzationResultExtensions.cs" />
-    <Compile Include="Extensions\MethodKindExtensions.cs" />
-    <Compile Include="Extensions\SymbolExtensions.cs" />
-    <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
-    <Compile Include="Analyzation\INamespaceAnalyzationResult.cs" />
-    <Compile Include="Extensions\SyntaxNodeExtensions.cs" />
-    <Compile Include="Internal\FunctionData.cs" />
-    <Compile Include="Internal\AsyncLock.cs" />
-    <Compile Include="Internal\AsyncSemaphore.cs" />
-    <Compile Include="Internal\ConcurrentSet.cs" />
-    <Compile Include="Analyzation\IProjectAnalyzationResult.cs" />
-    <Compile Include="Analyzation\ITypeAnalyzationResult.cs" />
-    <Compile Include="Internal\DefaultPreconditionChecker.cs" />
-    <Compile Include="Internal\DefaultAsyncCounterpartsFinder.cs" />
-    <Compile Include="Internal\DelegateAsyncCounterpartsFinder.cs" />
-    <Compile Include="Internal\DelegatePreconditionChecker.cs" />
-    <Compile Include="MethodConversion.cs" />
-    <Compile Include="Internal\MethodData.cs" />
-    <Compile Include="Internal\BodyFunctionReferenceData.cs" />
-    <Compile Include="Internal\NamespaceData.cs" />
-    <Compile Include="Analyzation\Internal\ProjectAnalyzer.cs" />
-    <Compile Include="Plugins\AbstractPlugin.cs" />
-    <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
-    <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
-    <Compile Include="Plugins\IPlugin.cs" />
-    <Compile Include="Plugins\IPreconditionChecker.cs" />
-    <Compile Include="Internal\ProjectData.cs" />
+    <Compile Include="BaseFixture.cs" />
+    <Compile Include="CastOmitAsync\Fixture.cs" />
+    <Compile Include="CustomReturnType\Fixture.cs" />
+    <Compile Include="LocalFunctions\Fixture.cs" />
+    <Compile Include="LocalFunctions\Input\TestCase.cs" />
+    <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
+    <Compile Include="PreconditionOmitAsync\Fixture.cs" />
+    <Compile Include="Preconditions\Fixture.cs" />
+    <Compile Include="SimpleAnonymousFunctions\Fixture.cs" />
+    <Compile Include="SimpleCircularCall\Fixture.cs" />
+    <Compile Include="SimpleClassInheritance\Fixture.cs" />
+    <Compile Include="SimpleReference\Fixture.cs" />
+    <Compile Include="SimpleOmitAsync\Fixture.cs" />
+    <Compile Include="SynhronizedMethod\Fixture.cs" />
+    <Compile Include="CastOmitAsync\Input\TestCase.cs" />
+    <Compile Include="OverloadWithDifferentParameters\Input\TestCase.cs" />
+    <Compile Include="CustomReturnType\Input\TestCase.cs" />
+    <Compile Include="MethodAsArgument\Input\TestCase.cs" />
+    <Compile Include="Preconditions\Input\TestCase.cs" />
+    <Compile Include="PreconditionOmitAsync\Input\TestCase.cs" />
+    <Compile Include="SimpleAnonymousFunctions\Input\TestCase.cs" />
+    <Compile Include="SimpleCircularCall\Input\TestCase.cs" />
+    <Compile Include="SimpleClassInheritance\Input\TestCase.cs" />
+    <Compile Include="SimpleReference\Input\TestCase.cs" />
+    <Compile Include="SynhronizedMethod\Input\TestCase.cs" />
+    <Compile Include="TestCases\TestCase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Internal\SolutionData.cs" />
-    <Compile Include="Transformation\IDocumentTransformationResult.cs" />
-    <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
-    <Compile Include="Transformation\Internal\ProjectTransformationResult.cs" />
-    <Compile Include="Transformation\Internal\ProjectTransformer.Document.cs" />
-    <Compile Include="Transformation\Internal\ProjectTransformer.Method.cs" />
-    <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
-    <Compile Include="Transformation\IProjectTransformationResult.cs" />
-    <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
-    <Compile Include="TypeConversion.cs" />
-    <Compile Include="Internal\TypeData.cs" />
-    <Compile Include="Internal\TypeReferenceData.cs" />
+    <Compile Include="SimpleOmitAsync\Input\TestCase.cs" />
+    <Compile Include="VariousTaskRunUsages\Input\TestCase.cs" />
+    <Compile Include="VariousTaskRunUsages\Fixture.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config">
+    <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj">
+      <Project>{a183d706-0dbb-4f6b-92a5-6359660255d7}</Project>
+      <Name>AsyncGenerator.TestCases</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AsyncGenerator\AsyncGenerator.csproj">
+      <Project>{9d321ea8-54ae-4741-86a8-12198551ad67}</Project>
+      <Name>AsyncGenerator</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleReference\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="CastOmitAsync\Output\" />
+    <Folder Include="CustomReturnType\Output\" />
+    <Folder Include="LocalFunctions\Output\" />
+    <Folder Include="MethodAsArgument\Output\" />
+    <Folder Include="OverloadWithDifferentParameters\Output\" />
+    <Folder Include="PreconditionOmitAsync\Output\" />
+    <Folder Include="Preconditions\Output\" />
+    <Folder Include="SimpleAnonymousFunctions\Output\" />
+    <Folder Include="SimpleClassInheritance\Output\" />
+    <Folder Include="SimpleOmitAsync\Output\" />
+    <Folder Include="SynhronizedMethod\Output\" />
+    <Folder Include="VariousTaskRunUsages\Output\" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleReference\Output\TestCaseWithToken.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleCircularCall\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleCircularCall\Output\TestCaseWithTokens.txt" />
+  </ItemGroup>
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
+      <ItemGroup>
+        <Reference Include="Microsoft.VisualStudio.QualityTools.CodedUITestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Extension, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="Microsoft.VisualStudio.TestTools.UITesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+          <Private>False</Private>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

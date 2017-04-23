@@ -7,13 +7,15 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Simplification;
 using Microsoft.CodeAnalysis.Text;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using SyntaxTrivia = Microsoft.CodeAnalysis.SyntaxTrivia;
 
 namespace AsyncGenerator.Extensions
 {
-	public static class SyntaxNodeExtensions
+	internal static partial class SyntaxNodeExtensions
 	{
 		/// <summary>
 		/// Check if the statement is a precondition. A statement will qualify for a precondition only if it is a 
@@ -134,11 +136,6 @@ namespace AsyncGenerator.Extensions
 						: (TypeSyntax)genericTaskNode);
 		}
 
-		public static SyntaxNode GetBody(this MethodDeclarationSyntax methodNode)
-		{
-			return methodNode.Body ?? (SyntaxNode) methodNode.ExpressionBody;
-		}
-
 		internal static ReturnStatementSyntax ToReturnStatement(this StatementSyntax statement)
 		{
 			if (statement.IsKind(SyntaxKind.ReturnStatement))
@@ -189,7 +186,14 @@ namespace AsyncGenerator.Extensions
 					});
 		}
 
-		internal static MethodDeclarationSyntax AddCancellationTokenParameter(this MethodDeclarationSyntax node, string parameterName, bool condition = true)
+		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, bool condition)
+		{
+			return condition 
+				? node.AddArgumentListArguments(Argument(IdentifierName(argumentName)))
+				: node;
+		}
+
+		internal static MethodDeclarationSyntax AddCancellationTokenParameterIf(this MethodDeclarationSyntax node, string parameterName, bool condition)
 		{
 			if (!condition)
 			{

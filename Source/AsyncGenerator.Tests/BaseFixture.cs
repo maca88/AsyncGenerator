@@ -24,7 +24,7 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(Action<IProjectConfiguration> action = null)
 		{
-			var slnFilePath = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + @"..\..\..\..\AsyncGenerator.sln");
+			var slnFilePath = Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory + @"..\..\..\AsyncGenerator.sln");
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
 					.ConfigureProject("AsyncGenerator.Tests", p =>
