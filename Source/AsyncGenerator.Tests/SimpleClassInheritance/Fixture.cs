@@ -17,7 +17,8 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 			var readFile = GetMethodName<DerivedClass>(o => o.ReadFile);
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -29,9 +30,8 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 
 				Assert.AreEqual(1, types[nameof(BaseClass)].Methods.Count);
 				Assert.AreEqual(MethodConversion.ToAsync, types[nameof(BaseClass)].Methods[0].Conversion);
+			}
 
-
-			};
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
@@ -39,10 +39,31 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 						return MethodConversion.Smart;
 					})
 					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
+						.AfterAnalyzation(AfterAnalyzation)
 					)
 				)
 				);
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestAfterTransformation()
+		{
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}

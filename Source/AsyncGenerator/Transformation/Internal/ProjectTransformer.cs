@@ -69,6 +69,8 @@ namespace AsyncGenerator.Transformation.Internal
 		public List<MethodTransformationResult> TransformedMethods { get; } = new List<MethodTransformationResult>();
 
 		public HashSet<string> ReservedFieldNames { get; set; }
+
+		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 	}
 
 

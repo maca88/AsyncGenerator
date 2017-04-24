@@ -1,0 +1,29 @@
+﻿using AsyncGenerator.TestCases;
+
+namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
+{
+	using System.Threading.Tasks;
+	public partial class BaseClass
+	{
+		public virtual Task ReadFileAsync()
+		{
+			return Task.Completed;
+		}
+	}
+
+	public partial class DerivedClass : BaseClass
+	{
+		public override Task ReadFileAsync()
+		{
+			return SimpleFile.ReadAsync();
+		}
+	}
+
+	public partial class TestCase
+	{
+		public Task ReadAsync()
+		{
+			return new DerivedClass().ReadFileAsync();
+		}
+	}
+}

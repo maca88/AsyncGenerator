@@ -36,6 +36,7 @@ namespace AsyncGenerator.Transformation.Internal
 				var typeSpanLength = typeResult.Node.Span.Length;
 				var typeNode = rootTypeNode.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
 					.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
+				var leadingWhitespaceTrivia = typeNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
 				TypeTransformationMetadata metadata;
 				if (typeNode == rootTypeNode)
 				{
@@ -49,6 +50,7 @@ namespace AsyncGenerator.Transformation.Internal
 					};
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(metadata.Annotation)));
 				}
+				metadata.LeadingWhitespaceTrivia = leadingWhitespaceTrivia;
 
 				// TypeReferences can be changes only if we create a new type
 				if (rootTypeResult.Conversion == TypeConversion.NewType)

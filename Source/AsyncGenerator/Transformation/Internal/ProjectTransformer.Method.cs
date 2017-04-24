@@ -36,6 +36,12 @@ namespace AsyncGenerator.Transformation.Internal
 			methodNode = methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 			startMethodSpan -= methodNode.SpanStart;
 			// TODO: get leading trivia for the method
+			var endOfLineTrivia = methodNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
+			var methodLeadingTrivia = methodNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+
+			var bodyWhitespaceTrivia = methodLeadingTrivia.ToFullString() + methodLeadingTrivia.ToFullString()
+					.Substring(typeMetadata.LeadingWhitespaceTrivia.ToFullString().Length);
+
 
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
@@ -163,6 +169,11 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (methodResult.OmitAsync)
 			{
+				if (methodResult.MethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
+				{
+					
+				}
+
 				// TODO: wrap in a task when calling non taskable method or throwing an exception in a non precondition statement
 			}
 			else
