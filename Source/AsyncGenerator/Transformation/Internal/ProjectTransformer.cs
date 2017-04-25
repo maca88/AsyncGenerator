@@ -74,6 +74,21 @@ namespace AsyncGenerator.Transformation.Internal
 	}
 
 
+	internal class FunctionTransformationMetadata
+	{
+		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia BodyLeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		public SyntaxTrivia IndentTrivia { get; set; }
+
+		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
+
+	}
+
+
 	internal partial class ProjectTransformer
 	{
 		private readonly ProjectTransformConfiguration _configuration;

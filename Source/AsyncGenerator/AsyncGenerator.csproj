@@ -180,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\ObjectExtensions.cs" />
+    <Compile Include="Extensions\SpecialTypeExtensions.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensions.Async.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensions.Await.cs" />
     <Compile Include="Internal\AbstractData.cs" />
@@ -253,6 +254,7 @@
     <Compile Include="Transformation\Internal\ProjectTransformer.Document.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Method.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
+    <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
     <Compile Include="Transformation\IProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
     <Compile Include="TypeConversion.cs" />

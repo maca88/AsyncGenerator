@@ -2,12 +2,14 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.TestCases;
+using AsyncGenerator.Tests.SimpleOmitAsync.Input;
+using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.SimpleOmitAsync
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<Input.TestCase>
+	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -25,7 +27,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var read = GetMethodName(() => SimpleFile.Read());
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -127,7 +130,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
-			};
+			}
+
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
@@ -135,10 +139,81 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 						return symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart;
 					})
 					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
+						.AfterAnalyzation(AfterAnalyzation)
 					)
 				)
 				);
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestAfterTransformation()
+		{
+			var syncReturn = GetMethodName(o => o.SyncReturn());
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestConfigureAwaitAfterTransformation()
+		{
+			var syncReturn = GetMethodName(o => o.SyncReturn());
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseConfigureAwait"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestUseCancellationTokenOverloadAfterTransformation()
+		{
+			var syncReturn = GetMethodName(o => o.SyncReturn());
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
+					.UseCancellationTokenOverload(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseWithTokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}

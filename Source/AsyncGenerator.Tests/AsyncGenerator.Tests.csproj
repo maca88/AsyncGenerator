@@ -272,6 +272,7 @@
     <EmbeddedResource Include="SimpleReference\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ArrowFunctions\" />
     <Folder Include="CastOmitAsync\Output\" />
     <Folder Include="CustomReturnType\Output\" />
     <Folder Include="LocalFunctions\Output\" />
@@ -279,11 +280,12 @@
     <Folder Include="OverloadWithDifferentParameters\Output\" />
     <Folder Include="PreconditionOmitAsync\Output\" />
     <Folder Include="Preconditions\Output\" />
+    <Folder Include="Regions\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
-    <Folder Include="SimpleClassInheritance\Output\" />
-    <Folder Include="SimpleOmitAsync\Output\" />
     <Folder Include="SynhronizedMethod\Output\" />
+    <Folder Include="TryCatches\" />
     <Folder Include="VariousTaskRunUsages\Output\" />
+    <Folder Include="Yields\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SimpleReference\Output\TestCaseWithToken.txt" />
@@ -296,6 +298,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SimpleCircularCall\Output\TestCaseWithConfigureAwait.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleClassInheritance\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleOmitAsync\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleOmitAsync\Output\TestCaseConfigureAwait.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleOmitAsync\Output\TestCaseWithTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

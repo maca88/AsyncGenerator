@@ -115,6 +115,12 @@ namespace AsyncGenerator.Extensions
 					);
 		}
 
+		internal static bool EndsWithReturnStatement(this BlockSyntax node)
+		{
+			var lastStatement = node.Statements.LastOrDefault();
+			return lastStatement?.IsKind(SyntaxKind.ReturnStatement) == true;
+		}
+
 		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, IMethodSymbol methodSymbol, bool withFullName = false)
 		{
 			if (methodSymbol.ReturnsVoid)
@@ -151,6 +157,76 @@ namespace AsyncGenerator.Extensions
 					expressionStatement.SemicolonToken);
 			}
 			throw new InvalidOperationException($"Cannot convert statement {statement} to ReturnStatementSyntax");
+		}
+
+		internal static SyntaxNode GetFunctionBody(this SyntaxNode node)
+		{
+			switch (node.Kind())
+			{
+				case SyntaxKind.SimpleLambdaExpression:
+				case SyntaxKind.AnonymousMethodExpression:
+				case SyntaxKind.ParenthesizedLambdaExpression:
+					return ((AnonymousFunctionExpressionSyntax) node).Body;
+				case SyntaxKind.LocalFunctionStatement:
+					return ((LocalFunctionStatementSyntax) node).Body ?? (SyntaxNode) ((LocalFunctionStatementSyntax) node).ExpressionBody;
+				case SyntaxKind.MethodDeclaration:
+					return ((MethodDeclarationSyntax) node).Body ?? (SyntaxNode) ((MethodDeclarationSyntax) node).ExpressionBody;
+				default:
+					throw new InvalidOperationException($"Node {node} is not a function");
+			}
+		}
+
+		internal static bool IsFunction(this SyntaxNode node)
+		{
+			switch (node.Kind())
+			{
+				case SyntaxKind.SimpleLambdaExpression:
+				case SyntaxKind.AnonymousMethodExpression:
+				case SyntaxKind.ParenthesizedLambdaExpression:
+				case SyntaxKind.LocalFunctionStatement:
+				case SyntaxKind.MethodDeclaration:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Check if the node is returned with a <see cref="ReturnStatementSyntax"/>
+		/// </summary>
+		/// <param name="node"></param>
+		/// <returns></returns>
+		internal static bool IsReturned(this SyntaxNode node)
+		{
+			if (node.IsKind(SyntaxKind.ReturnStatement))
+			{
+				return false;
+			}
+			var statement = node.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
+			if (statement == null || !statement.IsKind(SyntaxKind.ReturnStatement))
+			{
+				return false;
+			}
+			var currNode = node;
+			while (!currNode.IsKind(SyntaxKind.ReturnStatement))
+			{
+				currNode = currNode.Parent;
+				switch (currNode.Kind())
+				{
+					case SyntaxKind.ConditionalExpression:
+						var conditionExpression = (ConditionalExpressionSyntax)currNode;
+						if (conditionExpression.Condition.Contains(node))
+						{
+							return false;
+						}
+						continue;
+					case SyntaxKind.ReturnStatement:
+						return true;
+					default:
+						return false;
+				}
+			}
+			return true;
 		}
 
 		internal static SimpleNameSyntax GetSimpleName(this SyntaxNode node, int spanStart, int spanLength, bool descendIntoTrivia = false)
@@ -259,7 +335,7 @@ namespace AsyncGenerator.Extensions
 					: triviaList);
 		}
 
-		private static NameSyntax ConstructNameSyntax(string name)
+		internal static NameSyntax ConstructNameSyntax(string name)
 		{
 			var names = name.Split('.').ToList();
 			if (names.Count < 2)

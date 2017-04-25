@@ -3,6 +3,7 @@ using System.Linq;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Analyzation.Internal
@@ -76,7 +77,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void CalculateWrapInTryCatch(MethodData methodData)
 		{
 			var methodDataBody = methodData.Node.Body;
-			if (methodDataBody == null)
+			if (methodDataBody == null || !methodDataBody.Statements.Any())
 			{
 				return;
 			}
@@ -85,9 +86,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				methodData.WrapInTryCatch = true;
 				return;
 			}
+			// Do not look into child functions
 			var statements = methodDataBody.Statements
 				.First(o => !methodData.Preconditions.Contains(o))
-				.DescendantNodesAndSelf()
+				.DescendantNodesAndSelf(o => !o.IsFunction())
 				.OfType<StatementSyntax>()
 				.ToList();
 			if (statements.Count != 1)
@@ -96,7 +98,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			var lastStatement = statements[0];
-			var invocationExps = lastStatement?.DescendantNodes().OfType<InvocationExpressionSyntax>().ToList();
+			var invocationExps = lastStatement?.DescendantNodes(o => !o.IsFunction()).OfType<InvocationExpressionSyntax>().ToList();
 			if (invocationExps?.Count != 1)
 			{
 				methodData.WrapInTryCatch = true;

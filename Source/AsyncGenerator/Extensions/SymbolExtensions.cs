@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Extensions
 {
@@ -207,6 +209,23 @@ namespace AsyncGenerator.Extensions
 				(method.MethodKind == MethodKind.EventAdd ||
 				 method.MethodKind == MethodKind.EventRaise ||
 				 method.MethodKind == MethodKind.EventRemove);
+		}
+
+		public static bool IsNullable(this ITypeSymbol symbol)
+		{
+			return symbol?.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+		}
+
+		public static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol)
+		{
+			var predefinedType = symbol.SpecialType.ToPredefinedType();
+			if (predefinedType != null)
+			{
+				return symbol.IsNullable()
+					? (TypeSyntax)NullableType(predefinedType)
+					: predefinedType;
+			}
+			return SyntaxNodeExtensions.ConstructNameSyntax(symbol.ToString());
 		}
 	}
 }

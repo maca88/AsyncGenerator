@@ -35,13 +35,18 @@ namespace AsyncGenerator.Transformation.Internal
 			var startMethodSpan = methodResult.Node.Span.Start;
 			methodNode = methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 			startMethodSpan -= methodNode.SpanStart;
-			// TODO: get leading trivia for the method
+			// Calculate whitespace method trivias
 			var endOfLineTrivia = methodNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
-			var methodLeadingTrivia = methodNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
-
-			var bodyWhitespaceTrivia = methodLeadingTrivia.ToFullString() + methodLeadingTrivia.ToFullString()
-					.Substring(typeMetadata.LeadingWhitespaceTrivia.ToFullString().Length);
-
+			var methodLeadWhitespaceTrivia = methodNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+			var methodIndentTrivia = methodLeadWhitespaceTrivia.ToFullString().Substring(typeMetadata.LeadingWhitespaceTrivia.ToFullString().Length);
+			var bodyLeadWhitespaceTrivia = Whitespace(methodLeadWhitespaceTrivia.ToFullString() + methodIndentTrivia);
+			var metadata = new FunctionTransformationMetadata
+			{
+				BodyLeadingWhitespaceTrivia = bodyLeadWhitespaceTrivia,
+				LeadingWhitespaceTrivia = methodLeadWhitespaceTrivia,
+				EndOfLineTrivia = endOfLineTrivia,
+				IndentTrivia = Whitespace(methodIndentTrivia)
+			};
 
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
@@ -61,12 +66,27 @@ namespace AsyncGenerator.Transformation.Internal
 				.Union(methodResult.MethodReferences)
 				.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
 			{
+				var isCref = referenceResult is CrefFunctionReferenceData;
 				var reference = referenceResult.ReferenceLocation;
 				var startSpan = reference.Location.SourceSpan.Start - startMethodSpan;
-				var nameNode = methodNode.GetSimpleName(startSpan, reference.Location.SourceSpan.Length, referenceResult is CrefFunctionReferenceData);
+				var nameNode = methodNode.GetSimpleName(startSpan, reference.Location.SourceSpan.Length, isCref);
 				var annotation = Guid.NewGuid().ToString();
 				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
 				referenceAnnotations.Add(annotation, referenceResult);
+
+				if (isCref || !methodResult.OmitAsync)
+				{
+					continue;
+				}
+				// We need to annotate the reference node (InvocationExpression, IdentifierName) in order to know if we need to wrap the node in a Task.FromResult
+				var refNode = referenceResult.ReferenceNode;
+				var bodyReference = (IBodyFunctionReferenceAnalyzationResult) referenceResult;
+				if (bodyReference.UseAsReturnValue || refNode.IsReturned())
+				{
+					startSpan = refNode.SpanStart - startMethodSpan;
+					var referenceNode = methodNode.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);
+					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(metadata.TaskReturnedAnnotation)));
+				}
 			}
 
 			// Modify references
@@ -117,17 +137,24 @@ namespace AsyncGenerator.Transformation.Internal
 
 				if (!bodyFuncReferenceResult.AwaitInvocation)
 				{
-					//TODO: arrow method
 					var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
-
 					var newNameNode = nameNode
 						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
 						.WithTriviaFrom(nameNode);
-					// An arrow method will not have a statement
+					// An arrow method does not have a statement
 					if (statement == null)
 					{
-						methodNode = methodNode
-							.ReplaceNode(nameNode, newNameNode);
+						if (invokeNode != null)
+						{
+							methodNode = methodNode.ReplaceNode(invokeNode, invokeNode
+								.ReplaceNode(nameNode, newNameNode)
+								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired));
+						}
+						else
+						{
+							methodNode = methodNode
+								.ReplaceNode(nameNode, newNameNode);
+						}
 					}
 					else
 					{
@@ -169,12 +196,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (methodResult.OmitAsync)
 			{
-				if (methodResult.MethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
-				{
-					
-				}
-
-				// TODO: wrap in a task when calling non taskable method or throwing an exception in a non precondition statement
+				var rewriter = new ReturnTaskMethodRewriter(metadata, methodResult);
+				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
 			}
 			else
 			{
