@@ -315,6 +315,15 @@
     <EmbeddedResource Include="Preconditions\Output\TestCase.txt" />
     <EmbeddedResource Include="Preconditions\Output\TestCaseLocalFunctions.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Preconditions\Output\TestCaseCustomChecker.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Preconditions\Output\TestCaseWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Preconditions\Output\TestCaseLocalFunctionsWithTokens.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

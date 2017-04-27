@@ -282,9 +282,24 @@ namespace AsyncGenerator.Extensions
 
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, bool condition)
 		{
-			return condition 
-				? node.AddArgumentListArguments(Argument(IdentifierName(argumentName)))
-				: node;
+			if (!condition)
+			{
+				return node;
+			}
+			if (!node.ArgumentList.Arguments.Any())
+			{
+				return node.AddArgumentListArguments(Argument(IdentifierName(argumentName)));
+			}
+			// We need to add an extra space after the comma
+			var argumentList = SeparatedList<ArgumentSyntax>(
+				node.ArgumentList.Arguments.GetWithSeparators()
+					.Concat(new SyntaxNodeOrToken[]
+					{
+						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
+						Argument(IdentifierName(argumentName))
+					})
+			);
+			return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
 		}
 
 		internal static MethodDeclarationSyntax AddCancellationTokenParameterIf(this MethodDeclarationSyntax node, string parameterName, bool condition)
@@ -293,7 +308,7 @@ namespace AsyncGenerator.Extensions
 			{
 				return node;
 			}
-			return node.AddParameterListParameters(Parameter(
+			var parameter = Parameter(
 					Identifier(
 						TriviaList(),
 						parameterName,
@@ -315,7 +330,21 @@ namespace AsyncGenerator.Extensions
 								TriviaList(),
 								SyntaxKind.EqualsToken,
 								TriviaList(
-									Space)))));
+									Space))));
+			if (!node.ParameterList.Parameters.Any())
+			{
+				return node.AddParameterListParameters(parameter);
+			}
+			// We need to add an extra space after the comma
+			var parameterList = SeparatedList<ParameterSyntax>(
+				node.ParameterList.Parameters.GetWithSeparators()
+					.Concat(new SyntaxNodeOrToken[]
+					{
+						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
+						parameter
+					})
+			);
+			return node.WithParameterList(node.ParameterList.WithParameters(parameterList));
 		}
 
 		internal static InvocationExpressionSyntax AddArgument(this InvocationExpressionSyntax node, string argumentName)
@@ -362,7 +391,7 @@ namespace AsyncGenerator.Extensions
 			var argSeparator = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			for (var i = 0; i < callArguments.Count; i++)
 			{
-				argumentList.Add(callArguments[i]);
+				argumentList.Add(callArguments[i].WithoutTrivia());
 				if (i + 1 < callArguments.Count)
 				{
 					argumentList.Add(argSeparator);
