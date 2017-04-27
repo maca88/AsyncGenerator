@@ -77,7 +77,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void CalculateWrapInTryCatch(MethodData methodData)
 		{
 			var methodDataBody = methodData.Node.Body;
-			if (methodDataBody == null || !methodDataBody.Statements.Any())
+			if (methodDataBody == null || !methodDataBody.Statements.Any() || methodData.SplitTail)
 			{
 				return;
 			}
@@ -311,8 +311,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 				}
 
-				// The async keyword shall be omitted when the method does not have any awaitable invocation
-				if (!methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
+				// The async keyword shall be omitted when the method does not have any awaitable invocation or we have to tail split
+				if (methodData.SplitTail || !methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
 				{
 					methodData.OmitAsync = true;
 				}

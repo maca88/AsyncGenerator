@@ -24,6 +24,12 @@ namespace AsyncGenerator.Configuration
 		IProjectTransformConfiguration ConfigureAwaitArgument(ExpressionSyntax node);
 
 		/// <summary>
+		/// Enable or disable the generation of local functions instead of private methods (eg. method tail split).
+		/// Default is false.
+		/// </summary>
+		IProjectTransformConfiguration LocalFunctions(bool enabled);
+
+		/// <summary>
 		/// Set a function that can return a number of namespaces to import in a given document
 		/// </summary>
 		IProjectTransformConfiguration AdditionalDocumentNamespaces(Func<CompilationUnitSyntax, IEnumerable<string>> func);
@@ -37,16 +43,6 @@ namespace AsyncGenerator.Configuration
 		/// Set the parse options of the project
 		/// </summary>
 		IProjectTransformConfiguration ParseOptions(ParseOptions parseOptions);
-
-		/// <summary>
-		/// Wraps all generated code within the provided directive
-		/// </summary>
-		IProjectTransformConfiguration DirectiveForGeneratedCode(string directiveName);
-
-		/// <summary>
-		/// Indent all generated code using the provided indentation
-		/// </summary>
-		IProjectTransformConfiguration IndentationForGeneratedCode(string indentation);
 
 		/// <summary>
 		/// Add a callback that is called when the transformation for the project is completed

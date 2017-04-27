@@ -57,7 +57,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 
 				method = methods[preconditionToSplit];
 				Assert.AreEqual(1, method.Preconditions.Count);
-				Assert.IsFalse(method.OmitAsync);
+				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsTrue(method.SplitTail);
 				methodReference = method.MethodReferences.First();

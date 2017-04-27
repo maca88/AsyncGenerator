@@ -29,7 +29,18 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public IMethodAnalyzationResult MethodAnalyzationResult { get; }
 
+		public MethodDeclarationSyntax TailMethodNode { get; set; }
+
 		public FieldDeclarationSyntax AsyncLockField { get; set; }
+
+		public override IEnumerable<SyntaxNode> GetTransformedNodes()
+		{
+			yield return TransformedNode;
+			if (TailMethodNode != null)
+			{
+				yield return TailMethodNode;
+			}
+		}
 	}
 
 	internal class TransformationResult : TransformationResult<SyntaxNode>
@@ -46,6 +57,11 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 		public T TransformedNode { get; set; }
+
+		public virtual IEnumerable<T> GetTransformedNodes()
+		{
+			yield return TransformedNode;
+		}
 	}
 
 	internal class AnnotatedNode<T> where T : SyntaxNode

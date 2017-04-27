@@ -134,7 +134,7 @@ namespace AsyncGenerator.Transformation.Internal
 							.Union(metadata.TransformedMethods)
 							.Where(o => o.TransformedNode != null)
 							.OrderBy(o => o.Node.SpanStart)
-							.Select(o => o.TransformedNode)
+							.SelectMany(o => o.GetTransformedNodes())
 						.Union(typeNode.DescendantNodes().OfType<TypeDeclarationSyntax>())
 						.ToList();
 					if (!newNodes.Any())

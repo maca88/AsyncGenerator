@@ -28,7 +28,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodBodyNode = methodResult.GetBodyNode();
 			if (methodBodyNode == null)
 			{
-				result.TransformedNode = methodNode.ReturnAsTask(methodResult.Symbol)
+				result.TransformedNode = methodNode.ReturnAsTask()
 					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 				return result;
 			}
@@ -194,7 +194,61 @@ namespace AsyncGenerator.Transformation.Internal
 
 			}
 
-			if (methodResult.OmitAsync)
+			// The method with SplitTail needs to be splitted into two methods
+			if (methodResult.SplitTail)
+			{
+				// Tail method body shall contain all statements after preconditions
+				var tailMethodBody = methodNode.Body
+						.WithStatements(new SyntaxList<StatementSyntax>()
+							.AddRange(methodNode.Body.Statements.Skip(methodResult.Preconditions.Count)));
+				// Main method shall contain only preconditions and a call to the tail method
+				var bodyStatements = new SyntaxList<StatementSyntax>()
+					.AddRange(methodNode.Body.Statements.Take(methodResult.Preconditions.Count));
+				ParameterListSyntax tailCallParameterList;
+				// TODO: handle name collisions
+				var tailIdentifier = Identifier("Internal" + methodNode.Identifier.Value + "Async");
+				if (_configuration.LocalFunctions)
+				{
+					var tailFunction = LocalFunctionStatement(
+							methodNode.ReturnType.WrapIntoTask().WithoutLeadingTrivia(),
+							tailIdentifier)
+						.WithParameterList(ParameterList()
+							.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(metadata.EndOfLineTrivia))))
+						.AddAsync()
+						.WithLeadingTrivia(metadata.BodyLeadingWhitespaceTrivia)
+						.WithBody(tailMethodBody
+							.AddWhitespace(metadata.IndentTrivia)
+						);
+					bodyStatements = bodyStatements.Add(tailFunction);
+					// We do not need any parameter for the local function as we already have the parameters from the parent method
+					tailCallParameterList = ParameterList();
+				}
+				else
+				{
+					var tailMethod = methodNode
+						.WithReturnType(methodNode.ReturnType.WithLeadingTrivia()) // Remove lead trivia in case the return type is the first node (eg. void Method())
+						.ReturnAsTask()
+						.WithIdentifier(tailIdentifier)
+						.WithModifiers(TokenList(
+							Token(TriviaList(methodNode.GetLeadingTrivia()), SyntaxKind.PrivateKeyword, TriviaList(Space))))
+						.AddAsync()
+						.WithBody(tailMethodBody);
+					result.TailMethodNode = tailMethod;
+					// Tail call shall contain the cancellation token parameter
+					tailCallParameterList = methodNode.ParameterList;
+				}
+
+				var tailCall = ReturnStatement(
+					Token(TriviaList(metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					IdentifierName(tailIdentifier).Invoke(tailCallParameterList),
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(metadata.EndOfLineTrivia))
+				);
+				bodyStatements = bodyStatements.Add(tailCall);
+
+				methodNode = methodNode.WithBody(methodNode.Body
+					.WithStatements(bodyStatements));
+			}
+			else if (methodResult.OmitAsync)
 			{
 				var rewriter = new ReturnTaskMethodRewriter(metadata, methodResult);
 				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
@@ -203,7 +257,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				methodNode = methodNode.AddAsync();
 			}
-			methodNode = methodNode.ReturnAsTask(methodResult.Symbol)
+			methodNode = methodNode.ReturnAsTask()
 				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 			result.TransformedNode = methodNode;
 

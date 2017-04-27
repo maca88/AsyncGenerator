@@ -18,11 +18,9 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ParseOptions ParseOptions { get; private set; }
 
-		public string DirectiveForGeneratedCode { get; private set; }
-
-		public string IndentationForGeneratedCode { get; private set; }
-
 		public ExpressionSyntax ConfigureAwaitArgument { get; private set; }
+
+		public bool LocalFunctions { get; private set; }
 
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
 
@@ -35,6 +33,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IProjectTransformConfiguration IProjectTransformConfiguration.ConfigureAwaitArgument(ExpressionSyntax value)
 		{
 			ConfigureAwaitArgument = value;
+			return this;
+		}
+
+		IProjectTransformConfiguration IProjectTransformConfiguration.LocalFunctions(bool enabled)
+		{
+			LocalFunctions = enabled;
 			return this;
 		}
 
@@ -62,18 +66,6 @@ namespace AsyncGenerator.Configuration.Internal
 		IProjectTransformConfiguration IProjectTransformConfiguration.ParseOptions(ParseOptions parseOptions)
 		{
 			ParseOptions = parseOptions ?? throw new ArgumentNullException(nameof(parseOptions));
-			return this;
-		}
-
-		IProjectTransformConfiguration IProjectTransformConfiguration.DirectiveForGeneratedCode(string directiveName)
-		{
-			DirectiveForGeneratedCode = directiveName ?? throw new ArgumentNullException(nameof(directiveName));
-			return this;
-		}
-
-		IProjectTransformConfiguration IProjectTransformConfiguration.IndentationForGeneratedCode(string indentation)
-		{
-			IndentationForGeneratedCode = indentation ?? throw new ArgumentNullException(nameof(indentation));
 			return this;
 		}
 

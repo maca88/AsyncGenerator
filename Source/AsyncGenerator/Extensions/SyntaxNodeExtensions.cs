@@ -121,25 +121,43 @@ namespace AsyncGenerator.Extensions
 			return lastStatement?.IsKind(SyntaxKind.ReturnStatement) == true;
 		}
 
-		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, IMethodSymbol methodSymbol, bool withFullName = false)
+		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, bool withFullName = false)
 		{
-			if (methodSymbol.ReturnsVoid)
+			return methodNode.WithReturnType(
+				methodNode.ReturnType.WrapIntoTask(withFullName)
+			);
+		}
+
+		internal static TypeSyntax WrapIntoTask(this TypeSyntax typeNode, bool withFullName = false)
+		{
+			if (typeNode.ChildTokens().Any(o => o.IsKind(SyntaxKind.VoidKeyword)))
 			{
-				var taskNode = IdentifierName(nameof(Task)).WithTriviaFrom(methodNode.ReturnType);
-				return methodNode
-					.WithReturnType(
-						withFullName
-							? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), taskNode)
-							: (TypeSyntax)taskNode);
+				var taskNode = IdentifierName(nameof(Task)).WithTriviaFrom(typeNode);
+				return withFullName
+					? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), taskNode)
+					: (TypeSyntax)taskNode;
 			}
 			var genericTaskNode = GenericName(nameof(Task))
-				.WithTriviaFrom(methodNode.ReturnType)
-				.AddTypeArgumentListArguments(methodNode.ReturnType.WithoutTrivia());
-			return methodNode
-				.WithReturnType(
-					withFullName
-						? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), genericTaskNode)
-						: (TypeSyntax)genericTaskNode);
+				.WithTriviaFrom(typeNode)
+				.AddTypeArgumentListArguments(typeNode.WithoutTrivia());
+			return withFullName
+				? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), genericTaskNode)
+				: (TypeSyntax) genericTaskNode;
+		}
+
+		internal static BlockSyntax AddWhitespace(this BlockSyntax blockNode, SyntaxTrivia whitespace)
+		{
+			var statements = new SyntaxList<StatementSyntax>();
+			foreach (var statement in blockNode.Statements)
+			{
+				statements = statements.Add(statement.WithLeadingTrivia(statement.GetLeadingTrivia().Add(whitespace)));
+			}
+			return blockNode
+				.WithStatements(statements)
+				.WithOpenBraceToken(
+					blockNode.OpenBraceToken.WithLeadingTrivia(blockNode.OpenBraceToken.LeadingTrivia.Add(whitespace)))
+				.WithCloseBraceToken(
+					blockNode.CloseBraceToken.WithLeadingTrivia(blockNode.CloseBraceToken.LeadingTrivia.Add(whitespace)));
 		}
 
 		internal static ReturnStatementSyntax ToReturnStatement(this StatementSyntax statement)
@@ -333,6 +351,24 @@ namespace AsyncGenerator.Extensions
 				token.HasLeadingTrivia 
 					? triviaList.Union(token.LeadingTrivia)
 					: triviaList);
+		}
+
+		internal static InvocationExpressionSyntax Invoke(this IdentifierNameSyntax identifier, ParameterListSyntax parameterList)
+		{
+			var callArguments = parameterList.Parameters
+				.Select(o => Argument(IdentifierName(o.Identifier)))
+				.ToList();
+			var argumentList = new List<SyntaxNodeOrToken>();
+			var argSeparator = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
+			for (var i = 0; i < callArguments.Count; i++)
+			{
+				argumentList.Add(callArguments[i]);
+				if (i + 1 < callArguments.Count)
+				{
+					argumentList.Add(argSeparator);
+				}
+			}
+			return InvocationExpression(identifier, ArgumentList(SeparatedList<ArgumentSyntax>(argumentList)));
 		}
 
 		internal static NameSyntax ConstructNameSyntax(string name)

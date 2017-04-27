@@ -12,6 +12,10 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
+	/// <summary>
+	/// Wraps all non taskable returns statements into a <see cref="Task.FromResult{TResult}"/> and conditionally wraps the method body
+	/// in a try/catch block (without preconditions) 
+	/// </summary>
 	internal class ReturnTaskMethodRewriter : CSharpSyntaxRewriter
 	{
 		private readonly IMethodAnalyzationResult _methodResult;

@@ -62,7 +62,7 @@ namespace AsyncGenerator.Extensions
 						}
 						break;
 					case SyntaxKind.LocalFunctionStatement:
-						if ((node as LocalDeclarationStatementSyntax)?.Modifiers.Any(SyntaxKind.AsyncKeyword) == false)
+						if ((node as LocalFunctionStatementSyntax)?.Modifiers.Any(SyntaxKind.AsyncKeyword) == false)
 						{
 							return node;
 						}

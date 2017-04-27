@@ -275,11 +275,11 @@
     <Folder Include="ArrowFunctions\" />
     <Folder Include="CastOmitAsync\Output\" />
     <Folder Include="CustomReturnType\Output\" />
+    <Folder Include="FileComments\" />
     <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
     <Folder Include="PreconditionOmitAsync\Output\" />
-    <Folder Include="Preconditions\Output\" />
     <Folder Include="Regions\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
     <Folder Include="SynhronizedMethod\Output\" />
@@ -310,6 +310,10 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SimpleOmitAsync\Output\TestCaseWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Preconditions\Output\TestCase.txt" />
+    <EmbeddedResource Include="Preconditions\Output\TestCaseLocalFunctions.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
