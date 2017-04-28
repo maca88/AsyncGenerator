@@ -179,6 +179,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\SpecialTypeExtensions.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensions.Async.cs" />
@@ -199,6 +200,7 @@
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.Scan.cs" />
     <Compile Include="Internal\ChildFunctionData.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
+    <Compile Include="NamespaceConversion.cs" />
     <Compile Include="ReferenceConversion.cs" />
     <Compile Include="Configuration\IProjectAnalyzeCallbacksConfiguration.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
@@ -217,7 +219,7 @@
     <Compile Include="Configuration\Internal\SolutionConfiguration.cs" />
     <Compile Include="Internal\CrefFunctionReferenceData.cs" />
     <Compile Include="Internal\DocumentData.cs" />
-    <Compile Include="Extensions\TypeAnalyzationResultExtensions.cs" />
+    <Compile Include="Extensions\AnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\MethodKindExtensions.cs" />
     <Compile Include="Extensions\SymbolExtensions.cs" />
     <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
@@ -253,7 +255,9 @@
     <Compile Include="Transformation\Internal\ProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Document.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Method.cs" />
+    <Compile Include="Transformation\Internal\ProjectTransformer.Namespace.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
+    <Compile Include="Transformation\Internal\DirectiveTransformer.cs" />
     <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
     <Compile Include="Transformation\IProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />

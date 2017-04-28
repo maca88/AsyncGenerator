@@ -19,13 +19,13 @@ namespace AsyncGenerator.Transformation.Internal
 	internal class ReturnTaskMethodRewriter : CSharpSyntaxRewriter
 	{
 		private readonly IMethodAnalyzationResult _methodResult;
-		private readonly FunctionTransformationMetadata _metadata;
+		private readonly MethodTransformationResult _transformResult;
 		private SyntaxKind? _rewritingSyntaxKind;
 
-		public ReturnTaskMethodRewriter(FunctionTransformationMetadata metadata, IMethodAnalyzationResult methodResult)
+		public ReturnTaskMethodRewriter(MethodTransformationResult transformResult)
 		{
-			_metadata = metadata;
-			_methodResult = methodResult;
+			_transformResult = transformResult;
+			_methodResult = transformResult.MethodAnalyzationResult;
 		}
 
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
@@ -149,7 +149,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			// If the expression is returned and does not return a Task then wrap it into Task.FromResult
 			var expression = node as ExpressionSyntax;
-			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(_metadata.TaskReturnedAnnotation).Any())
+			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any())
 			{
 				return WrapInTaskFromResult(expression);
 			}
@@ -162,15 +162,15 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var catchNode = node.Ancestors().OfType<CatchClauseSyntax>().First();
 				return ReturnStatement(
-					Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 					WrapInTaskFromException(IdentifierName(catchNode.Declaration.Identifier.ValueText)),
-					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_metadata.EndOfLineTrivia)));
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)));
 			}
 
 			return ReturnStatement(
-					Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 					WrapInTaskFromException(node.Expression),
-					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_metadata.EndOfLineTrivia)))
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))
 				.WithReturnKeyword(Token(TriviaList(node.GetLeadingTrivia()), SyntaxKind.ReturnKeyword, TriviaList(Space)));
 		}
 
@@ -227,19 +227,19 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			return node.AddStatements(
 				ReturnStatement(
-					Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
 						IdentifierName(nameof(Task)),
 						IdentifierName("CompletedTask")),
-					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_metadata.EndOfLineTrivia))
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
 				));
 		}
 
 		private BlockSyntax WrapInsideTryCatch(BlockSyntax node)
 		{
 			var wrappedStatements = new SyntaxList<StatementSyntax>();
-			var innerBodyTrivia = Whitespace(_metadata.BodyLeadingWhitespaceTrivia.ToFullString() + _metadata.IndentTrivia.ToFullString());
+			var innerBodyTrivia = Whitespace(_transformResult.BodyLeadingWhitespaceTrivia.ToFullString() + _transformResult.IndentTrivia.ToFullString());
 			// We need to add an indent for each wrapped statement
 			foreach (var statement in node.Statements.Skip(_methodResult.Preconditions.Count))
 			{
@@ -247,18 +247,18 @@ namespace AsyncGenerator.Transformation.Internal
 				wrappedStatements = wrappedStatements.Add(statement.ReplaceTrivia(leadingTrivia, innerBodyTrivia));
 			}
 			var tryStatement = TryStatement()
-				.WithTryKeyword(Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.TryKeyword, TriviaList(_metadata.EndOfLineTrivia)))
+				.WithTryKeyword(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.TryKeyword, TriviaList(_transformResult.EndOfLineTrivia)))
 				.WithBlock(Block(wrappedStatements)
-					.WithOpenBraceToken(Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_metadata.EndOfLineTrivia)))
-					.WithCloseBraceToken(Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_metadata.EndOfLineTrivia)))
+					.WithOpenBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
+					.WithCloseBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
 				)
 				.WithCatches(SingletonList(
 					CatchClause()
-						.WithCatchKeyword(Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.CatchKeyword, TriviaList(Space)))
+						.WithCatchKeyword(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CatchKeyword, TriviaList(Space)))
 						.WithDeclaration(
 							CatchDeclaration(IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space))))
 								.WithIdentifier(Identifier("ex"))
-								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_metadata.EndOfLineTrivia)))
+								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_transformResult.EndOfLineTrivia)))
 						)
 						.WithBlock(GetCatchBlock(innerBodyTrivia))
 				));
@@ -295,10 +295,10 @@ namespace AsyncGenerator.Transformation.Internal
 												Argument(
 													IdentifierName("ex"))))))
 							.WithReturnKeyword(Token(TriviaList(innerBodyTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)))
-							.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_metadata.EndOfLineTrivia)))
+							.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))
 					))
-				.WithOpenBraceToken(Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_metadata.EndOfLineTrivia)))
-				.WithCloseBraceToken(Token(TriviaList(_metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_metadata.EndOfLineTrivia)));
+				.WithOpenBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
+				.WithCloseBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_transformResult.EndOfLineTrivia)));
 		}
 	}
 }

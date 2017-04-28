@@ -59,11 +59,19 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public IEnumerable<TypeData> GetAllTypeDatas(Func<TypeData, bool> predicate = null)
 		{
-			return Namespaces.Values
-				.SelectMany(o => o.GetSelfAndDescendantsNamespaceData())
+			return GetAllNamespaceDatas()
 				.SelectMany(o => o.Types.Values)
-				.Union(GlobalNamespaceData.Types.Values)
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData(predicate));
+		}
+
+		/// <summary>
+		/// Iterate through all namespace data from top to bottom
+		/// </summary>
+		public IEnumerable<NamespaceData> GetAllNamespaceDatas(Func<NamespaceData, bool> predicate = null)
+		{
+			return new[] {GlobalNamespaceData}
+				.Union(Namespaces.Values
+					.SelectMany(o => o.GetSelfAndDescendantsNamespaceData(predicate)));
 		}
 
 		public AbstractData GetNearestNodeData(SyntaxNode node)
@@ -321,6 +329,8 @@ namespace AsyncGenerator.Internal
 
 
 		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;
+
+		IEnumerable<ITypeAnalyzationResult> IDocumentAnalyzationResult.GetAllTypes() => GetAllTypeDatas();
 
 		#endregion
 	}

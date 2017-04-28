@@ -19,97 +19,63 @@ namespace AsyncGenerator.Transformation.Internal
 			var rootNode = documentResult.Node;
 			var endOfLineTrivia = rootNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
 			var result = new DocumentTransformationResult(rootNode);
-			var rewrittenNodes = new List<TransformationResult>();
-			var namespaceNodes = new List<MemberDeclarationSyntax>();
-			var hasTaskUsing = rootNode.Usings.Any(o => o.Name.ToString() == "System.Threading.Tasks");
-			var hasThreadingUsing = rootNode.Usings.Any(o => o.Name.ToString() == "System.Threading");
-			var hasSystemUsing = rootNode.Usings.Any(o => o.Name.ToString() == "System");
+			var transformResults = new List<TransformationResult>();
+
+			foreach (var typeResult in documentResult.GlobalNamespace.Types.Where(o => o.Conversion != TypeConversion.Ignore))
+			{
+				var typeSpanStart = typeResult.Node.SpanStart;
+				var typeSpanLength = typeResult.Node.Span.Length;
+				var typeNode = rootNode.DescendantNodesAndSelf()
+					.OfType<TypeDeclarationSyntax>()
+					.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
+				var transformResult = TransformType(typeResult);
+				transformResults.Add(transformResult);
+				rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
+			}
 
 			foreach (var namespaceResult in documentResult.Namespaces.OrderBy(o => o.Node.SpanStart))
 			{
-				var namespaceNode = namespaceResult.Node;
-				var typeNodes = new List<MemberDeclarationSyntax>();
-				var threadingUsingRequired = false;
-				var systemUsingRequired = false;
-				foreach (var typeResult in namespaceResult.Types.Where(o => o.Conversion != TypeConversion.Ignore).OrderBy(o => o.Node.SpanStart))
-				{
-					var transformResult = TransformType(typeResult);
-					if (transformResult.TransformedNode == null)
-					{
-						continue;
-					}
-					typeNodes.Add(transformResult.TransformedNode);
-
-					threadingUsingRequired |= typeResult.Methods.Any(o => o.CancellationTokenRequired);
-					systemUsingRequired |= typeResult.Methods.Any(o => o.WrapInTryCatch);
-
-					// We need to update the original file if it was modified
-					if (transformResult.OriginalModifiedNode != null)
-					{
-						var typeSpanStart = typeResult.Node.SpanStart;
-						var typeSpanLength = typeResult.Node.Span.Length;
-						var typeNode = rootNode.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
-							.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-						var rewritenNode = new TransformationResult(typeNode)
-						{
-							TransformedNode = transformResult.OriginalModifiedNode
-						};
-						rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(rewritenNode.Annotation)));
-						rewrittenNodes.Add(rewritenNode);
-					}
-
-					// TODO: missing members
-					//if (typeInfo.TypeTransformation == TypeTransformation.NewType && typeInfo.HasMissingMembers)
-					//{
-					//	transformResult = TransformType(typeInfo, true);
-					//	if (transformResult.Node == null)
-					//	{
-					//		continue;
-					//	}
-					//	typeNodes.Add(transformResult.Node);
-					//}
-				}
-				if (typeNodes.Any())
-				{
-					var leadingTrivia = namespaceResult.Types.First().Node.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
-
-					//TODO: check if Task is conflicted inside namespace
-					if (!hasTaskUsing && namespaceNode.Usings.All(o => o.Name.ToString() != "System.Threading.Tasks"))
-					{
-						namespaceNode = namespaceNode.AddUsing("System.Threading.Tasks", TriviaList(leadingTrivia), endOfLineTrivia);
-					}
-					if (threadingUsingRequired && !hasThreadingUsing && namespaceNode.Usings.All(o => o.Name.ToString() != "System.Threading"))
-					{
-						namespaceNode = namespaceNode.AddUsing("System.Threading", TriviaList(leadingTrivia), endOfLineTrivia);
-					}
-					if (systemUsingRequired && !hasSystemUsing && namespaceNode.Usings.All(o => o.Name.ToString() != "System"))
-					{
-						namespaceNode = namespaceNode.AddUsing("System", TriviaList(leadingTrivia), endOfLineTrivia);
-					}
-					// TODO: add locking namespaces
-
-					namespaceNodes.Add(namespaceNode
-						.WithMembers(List(typeNodes)));
-				}
+				var namespaceSpanStart = namespaceResult.Node.SpanStart;
+				var namespaceSpanLength = namespaceResult.Node.Span.Length;
+				var namespaceNode = rootNode.DescendantNodesAndSelf()
+					.OfType<NamespaceDeclarationSyntax>()
+					.First(o => o.SpanStart == namespaceSpanStart && o.Span.Length == namespaceSpanLength);
+				var transformResult = TransformNamespace(namespaceResult);
+				transformResults.Add(transformResult);
+				rootNode = rootNode.ReplaceNode(namespaceNode, namespaceNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 			}
-			if (!namespaceNodes.Any())
+
+			// Save the orignal node that was only annotated
+			var originalAnnotatedNode = rootNode;
+
+			var newMembers = transformResults
+				.Where(o => o.TransformedNode != null)
+				.OrderBy(o => o.OriginalNode.SpanStart)
+				.SelectMany(o => o.GetTransformedNodes())
+				.ToList();
+
+			if (!newMembers.Any())
 			{
-				return result;
+				return result; // the document will not be created
 			}
-			// Update the original node
-			var origRootNode = rootNode;
-			foreach (var rewrittenNode in rewrittenNodes)
-			{
-				origRootNode = rootNode.ReplaceNode(rootNode.GetAnnotatedNodes(rewrittenNode.Annotation).First(), rewrittenNode.TransformedNode);
-			}
-			if (rootNode != origRootNode)
-			{
-				result.OriginalModifiedNode = origRootNode;
-			}
-
-			// Create the new node
 			rootNode = rootNode
-					.WithMembers(List(namespaceNodes));
+				.WithMembers(List(newMembers));
+
+			var regionRewriter = new DirectiveTransformer(documentResult.Node, documentResult);
+			regionRewriter.Analyze();
+
+			// Update the original document if required
+			foreach (var rewrittenNode in transformResults.Where(o => o.OriginalModifiedNode != null))
+			{
+				if (result.OriginalModifiedNode == null)
+				{
+					result.OriginalModifiedNode = originalAnnotatedNode;
+				}
+				result.OriginalModifiedNode = result.OriginalModifiedNode
+					.ReplaceNode(result.OriginalModifiedNode
+						.GetAnnotatedNodes(rewrittenNode.Annotation).First(), rewrittenNode.OriginalModifiedNode);
+			}
+
 			// Add auto-generated comment
 			var token = rootNode.DescendantTokens().First();
 			rootNode = rootNode.ReplaceToken(token, token.AddAutoGeneratedTrivia(endOfLineTrivia));

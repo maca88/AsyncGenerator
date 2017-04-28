@@ -13,5 +13,7 @@ namespace AsyncGenerator.Analyzation
 		IReadOnlyList<INamespaceAnalyzationResult> Namespaces { get; }
 
 		INamespaceAnalyzationResult GlobalNamespace { get; }
+
+		IEnumerable<ITypeAnalyzationResult> GetAllTypes();
 	}
 }

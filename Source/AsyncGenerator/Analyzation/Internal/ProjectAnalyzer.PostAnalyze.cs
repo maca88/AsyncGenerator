@@ -118,16 +118,22 @@ namespace AsyncGenerator.Analyzation.Internal
 		}
 
 		/// <summary>
-		/// Calculates the final conversion for all currently not ignored method data
+		/// Calculates the final conversion for all currently not ignored method/type/namespace data
 		/// </summary>
 		/// <param name="documentData">All project documents</param>
 		private void PostAnalyze(IEnumerable<DocumentData> documentData)
 		{
-			// If a type data is ignored then also its method data are ignored
-			var allTypeData = documentData
-				.SelectMany(o => o.GetAllTypeDatas())
-				.Where(o => o.Conversion != TypeConversion.Ignore)
+			var allNamespaceData = documentData
+				.SelectMany(o => o.GetAllNamespaceDatas(m => m.Conversion != NamespaceConversion.Ignore))
 				.ToList();
+
+			// If a type data is ignored then also its method data are ignored
+			var allTypeData = allNamespaceData
+				.SelectMany(o => o.Types.Values)
+				.SelectMany(o => o.GetSelfAndDescendantsTypeData(t => t.Conversion != TypeConversion.Ignore))
+				//.Where(o => o.Conversion != TypeConversion.Ignore)
+				.ToList();
+			// TODO: nested functions
 			var toProcessMethodData = new HashSet<MethodData>(allTypeData
 				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
 			//TODO: optimize steps for better performance
@@ -196,7 +202,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 				// A type can be ignored only if it has no async methods that will get converted
-				if (typeData.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore))
+				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore)))
 				{
 					typeData.Conversion = TypeConversion.Ignore;
 				}
@@ -206,7 +212,25 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-			// 5. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
+			// 5. Step - Calculate the final namespace conversion
+			foreach (var namespaceData in allNamespaceData)
+			{
+				if (namespaceData.Conversion != NamespaceConversion.Unknown)
+				{
+					continue;
+				}
+				// A type can be ignored only if it has no async methods that will get converted
+				if (namespaceData.GetSelfAndDescendantsNamespaceData().All(t => t.Types.Values.All(o => o.Conversion == TypeConversion.Ignore)))
+				{
+					namespaceData.Conversion = NamespaceConversion.Ignore;
+				}
+				else
+				{
+					namespaceData.Conversion = NamespaceConversion.Generate;
+				}
+			}
+
+			// 6. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
 			foreach (var methodData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
 				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
 			{

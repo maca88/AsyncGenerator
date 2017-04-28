@@ -7,8 +7,39 @@ using AsyncGenerator.Analyzation;
 
 namespace AsyncGenerator.Extensions
 {
-	public static class TypeAnalyzationResultExtensions
+	public static class AnalyzationResultExtensions
 	{
+		public static IEnumerable<INamespaceAnalyzationResult> GetSelfAndDescendantsNamespaces(this INamespaceAnalyzationResult namespaceResult,
+			Func<INamespaceAnalyzationResult, bool> predicate = null)
+		{
+			return GetSelfAndDescendantsNamespacesRecursively(namespaceResult, predicate);
+		}
+
+		private static IEnumerable<INamespaceAnalyzationResult> GetSelfAndDescendantsNamespacesRecursively(INamespaceAnalyzationResult namespaceResult,
+			Func<INamespaceAnalyzationResult, bool> predicate = null)
+		{
+			if (predicate?.Invoke(namespaceResult) == false)
+			{
+				yield break;
+			}
+			yield return namespaceResult;
+			foreach (var subNamespace in namespaceResult.NestedNamespaces)
+			{
+				if (predicate?.Invoke(subNamespace) == false)
+				{
+					yield break;
+				}
+				foreach (var td in GetSelfAndDescendantsNamespacesRecursively(subNamespace, predicate))
+				{
+					if (predicate?.Invoke(td) == false)
+					{
+						yield break;
+					}
+					yield return td;
+				}
+			}
+		}
+
 		public static IEnumerable<ITypeAnalyzationResult> GetSelfAndDescendantsTypes(this ITypeAnalyzationResult typeResult, Func<ITypeAnalyzationResult, bool> predicate = null)
 		{
 			return GetSelfAndDescendantsTypesRecursively(typeResult, predicate);

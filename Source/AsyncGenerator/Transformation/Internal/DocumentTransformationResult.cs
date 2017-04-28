@@ -9,7 +9,7 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	internal class DocumentTransformationResult : TransformationResult<CompilationUnitSyntax>, IDocumentTransformationResult
 	{
-		public DocumentTransformationResult(CompilationUnitSyntax node) : base(node)
+		public DocumentTransformationResult(CompilationUnitSyntax originalNode) : base(originalNode)
 		{
 		}
 
@@ -17,7 +17,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		#region IDocumentTransformationResult
 
-		CompilationUnitSyntax IDocumentTransformationResult.Original => Node;
+		CompilationUnitSyntax IDocumentTransformationResult.Original => OriginalNode;
 
 		CompilationUnitSyntax IDocumentTransformationResult.OriginalModified => OriginalModifiedNode;
 

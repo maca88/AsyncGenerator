@@ -2,11 +2,12 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using NUnit.Framework;
+using AsyncGenerator.Tests.PreconditionOmitAsync.Input;
 
 namespace AsyncGenerator.Tests.PreconditionOmitAsync
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<Input.TestCase>
+	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
 		public void TestAfterAnalyzation()
@@ -19,7 +20,8 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 			var syncReadFile = GetMethodName(o => o.SyncReadFile());
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -37,7 +39,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
 				var methodReference = method.MethodReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync,  methodReference.GetConversion());
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
@@ -73,19 +75,38 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsTrue(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
 				Assert.AreEqual(0, method.MethodReferences.Count);
+			}
 
-			};
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == syncReadFile ?  MethodConversion.Ignore : MethodConversion.ToAsync;
-					})
+					.MethodConversion(symbol => symbol.Name == syncReadFile ?  MethodConversion.Ignore : MethodConversion.ToAsync)
 					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
+						.AfterAnalyzation(AfterAnalyzation)
 					)
 				)
 				);
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestAfterTransformation()
+		{
+			var syncReadFile = GetMethodName(o => o.SyncReadFile());
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == syncReadFile ? MethodConversion.Ignore : MethodConversion.ToAsync)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}

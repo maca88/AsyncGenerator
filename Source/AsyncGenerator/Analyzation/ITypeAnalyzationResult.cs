@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Analyzation
 {
-	public interface ITypeAnalyzationResult
+	public interface ITypeAnalyzationResult : IMemberAnalyzationResult
 	{
 		INamedTypeSymbol Symbol { get; }
 

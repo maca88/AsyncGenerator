@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Analyzation
 {
-	public interface IMethodAnalyzationResult : IFunctionAnalyzationResult
+	public interface IMethodAnalyzationResult : IFunctionAnalyzationResult, IMemberAnalyzationResult
 	{
 		MethodDeclarationSyntax Node { get; }
 

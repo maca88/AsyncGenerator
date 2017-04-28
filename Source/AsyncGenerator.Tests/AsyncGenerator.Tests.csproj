@@ -222,9 +222,15 @@
     <Compile Include="CustomReturnType\Fixture.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
     <Compile Include="LocalFunctions\Input\TestCase.cs" />
+    <Compile Include="NestedNamespaces\Fixture.cs" />
+    <Compile Include="NestedNamespaces\Input\TestCase.cs" />
+    <Compile Include="NestedTypes\Fixture.cs" />
+    <Compile Include="NestedTypes\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
     <Compile Include="Preconditions\Fixture.cs" />
+    <Compile Include="Regions\Fixture.cs" />
+    <Compile Include="Regions\Input\TestCase.cs" />
     <Compile Include="SimpleAnonymousFunctions\Fixture.cs" />
     <Compile Include="SimpleCircularCall\Fixture.cs" />
     <Compile Include="SimpleClassInheritance\Fixture.cs" />
@@ -279,8 +285,7 @@
     <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
-    <Folder Include="PreconditionOmitAsync\Output\" />
-    <Folder Include="Regions\" />
+    <Folder Include="Regions\Output\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
     <Folder Include="SynhronizedMethod\Output\" />
     <Folder Include="TryCatches\" />
@@ -323,6 +328,21 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Preconditions\Output\TestCaseLocalFunctionsWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreconditionOmitAsync\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NestedTypes\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NestedTypes\Output\TestCaseOriginal.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NestedNamespaces\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NestedNamespaces\Output\TestCaseOriginal.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

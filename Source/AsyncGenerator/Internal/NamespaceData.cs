@@ -25,6 +25,8 @@ namespace AsyncGenerator.Internal
 
 		public NamespaceDeclarationSyntax Node { get; }
 
+		public NamespaceConversion Conversion { get; set; }
+
 		public NamespaceData ParentNamespaceData { get; }
 
 		public bool IsGlobal => Node == null;
@@ -196,6 +198,9 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedTypes;
 		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => _cachedTypes ?? (_cachedTypes = Types.Values.ToImmutableArray());
+
+		private IReadOnlyList<INamespaceAnalyzationResult> _nestedNamespaces;
+		IReadOnlyList<INamespaceAnalyzationResult> INamespaceAnalyzationResult.NestedNamespaces => _nestedNamespaces ?? (_nestedNamespaces = NestedNamespaces.Values.ToImmutableArray());
 
 		#endregion
 	}

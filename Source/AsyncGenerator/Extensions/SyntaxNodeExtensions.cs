@@ -280,6 +280,30 @@ namespace AsyncGenerator.Extensions
 					});
 		}
 
+		internal static bool HasUsing(this NamespaceDeclarationSyntax node, string usingFullName)
+		{
+			foreach (var ancestor in node.AncestorsAndSelf())
+			{
+				if (ancestor is NamespaceDeclarationSyntax namespaceNode)
+				{
+					if (namespaceNode.Usings.Any(o => o.Name.ToString() == usingFullName))
+					{
+						return true;
+					}
+					continue;
+				}
+				if (!(ancestor is CompilationUnitSyntax compilationNode))
+				{
+					continue;
+				}
+				if (compilationNode.Usings.Any(o => o.Name.ToString() == usingFullName))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, bool condition)
 		{
 			if (!condition)

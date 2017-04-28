@@ -10,14 +10,13 @@ using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using  static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private MethodTransformationResult TransformMethod(TypeTransformationMetadata typeMetadata, 
-			IMethodAnalyzationResult methodResult)
+		private MethodTransformationResult TransformMethod(IMethodAnalyzationResult methodResult, SyntaxTrivia typeLeadingWhitespace)
 		{
 			var result = new MethodTransformationResult(methodResult);
 			if (methodResult.Conversion == MethodConversion.Ignore)
@@ -35,18 +34,12 @@ namespace AsyncGenerator.Transformation.Internal
 			var startMethodSpan = methodResult.Node.Span.Start;
 			methodNode = methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 			startMethodSpan -= methodNode.SpanStart;
+
 			// Calculate whitespace method trivias
-			var endOfLineTrivia = methodNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
-			var methodLeadWhitespaceTrivia = methodNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
-			var methodIndentTrivia = methodLeadWhitespaceTrivia.ToFullString().Substring(typeMetadata.LeadingWhitespaceTrivia.ToFullString().Length);
-			var bodyLeadWhitespaceTrivia = Whitespace(methodLeadWhitespaceTrivia.ToFullString() + methodIndentTrivia);
-			var metadata = new FunctionTransformationMetadata
-			{
-				BodyLeadingWhitespaceTrivia = bodyLeadWhitespaceTrivia,
-				LeadingWhitespaceTrivia = methodLeadWhitespaceTrivia,
-				EndOfLineTrivia = endOfLineTrivia,
-				IndentTrivia = Whitespace(methodIndentTrivia)
-			};
+			result.EndOfLineTrivia = methodNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
+			result.LeadingWhitespaceTrivia = methodNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+			result.IndentTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString().Substring(typeLeadingWhitespace.ToFullString().Length));
+			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
@@ -85,7 +78,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					startSpan = refNode.SpanStart - startMethodSpan;
 					var referenceNode = methodNode.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);
-					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(metadata.TaskReturnedAnnotation)));
+					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.TaskReturnedAnnotation)));
 				}
 			}
 
@@ -213,11 +206,11 @@ namespace AsyncGenerator.Transformation.Internal
 							methodNode.ReturnType.WrapIntoTask().WithoutLeadingTrivia(),
 							tailIdentifier)
 						.WithParameterList(ParameterList()
-							.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(metadata.EndOfLineTrivia))))
+							.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(result.EndOfLineTrivia))))
 						.AddAsync()
-						.WithLeadingTrivia(metadata.BodyLeadingWhitespaceTrivia)
+						.WithLeadingTrivia(result.BodyLeadingWhitespaceTrivia)
 						.WithBody(tailMethodBody
-							.AddWhitespace(metadata.IndentTrivia)
+							.AddWhitespace(result.IndentTrivia)
 						);
 					bodyStatements = bodyStatements.Add(tailFunction);
 					// We do not need any parameter for the local function as we already have the parameters from the parent method
@@ -239,9 +232,9 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				var tailCall = ReturnStatement(
-					Token(TriviaList(metadata.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					Token(TriviaList(result.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 					IdentifierName(tailIdentifier).Invoke(tailCallParameterList),
-					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(metadata.EndOfLineTrivia))
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(result.EndOfLineTrivia))
 				);
 				bodyStatements = bodyStatements.Add(tailCall);
 
@@ -250,7 +243,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 			else if (methodResult.OmitAsync)
 			{
-				var rewriter = new ReturnTaskMethodRewriter(metadata, methodResult);
+				var rewriter = new ReturnTaskMethodRewriter(result);
 				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
 			}
 			else

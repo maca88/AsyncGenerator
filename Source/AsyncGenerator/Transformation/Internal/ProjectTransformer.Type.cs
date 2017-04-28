@@ -19,13 +19,12 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			var rootTypeNode = rootTypeResult.Node;
 			var startRootTypeSpan = rootTypeNode.SpanStart;
-			var typeResultMetadatas = new Dictionary<ITypeAnalyzationResult, TypeTransformationMetadata>();
-			var rootMetadata = new TypeTransformationMetadata
+			var rootTransformResult = new RootTypeTransformationResult(rootTypeResult)
 			{
 				ReservedFieldNames = new HashSet<string>(rootTypeResult.Symbol.MemberNames)
 			};
 			// We do this here because we want that the root node has span start equal to 0
-			rootTypeNode = rootTypeNode.WithAdditionalAnnotations(new SyntaxAnnotation(rootMetadata.Annotation));
+			rootTypeNode = rootTypeNode.WithAdditionalAnnotations(new SyntaxAnnotation(rootTransformResult.Annotation));
 			startRootTypeSpan -= rootTypeNode.SpanStart;
 
 			// Before any modification we need to annotate nodes that will be transformed in order to find them later on. 
@@ -36,21 +35,22 @@ namespace AsyncGenerator.Transformation.Internal
 				var typeSpanLength = typeResult.Node.Span.Length;
 				var typeNode = rootTypeNode.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
 					.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-				var leadingWhitespaceTrivia = typeNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
-				TypeTransformationMetadata metadata;
+				var leadingWhitespaceTrivia = typeNode.GetLeadingTrivia().First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+				TypeTransformationResult transformResult;
 				if (typeNode == rootTypeNode)
 				{
-					metadata = rootMetadata;
+					transformResult = rootTransformResult;
 				}
 				else
 				{
-					metadata = new TypeTransformationMetadata
+					transformResult = new TypeTransformationResult(typeResult)
 					{
 						ReservedFieldNames = new HashSet<string>(typeResult.Symbol.MemberNames)
 					};
-					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(metadata.Annotation)));
+					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
+					rootTransformResult.DescendantTransformTypeResults.Add(transformResult);
 				}
-				metadata.LeadingWhitespaceTrivia = leadingWhitespaceTrivia;
+				transformResult.LeadingWhitespaceTrivia = leadingWhitespaceTrivia;
 
 				// TypeReferences can be changes only if we create a new type
 				if (rootTypeResult.Conversion == TypeConversion.NewType)
@@ -73,7 +73,7 @@ namespace AsyncGenerator.Transformation.Internal
 						{
 							TransformedNode = nameNode.WithIdentifier(Identifier(nameNode.Identifier.ValueText + "Async"))
 						};
-						metadata.TransformedNodes.Add(transformedNode);
+						transformResult.TransformedNodes.Add(transformedNode);
 						rootTypeNode = rootTypeNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 
 					}
@@ -85,35 +85,36 @@ namespace AsyncGenerator.Transformation.Internal
 					var methodSpanStart = methodResult.Node.SpanStart - startRootTypeSpan;
 					var methodSpanLength = methodResult.Node.Span.Length;
 					var methodNode = rootTypeNode.DescendantNodes()
-											 .OfType<MethodDeclarationSyntax>()
-											 .First(o => o.SpanStart == methodSpanStart && o.Span.Length == methodSpanLength);
-					var transformedNode = TransformMethod(metadata, methodResult);
-					metadata.TransformedMethods.Add(transformedNode);
+						.OfType<MethodDeclarationSyntax>()
+						.First(o => o.SpanStart == methodSpanStart && o.Span.Length == methodSpanLength);
+					var transformedNode = TransformMethod(methodResult, transformResult.LeadingWhitespaceTrivia);
+					transformResult.TransformedMethods.Add(transformedNode);
 					rootTypeNode = rootTypeNode.ReplaceNode(methodNode, methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 
 				}
-				typeResultMetadatas.Add(typeResult, metadata);
-
 			}
 			// Save the orignal node that was only annotated
-			var result = new TypeTransformationResult(rootTypeNode);
+			var originalAnnotatedNode = rootTypeNode;
 
 			// Now we can start transforming the type. Start from the bottom in order to preserve replaced nested types
-			foreach (var typeResult in rootTypeResult.GetSelfAndDescendantsTypes(o => o.Conversion != TypeConversion.Ignore)
-				.OrderByDescending(o => o.Node.SpanStart))
+			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTypes().OrderByDescending(o => o.OriginalNode.SpanStart))
 			{
-				var metadata = typeResultMetadatas[typeResult];
+				var typeResult = transformResult.TypeAnalyzationResult;
 				// Add partial keyword on the original node if not present
 				if (typeResult.Conversion == TypeConversion.Partial && !typeResult.IsPartial)
 				{
-					var typeNode = rootTypeNode.GetAnnotatedNodes(metadata.Annotation).OfType<TypeDeclarationSyntax>().First();
-					result.OriginalModifiedNode = result.Node.ReplaceNode(typeNode, typeNode.AddPartial());
+					if (rootTransformResult.OriginalModifiedNode == null)
+					{
+						rootTransformResult.OriginalModifiedNode = originalAnnotatedNode;
+					}
+					var typeNode = rootTransformResult.OriginalModifiedNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
+					rootTransformResult.OriginalModifiedNode = rootTransformResult.OriginalModifiedNode.ReplaceNode(typeNode, typeNode.AddPartial());
 				}
 				// If the root type has to be a new type then all nested types have to be new types
 				if (typeResult.Conversion == TypeConversion.NewType)
 				{
 					// Replace all rewritten nodes
-					foreach (var rewNode in metadata.TransformedNodes)
+					foreach (var rewNode in transformResult.TransformedNodes)
 					{
 						var node = rootTypeNode.GetAnnotatedNodes(rewNode.Annotation).First();
 						if (rewNode.TransformedNode == null)
@@ -129,11 +130,11 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				else if (typeResult.Conversion == TypeConversion.Partial)
 				{
-					var typeNode = rootTypeNode.GetAnnotatedNodes(metadata.Annotation).OfType<TypeDeclarationSyntax>().First();
-					var newNodes = metadata.TransformedNodes
-							.Union(metadata.TransformedMethods)
+					var typeNode = rootTypeNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
+					var newNodes = transformResult.TransformedNodes
+							.Union(transformResult.TransformedMethods)
 							.Where(o => o.TransformedNode != null)
-							.OrderBy(o => o.Node.SpanStart)
+							.OrderBy(o => o.OriginalNode.SpanStart)
 							.SelectMany(o => o.GetTransformedNodes())
 						.Union(typeNode.DescendantNodes().OfType<TypeDeclarationSyntax>())
 						.ToList();
@@ -147,21 +148,21 @@ namespace AsyncGenerator.Transformation.Internal
 						// We need to remove the attributes as they cannot be defined in both partial classes
 						var newTypeNode = typeNode.AddPartial().WithoutAttributes();
 						// Add fields for async lock if any. We need a lock field for each synchronized method
-						foreach (var methodTransform in metadata.TransformedMethods.Where(o => o.AsyncLockField != null).OrderBy(o => o.Node.SpanStart))
+						foreach (var methodTransform in transformResult.TransformedMethods.Where(o => o.AsyncLockField != null).OrderBy(o => o.OriginalNode.SpanStart))
 						{
 							newNodes.Insert(0, methodTransform.AsyncLockField);
 						}
 						newTypeNode = newTypeNode.WithMembers(List(newNodes));
 
 						//TODO: fix regions
-						rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode/*.RemoveLeadingDirectives()*/);
+						rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 					}
 				}
 			}
 
-			result.TransformedNode = rootTypeNode;
+			rootTransformResult.TransformedNode = rootTypeNode;
 
-			return result;
+			return rootTransformResult;
 		}
 
 
