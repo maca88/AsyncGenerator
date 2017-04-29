@@ -43,5 +43,10 @@ namespace AsyncGenerator.Transformation.Internal
 				yield return TailMethodNode;
 			}
 		}
+
+		public IMemberAnalyzationResult GetAnalyzationResult()
+		{
+			return AnalyzationResult;
+		}
 	}
 }

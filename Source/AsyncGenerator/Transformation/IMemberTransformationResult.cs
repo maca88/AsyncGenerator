@@ -7,8 +7,8 @@ using AsyncGenerator.Analyzation;
 
 namespace AsyncGenerator.Transformation
 {
-	public interface IMethodTransformationResult : IMemberTransformationResult
+	public interface IMemberTransformationResult : ITransformationResult
 	{
-		IMethodAnalyzationResult AnalyzationResult { get; }
+		IMemberAnalyzationResult GetAnalyzationResult();
 	}
 }

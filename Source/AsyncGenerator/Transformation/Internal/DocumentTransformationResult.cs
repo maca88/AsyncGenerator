@@ -34,12 +34,12 @@ namespace AsyncGenerator.Transformation.Internal
 		private IReadOnlyList<INamespaceTransformationResult> _cachedTransformedNamespaces;
 		IReadOnlyList<INamespaceTransformationResult> IDocumentTransformationResult.TransformedNamespaces =>
 			_cachedTransformedNamespaces ?? (_cachedTransformedNamespaces = TransformedNamespaces
-				.SelectMany(o => o.GetSelfAndDescendantTransformedNamespaces()).ToImmutableArray());
+				.SelectMany(o => o.GetSelfAndDescendantTransformedNamespaces().Where(n => n.TransformedNode != null)).ToImmutableArray());
 
 		private IReadOnlyList<ITypeTransformationResult> _cachedTransformedTypes;
 		IReadOnlyList<ITypeTransformationResult> IDocumentTransformationResult.TransformedTypes =>
 			_cachedTransformedTypes ?? (_cachedTransformedTypes = TransformedTypes
-				.SelectMany(o => o.GetSelfAndDescendantTransformedTypes()).ToImmutableArray());
+				.SelectMany(o => o.GetSelfAndDescendantTransformedTypes().Where(n => n.TransformedNode != null)).ToImmutableArray());
 
 		#endregion
 	}

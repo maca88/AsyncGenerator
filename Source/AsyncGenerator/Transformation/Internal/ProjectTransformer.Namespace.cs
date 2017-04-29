@@ -82,7 +82,7 @@ namespace AsyncGenerator.Transformation.Internal
 					continue;
 				}
 				var newNode = node.WithMembers(List(newMembers));
-				var leadingTrivia = result.Types.First().Node.GetLeadingTrivia().First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+				var leadingTrivia = result.Node.Members.First().GetLeadingTrivia().First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
 				//TODO: check if Task is conflicted inside namespace
 				if (!rootResult.Node.HasUsing("System.Threading.Tasks"))
 				{
@@ -99,6 +99,7 @@ namespace AsyncGenerator.Transformation.Internal
 				// TODO: add locking namespaces
 
 				//TODO: fix regions
+				transformResult.TransformedNode = newNode;
 				rootNode = rootNode.ReplaceNode(node, newNode);
 
 				// We need to update the original types if they were modified

@@ -30,8 +30,13 @@ namespace AsyncGenerator.Transformation.Internal
 		private IReadOnlyList<ITypeTransformationResult> _cachedTransformedTypes;
 		IReadOnlyList<ITypeTransformationResult> INamespaceTransformationResult.TransformedTypes =>
 			_cachedTransformedTypes ?? (_cachedTransformedTypes = TransformedTypes
-				.SelectMany(o => o.GetSelfAndDescendantTransformedTypes()).ToImmutableArray());
+				.SelectMany(o => o.GetSelfAndDescendantTransformedTypes().Where(t => t.TransformedNode != null)).ToImmutableArray());
 
 		#endregion
+
+		public IMemberAnalyzationResult GetAnalyzationResult()
+		{
+			return AnalyzationResult;
+		}
 	}
 }

@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Transformation
 {
-	public interface IDocumentTransformationResult
+	public interface IDocumentTransformationResult : ITransformationResult
 	{
 		/// <summary>
 		/// The original document prior the transformation

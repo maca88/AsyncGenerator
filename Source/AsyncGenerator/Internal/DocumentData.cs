@@ -54,6 +54,11 @@ namespace AsyncGenerator.Internal
 
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> Namespaces { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
 
+		public SyntaxNode GetNode()
+		{
+			return Node;
+		} 
+
 		/// <summary>
 		/// Iterate through all type data from top to bottom
 		/// </summary>

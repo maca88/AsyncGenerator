@@ -49,6 +49,12 @@ namespace AsyncGenerator.Tests.Regions
 			#endregion Empty
 		}
 	}
+
 	#endregion Input
+
+	public class TestCase3
+	{
+	}
+
 }
 #endregion Namespace

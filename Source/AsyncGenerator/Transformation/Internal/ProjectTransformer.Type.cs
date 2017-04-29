@@ -80,7 +80,7 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				// Annotate and save the transformed methods
-				foreach (var methodResult in typeResult.Methods)
+				foreach (var methodResult in typeResult.Methods.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					var methodSpanStart = methodResult.Node.SpanStart - startRootTypeSpan;
 					var methodSpanLength = methodResult.Node.Span.Length;
@@ -152,6 +152,7 @@ namespace AsyncGenerator.Transformation.Internal
 							newNodes.Insert(0, methodTransform.AsyncLockField);
 						}
 						newTypeNode = newTypeNode.WithMembers(List(newNodes));
+						transformResult.TransformedNode = newTypeNode;
 
 						//TODO: fix regions
 						rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);

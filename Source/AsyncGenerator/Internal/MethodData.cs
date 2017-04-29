@@ -91,6 +91,34 @@ namespace AsyncGenerator.Internal
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodAnalyzationResult.CrefMethodReferences =>
 			_cachedMethodCrefReferences ?? (_cachedMethodCrefReferences = CrefMethodReferences.ToImmutableArray());
 
+		#endregion
+
+		#region IMemberAnalyzationResult
+
+		public IMemberAnalyzationResult GetNext()
+		{
+			// Try to find the next sibling that can be only a method
+			var sibling = TypeData.Methods.Values
+				.Where(o => o != this)
+				.OrderBy(o => o.Node.SpanStart)
+				.FirstOrDefault(o => o.Node.SpanStart > Node.Span.End);
+			return sibling ?? (IMemberAnalyzationResult)TypeData;
+		}
+
+		public IMemberAnalyzationResult GetPrevious()
+		{
+			// Try to find the previous sibling that can be only a method
+			var sibling = TypeData.Methods.Values
+				.Where(o => o != this)
+				.OrderByDescending(o => o.Node.Span.End)
+				.FirstOrDefault(o => o.Node.Span.End < Node.SpanStart);
+			return sibling ?? (IMemberAnalyzationResult)TypeData;
+		}
+
+		public bool IsParent(IAnalyzationResult analyzationResult)
+		{
+			return TypeData == analyzationResult;
+		}
 
 		#endregion
 
@@ -173,6 +201,8 @@ namespace AsyncGenerator.Internal
 		//	}
 		//	return currentFunData;
 		//}
+
+
 
 	}
 }

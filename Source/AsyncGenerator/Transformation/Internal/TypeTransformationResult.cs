@@ -30,9 +30,13 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private IReadOnlyList<IMethodTransformationResult> _cachedTransformedMethods;
 		IReadOnlyList<IMethodTransformationResult> ITypeTransformationResult.TransformedMethods =>
-			_cachedTransformedMethods ?? (_cachedTransformedMethods = TransformedMethods.ToImmutableList());
+			_cachedTransformedMethods ?? (_cachedTransformedMethods = TransformedMethods.Where(o => o.TransformedNode != null).ToImmutableList());
 
 		#endregion
 
+		public IMemberAnalyzationResult GetAnalyzationResult()
+		{
+			return AnalyzationResult;
+		}
 	}
 }

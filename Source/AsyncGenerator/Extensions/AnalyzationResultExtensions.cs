@@ -27,13 +27,13 @@ namespace AsyncGenerator.Extensions
 			{
 				if (predicate?.Invoke(subNamespace) == false)
 				{
-					yield break;
+					continue;
 				}
 				foreach (var td in GetSelfAndDescendantsNamespacesRecursively(subNamespace, predicate))
 				{
 					if (predicate?.Invoke(td) == false)
 					{
-						yield break;
+						continue;
 					}
 					yield return td;
 				}
@@ -56,13 +56,13 @@ namespace AsyncGenerator.Extensions
 			{
 				if (predicate?.Invoke(subTypeData) == false)
 				{
-					yield break;
+					continue;
 				}
 				foreach (var td in GetSelfAndDescendantsTypesRecursively(subTypeData, predicate))
 				{
 					if (predicate?.Invoke(td) == false)
 					{
-						yield break;
+						continue;
 					}
 					yield return td;
 				}

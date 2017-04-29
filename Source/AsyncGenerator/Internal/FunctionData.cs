@@ -36,8 +36,6 @@ namespace AsyncGenerator.Internal
 
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 
-		public abstract SyntaxNode GetNode();
-
 		public abstract SyntaxNode GetBodyNode();
 
 		public abstract MethodData GetMethodData();

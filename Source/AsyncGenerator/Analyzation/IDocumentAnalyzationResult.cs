@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Analyzation
 {
-	public interface IDocumentAnalyzationResult
+	public interface IDocumentAnalyzationResult : IAnalyzationResult
 	{
 		Document Document { get; }
 
@@ -12,6 +12,7 @@ namespace AsyncGenerator.Analyzation
 
 		IReadOnlyList<INamespaceAnalyzationResult> Namespaces { get; }
 
+		// TODO: global namespace cannot have NestedNamespaces
 		INamespaceAnalyzationResult GlobalNamespace { get; }
 
 		IEnumerable<ITypeAnalyzationResult> GetAllTypes();

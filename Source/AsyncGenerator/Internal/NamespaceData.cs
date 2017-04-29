@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -35,6 +36,11 @@ namespace AsyncGenerator.Internal
 
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NestedNamespaces { get; } = 
 			new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
+
+		public override SyntaxNode GetNode()
+		{
+			return Node;
+		}
 
 		public IEnumerable<NamespaceData> GetSelfAndDescendantsNamespaceData(Func<NamespaceData, bool> predicate = null)
 		{
@@ -201,6 +207,51 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<INamespaceAnalyzationResult> _nestedNamespaces;
 		IReadOnlyList<INamespaceAnalyzationResult> INamespaceAnalyzationResult.NestedNamespaces => _nestedNamespaces ?? (_nestedNamespaces = NestedNamespaces.Values.ToImmutableArray());
+
+		#endregion
+
+		#region IMemberAnalyzationResult
+
+		public IMemberAnalyzationResult GetNext()
+		{
+			if (ParentNamespaceData == null)
+			{
+				return DocumentData.GlobalNamespaceData.Types.Values
+					.OrderBy(o => o.Node.SpanStart)
+					.FirstOrDefault(o => o.Node.SpanStart > Node.Span.End);
+			}
+			// Try to find the next sibling that can be a type or a namespace
+			var sibling = ParentNamespaceData.NestedNamespaces.Values
+				.Cast<IMemberAnalyzationResult>()
+				.Where(o => o != this)
+				.Union(ParentNamespaceData.Types.Values)
+				.OrderBy(o => o.GetNode().SpanStart)
+				.FirstOrDefault(o => o.GetNode().SpanStart > Node.Span.End);
+			return sibling ?? ParentNamespaceData;
+		}
+
+		public IMemberAnalyzationResult GetPrevious()
+		{
+			if (ParentNamespaceData == null)
+			{
+				return DocumentData.GlobalNamespaceData.Types.Values
+					.OrderByDescending(o => o.Node.SpanStart)
+					.FirstOrDefault(o => o.Node.Span.End < Node.SpanStart);
+			}
+			// Try to find the previous sibling that can be a type or a namespace
+			var sibling = ParentNamespaceData.NestedNamespaces.Values
+				.Cast<IMemberAnalyzationResult>()
+				.Where(o => o != this)
+				.Union(ParentNamespaceData.Types.Values)
+				.OrderByDescending(o => o.GetNode().Span.End)
+				.FirstOrDefault(o => o.GetNode().Span.End < Node.SpanStart);
+			return sibling ?? ParentNamespaceData;
+		}
+
+		public bool IsParent(IAnalyzationResult analyzationResult)
+		{
+			return ParentNamespaceData == analyzationResult || DocumentData == analyzationResult;
+		}
 
 		#endregion
 	}

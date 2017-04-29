@@ -135,11 +135,11 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 	}
 
-	// A directive can be located on a member declaration within its leading trivia or its close brace token or on a end of line token
+	/// <summary>
+	/// A transformator that takes care of partially generated directives.
+	/// </summary>
 	internal class DirectiveTransformer
 	{
-		private CompilationUnitSyntax _rootNode;
-		private IDocumentAnalyzationResult _documentResult;
 		private static readonly HashSet<SyntaxKind> DirectiveKinds = new HashSet<SyntaxKind>
 		{
 			SyntaxKind.RegionDirectiveTrivia,
@@ -151,15 +151,26 @@ namespace AsyncGenerator.Transformation.Internal
 			SyntaxKind.EndIfDirectiveTrivia,
 		};
 
-		public DirectiveTransformer(CompilationUnitSyntax rootNode, IDocumentAnalyzationResult documentResult)
+		private class RelatedTransformationResult
 		{
-			_rootNode = rootNode;
-			_documentResult = documentResult;
+			public RelatedTransformationResult(ITransformationResult related)
+			{
+				Related = related;
+			}
+
+			public ITransformationResult Related { get; }
+
+			public ITransformationResult NextRelated { get; set; }
+
+			public ITransformationResult PreviousRelated { get; set; }
 		}
-		public CompilationUnitSyntax Analyze()
+
+		public CompilationUnitSyntax Transform(IDocumentTransformationResult transformResult)
 		{
+			var origRootNode = transformResult.Original;
+			// Step 1 - Find all directives and link them together
 			RegionTreeNode rootRegionNode = null;
-			foreach (var directive in _rootNode.DescendantTrivia().Where(o => DirectiveKinds.Contains(o.Kind())).OrderBy(o => o.SpanStart))
+			foreach (var directive in origRootNode.DescendantTrivia().Where(o => DirectiveKinds.Contains(o.Kind())).OrderBy(o => o.SpanStart))
 			{
 				if (directive.IsKind(SyntaxKind.RegionDirectiveTrivia) || directive.IsKind(SyntaxKind.EndRegionDirectiveTrivia))
 				{
@@ -180,65 +191,157 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (rootRegionNode == null)
 			{
-				return _rootNode;
+				return transformResult.Transformed;
 			}
 
+			var allTransformResults = transformResult.TransformedNamespaces
+				.Cast<IMemberTransformationResult>()
+				.Union(transformResult.TransformedTypes)
+				.Union(transformResult.TransformedNamespaces.SelectMany(o => o.TransformedTypes))
+				.Union(transformResult.TransformedNamespaces.SelectMany(o => o.TransformedTypes)
+					.SelectMany(o => o.TransformedMethods))
+				.ToDictionary(o => o.GetAnalyzationResult(), o => o);
 
-			var namespaces = _documentResult.Namespaces
-				.SelectMany(o => o.GetSelfAndDescendantsNamespaces())
-				.OrderByDescending(o => o.Node.SpanStart)
-				.ToDictionary(o => o, o => o.Types
-					.SelectMany(t => t.GetSelfAndDescendantsTypes())
-					.OrderByDescending(t => t.Node.SpanStart)
-					.ToList());
-
-			IMemberAnalyzationResult GetRelatedData(SyntaxTrivia directive)
+			ITransformationResult GetNextTransformationResult(IMemberAnalyzationResult result)
 			{
-				var ns = namespaces.Keys.FirstOrDefault(o => o.Node.FullSpan.Contains(directive.Span));
-				if (ns == null)
+				var nextResult = result.GetNext();
+				while (nextResult != null)
 				{
-					return null;
+					if (allTransformResults.ContainsKey(nextResult))
+					{
+						return allTransformResults[nextResult];
+					}
+					nextResult = nextResult.GetNext();
 				}
-				if (ns.Node.GetLeadingTrivia().FullSpan.Contains(directive.Span) || ns.Node.CloseBraceToken.LeadingTrivia.Any(o => o.FullSpan.Contains(directive.Span)))
+				return transformResult;
+			}
+
+			ITransformationResult GetPreviousTransformationResult(IMemberAnalyzationResult result)
+			{
+				var prevResult = result.GetPrevious();
+				while (prevResult != null)
 				{
-					return ns;
+					if (allTransformResults.ContainsKey(prevResult))
+					{
+						return allTransformResults[prevResult];
+					}
+					prevResult = prevResult.GetPrevious();
 				}
-				var type = namespaces[ns].FirstOrDefault(o => o.Node.FullSpan.Contains(directive.Span));
-				if (type == null)
+				return transformResult;
+			}
+
+			// Get related analyzation result
+			IAnalyzationResult GetRelatedAnalyzationResult(SyntaxTrivia directive)
+			{
+				// Check if the directive is located before an end of line
+				if (transformResult.Original.EndOfFileToken.LeadingTrivia.FullSpan.Contains(directive.Span))
 				{
-					return null;
+					return transformResult.AnalyzationResult;
 				}
-				if (type.Node.GetLeadingTrivia().Span.Contains(directive.Span) || type.Node.CloseBraceToken.LeadingTrivia.Any(o => o.FullSpan.Contains(directive.Span)))
+				var result = transformResult.AnalyzationResult;
+				var globalType = result.GlobalNamespace.Types.FirstOrDefault(o =>
+					o.Node.GetLeadingTrivia().FullSpan.Contains(directive.Span) ||
+					o.Node.CloseBraceToken.LeadingTrivia.Any(t => t.FullSpan.Contains(directive.Span)));
+				if (globalType != null)
 				{
-					return type;
+					return globalType;
 				}
-				var method = type.Methods.FirstOrDefault(o => o.Node.GetLeadingTrivia().Span.Contains(directive.Span));
-				return method;
+
+				foreach (var namespaceResult in result.Namespaces.SelectMany(o => o.GetSelfAndDescendantsNamespaces()))
+				{
+					if (
+						namespaceResult.Node.GetLeadingTrivia().FullSpan.Contains(directive.Span) ||
+						namespaceResult.Node.CloseBraceToken.LeadingTrivia.Any(o => o.FullSpan.Contains(directive.Span)))
+					{
+						return namespaceResult;
+					}
+
+					foreach (var typeResult in namespaceResult.Types.SelectMany(o => o.GetSelfAndDescendantsTypes()))
+					{
+						if (
+							typeResult.Node.GetLeadingTrivia().FullSpan.Contains(directive.Span) ||
+							typeResult.Node.CloseBraceToken.LeadingTrivia.Any(o => o.FullSpan.Contains(directive.Span)))
+						{
+							return typeResult;
+						}
+						var method = typeResult.Methods.FirstOrDefault(o => o.Node.GetLeadingTrivia().FullSpan.Contains(directive.Span));
+						if (method != null)
+						{
+							return method;
+						}
+					}
+				}
+				// The trivia is outside of our generation scope
+				return null;
 			}
 
 			// Find out where the regions are located, we need to find it by spans as the node parent will be always null
 			foreach (var regionNode in rootRegionNode.GetSelfAndDescendantsNodes()
 				.Where(o => o.Start.HasValue && o.End.HasValue))
 			{
-				var startRegionMember = GetRelatedData(regionNode.Start.Value);
-				var endRegionMember = GetRelatedData(regionNode.End.Value);
+				var startRegionAnalyzeResult = GetRelatedAnalyzationResult(regionNode.Start.Value);
+				var endRegionAnalyzeResult = GetRelatedAnalyzationResult(regionNode.End.Value);
+				if (startRegionAnalyzeResult == null && endRegionAnalyzeResult == null)
+				{
+					continue; // We do not need to do anything as both start and end region are outside of our generation scope
+				}
+				if (startRegionAnalyzeResult is IDocumentAnalyzationResult &&
+				    endRegionAnalyzeResult is IDocumentAnalyzationResult)
+				{
+					continue; // Both directives will get generated, skip further processing
+				}
+
+				var startRegionMemberAnalyzeResult = startRegionAnalyzeResult as IMemberAnalyzationResult;
+				var endRegionMemberAnalyzeResult = endRegionAnalyzeResult as IMemberAnalyzationResult;
+
+				if (startRegionMemberAnalyzeResult != null && endRegionMemberAnalyzeResult != null)
+				{
+					if (allTransformResults.ContainsKey(startRegionMemberAnalyzeResult) &&
+					    allTransformResults.ContainsKey(endRegionMemberAnalyzeResult))
+					{
+						continue; // Both directives will get generated, skip further processing
+					}
+
+					if (!allTransformResults.ContainsKey(startRegionMemberAnalyzeResult) &&
+					    !allTransformResults.ContainsKey(endRegionMemberAnalyzeResult))
+					{
+						continue; // Both directives will not get generated, skip further processing
+					}
+				}
+
+				// If the directive is omitted in the generation we need to move it to the next node that will be generated
+				if (startRegionMemberAnalyzeResult != null && !allTransformResults.ContainsKey(startRegionMemberAnalyzeResult))
+				{
+					// We need to find the next node where we will append the directive
+					var nextTransformResult = GetNextTransformationResult(startRegionMemberAnalyzeResult);
+					var nextMemberTransform = nextTransformResult as IMemberTransformationResult;
+					if (nextMemberTransform == null)
+					{
+						// TODO: We need to append the trivia at the end of the document
+					}
+					else
+					{
+						// We need to check if the next node is the parent as we need to know where to append the trivia on the start or end of the node
+						var nextAnalyzeNode = nextMemberTransform.GetAnalyzationResult();
+						if (startRegionMemberAnalyzeResult.IsParent(nextAnalyzeNode))
+						{
+							// TODO: Add the directive on the close bracket of the parent node
+						}
+						else
+						{
+							// TODO: Add the directive on the lead trivia of the next node
+						}
+					}
+				}
 
 
+				if (endRegionMemberAnalyzeResult != null)
+				{
+					// TODO
+				}
 			}
 
-
-
-			return _rootNode;
+			return null;
 		}
-
-		
-
 	}
 }
-#if DEBUG
-
-#elif TRACE
-
-#else
-
-#endif

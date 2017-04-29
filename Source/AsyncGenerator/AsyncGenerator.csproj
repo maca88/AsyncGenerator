@@ -179,6 +179,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzation\IAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\SpecialTypeExtensions.cs" />
@@ -251,6 +252,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internal\SolutionData.cs" />
     <Compile Include="Transformation\IDocumentTransformationResult.cs" />
+    <Compile Include="Transformation\IMemberTransformationResult.cs" />
     <Compile Include="Transformation\IMethodTransformationResult.cs" />
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />

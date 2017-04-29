@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Analyzation
 {
-	public interface IFunctionAnalyzationResult
+	public interface IFunctionAnalyzationResult : IAnalyzationResult
 	{
 		/// <summary>
 		/// Symbol of the function
@@ -13,11 +13,6 @@ namespace AsyncGenerator.Analyzation
 		IMethodSymbol Symbol { get; }
 
 		MethodConversion Conversion { get; }
-
-		/// <summary>
-		/// Get the syntax node of the function
-		/// </summary>
-		SyntaxNode GetNode();
 
 		/// <summary>
 		/// Get the syntax node of the function body

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -40,6 +41,11 @@ namespace AsyncGenerator.Internal
 		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> Methods { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
 
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypes { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
+
+		public override SyntaxNode GetNode()
+		{
+			return Node;
+		}
 
 		//public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
 		//{
@@ -115,6 +121,37 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedNestedTypes;
 		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => _cachedNestedTypes ?? (_cachedNestedTypes = NestedTypes.Values.ToImmutableArray());
+
+		#endregion
+
+		#region IMemberAnalyzationResult
+
+		public IMemberAnalyzationResult GetNext()
+		{
+			// Try to find the next sibling that can be a type or a namespace
+			var sibling = NamespaceData.NestedNamespaces.Values
+				.Cast<IMemberAnalyzationResult>()
+				.Union(NamespaceData.Types.Values.Where(o => o != this))
+				.OrderBy(o => o.GetNode().SpanStart)
+				.FirstOrDefault(o => o.GetNode().SpanStart > Node.Span.End);
+			return sibling ?? NamespaceData;
+		}
+
+		public IMemberAnalyzationResult GetPrevious()
+		{
+			// Try to find the previous sibling that can be a type or a namespace
+			var sibling = NamespaceData.NestedNamespaces.Values
+				.Cast<IMemberAnalyzationResult>()
+				.Union(NamespaceData.Types.Values.Where(o => o != this))
+				.OrderByDescending(o => o.GetNode().Span.End)
+				.FirstOrDefault(o => o.GetNode().Span.End < Node.SpanStart);
+			return sibling ?? NamespaceData;
+		}
+
+		public bool IsParent(IAnalyzationResult analyzationResult)
+		{
+			return ParentTypeData == analyzationResult || NamespaceData == analyzationResult;
+		}
 
 		#endregion
 	}
