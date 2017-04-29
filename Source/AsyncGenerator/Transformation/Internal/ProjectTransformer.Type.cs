@@ -15,7 +15,7 @@ namespace AsyncGenerator.Transformation.Internal
 	partial class ProjectTransformer
 	{
 		// TODO: Missing members
-		private TypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult)
+		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult)
 		{
 			var rootTypeNode = rootTypeResult.Node;
 			var startRootTypeSpan = rootTypeNode.SpanStart;
@@ -48,7 +48,7 @@ namespace AsyncGenerator.Transformation.Internal
 						ReservedFieldNames = new HashSet<string>(typeResult.Symbol.MemberNames)
 					};
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
-					rootTransformResult.DescendantTransformTypeResults.Add(transformResult);
+					rootTransformResult.DescendantTransformedTypes.Add(transformResult);
 				}
 				transformResult.LeadingWhitespaceTrivia = leadingWhitespaceTrivia;
 
@@ -97,9 +97,9 @@ namespace AsyncGenerator.Transformation.Internal
 			var originalAnnotatedNode = rootTypeNode;
 
 			// Now we can start transforming the type. Start from the bottom in order to preserve replaced nested types
-			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTypes().OrderByDescending(o => o.OriginalNode.SpanStart))
+			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTransformedTypes().OrderByDescending(o => o.OriginalNode.SpanStart))
 			{
-				var typeResult = transformResult.TypeAnalyzationResult;
+				var typeResult = transformResult.AnalyzationResult;
 				// Add partial keyword on the original node if not present
 				if (typeResult.Conversion == TypeConversion.Partial && !typeResult.IsPartial)
 				{
@@ -133,8 +133,7 @@ namespace AsyncGenerator.Transformation.Internal
 					var typeNode = rootTypeNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
 					var newNodes = transformResult.TransformedNodes
 							.Union(transformResult.TransformedMethods)
-							.Where(o => o.TransformedNode != null)
-							.OrderBy(o => o.OriginalNode.SpanStart)
+							.OrderBy(o => o.OriginalStartSpan)
 							.SelectMany(o => o.GetTransformedNodes())
 						.Union(typeNode.DescendantNodes().OfType<TypeDeclarationSyntax>())
 						.ToList();

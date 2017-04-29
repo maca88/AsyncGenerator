@@ -18,8 +18,7 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			var rootNode = documentResult.Node;
 			var endOfLineTrivia = rootNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
-			var result = new DocumentTransformationResult(rootNode);
-			var transformResults = new List<TransformationResult>();
+			var result = new DocumentTransformationResult(documentResult);
 
 			foreach (var typeResult in documentResult.GlobalNamespace.Types.Where(o => o.Conversion != TypeConversion.Ignore))
 			{
@@ -29,7 +28,7 @@ namespace AsyncGenerator.Transformation.Internal
 					.OfType<TypeDeclarationSyntax>()
 					.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
 				var transformResult = TransformType(typeResult);
-				transformResults.Add(transformResult);
+				result.TransformedTypes.Add(transformResult);
 				rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 			}
 
@@ -41,16 +40,20 @@ namespace AsyncGenerator.Transformation.Internal
 					.OfType<NamespaceDeclarationSyntax>()
 					.First(o => o.SpanStart == namespaceSpanStart && o.Span.Length == namespaceSpanLength);
 				var transformResult = TransformNamespace(namespaceResult);
-				transformResults.Add(transformResult);
+				result.TransformedNamespaces.Add(transformResult);
 				rootNode = rootNode.ReplaceNode(namespaceNode, namespaceNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 			}
 
 			// Save the orignal node that was only annotated
 			var originalAnnotatedNode = rootNode;
 
+			var transformResults = result.TransformedNamespaces
+				.Cast<TransformationResult>()
+				.Union(result.TransformedTypes)
+				.ToList();
+
 			var newMembers = transformResults
-				.Where(o => o.TransformedNode != null)
-				.OrderBy(o => o.OriginalNode.SpanStart)
+				.OrderBy(o => o.OriginalStartSpan)
 				.SelectMany(o => o.GetTransformedNodes())
 				.ToList();
 
@@ -65,7 +68,7 @@ namespace AsyncGenerator.Transformation.Internal
 			regionRewriter.Analyze();
 
 			// Update the original document if required
-			foreach (var rewrittenNode in transformResults.Where(o => o.OriginalModifiedNode != null))
+			foreach (var rewrittenNode in transformResults.Where(o => o.OriginalModifiedNode != null).OrderByDescending(o => o.OriginalStartSpan))
 			{
 				if (result.OriginalModifiedNode == null)
 				{

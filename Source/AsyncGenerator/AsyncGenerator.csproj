@@ -251,7 +251,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internal\SolutionData.cs" />
     <Compile Include="Transformation\IDocumentTransformationResult.cs" />
+    <Compile Include="Transformation\IMethodTransformationResult.cs" />
+    <Compile Include="Transformation\INamespaceTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\MethodTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\NamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Document.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Method.cs" />
@@ -259,8 +264,14 @@
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
     <Compile Include="Transformation\Internal\DirectiveTransformer.cs" />
     <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
+    <Compile Include="Transformation\Internal\RootNamespaceTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\RootTypeTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\TransformationResult.cs" />
+    <Compile Include="Transformation\Internal\TypeTransformationResult.cs" />
     <Compile Include="Transformation\IProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
+    <Compile Include="Transformation\ITransformationResult.cs" />
+    <Compile Include="Transformation\ITypeTransformationResult.cs" />
     <Compile Include="TypeConversion.cs" />
     <Compile Include="Internal\TypeData.cs" />
     <Compile Include="Internal\TypeReferenceData.cs" />

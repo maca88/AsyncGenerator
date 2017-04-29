@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,30 +13,14 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class NamespaceTransformationResult : TransformationResult
-	{
-		public NamespaceTransformationResult(SyntaxNode originalNode) : base(originalNode)
-		{
-		}
-
-		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
-
-		public bool ThreadingUsingRequired { get; set; }
-
-		public bool SystemUsingRequired { get; set; }
-
-		public List<TypeTransformationResult> TransformedTypes { get; } = new List<TypeTransformationResult>();
-	}
-
 	partial class ProjectTransformer
 	{
-		private NamespaceTransformationResult TransformNamespace(INamespaceAnalyzationResult rootResult)
+		private RootNamespaceTransformationResult TransformNamespace(INamespaceAnalyzationResult rootResult)
 		{
 			var rootNode = rootResult.Node;
 			var endOfLineTrivia = rootNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
 			var startRootSpan = rootNode.SpanStart;
-			var rootTransformResult = new NamespaceTransformationResult(rootNode);
-			var transformResults = new Dictionary<INamespaceAnalyzationResult, NamespaceTransformationResult>();
+			var rootTransformResult = new RootNamespaceTransformationResult(rootResult);
 
 			// We do this here because we want that the root node has span start equal to 0
 			rootNode = rootNode.WithAdditionalAnnotations(new SyntaxAnnotation(rootTransformResult.Annotation));
@@ -55,8 +40,9 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				else
 				{
-					transformResult = new NamespaceTransformationResult(node);
+					transformResult = new NamespaceTransformationResult(result);
 					rootNode = rootNode.ReplaceNode(node, node.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
+					rootTransformResult.DescendantTransformedNamespaces.Add(transformResult);
 				}
 				//transformResult.LeadingWhitespaceTrivia = node.GetLeadingTrivia().First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
 
@@ -74,23 +60,20 @@ namespace AsyncGenerator.Transformation.Internal
 					transformResult.ThreadingUsingRequired |= typeResult.Methods.Any(o => o.CancellationTokenRequired);
 					transformResult.SystemUsingRequired |= typeResult.Methods.Any(o => o.WrapInTryCatch);
 				}
-				transformResults.Add(result, transformResult);
 			}
 
 			// Save the orignal node that was only annotated
 			var originalAnnotatedNode = rootNode;
 
 			// Now we can start transforming the namespace. Start from the bottom in order to preserve replaced nested namespaces
-			foreach (var result in rootResult.GetSelfAndDescendantsNamespaces()
-				.OrderByDescending(o => o.Node.SpanStart))
+			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTransformedNamespaces().OrderByDescending(o => o.OriginalNode.SpanStart))
 			{
-				var transformResult = transformResults[result];
+				var result = transformResult.AnalyzationResult;
 				var node = rootNode.GetAnnotatedNodes(transformResult.Annotation).OfType<NamespaceDeclarationSyntax>().First();
 				var newMembers = transformResult.TransformedTypes
-					.Where(o => o.TransformedNode != null)
-					.OrderBy(o => o.OriginalNode.SpanStart)
+					.OrderBy(o => o.OriginalStartSpan)
 					.SelectMany(o => o.GetTransformedNodes())
-					.Union(node.DescendantNodes().Where(o => o is NamespaceDeclarationSyntax)) // we need to include the already transformed namespaces
+					.Union(node.DescendantNodes().Where(o => o is NamespaceDeclarationSyntax)) // We need to include the already transformed namespaces
 					.ToList();
 				if (!newMembers.Any())
 				{
@@ -119,7 +102,7 @@ namespace AsyncGenerator.Transformation.Internal
 				rootNode = rootNode.ReplaceNode(node, newNode);
 
 				// We need to update the original types if they were modified
-				foreach (var transformTypeResult in transformResult.TransformedTypes.Where(o => o.OriginalModifiedNode != null))
+				foreach (var transformTypeResult in transformResult.TransformedTypes.Where(o => o.OriginalModifiedNode != null).OrderByDescending(o => o.OriginalStartSpan))
 				{
 					if (rootTransformResult.OriginalModifiedNode == null)
 					{

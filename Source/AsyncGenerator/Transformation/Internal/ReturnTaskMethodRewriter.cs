@@ -25,7 +25,7 @@ namespace AsyncGenerator.Transformation.Internal
 		public ReturnTaskMethodRewriter(MethodTransformationResult transformResult)
 		{
 			_transformResult = transformResult;
-			_methodResult = transformResult.MethodAnalyzationResult;
+			_methodResult = transformResult.AnalyzationResult;
 		}
 
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
