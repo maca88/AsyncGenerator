@@ -229,8 +229,10 @@
     <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
     <Compile Include="Preconditions\Fixture.cs" />
-    <Compile Include="Regions\Fixture.cs" />
-    <Compile Include="Regions\Input\TestCase.cs" />
+    <Compile Include="IfDirective\Fixture.cs" />
+    <Compile Include="IfDirective\Input\TestCase.cs" />
+    <Compile Include="RegionDirective\Fixture.cs" />
+    <Compile Include="RegionDirective\Input\TestCase.cs" />
     <Compile Include="SimpleAnonymousFunctions\Fixture.cs" />
     <Compile Include="SimpleCircularCall\Fixture.cs" />
     <Compile Include="SimpleClassInheritance\Fixture.cs" />
@@ -285,7 +287,6 @@
     <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
-    <Folder Include="Regions\Output\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
     <Folder Include="SynhronizedMethod\Output\" />
     <Folder Include="TryCatches\" />
@@ -343,6 +344,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NestedNamespaces\Output\TestCaseOriginal.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="RegionDirective\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IfDirective\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

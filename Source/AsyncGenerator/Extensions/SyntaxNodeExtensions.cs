@@ -160,6 +160,46 @@ namespace AsyncGenerator.Extensions
 					blockNode.CloseBraceToken.WithLeadingTrivia(blockNode.CloseBraceToken.LeadingTrivia.Add(whitespace)));
 		}
 
+		internal static SyntaxTrivia GetLeadingWhitespace(this SyntaxNode node)
+		{
+			return node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+		}
+
+		internal static SyntaxTrivia GetEndOfLine(this SyntaxNode node)
+		{
+			return node.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
+		}
+
+		internal static SyntaxTrivia GetIndent(this SyntaxNode node, SyntaxTrivia? leadingWhitespaceTrivia = null, SyntaxTrivia? parentLeadingWhitespace = null)
+		{
+			if (parentLeadingWhitespace.HasValue)
+			{
+				return Whitespace((leadingWhitespaceTrivia ?? node.GetLeadingWhitespace()).ToFullString()
+					.Substring(parentLeadingWhitespace.Value.ToFullString().Length));
+			}
+			return node.Parent == null
+				? default(SyntaxTrivia)
+				: Whitespace((leadingWhitespaceTrivia ?? node.GetLeadingWhitespace()).ToFullString()
+					.Substring(node.Parent.GetLeadingWhitespace().ToFullString().Length));
+		}
+
+		internal static SyntaxNode PrependCloseBraceLeadingTrivia(this SyntaxNode node, SyntaxTriviaList leadingTrivia)
+		{
+			if (node is TypeDeclarationSyntax typeNode)
+			{
+				return typeNode
+					.ReplaceToken(typeNode.CloseBraceToken,
+						typeNode.CloseBraceToken.WithLeadingTrivia(leadingTrivia.AddRange(typeNode.CloseBraceToken.LeadingTrivia)));
+			}
+			if (node is NamespaceDeclarationSyntax nsNode)
+			{
+				return nsNode
+					.ReplaceToken(nsNode.CloseBraceToken,
+						nsNode.CloseBraceToken.WithLeadingTrivia(leadingTrivia.AddRange(nsNode.CloseBraceToken.LeadingTrivia)));
+			}
+			throw new InvalidOperationException($"Unable to prepend CloseBraceToken trivia to node {node}");
+		}
+
 		internal static ReturnStatementSyntax ToReturnStatement(this StatementSyntax statement)
 		{
 			if (statement.IsKind(SyntaxKind.ReturnStatement))
@@ -302,6 +342,128 @@ namespace AsyncGenerator.Extensions
 				}
 			}
 			return false;
+		}
+
+		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node,
+			MemberDeclarationSyntax member, IReadOnlyList<MemberDeclarationSyntax> newMembers)
+		{
+			if (newMembers.Count == 1)
+			{
+				node = node.ReplaceNode(member, newMembers[0]);
+			}
+			else
+			{
+				// Append all additional members after the original one
+				var index = node.Members.IndexOf(member);
+				node = node.ReplaceNode(member, newMembers[0]);
+				var currIndex = index + 1;
+				foreach (var newMember in newMembers.Skip(1))
+				{
+					node = node.WithMembers(node.Members.Insert(currIndex, newMember));
+					currIndex++;
+				}
+			}
+			return node;
+		}
+
+		internal static NamespaceDeclarationSyntax ReplaceWithMembers(this NamespaceDeclarationSyntax node,
+			MemberDeclarationSyntax member, IReadOnlyList<MemberDeclarationSyntax> newMembers)
+		{
+			if (newMembers.Count == 1)
+			{
+				node = node.ReplaceNode(member, newMembers[0]);
+			}
+			else
+			{
+				// Append all additional members after the original one
+				var index = node.Members.IndexOf(member);
+				node = node.ReplaceNode(member, newMembers[0]);
+				var currIndex = index + 1;
+				foreach (var newMember in newMembers.Skip(1))
+				{
+					node = node.WithMembers(node.Members.Insert(currIndex, newMember));
+					currIndex++;
+				}
+			}
+			return node;
+		}
+
+		internal static TypeDeclarationSyntax RemoveMembersKeepDirectives(this TypeDeclarationSyntax node, 
+			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace)
+		{
+			var annotations = new List<string>();
+			foreach (var member in node.Members.Where(o => predicate(o)))
+			{
+				var annotation = Guid.NewGuid().ToString();
+				annotations.Add(annotation);
+				node = node.ReplaceNode(member, member.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
+			}
+			foreach (var annotation in annotations)
+			{
+				node = RemoveNodeKeepDirectives(node, annotation, directiveLeadingWhitespace);
+			}
+			return node;
+		}
+
+		internal static NamespaceDeclarationSyntax RemoveMembersKeepDirectives(this NamespaceDeclarationSyntax node,
+			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace)
+		{
+			var annotations = new List<string>();
+			foreach (var member in node.Members.Where(o => predicate(o)))
+			{
+				var annotation = Guid.NewGuid().ToString();
+				annotations.Add(annotation);
+				node = node.ReplaceNode(member, member.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
+			}
+			foreach (var annotation in annotations)
+			{
+				node = RemoveNodeKeepDirectives(node, annotation, directiveLeadingWhitespace);
+			}
+			return node;
+		}
+
+		internal static T RemoveNodeKeepDirectives<T>(this T node, string annotation, SyntaxTrivia directiveLeadingWhitespace)
+			where T : SyntaxNode
+		{
+			var toRemoveNode = node.GetAnnotatedNodes(annotation).First();
+			// We need to add a whitespace trivia to keept directives as they will not have any leading whitespace
+			var directiveAnnotations = new List<string>();
+			var directiveSpans = toRemoveNode.GetDirectives().Select(o => o.Span);
+			foreach (var directiveSpan in directiveSpans)
+			{
+				var directiveNode = toRemoveNode.GetDirectives().First(o => o.Span == directiveSpan).GetStructure();
+				var directiveAnnotation = Guid.NewGuid().ToString();
+				directiveAnnotations.Add(directiveAnnotation);
+				node = node.ReplaceNode(directiveNode, directiveNode.WithAdditionalAnnotations(new SyntaxAnnotation(directiveAnnotation)));
+				toRemoveNode = node.GetAnnotatedNodes(annotation).First();
+			}
+			node = node.RemoveNode(toRemoveNode, SyntaxRemoveOptions.KeepUnbalancedDirectives);
+			if (node == null)
+			{
+				return null;
+			}
+			foreach (var directiveAnnotation in directiveAnnotations)
+			{
+				var directiveNode = node.GetAnnotatedNodes(directiveAnnotation).First();
+				node = node.ReplaceNode(directiveNode,
+					directiveNode.WithLeadingTrivia(directiveLeadingWhitespace));
+			}
+			return node;
+		}
+
+		private static IEnumerable<SyntaxTrivia> GetDirectives(this SyntaxNode node)
+		{
+			if (node is TypeDeclarationSyntax typeNode)
+			{
+				return typeNode.GetLeadingTrivia().Where(o => o.IsDirective)
+					.Union(typeNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
+			}
+			if (node is NamespaceDeclarationSyntax nsNode)
+			{
+				return nsNode.GetLeadingTrivia().Where(o => o.IsDirective)
+					.Union(nsNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
+			}
+			return node.GetLeadingTrivia().Where(o => o.IsDirective);
 		}
 
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, bool condition)

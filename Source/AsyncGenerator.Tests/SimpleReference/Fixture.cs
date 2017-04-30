@@ -3,6 +3,7 @@ using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.TestCases;
 using AsyncGenerator.Tests.SimpleReference.Input;
+using AsyncGenerator.Transformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
@@ -82,6 +83,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
+						AssertValidAnnotations(result);
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);

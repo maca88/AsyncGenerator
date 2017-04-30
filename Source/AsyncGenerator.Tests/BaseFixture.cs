@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Transformation;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
@@ -54,6 +55,31 @@ namespace AsyncGenerator.Tests
 				if (stream == null) return string.Empty;
 				var reader = new StreamReader(stream);
 				return reader.ReadToEnd();
+			}
+		}
+
+		public void AssertValidAnnotations(IProjectTransformationResult projectResult)
+		{
+			foreach (var documentResult in projectResult.Documents)
+			{
+				var rootNode = documentResult.Transformed;
+				Assert.AreEqual(1, rootNode.GetAnnotatedNodes(documentResult.Annotation).ToList().Count);
+				foreach (var namespaceResult in documentResult.TransformedNamespaces)
+				{
+					Assert.AreEqual(1, rootNode.GetAnnotatedNodes(namespaceResult.Annotation).ToList().Count);
+					foreach (var typeResult in namespaceResult.TransformedTypes)
+					{
+						Assert.AreEqual(1, rootNode.GetAnnotatedNodes(typeResult.Annotation).ToList().Count);
+						foreach (var methodResult in typeResult.TransformedMethods)
+						{
+							Assert.AreEqual(1, rootNode.GetAnnotatedNodes(methodResult.Annotation).ToList().Count);
+						}
+					}
+				}
+				foreach (var typeResult in documentResult.TransformedTypes)
+				{
+					Assert.AreEqual(1, rootNode.GetAnnotatedNodes(typeResult.Annotation).ToList().Count);
+				}
 			}
 		}
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Transformation.Internal
 {
@@ -17,7 +18,11 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public INamespaceAnalyzationResult AnalyzationResult { get; }
 
-		//public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		public SyntaxTrivia IndentTrivia { get; set; }
 
 		public bool ThreadingUsingRequired { get; set; }
 

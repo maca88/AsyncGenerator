@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
 #region Namespace
-namespace AsyncGenerator.Tests.Regions
+namespace AsyncGenerator.Tests.RegionDirective
 {
 	#region Input
 	namespace Input

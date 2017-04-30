@@ -134,7 +134,7 @@ namespace AsyncGenerator.Internal
 				.Union(NamespaceData.Types.Values.Where(o => o != this))
 				.OrderBy(o => o.GetNode().SpanStart)
 				.FirstOrDefault(o => o.GetNode().SpanStart > Node.Span.End);
-			return sibling ?? NamespaceData;
+			return (sibling ?? ParentTypeData) ?? NamespaceData;
 		}
 
 		public IMemberAnalyzationResult GetPrevious()
@@ -145,7 +145,7 @@ namespace AsyncGenerator.Internal
 				.Union(NamespaceData.Types.Values.Where(o => o != this))
 				.OrderByDescending(o => o.GetNode().Span.End)
 				.FirstOrDefault(o => o.GetNode().Span.End < Node.SpanStart);
-			return sibling ?? NamespaceData;
+			return (sibling ?? ParentTypeData) ?? NamespaceData;
 		}
 
 		public bool IsParent(IAnalyzationResult analyzationResult)

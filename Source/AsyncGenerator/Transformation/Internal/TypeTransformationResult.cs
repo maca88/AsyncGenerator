@@ -26,6 +26,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		public SyntaxTrivia IndentTrivia { get; set; }
+
 		#region ITypeTransformationResult
 
 		private IReadOnlyList<IMethodTransformationResult> _cachedTransformedMethods;

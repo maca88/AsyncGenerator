@@ -18,7 +18,6 @@ namespace AsyncGenerator.Transformation.Internal
 		private RootNamespaceTransformationResult TransformNamespace(INamespaceAnalyzationResult rootResult)
 		{
 			var rootNode = rootResult.Node;
-			var endOfLineTrivia = rootNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
 			var startRootSpan = rootNode.SpanStart;
 			var rootTransformResult = new RootNamespaceTransformationResult(rootResult);
 
@@ -33,27 +32,34 @@ namespace AsyncGenerator.Transformation.Internal
 				var spanLength = result.Node.Span.Length;
 				var node = rootNode.DescendantNodesAndSelf().OfType<NamespaceDeclarationSyntax>()
 					.First(o => o.SpanStart == spanStart && o.Span.Length == spanLength);
+				var leadingWhitespace = node.GetLeadingWhitespace();
 				NamespaceTransformationResult transformResult;
 				if (node == rootNode)
 				{
 					transformResult = rootTransformResult;
+					// To get the indent of the root namespace we need to check the first memeber as the parent is the document
+					transformResult.IndentTrivia = node.Members.FirstOrDefault()?.GetLeadingWhitespace() ?? default(SyntaxTrivia);
 				}
 				else
 				{
-					transformResult = new NamespaceTransformationResult(result);
+					transformResult = new NamespaceTransformationResult(result)
+					{
+						IndentTrivia = node.GetIndent(leadingWhitespace)
+					};
 					rootNode = rootNode.ReplaceNode(node, node.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 					rootTransformResult.DescendantTransformedNamespaces.Add(transformResult);
 				}
-				//transformResult.LeadingWhitespaceTrivia = node.GetLeadingTrivia().First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+				transformResult.LeadingWhitespaceTrivia = leadingWhitespace;
+				transformResult.EndOfLineTrivia = node.GetEndOfLine();
 
-				foreach (var typeResult in result.Types.Where(o => o.Conversion != TypeConversion.Ignore))
+				foreach (var typeResult in result.Types/*.Where(o => o.Conversion != TypeConversion.Ignore)*/)
 				{
 					var typeSpanStart = typeResult.Node.SpanStart - startRootSpan;
 					var typeSpanLength = typeResult.Node.Span.Length;
 					var typeNode = rootNode.DescendantNodesAndSelf()
 						.OfType<TypeDeclarationSyntax>()
 						.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-					var transformTypeResult = TransformType(typeResult);
+					var transformTypeResult = TransformType(typeResult, transformResult.LeadingWhitespaceTrivia);
 					transformResult.TransformedTypes.Add(transformTypeResult);
 					rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformTypeResult.Annotation)));
 
@@ -68,37 +74,65 @@ namespace AsyncGenerator.Transformation.Internal
 			// Now we can start transforming the namespace. Start from the bottom in order to preserve replaced nested namespaces
 			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTransformedNamespaces().OrderByDescending(o => o.OriginalNode.SpanStart))
 			{
-				var result = transformResult.AnalyzationResult;
-				var node = rootNode.GetAnnotatedNodes(transformResult.Annotation).OfType<NamespaceDeclarationSyntax>().First();
-				var newMembers = transformResult.TransformedTypes
-					.OrderBy(o => o.OriginalStartSpan)
-					.SelectMany(o => o.GetTransformedNodes())
-					.Union(node.DescendantNodes().Where(o => o is NamespaceDeclarationSyntax)) // We need to include the already transformed namespaces
-					.ToList();
-				if (!newMembers.Any())
+				if (transformResult.AnalyzationResult.Conversion == NamespaceConversion.Ignore)
 				{
-					//TODO: fix regions
-					rootNode = rootNode.RemoveNode(node, SyntaxRemoveOptions.KeepNoTrivia);
+					rootNode = rootNode.RemoveNodeKeepDirectives(transformResult.Annotation, transformResult.LeadingWhitespaceTrivia);
 					continue;
 				}
-				var newNode = node.WithMembers(List(newMembers));
-				var leadingTrivia = result.Node.Members.First().GetLeadingTrivia().First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+
+				var node = rootNode.GetAnnotatedNodes(transformResult.Annotation).OfType<NamespaceDeclarationSyntax>().First();
+				var newNode = node;
+				var memberWhitespace = Whitespace(transformResult.LeadingWhitespaceTrivia.ToFullString() + transformResult.IndentTrivia.ToFullString());
+
+				foreach (var transformType in transformResult.TransformedTypes.OrderByDescending(o => o.OriginalStartSpan))
+				{
+					if (transformType.AnalyzationResult.Conversion == TypeConversion.Ignore)
+					{
+						// We need to add a whitespace trivia to kept directives as they will not have any leading whitespace
+						newNode = newNode.RemoveNodeKeepDirectives(transformType.Annotation, memberWhitespace);
+						continue;
+					}
+					if(transformType.AnalyzationResult.Conversion == TypeConversion.Partial)
+					{
+						var typeNode = newNode.GetAnnotatedNodes(transformType.Annotation)
+							.OfType<MemberDeclarationSyntax>()
+							.First();
+						newNode = newNode.ReplaceWithMembers(typeNode, transformType.GetTransformedNodes()
+							.OfType<MemberDeclarationSyntax>()
+							.ToImmutableList());
+					}
+				}
+
+				// We need to remove all other members that are not namespaces or types
+				newNode = newNode.RemoveMembersKeepDirectives(o => !(o is NamespaceDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
+
 				//TODO: check if Task is conflicted inside namespace
 				if (!rootResult.Node.HasUsing("System.Threading.Tasks"))
 				{
-					newNode = newNode.AddUsing("System.Threading.Tasks", TriviaList(leadingTrivia), endOfLineTrivia);
+					newNode = newNode.AddUsing("System.Threading.Tasks", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
 				}
 				if (transformResult.ThreadingUsingRequired && !rootResult.Node.HasUsing("System.Threading"))
 				{
-					newNode = newNode.AddUsing("System.Threading", TriviaList(leadingTrivia), endOfLineTrivia);
+					newNode = newNode.AddUsing("System.Threading", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
 				}
 				if (transformResult.SystemUsingRequired && !rootResult.Node.HasUsing("System"))
 				{
-					newNode = newNode.AddUsing("System", TriviaList(leadingTrivia), endOfLineTrivia);
+					newNode = newNode.AddUsing("System", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
 				}
 				// TODO: add locking namespaces
 
-				//TODO: fix regions
+				//var newMembers = transformResult.TransformedTypes
+				//	.OrderBy(o => o.OriginalStartSpan)
+				//	.SelectMany(o => o.GetTransformedNodes())
+				//	.Union(node.DescendantNodes().Where(o => o is NamespaceDeclarationSyntax)) // We need to include the already transformed namespaces
+				//	.ToList();
+				//if (!newMembers.Any())
+				//{
+				//	//TODO: fix regions
+				//	rootNode = rootNode.RemoveNode(node, SyntaxRemoveOptions.KeepNoTrivia);
+				//	continue;
+				//}
+				//var newNode = node.WithMembers(List(newMembers));
 				transformResult.TransformedNode = newNode;
 				rootNode = rootNode.ReplaceNode(node, newNode);
 

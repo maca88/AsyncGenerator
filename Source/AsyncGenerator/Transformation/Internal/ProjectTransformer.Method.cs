@@ -19,10 +19,6 @@ namespace AsyncGenerator.Transformation.Internal
 		private MethodTransformationResult TransformMethod(IMethodAnalyzationResult methodResult, SyntaxTrivia typeLeadingWhitespace)
 		{
 			var result = new MethodTransformationResult(methodResult);
-			if (methodResult.Conversion == MethodConversion.Ignore)
-			{
-				return result;
-			}
 			var methodNode = methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
 			if (methodBodyNode == null)
@@ -36,10 +32,15 @@ namespace AsyncGenerator.Transformation.Internal
 			startMethodSpan -= methodNode.SpanStart;
 
 			// Calculate whitespace method trivias
-			result.EndOfLineTrivia = methodNode.DescendantTrivia().First(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
-			result.LeadingWhitespaceTrivia = methodNode.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
-			result.IndentTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString().Substring(typeLeadingWhitespace.ToFullString().Length));
+			result.EndOfLineTrivia = methodNode.GetEndOfLine();
+			result.LeadingWhitespaceTrivia = methodNode.GetLeadingWhitespace();
+			result.IndentTrivia =  methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeLeadingWhitespace);
 			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
+
+			if (methodResult.Conversion == MethodConversion.Ignore)
+			{
+				return result;
+			}
 
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change

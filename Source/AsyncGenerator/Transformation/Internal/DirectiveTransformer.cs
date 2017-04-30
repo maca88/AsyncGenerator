@@ -137,6 +137,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 	/// <summary>
 	/// A transformator that takes care of partially generated directives.
+	/// DEPRECATED: not needed anymore as there is an easier way to achieve the same result
 	/// </summary>
 	internal class DirectiveTransformer
 	{
@@ -167,6 +168,9 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public CompilationUnitSyntax Transform(IDocumentTransformationResult transformResult)
 		{
+			var rootNode = transformResult.Transformed;
+			var replaceMetadata = new TriviaReplaceMetadata();
+
 			var origRootNode = transformResult.Original;
 			// Step 1 - Find all directives and link them together
 			RegionTreeNode rootRegionNode = null;
@@ -212,20 +216,6 @@ namespace AsyncGenerator.Transformation.Internal
 						return allTransformResults[nextResult];
 					}
 					nextResult = nextResult.GetNext();
-				}
-				return transformResult;
-			}
-
-			ITransformationResult GetPreviousTransformationResult(IMemberAnalyzationResult result)
-			{
-				var prevResult = result.GetPrevious();
-				while (prevResult != null)
-				{
-					if (allTransformResults.ContainsKey(prevResult))
-					{
-						return allTransformResults[prevResult];
-					}
-					prevResult = prevResult.GetPrevious();
 				}
 				return transformResult;
 			}
@@ -294,6 +284,20 @@ namespace AsyncGenerator.Transformation.Internal
 				var startRegionMemberAnalyzeResult = startRegionAnalyzeResult as IMemberAnalyzationResult;
 				var endRegionMemberAnalyzeResult = endRegionAnalyzeResult as IMemberAnalyzationResult;
 
+				if (startRegionAnalyzeResult is IDocumentAnalyzationResult && 
+					endRegionMemberAnalyzeResult != null && 
+					allTransformResults.ContainsKey(endRegionMemberAnalyzeResult))
+				{
+					continue; // Both directives will get generated, skip further processing
+				}
+
+				if (endRegionAnalyzeResult is IDocumentAnalyzationResult &&
+				    startRegionMemberAnalyzeResult != null &&
+				    allTransformResults.ContainsKey(startRegionMemberAnalyzeResult))
+				{
+					continue; // Both directives will get generated, skip further processing
+				}
+
 				if (startRegionMemberAnalyzeResult != null && endRegionMemberAnalyzeResult != null)
 				{
 					if (allTransformResults.ContainsKey(startRegionMemberAnalyzeResult) &&
@@ -309,39 +313,97 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 				}
 
-				// If the directive is omitted in the generation we need to move it to the next node that will be generated
-				if (startRegionMemberAnalyzeResult != null && !allTransformResults.ContainsKey(startRegionMemberAnalyzeResult))
+				void AddTrivia(IMemberAnalyzationResult regionMemberAnalyzeResult, SyntaxTrivia region, TriviaReplaceMetadata metadata)
 				{
+					if (regionMemberAnalyzeResult == null || allTransformResults.ContainsKey(regionMemberAnalyzeResult))
+					{
+						return;
+					}
 					// We need to find the next node where we will append the directive
-					var nextTransformResult = GetNextTransformationResult(startRegionMemberAnalyzeResult);
+					var nextTransformResult = GetNextTransformationResult(regionMemberAnalyzeResult);
 					var nextMemberTransform = nextTransformResult as IMemberTransformationResult;
 					if (nextMemberTransform == null)
 					{
-						// TODO: We need to append the trivia at the end of the document
+						// Prepend the trivia at the end of the document
+						var leadingTrivia = TriviaList(
+							region,
+							rootNode.GetEndOfLine()
+						);
+						metadata.EndOfFileTokenTriviaList = metadata.EndOfFileTokenTriviaList.AddRange(leadingTrivia);
+
+						/*
+						rootNode = rootNode.ReplaceToken(rootNode.EndOfFileToken, rootNode.EndOfFileToken
+							.WithLeadingTrivia(leadingTrivia.AddRange(rootNode.EndOfFileToken.LeadingTrivia)));*/
 					}
 					else
 					{
 						// We need to check if the next node is the parent as we need to know where to append the trivia on the start or end of the node
 						var nextAnalyzeNode = nextMemberTransform.GetAnalyzationResult();
-						if (startRegionMemberAnalyzeResult.IsParent(nextAnalyzeNode))
+						//var nextNode = rootNode.GetAnnotatedNodes(nextMemberTransform.Annotation).First();
+						var leadingTrivia = TriviaList(
+							Whitespace(nextMemberTransform.LeadingWhitespaceTrivia.ToFullString() +
+							           nextMemberTransform.IndentTrivia.ToFullString()),
+							region,
+							nextMemberTransform.EndOfLineTrivia
+						);
+						if (regionMemberAnalyzeResult.IsParent(nextAnalyzeNode))
 						{
-							// TODO: Add the directive on the close bracket of the parent node
+							// Prepend the directive on the close brace of the parent node
+							if (metadata.NodeCloseBraceTrivias.TryGetValue(nextMemberTransform.Annotation, out var triviaList))
+							{
+								metadata.NodeCloseBraceTrivias[nextMemberTransform.Annotation] = triviaList.AddRange(leadingTrivia);
+							}
+							else
+							{
+								metadata.NodeCloseBraceTrivias.Add(nextMemberTransform.Annotation, leadingTrivia);
+							}
+							//rootNode = rootNode.ReplaceNode(nextNode, nextNode.PrependCloseBraceLeadingTrivia(leadingTrivia));
 						}
 						else
 						{
-							// TODO: Add the directive on the lead trivia of the next node
+							// Prepend the directive on the lead trivia of the next node
+							if (metadata.NodeTrivias.TryGetValue(nextMemberTransform.Annotation, out var triviaList))
+							{
+								metadata.NodeTrivias[nextMemberTransform.Annotation] = triviaList.AddRange(leadingTrivia);
+							}
+							else
+							{
+								metadata.NodeTrivias.Add(nextMemberTransform.Annotation, leadingTrivia);
+							}
+							//rootNode = rootNode.ReplaceNode(nextNode, nextNode.WithLeadingTrivia(leadingTrivia.AddRange(nextNode.GetLeadingTrivia())));
 						}
 					}
 				}
 
-
-				if (endRegionMemberAnalyzeResult != null)
-				{
-					// TODO
-				}
+				AddTrivia(endRegionMemberAnalyzeResult, regionNode.End.Value, replaceMetadata);
+				AddTrivia(startRegionMemberAnalyzeResult, regionNode.Start.Value, replaceMetadata);
 			}
 
+			foreach (var nodeTrivias in replaceMetadata.NodeCloseBraceTrivias)
+			{
+				var nextNode = rootNode.GetAnnotatedNodes(nodeTrivias.Key).First();
+				rootNode = rootNode.ReplaceNode(nextNode, nextNode.PrependCloseBraceLeadingTrivia(nodeTrivias.Value));
+			}
+			foreach (var nodeTrivias in replaceMetadata.NodeTrivias)
+			{
+				var nextNode = rootNode.GetAnnotatedNodes(nodeTrivias.Key).First();
+				rootNode = rootNode.ReplaceNode(nextNode, nextNode.WithLeadingTrivia(nodeTrivias.Value.AddRange(nextNode.GetLeadingTrivia())));
+			}
+
+			rootNode = rootNode.ReplaceToken(rootNode.EndOfFileToken, rootNode.EndOfFileToken
+				.WithLeadingTrivia(replaceMetadata.EndOfFileTokenTriviaList.AddRange(rootNode.EndOfFileToken.LeadingTrivia)));
+
 			return null;
+		}
+
+
+		private class TriviaReplaceMetadata
+		{
+			public Dictionary<string, SyntaxTriviaList> NodeTrivias { get; } = new Dictionary<string, SyntaxTriviaList>();
+
+			public Dictionary<string, SyntaxTriviaList> NodeCloseBraceTrivias { get; } = new Dictionary<string, SyntaxTriviaList>();
+
+			public SyntaxTriviaList EndOfFileTokenTriviaList { get; set; }
 		}
 	}
 }
