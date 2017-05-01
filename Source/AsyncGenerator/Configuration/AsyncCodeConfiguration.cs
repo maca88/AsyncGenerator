@@ -22,7 +22,7 @@ namespace AsyncGenerator.Configuration
 
 		internal List<SolutionConfiguration> SolutionConfigurations { get; } = new List<SolutionConfiguration>();
 
-		public AsyncCodeConfiguration ConfigureSolution(string solutionFilePath, Action<ISolutionConfiguration> action)
+		public AsyncCodeConfiguration ConfigureSolution(string solutionFilePath, Action<IFluentSolutionConfiguration> action)
 		{
 			if (solutionFilePath == null)
 			{

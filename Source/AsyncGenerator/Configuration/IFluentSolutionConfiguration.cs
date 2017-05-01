@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace AsyncGenerator.Configuration
 {
-	public interface ISolutionConfiguration
+	public interface IFluentSolutionConfiguration
 	{
-		ISolutionConfiguration ConfigureProject(string projectName, Action<IProjectConfiguration> action);
+		IFluentSolutionConfiguration ConfigureProject(string projectName, Action<IFluentProjectConfiguration> action);
 
 		/// <summary>
 		/// Set if changes to projects and documents should be applied at the end of the transformation process
 		/// </summary>
-		ISolutionConfiguration ApplyChanges(bool value);
+		IFluentSolutionConfiguration ApplyChanges(bool value);
 	}
 }

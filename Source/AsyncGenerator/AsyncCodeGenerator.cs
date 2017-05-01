@@ -36,15 +36,18 @@ namespace AsyncGenerator
 				var solutionData = await CreateSolutionData(config).ConfigureAwait(false);
 				foreach (var projectData in solutionData.ProjectData.Values)
 				{
+					// Register internal plugins
+					RegisterInternalPlugins(projectData.Configuration);
+					
 					// Initialize plugins
 					foreach (var registeredPlugin in projectData.Configuration.RegisteredPlugins)
 					{
-						await registeredPlugin.Initialize(projectData.Project).ConfigureAwait(false);
+						await registeredPlugin.Initialize(projectData.Project, projectData.Configuration).ConfigureAwait(false);
 					}
 					// Analyze project
 					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
 					var analyzationResult = await AnalyzeProject(projectData).ConfigureAwait(false);
-					foreach (var action in analyzeConfig.Callbacks.AfterAnalyzation)
+					foreach (var action in analyzeConfig.AfterAnalyzation)
 					{
 						action(analyzationResult);
 					}
@@ -112,6 +115,13 @@ namespace AsyncGenerator
 				project = project.RemoveDocument(docId);
 			}
 			projectData.Project = project;
+		}
+
+		private void RegisterInternalPlugins(IFluentProjectConfiguration configuration)
+		{
+			configuration.RegisterPlugin(new DefaultAsyncCounterpartsFinder());
+			configuration.RegisterPlugin(new DefaultPreconditionChecker());
+			configuration.RegisterPlugin(new IncludeFilePathTransformer());
 		}
 	}
 }

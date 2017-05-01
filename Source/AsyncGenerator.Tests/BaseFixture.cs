@@ -23,7 +23,7 @@ namespace AsyncGenerator.Tests
 
 		public string InputFolderPath { get; }
 
-		public AsyncCodeConfiguration Configure(Action<IProjectConfiguration> action = null)
+		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
 			// BaseDirectory ends with a backslash when running with Visual Studio (Test Explorer), but when running with 
 			// Reshaper (Unit Test Session) there is no backslash at the end

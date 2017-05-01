@@ -64,7 +64,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == readFile ? methodConversion : MethodConversion.Unknown)
-					.Callbacks(c => c.AfterAnalyzation(AfterAnalyzation))
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
@@ -164,7 +164,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(methodConversion)
 					.UseCancellationTokenOverload(true)
-					.Callbacks(c => c.AfterAnalyzation(AfterAnalyzation))
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

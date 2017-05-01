@@ -43,9 +43,7 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
@@ -138,9 +136,7 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 					.UseCancellationTokenOverload(true)
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

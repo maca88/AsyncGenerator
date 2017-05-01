@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using AsyncGenerator.Plugins;
+using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration.Internal
 {
-	internal class ProjectConfiguration : IProjectConfiguration
+	internal class ProjectConfiguration : IFluentProjectConfiguration, IProjectConfiguration
 	{
 		public ProjectConfiguration(string name)
 		{
@@ -26,7 +27,17 @@ namespace AsyncGenerator.Configuration.Internal
 
 		#region IProjectConfiguration
 
-		IProjectConfiguration IProjectConfiguration.ConfigureAnalyzation(Action<IProjectAnalyzeConfiguration> action)
+		IProjectAnalyzeConfiguration IProjectConfiguration.AnalyzeConfiguration => AnalyzeConfiguration;
+
+		IProjectTransformConfiguration IProjectConfiguration.TransformConfiguration => TransformConfiguration;
+
+		IProjectCompileConfiguration IProjectConfiguration.CompileConfiguration => CompileConfiguration;
+
+		#endregion
+
+		#region IFluentProjectConfiguration
+
+		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureAnalyzation(Action<IFluentProjectAnalyzeConfiguration> action)
 		{
 			if (action == null)
 			{
@@ -36,7 +47,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IProjectConfiguration IProjectConfiguration.ConfigureTransformation(Action<IProjectTransformConfiguration> action)
+		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureTransformation(Action<IFluentProjectTransformConfiguration> action)
 		{
 			if (action == null)
 			{
@@ -46,7 +57,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IProjectConfiguration IProjectConfiguration.ConfigureCompilation(string outputPath, Action<IProjectCompileConfiguration> action)
+		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureCompilation(string outputPath, Action<IFluentProjectCompileConfiguration> action)
 		{
 			if (action == null)
 			{
@@ -61,13 +72,13 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IProjectConfiguration IProjectConfiguration.RegisterPlugin<TPlugin>()
+		IFluentProjectConfiguration IFluentProjectConfiguration.RegisterPlugin<TPlugin>()
 		{
 			RegisterPlugin(Activator.CreateInstance<TPlugin>());
 			return this;
 		}
 
-		IProjectConfiguration IProjectConfiguration.RegisterPlugin(IPlugin plugin)
+		IFluentProjectConfiguration IFluentProjectConfiguration.RegisterPlugin(IPlugin plugin)
 		{
 			if (plugin == null)
 			{
@@ -83,7 +94,7 @@ namespace AsyncGenerator.Configuration.Internal
 		{
 			TryAdd(plugin, AnalyzeConfiguration.FindAsyncCounterpartsFinders);
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
-			TryAdd(plugin, AnalyzeConfiguration.InvocationExpressionAnalyzers);
+			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
 			RegisteredPlugins.Add(plugin);
 		}
 

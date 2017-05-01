@@ -49,9 +49,7 @@ namespace AsyncGenerator.Tests.Preconditions
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
@@ -137,10 +135,7 @@ namespace AsyncGenerator.Tests.Preconditions
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return MethodConversion.Smart;
-					})
+					.MethodConversion(symbol => MethodConversion.Smart)
 					.IsPrecondition((statement, semanticModel) =>
 					{
 						var expressionStatement = statement as ExpressionStatementSyntax;
@@ -152,9 +147,7 @@ namespace AsyncGenerator.Tests.Preconditions
 						var symbol = semanticModel.GetSymbolInfo(invocationExpression).Symbol;
 						return symbol?.ContainingType?.Name == "Requires";
 					})
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

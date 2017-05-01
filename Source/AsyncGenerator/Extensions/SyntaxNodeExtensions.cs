@@ -388,6 +388,7 @@ namespace AsyncGenerator.Extensions
 			return node;
 		}
 
+		// TODO: take the original directive whitespace
 		internal static TypeDeclarationSyntax RemoveMembersKeepDirectives(this TypeDeclarationSyntax node, 
 			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace)
 		{
@@ -405,6 +406,7 @@ namespace AsyncGenerator.Extensions
 			return node;
 		}
 
+		// TODO: take the original directive whitespace
 		internal static NamespaceDeclarationSyntax RemoveMembersKeepDirectives(this NamespaceDeclarationSyntax node,
 			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace)
 		{
@@ -422,6 +424,7 @@ namespace AsyncGenerator.Extensions
 			return node;
 		}
 
+		// TODO: take the original directive whitespace
 		internal static T RemoveNodeKeepDirectives<T>(this T node, string annotation, SyntaxTrivia directiveLeadingWhitespace)
 			where T : SyntaxNode
 		{

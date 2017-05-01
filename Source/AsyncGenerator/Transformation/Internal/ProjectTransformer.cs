@@ -29,7 +29,14 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var docResult = TransformDocument(document);
 				result.Documents.Add(docResult);
-				// TODO: option to modify the document
+				if (docResult.TransformedNode == null)
+				{
+					continue;
+				}
+				foreach (var transformer in _configuration.DocumentTransformers)
+				{
+					docResult.TransformedNode = transformer.Transform(docResult) ?? docResult.TransformedNode;
+				}
 			}
 			return result;
 		}

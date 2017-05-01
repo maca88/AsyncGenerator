@@ -2,7 +2,7 @@
 
 namespace AsyncGenerator.Configuration.Internal
 {
-	internal class ProjectCompileConfiguration : IProjectCompileConfiguration
+	internal class ProjectCompileConfiguration : IFluentProjectCompileConfiguration, IProjectCompileConfiguration
 	{
 		public ProjectCompileConfiguration(string outputPath)
 		{
@@ -15,24 +15,20 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public string XmlDocumentationPath { get; private set; }
 
-		IProjectCompileConfiguration IProjectCompileConfiguration.SymbolsPath(string path)
+		#region IFluentProjectCompileConfiguration
+
+		IFluentProjectCompileConfiguration IFluentProjectCompileConfiguration.SymbolsPath(string path)
 		{
-			if (path == null)
-			{
-				throw new ArgumentNullException(nameof(path));
-			}
-			SymbolsPath = path;
+			SymbolsPath = path ?? throw new ArgumentNullException(nameof(path));
 			return this;
 		}
 
-		IProjectCompileConfiguration IProjectCompileConfiguration.XmlDocumentationPath(string path)
+		IFluentProjectCompileConfiguration IFluentProjectCompileConfiguration.XmlDocumentationPath(string path)
 		{
-			if (path == null)
-			{
-				throw new ArgumentNullException(nameof(path));
-			}
-			XmlDocumentationPath = path;
+			XmlDocumentationPath = path ?? throw new ArgumentNullException(nameof(path));
 			return this;
 		}
+
+		#endregion
 	}
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Plugins;
+using AsyncGenerator.Plugins.Internal;
 using Microsoft.CodeAnalysis;
 using static AsyncGenerator.Analyzation.AsyncCounterpartsSearchOptions;
 

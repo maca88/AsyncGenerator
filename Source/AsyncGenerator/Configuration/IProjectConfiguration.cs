@@ -3,20 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AsyncGenerator.Plugins;
 
 namespace AsyncGenerator.Configuration
 {
 	public interface IProjectConfiguration
 	{
-		IProjectConfiguration ConfigureAnalyzation(Action<IProjectAnalyzeConfiguration> action);
+		/// <summary>
+		/// Name of the project
+		/// </summary>
+		string Name { get; }
 
-		IProjectConfiguration ConfigureTransformation(Action<IProjectTransformConfiguration> action);
+		/// <summary>
+		/// Analyzation configurations for the project
+		/// </summary>
+		IProjectAnalyzeConfiguration AnalyzeConfiguration { get; }
 
-		IProjectConfiguration ConfigureCompilation(string outputPath, Action<IProjectCompileConfiguration> action);
+		/// <summary>
+		/// Transformation configurations for the project
+		/// </summary>
+		IProjectTransformConfiguration TransformConfiguration { get; }
 
-		IProjectConfiguration RegisterPlugin<TPlugin>() where TPlugin : class, IPlugin, new();
-
-		IProjectConfiguration RegisterPlugin(IPlugin plugin);
+		/// <summary>
+		/// Compilation configurations for the project
+		/// </summary>
+		IProjectCompileConfiguration CompileConfiguration { get; }
 	}
 }

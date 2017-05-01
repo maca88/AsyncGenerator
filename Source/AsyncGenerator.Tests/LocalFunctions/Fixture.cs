@@ -17,7 +17,8 @@ namespace AsyncGenerator.Tests.LocalFunctions
 			var expression = GetMethodName(o => o.Expression);
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -28,17 +29,12 @@ namespace AsyncGenerator.Tests.LocalFunctions
 
 				Assert.AreEqual(1, methods[simple].ChildFunctions.Count);
 				Assert.AreEqual(1, methods[expression].ChildFunctions.Count);
+			}
 
-			};
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return MethodConversion.Smart;
-					})
-					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
-					)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

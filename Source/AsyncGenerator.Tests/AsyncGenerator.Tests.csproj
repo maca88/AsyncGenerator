@@ -220,6 +220,8 @@
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
+    <Compile Include="FileComments\Fixture.cs" />
+    <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
     <Compile Include="LocalFunctions\Input\TestCase.cs" />
     <Compile Include="NestedNamespaces\Fixture.cs" />
@@ -260,6 +262,8 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="FileComments\TestCase.cs.xmldoc" />
+    <None Include="FileComments\Input\TestCase.cs.xmldoc" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -283,7 +287,6 @@
     <Folder Include="ArrowFunctions\" />
     <Folder Include="CastOmitAsync\Output\" />
     <Folder Include="CustomReturnType\Output\" />
-    <Folder Include="FileComments\" />
     <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
@@ -350,6 +353,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="IfDirective\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FileComments\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

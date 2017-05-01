@@ -181,6 +181,10 @@
   <ItemGroup>
     <Compile Include="Analyzation\IAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
+    <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
+    <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
+    <Compile Include="Configuration\IProjectConfiguration.cs" />
+    <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\SpecialTypeExtensions.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensions.Async.cs" />
@@ -202,17 +206,16 @@
     <Compile Include="Internal\ChildFunctionData.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="NamespaceConversion.cs" />
+    <Compile Include="Plugins\IDocumentTransformer.cs" />
     <Compile Include="ReferenceConversion.cs" />
-    <Compile Include="Configuration\IProjectAnalyzeCallbacksConfiguration.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />
     <Compile Include="Configuration\AsyncCodeConfiguration.cs" />
-    <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
-    <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
-    <Compile Include="Configuration\IProjectConfiguration.cs" />
-    <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
-    <Compile Include="Configuration\ISolutionConfiguration.cs" />
-    <Compile Include="Configuration\Internal\ProjectAnalyzeCallbacksConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectAnalyzeConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectCompileConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
+    <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectConfiguration.cs" />
@@ -243,7 +246,7 @@
     <Compile Include="Internal\BodyFunctionReferenceData.cs" />
     <Compile Include="Internal\NamespaceData.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.cs" />
-    <Compile Include="Plugins\AbstractPlugin.cs" />
+    <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
     <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
     <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
@@ -257,6 +260,7 @@
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />
     <Compile Include="Transformation\Internal\MethodTransformationResult.cs" />
     <Compile Include="Transformation\Internal\NamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformationResult.cs" />

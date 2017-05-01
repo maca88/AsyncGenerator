@@ -8,14 +8,10 @@ namespace AsyncGenerator.Configuration
 {
 	public interface IProjectCompileConfiguration
 	{
-		/// <summary>
-		/// Set the path where the symbols will be placed 
-		/// </summary>
-		IProjectCompileConfiguration SymbolsPath(string path);
+		string OutputPath { get; }
 
-		/// <summary>
-		/// Set the path where the xml documentation will be placed 
-		/// </summary>
-		IProjectCompileConfiguration XmlDocumentationPath(string path);
+		string SymbolsPath { get; }
+
+		string XmlDocumentationPath { get; }
 	}
 }

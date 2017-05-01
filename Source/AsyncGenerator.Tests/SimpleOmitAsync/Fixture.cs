@@ -138,9 +138,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 					{
 						return symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart;
 					})
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

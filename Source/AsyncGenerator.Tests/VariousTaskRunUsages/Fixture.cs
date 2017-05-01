@@ -23,7 +23,8 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 			var configuratedAwaitedFunctionTask = GetMethodName(o => o.ConfiguratedAwaitedFunctionTask);
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -34,14 +35,7 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				IBodyFunctionReferenceAnalyzationResult methodReference;
 				var awaitableMethods = new[]
 				{
-					waitActionTask,
-					runSynchronouslyActionTask,
-					waitFunctionTask,
-					waitFunctionTaskNoResult,
-					awaitedActionTask,
-					awaitedFunctionTask,
-					configuratedAwaitedActionTask,
-					configuratedAwaitedFunctionTask
+					waitActionTask, runSynchronouslyActionTask, waitFunctionTask, waitFunctionTaskNoResult, awaitedActionTask, awaitedFunctionTask, configuratedAwaitedActionTask, configuratedAwaitedFunctionTask
 				};
 				foreach (var awaitableMethod in awaitableMethods)
 				{
@@ -53,8 +47,7 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 
 				var notAwaitableMethods = new[]
 				{
-					notAwaitedActionTask,
-					notAwaitedFunctionTask
+					notAwaitedActionTask, notAwaitedFunctionTask
 				};
 				foreach (var notAwaitableMethod in notAwaitableMethods)
 				{
@@ -66,24 +59,22 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 
 				var configurableAwaitableMethods = new[]
 				{
-					configuratedAwaitedActionTask,
-					configuratedAwaitedFunctionTask,
+					configuratedAwaitedActionTask, configuratedAwaitedFunctionTask,
 				};
 				foreach (var configurableAwaitableMethod in configurableAwaitableMethods)
 				{
 					methodReference = methods[configurableAwaitableMethod].MethodReferences[0];
 					Assert.IsNotNull(methodReference.ConfigureAwaitParameter);
 				}
-			};
+			}
+
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
 					{
 						return MethodConversion.ToAsync;
 					})
-					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

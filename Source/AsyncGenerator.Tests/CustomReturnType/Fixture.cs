@@ -15,7 +15,8 @@ namespace AsyncGenerator.Tests.CustomReturnType
 			var getDataAsync = GetMethodName(o => o.GetDataAsync());
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -26,16 +27,15 @@ namespace AsyncGenerator.Tests.CustomReturnType
 
 				Assert.AreEqual(MethodConversion.Ignore, methods[getData].Conversion);
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
-			};
+			}
+
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
 					{
 						return symbol.Name == getData ?  MethodConversion.ToAsync : MethodConversion.Unknown;
 					})
-					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

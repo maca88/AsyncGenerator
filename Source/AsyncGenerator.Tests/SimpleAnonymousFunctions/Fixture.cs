@@ -19,7 +19,8 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 			var argumentAction = GetMethodName(o => o.ArgumentAction);
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -34,10 +35,7 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 
 				var ignoredAnonymousMethods = new[]
 				{
-					declareNamedDelegate,
-					returnDelegate,
-					declareFunction,
-					declareAction
+					declareNamedDelegate, returnDelegate, declareFunction, declareAction
 				};
 				IMethodAnalyzationResult method;
 				foreach (var ignoredAnonymousMethod in ignoredAnonymousMethods)
@@ -56,16 +54,12 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 				Assert.AreEqual(MethodConversion.ToAsync, method.ChildFunctions[0].Conversion);
 				Assert.AreEqual(1, method.ChildFunctions[0].MethodReferences.Count);
 				Assert.IsTrue(readFileMethod.InvokedBy.Any(o => o == method.ChildFunctions[0]));
-			};
+			}
+
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Smart;
-					})
-					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
-					)
+					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Smart)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

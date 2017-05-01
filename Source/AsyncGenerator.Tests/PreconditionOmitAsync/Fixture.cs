@@ -80,9 +80,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReadFile ?  MethodConversion.Ignore : MethodConversion.ToAsync)
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

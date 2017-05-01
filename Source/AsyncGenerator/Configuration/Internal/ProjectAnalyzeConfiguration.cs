@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration.Internal
 {
-	internal class ProjectAnalyzeConfiguration : IProjectAnalyzeConfiguration
+	internal class ProjectAnalyzeConfiguration : IFluentProjectAnalyzeConfiguration, IProjectAnalyzeConfiguration
 	{
 		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
 
@@ -18,17 +18,13 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Predicate<IMethodSymbol> ConvertMethodPredicate { get; private set; } = m => true;
 
-		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>()
-		{
-			new DefaultAsyncCounterpartsFinder()
-		};
+		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>();
 
-		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>()
-		{
-			new DefaultPreconditionChecker()
-		};
+		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>();
 
 		public List<IInvocationExpressionAnalyzer> InvocationExpressionAnalyzers { get; } = new List<IInvocationExpressionAnalyzer>();
+
+		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 
 		public bool ScanMethodBody { get; private set; }
 
@@ -36,51 +32,33 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool UseCancellationTokenOverload { get; private set; }
 
-		public ProjectAnalyzeCallbacksConfiguration Callbacks { get; } = new ProjectAnalyzeCallbacksConfiguration();
+		#region IFluentProjectAnalyzeConfiguration
 
-		#region IProjectAnalyzeConfiguration
-
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
 		{
-			if (func == null)
-			{
-				throw new ArgumentNullException(nameof(func));
-			}
-			MethodConversionFunction = func;
+			MethodConversionFunction = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.TypeConversion(Func<INamedTypeSymbol, TypeConversion> func)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.TypeConversion(Func<INamedTypeSymbol, TypeConversion> func)
 		{
-			if (func == null)
-			{
-				throw new ArgumentNullException(nameof(func));
-			}
-			TypeConversionFunction = func;
+			TypeConversionFunction = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.DocumentSelection(Predicate<Document> predicate)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.DocumentSelection(Predicate<Document> predicate)
 		{
-			if (predicate == null)
-			{
-				throw new ArgumentNullException(nameof(predicate));
-			}
-			DocumentSelectionPredicate = predicate;
+			DocumentSelectionPredicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ConvertMethodPredicate(Predicate<IMethodSymbol> predicate)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ConvertMethodPredicate(Predicate<IMethodSymbol> predicate)
 		{
-			if (predicate == null)
-			{
-				throw new ArgumentNullException(nameof(predicate));
-			}
-			ConvertMethodPredicate = predicate;
+			ConvertMethodPredicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.FindAsyncCounterparts(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.FindAsyncCounterparts(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func)
 		{
 			if (func == null)
 			{
@@ -90,7 +68,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.IsPrecondition(Func<StatementSyntax, SemanticModel, bool> predicate)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.IsPrecondition(Func<StatementSyntax, SemanticModel, bool> predicate)
 		{
 			if (predicate == null)
 			{
@@ -100,31 +78,31 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ScanMethodBody(bool value)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanMethodBody(bool value)
 		{
 			ScanMethodBody = value;
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
 		{
 			ScanForMissingAsyncMembers = value;
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.UseCancellationTokenOverload(bool value)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.UseCancellationTokenOverload(bool value)
 		{
 			UseCancellationTokenOverload = value;
 			return this;
 		}
 
-		IProjectAnalyzeConfiguration IProjectAnalyzeConfiguration.Callbacks(Action<IProjectAnalyzeCallbacksConfiguration> action)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AfterAnalyzation(Action<IProjectAnalyzationResult> action)
 		{
 			if (action == null)
 			{
 				throw new ArgumentNullException(nameof(action));
 			}
-			action(Callbacks);
+			AfterAnalyzation.Add(action);
 			return this;
 		}
 

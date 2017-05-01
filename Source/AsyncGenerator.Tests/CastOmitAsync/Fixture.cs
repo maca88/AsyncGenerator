@@ -17,7 +17,8 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 			var noCastReturnTask = GetMethodName(o => o.NoCastReturnTask());
 
 			var generator = new AsyncCodeGenerator();
-			Action<IProjectAnalyzationResult> afterAnalyzationFn = result =>
+
+			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
@@ -27,8 +28,7 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 
 				var awaitRequiredMethods = new[]
 				{
-					longCastReturn,
-					enumerableCastReturn
+					longCastReturn, enumerableCastReturn
 				};
 
 				IBodyFunctionReferenceAnalyzationResult methodReference;
@@ -45,8 +45,7 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 
 				var awaitNotRequiredMethods = new[]
 				{
-					noCastReturn,
-					noCastReturnTask
+					noCastReturn, noCastReturnTask
 				};
 				foreach (var awaitNotRequiredMethod in awaitNotRequiredMethods)
 				{
@@ -57,16 +56,12 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 					Assert.IsFalse(methodReference.AwaitInvocation);
 					Assert.IsTrue(methodReference.UseAsReturnValue);
 				}
-			};
+			}
+
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return MethodConversion.Smart;
-					})
-					.Callbacks(c => c
-						.AfterAnalyzation(afterAnalyzationFn)
-					)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

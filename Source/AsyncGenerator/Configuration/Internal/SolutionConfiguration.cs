@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AsyncGenerator.Configuration.Internal
 {
-	internal class SolutionConfiguration : ISolutionConfiguration
+	internal class SolutionConfiguration : IFluentSolutionConfiguration
 	{
 		public SolutionConfiguration(string path)
 		{
@@ -16,9 +16,9 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ApplyChanges { get; private set; }
 
-		#region ISolutionConfiguration
+		#region IFluentSolutionConfiguration
 
-		ISolutionConfiguration ISolutionConfiguration.ConfigureProject(string projectName, Action<IProjectConfiguration> action)
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.ConfigureProject(string projectName, Action<IFluentProjectConfiguration> action)
 		{
 			if (projectName == null)
 			{
@@ -34,7 +34,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		ISolutionConfiguration ISolutionConfiguration.ApplyChanges(bool value)
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.ApplyChanges(bool value)
 		{
 			ApplyChanges = value;
 			return this;

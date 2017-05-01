@@ -17,14 +17,13 @@ namespace AsyncGenerator.Tests.NestedNamespaces
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.Callbacks(c => c
-						.AfterAnalyzation(result =>
-						{
-							Assert.AreEqual(1, result.Documents.Count);
-							Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-							Assert.AreEqual(2, result.Documents[0].Namespaces[0].NestedNamespaces.Count);
-							Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-						}))
+					.AfterAnalyzation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
+						Assert.AreEqual(2, result.Documents[0].Namespaces[0].NestedNamespaces.Count);
+						Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
+					})
 				)
 			);
 			var generator = new AsyncCodeGenerator();

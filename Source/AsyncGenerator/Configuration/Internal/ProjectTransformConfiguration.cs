@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Plugins;
 using AsyncGenerator.Transformation;
+using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration.Internal
 {
-	internal class ProjectTransformConfiguration : IProjectTransformConfiguration
+	internal class ProjectTransformConfiguration : IFluentProjectTransformConfiguration, IProjectTransformConfiguration
 	{
 		public string AsyncFolder { get; private set; } = "Async";
 
@@ -22,34 +24,38 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool LocalFunctions { get; private set; }
 
+		public List<IDocumentTransformer> DocumentTransformers { get; } = new List<IDocumentTransformer>();
+
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.AsyncFolder(string folderName)
+		#region IFluentProjectTransformConfiguration
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AsyncFolder(string folderName)
 		{
 			AsyncFolder = folderName ?? throw new ArgumentNullException(nameof(folderName));
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.ConfigureAwaitArgument(ExpressionSyntax value)
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ConfigureAwaitArgument(ExpressionSyntax value)
 		{
 			ConfigureAwaitArgument = value;
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.LocalFunctions(bool enabled)
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.LocalFunctions(bool enabled)
 		{
 			LocalFunctions = enabled;
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.AdditionalDocumentNamespaces(
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AdditionalDocumentNamespaces(
 			Func<CompilationUnitSyntax, IEnumerable<string>> func)
 		{
 			AdditionalDocumentNamespaces = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.AddAssemblyReference(string assemblyPath)
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AddAssemblyReference(string assemblyPath)
 		{
 			if (assemblyPath == null)
 			{
@@ -63,13 +69,13 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.ParseOptions(ParseOptions parseOptions)
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ParseOptions(ParseOptions parseOptions)
 		{
 			ParseOptions = parseOptions ?? throw new ArgumentNullException(nameof(parseOptions));
 			return this;
 		}
 
-		IProjectTransformConfiguration IProjectTransformConfiguration.AfterTransformation(Action<IProjectTransformationResult> action)
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AfterTransformation(Action<IProjectTransformationResult> action)
 		{
 			if (action == null)
 			{
@@ -78,5 +84,8 @@ namespace AsyncGenerator.Configuration.Internal
 			AfterTransformation.Add(action);
 			return this;
 		}
+
+		#endregion
+
 	}
 }

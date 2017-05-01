@@ -38,9 +38,7 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					{
 						return MethodConversion.Smart;
 					})
-					.Callbacks(c => c
-						.AfterAnalyzation(AfterAnalyzation)
-					)
+					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
