@@ -188,6 +188,12 @@ namespace AsyncGenerator.Transformation.Internal
 
 			}
 
+			if (methodResult.RewriteYields)
+			{
+				var yieldRewriter = new YieldRewriter(result);
+				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
+			}
+
 			// The method with SplitTail needs to be splitted into two methods
 			if (methodResult.SplitTail)
 			{

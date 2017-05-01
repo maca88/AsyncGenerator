@@ -257,6 +257,8 @@
     <Compile Include="SimpleOmitAsync\Input\TestCase.cs" />
     <Compile Include="VariousTaskRunUsages\Input\TestCase.cs" />
     <Compile Include="VariousTaskRunUsages\Fixture.cs" />
+    <Compile Include="Yields\Fixture.cs" />
+    <Compile Include="Yields\Input\TestCase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
@@ -294,7 +296,6 @@
     <Folder Include="SynhronizedMethod\Output\" />
     <Folder Include="TryCatches\" />
     <Folder Include="VariousTaskRunUsages\Output\" />
-    <Folder Include="Yields\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SimpleReference\Output\TestCaseWithToken.txt" />
@@ -356,6 +357,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FileComments\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Yields\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

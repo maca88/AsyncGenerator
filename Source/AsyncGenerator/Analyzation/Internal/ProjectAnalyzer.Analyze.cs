@@ -43,7 +43,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			var methodBody = methodData.GetBodyNode();
-			methodData.HasYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
 				.Where(o => o.AttributeClass.Name == "MethodImplAttribute")
 				.Any(o => ((MethodImplOptions)(int)o.ConstructorArguments.First().Value).HasFlag(MethodImplOptions.Synchronized));
@@ -78,7 +78,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
-			methodData.HasYields = methodData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodData.RewriteYields = methodData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodData methoData, CrefFunctionReferenceData crefData)

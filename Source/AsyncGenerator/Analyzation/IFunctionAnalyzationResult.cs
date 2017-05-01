@@ -60,5 +60,10 @@ namespace AsyncGenerator.Analyzation
 		/// When true, the method will be wrapped in a try/catch block
 		/// </summary>
 		bool WrapInTryCatch { get; }
+
+		/// <summary>
+		/// When true, yield statements in method body will be rewritten to return statements
+		/// </summary>
+		bool RewriteYields { get; }
 	}
 }

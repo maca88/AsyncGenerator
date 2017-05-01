@@ -187,7 +187,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Symbol.ReturnType.CreateTypeSyntax())))))
+											: _methodResult.Node.ReturnType)))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -207,7 +207,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Symbol.ReturnType.CreateTypeSyntax())))))
+											: _methodResult.Node.ReturnType)))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -238,17 +238,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax WrapInsideTryCatch(BlockSyntax node)
 		{
-			var wrappedStatements = new SyntaxList<StatementSyntax>();
-			var innerBodyTrivia = Whitespace(_transformResult.BodyLeadingWhitespaceTrivia.ToFullString() + _transformResult.IndentTrivia.ToFullString());
-			// We need to add an indent for each wrapped statement
-			foreach (var statement in node.Statements.Skip(_methodResult.Preconditions.Count))
-			{
-				var leadingTrivia = statement.GetFirstToken().LeadingTrivia.First(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
-				wrappedStatements = wrappedStatements.Add(statement.ReplaceTrivia(leadingTrivia, innerBodyTrivia));
-			}
+			//var innerBodyTrivia = Whitespace(_transformResult.BodyLeadingWhitespaceTrivia.ToFullString() + _transformResult.IndentTrivia.ToFullString());
 			var tryStatement = TryStatement()
 				.WithTryKeyword(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.TryKeyword, TriviaList(_transformResult.EndOfLineTrivia)))
-				.WithBlock(Block(wrappedStatements)
+				.WithBlock(Block(node.Statements.Skip(_methodResult.Preconditions.Count))
 					.WithOpenBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
 					.WithCloseBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
 				)
@@ -260,8 +253,23 @@ namespace AsyncGenerator.Transformation.Internal
 								.WithIdentifier(Identifier("ex"))
 								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_transformResult.EndOfLineTrivia)))
 						)
-						.WithBlock(GetCatchBlock(innerBodyTrivia))
+						.WithBlock(GetCatchBlock(/*innerBodyTrivia*/))
 				));
+			// To indent the wrapped statement we will use the NormalizeWhitespace method as the indentation process is too complex to handle manually
+			// For using the NormalizeWhitespace we need to place the wrapped body in the original document node to get the right indentation
+			var annotation = Guid.NewGuid().ToString();
+			var docNode = _methodResult.Node.Ancestors().OfType<CompilationUnitSyntax>().First();
+			docNode = docNode.ReplaceNode(_methodResult.Node, _methodResult.Node
+				.WithBody(_methodResult.Node.Body
+					.WithStatements(SingletonList<StatementSyntax>(tryStatement
+						.WithAdditionalAnnotations(new SyntaxAnnotation(annotation))))));
+			tryStatement = docNode
+				.NormalizeWhitespace(
+					_transformResult.IndentTrivia.ToFullString(),
+					_transformResult.EndOfLineTrivia.ToString())
+				.GetAnnotatedNodes(annotation)
+				.OfType<TryStatementSyntax>()
+				.First();
 
 			var newStatements = node.Statements.Take(_methodResult.Preconditions.Count).ToList();
 			newStatements.Add(tryStatement);
@@ -271,7 +279,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithCloseBraceToken(node.CloseBraceToken);
 		}
 
-		private BlockSyntax GetCatchBlock(SyntaxTrivia innerBodyTrivia)
+		private BlockSyntax GetCatchBlock(/*SyntaxTrivia innerBodyTrivia*/)
 		{
 			return Block(
 					SingletonList<StatementSyntax>(
@@ -288,13 +296,13 @@ namespace AsyncGenerator.Transformation.Internal
 														SingletonSeparatedList(
 															_methodResult.Symbol.ReturnsVoid
 																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-																: _methodResult.Symbol.ReturnType.CreateTypeSyntax())))))
+																: _methodResult.Node.ReturnType)))))
 									.WithArgumentList(
 										ArgumentList(
 											SingletonSeparatedList(
 												Argument(
 													IdentifierName("ex"))))))
-							.WithReturnKeyword(Token(TriviaList(innerBodyTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)))
+							.WithReturnKeyword(Token(TriviaList(/*innerBodyTrivia*/), SyntaxKind.ReturnKeyword, TriviaList(Space)))
 							.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))
 					))
 				.WithOpenBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))

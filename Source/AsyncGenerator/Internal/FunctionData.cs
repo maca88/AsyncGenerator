@@ -100,7 +100,7 @@ namespace AsyncGenerator.Internal
 
 		#region Analyze step
 
-		public bool HasYields { get; set; }
+		public bool RewriteYields { get; set; }
 
 		#endregion
 
