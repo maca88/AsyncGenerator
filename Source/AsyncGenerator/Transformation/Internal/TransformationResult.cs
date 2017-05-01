@@ -20,17 +20,17 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 		}
 
-		public T TransformedNode { get; set; }
+		public T Transformed { get; set; }
 
-		public T OriginalModifiedNode { get; set; }
+		public T OriginalModified { get; set; }
 
 		public int OriginalStartSpan => OriginalNode.SpanStart;
 
 		public virtual IEnumerable<SyntaxNode> GetTransformedNodes()
 		{
-			if (TransformedNode != null)
+			if (Transformed != null)
 			{
-				yield return TransformedNode;
+				yield return Transformed;
 			}
 		}
 	}

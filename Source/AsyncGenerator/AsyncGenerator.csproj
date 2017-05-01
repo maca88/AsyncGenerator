@@ -207,6 +207,7 @@
     <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="NamespaceConversion.cs" />
     <Compile Include="Plugins\IDocumentTransformer.cs" />
+    <Compile Include="Plugins\IMethodTransformer.cs" />
     <Compile Include="ReferenceConversion.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />
@@ -259,6 +260,7 @@
     <Compile Include="Transformation\IMethodTransformationResult.cs" />
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
+    <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />
     <Compile Include="Transformation\Internal\MethodTransformationResult.cs" />
@@ -268,7 +270,6 @@
     <Compile Include="Transformation\Internal\ProjectTransformer.Method.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Namespace.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
-    <Compile Include="Transformation\Internal\DirectiveTransformer.cs" />
     <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
     <Compile Include="Transformation\Internal\RootNamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\RootTypeTransformationResult.cs" />

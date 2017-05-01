@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Transformation;
@@ -43,6 +44,14 @@ namespace AsyncGenerator.Configuration
 		/// Set the parse options of the project
 		/// </summary>
 		IFluentProjectTransformConfiguration ParseOptions(ParseOptions parseOptions);
+
+		/// <summary>
+		/// Set the async locking system of the project. Used only if the project contains methods with <see cref="MethodImplOptions.Synchronized"/> option.
+		/// </summary>
+		/// <param name="fullTypeName">The full type name of the async lock</param>
+		/// <param name="methodName">The method name that triggers the lock</param>
+		/// <returns></returns>
+		IFluentProjectTransformConfiguration AsyncLock(string fullTypeName, string methodName);
 
 		/// <summary>
 		/// Add a callback that is called when the transformation for the project is completed

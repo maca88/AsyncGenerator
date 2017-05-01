@@ -20,7 +20,7 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(2, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
+				Assert.AreEqual(4, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
 				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				Assert.IsTrue(methods[noOptimizationSynhronized].MustRunSynchronized);
@@ -32,7 +32,33 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
+				.ConfigureTransformation(t => t
+					.AsyncLock("Test.MyAsyncLock", "LockAsync")
+				)
+			);
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestAfterTransformation()
+		{
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.ToAsync)
+				)
+				.ConfigureTransformation(t => t
+					.AsyncLock("Test.MyAsyncLock", "LockAsync")
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCase"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}

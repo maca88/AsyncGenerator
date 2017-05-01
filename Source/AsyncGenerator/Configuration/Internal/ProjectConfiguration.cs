@@ -95,6 +95,7 @@ namespace AsyncGenerator.Configuration.Internal
 			TryAdd(plugin, AnalyzeConfiguration.FindAsyncCounterpartsFinders);
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
 			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
+			TryAdd(plugin, TransformConfiguration.MethodTransformers);
 			RegisteredPlugins.Add(plugin);
 		}
 

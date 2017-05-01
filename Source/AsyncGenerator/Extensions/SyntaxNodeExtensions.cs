@@ -344,23 +344,35 @@ namespace AsyncGenerator.Extensions
 			return false;
 		}
 
-		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node,
-			MemberDeclarationSyntax member, IReadOnlyList<MemberDeclarationSyntax> newMembers)
+		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node, 
+			MemberDeclarationSyntax member, MemberDeclarationSyntax newMember,
+			IEnumerable<FieldDeclarationSyntax> extraFields, IEnumerable<MethodDeclarationSyntax> extraMethods)
 		{
-			if (newMembers.Count == 1)
+			if (newMember == null)
 			{
-				node = node.ReplaceNode(member, newMembers[0]);
+				throw new ArgumentNullException(nameof(newMember));
 			}
-			else
+			if (extraMethods != null)
 			{
 				// Append all additional members after the original one
 				var index = node.Members.IndexOf(member);
-				node = node.ReplaceNode(member, newMembers[0]);
+				node = node.ReplaceNode(member, newMember);
 				var currIndex = index + 1;
-				foreach (var newMember in newMembers.Skip(1))
+				foreach (var extraMethod in extraMethods)
 				{
-					node = node.WithMembers(node.Members.Insert(currIndex, newMember));
+					node = node.WithMembers(node.Members.Insert(currIndex, extraMethod));
 					currIndex++;
+				}
+			}
+			else
+			{
+				node = node.ReplaceNode(member, newMember);
+			}
+			if (extraFields != null)
+			{
+				foreach (var extraField in extraFields)
+				{
+					node = node.WithMembers(node.Members.Insert(0, extraField));
 				}
 			}
 			return node;
@@ -467,6 +479,18 @@ namespace AsyncGenerator.Extensions
 					.Union(nsNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
 			}
 			return node.GetLeadingTrivia().Where(o => o.IsDirective);
+		}
+
+		internal static BlockSyntax NormalizeMethodBody(this MethodDeclarationSyntax originalNode, BlockSyntax body, SyntaxTrivia indentTrivia, SyntaxTrivia endOfLineTrivia)
+		{
+			var annotation = Guid.NewGuid().ToString();
+			var docNode = originalNode.Ancestors().OfType<CompilationUnitSyntax>().First();
+			docNode = docNode
+				.ReplaceNode(originalNode, originalNode
+					.WithBody(body)
+					.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)))
+				.NormalizeWhitespace(indentTrivia.ToFullString(), endOfLineTrivia.ToString());
+			return docNode.GetAnnotatedNodes(annotation).OfType<MethodDeclarationSyntax>().First().Body;
 		}
 
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, bool condition)
@@ -589,17 +613,23 @@ namespace AsyncGenerator.Extensions
 			return InvocationExpression(identifier, ArgumentList(SeparatedList<ArgumentSyntax>(argumentList)));
 		}
 
-		internal static NameSyntax ConstructNameSyntax(string name)
+		internal static NameSyntax ConstructNameSyntax(string name, SyntaxTrivia? trailingTrivia = null)
 		{
 			var names = name.Split('.').ToList();
+			var trailingTriviaList = names.Count <= 2 && trailingTrivia.HasValue
+				? TriviaList(trailingTrivia.Value)
+				: TriviaList();
 			if (names.Count < 2)
 			{
-				return IdentifierName(name);
+				return IdentifierName(Identifier(TriviaList(), name, trailingTriviaList));
 			}
-			var result = QualifiedName(IdentifierName(names[0]), IdentifierName(names[1]));
+			var result = QualifiedName(IdentifierName(names[0]), IdentifierName(Identifier(TriviaList(), names[1], trailingTriviaList)));
 			for (var i = 2; i < names.Count; i++)
 			{
-				result = QualifiedName(result, IdentifierName(names[i]));
+				trailingTriviaList = i + 1 == names.Count && trailingTrivia.HasValue
+					? TriviaList(trailingTrivia.Value)
+					: TriviaList();
+				result = QualifiedName(result, IdentifierName(Identifier(TriviaList(), names[i], trailingTriviaList)));
 			}
 			return result;
 		}

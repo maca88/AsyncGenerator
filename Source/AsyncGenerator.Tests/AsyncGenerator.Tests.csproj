@@ -293,7 +293,6 @@
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
-    <Folder Include="SynhronizedMethod\Output\" />
     <Folder Include="TryCatches\" />
     <Folder Include="VariousTaskRunUsages\Output\" />
   </ItemGroup>
@@ -360,6 +359,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Yields\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SynhronizedMethod\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

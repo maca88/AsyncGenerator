@@ -29,13 +29,13 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var docResult = TransformDocument(document);
 				result.Documents.Add(docResult);
-				if (docResult.TransformedNode == null)
+				if (docResult.Transformed == null)
 				{
 					continue;
 				}
 				foreach (var transformer in _configuration.DocumentTransformers)
 				{
-					docResult.TransformedNode = transformer.Transform(docResult) ?? docResult.TransformedNode;
+					docResult.Transformed = transformer.Transform(docResult) ?? docResult.Transformed;
 				}
 			}
 			return result;

@@ -32,16 +32,6 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
-			foreach (var reference in methodData.BodyMethodReferences)
-			{
-				AnalyzeMethodReference(documentData, reference);
-			}
-
-			foreach (var reference in methodData.CrefMethodReferences)
-			{
-				AnalyzeCrefMethodReference(documentData, methodData, reference);
-			}
-
 			var methodBody = methodData.GetBodyNode();
 			methodData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
@@ -50,6 +40,16 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (methodBody == null)
 			{
 				methodData.OmitAsync = true;
+			}
+
+			foreach (var reference in methodData.BodyMethodReferences)
+			{
+				AnalyzeMethodReference(documentData, reference);
+			}
+
+			foreach (var reference in methodData.CrefMethodReferences)
+			{
+				AnalyzeCrefMethodReference(documentData, methodData, reference);
 			}
 
 			// Check if there is any 

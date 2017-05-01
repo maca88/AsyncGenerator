@@ -14,5 +14,9 @@ namespace AsyncGenerator.Configuration
 		bool LocalFunctions { get; }
 
 		ParseOptions ParseOptions { get; }
+
+		string AsyncLockFullTypeName { get; }
+
+		string AsyncLockMethodName { get; }
 	}
 }

@@ -257,20 +257,10 @@ namespace AsyncGenerator.Transformation.Internal
 				));
 			// To indent the wrapped statement we will use the NormalizeWhitespace method as the indentation process is too complex to handle manually
 			// For using the NormalizeWhitespace we need to place the wrapped body in the original document node to get the right indentation
-			var annotation = Guid.NewGuid().ToString();
-			var docNode = _methodResult.Node.Ancestors().OfType<CompilationUnitSyntax>().First();
-			docNode = docNode.ReplaceNode(_methodResult.Node, _methodResult.Node
-				.WithBody(_methodResult.Node.Body
-					.WithStatements(SingletonList<StatementSyntax>(tryStatement
-						.WithAdditionalAnnotations(new SyntaxAnnotation(annotation))))));
-			tryStatement = docNode
-				.NormalizeWhitespace(
-					_transformResult.IndentTrivia.ToFullString(),
-					_transformResult.EndOfLineTrivia.ToString())
-				.GetAnnotatedNodes(annotation)
-				.OfType<TryStatementSyntax>()
+			tryStatement = _methodResult.Node.NormalizeMethodBody(_methodResult.Node.Body
+				.WithStatements(SingletonList<StatementSyntax>(tryStatement)), _transformResult.IndentTrivia, _transformResult.EndOfLineTrivia)
+				.Statements.OfType<TryStatementSyntax>()
 				.First();
-
 			var newStatements = node.Statements.Take(_methodResult.Preconditions.Count).ToList();
 			newStatements.Add(tryStatement);
 

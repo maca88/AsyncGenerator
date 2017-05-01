@@ -133,22 +133,22 @@ namespace AsyncGenerator.Transformation.Internal
 				//	continue;
 				//}
 				//var newNode = node.WithMembers(List(newMembers));
-				transformResult.TransformedNode = newNode;
+				transformResult.Transformed = newNode;
 				rootNode = rootNode.ReplaceNode(node, newNode);
 
 				// We need to update the original types if they were modified
-				foreach (var transformTypeResult in transformResult.TransformedTypes.Where(o => o.OriginalModifiedNode != null).OrderByDescending(o => o.OriginalStartSpan))
+				foreach (var transformTypeResult in transformResult.TransformedTypes.Where(o => o.OriginalModified != null).OrderByDescending(o => o.OriginalStartSpan))
 				{
-					if (rootTransformResult.OriginalModifiedNode == null)
+					if (rootTransformResult.OriginalModified == null)
 					{
-						rootTransformResult.OriginalModifiedNode = originalAnnotatedNode;
+						rootTransformResult.OriginalModified = originalAnnotatedNode;
 					}
-					rootTransformResult.OriginalModifiedNode = rootTransformResult.OriginalModifiedNode
-						.ReplaceNode(rootTransformResult.OriginalModifiedNode
-							.GetAnnotatedNodes(transformTypeResult.Annotation).First(), transformTypeResult.OriginalModifiedNode);
+					rootTransformResult.OriginalModified = rootTransformResult.OriginalModified
+						.ReplaceNode(rootTransformResult.OriginalModified
+							.GetAnnotatedNodes(transformTypeResult.Annotation).First(), transformTypeResult.OriginalModified);
 				}
 			}
-			rootTransformResult.TransformedNode = rootNode;
+			rootTransformResult.Transformed = rootNode;
 			return rootTransformResult;
 		}
 

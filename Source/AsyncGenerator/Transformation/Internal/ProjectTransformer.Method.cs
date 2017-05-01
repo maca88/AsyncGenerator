@@ -16,14 +16,14 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private MethodTransformationResult TransformMethod(IMethodAnalyzationResult methodResult, SyntaxTrivia typeLeadingWhitespace)
+		private MethodTransformationResult TransformMethod(IMethodAnalyzationResult methodResult, ITypeTransformationMetadata typeMetadata)
 		{
 			var result = new MethodTransformationResult(methodResult);
 			var methodNode = methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
 			if (methodBodyNode == null)
 			{
-				result.TransformedNode = methodNode.ReturnAsTask()
+				result.Transformed = methodNode.ReturnAsTask()
 					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 				return result;
 			}
@@ -34,7 +34,7 @@ namespace AsyncGenerator.Transformation.Internal
 			// Calculate whitespace method trivias
 			result.EndOfLineTrivia = methodNode.GetEndOfLine();
 			result.LeadingWhitespaceTrivia = methodNode.GetLeadingWhitespace();
-			result.IndentTrivia =  methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeLeadingWhitespace);
+			result.IndentTrivia =  methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
 			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
 			if (methodResult.Conversion == MethodConversion.Ignore)
@@ -233,7 +233,8 @@ namespace AsyncGenerator.Transformation.Internal
 							Token(TriviaList(methodNode.GetLeadingTrivia()), SyntaxKind.PrivateKeyword, TriviaList(Space))))
 						.AddAsync()
 						.WithBody(tailMethodBody);
-					result.TailMethodNode = tailMethod;
+					result.Methods = result.Methods ?? new List<MethodDeclarationSyntax>();
+					result.Methods.Add(tailMethod);
 					// Tail call shall contain the cancellation token parameter
 					tailCallParameterList = methodNode.ParameterList;
 				}
@@ -257,9 +258,10 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				methodNode = methodNode.AddAsync();
 			}
+
 			methodNode = methodNode.ReturnAsTask()
 				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
-			result.TransformedNode = methodNode;
+			result.Transformed = methodNode;
 
 			return result;
 		}

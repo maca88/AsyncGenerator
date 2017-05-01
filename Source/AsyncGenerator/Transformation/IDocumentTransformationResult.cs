@@ -13,11 +13,6 @@ namespace AsyncGenerator.Transformation
 	public interface IDocumentTransformationResult : ITransformationResult
 	{
 		/// <summary>
-		/// The original document prior the transformation
-		/// </summary>
-		CompilationUnitSyntax Original { get; }
-
-		/// <summary>
 		/// The modified original document that will be set only if the there were some changes needed to be done (eg. added partial keyword)
 		/// </summary>
 		CompilationUnitSyntax OriginalModified { get; }

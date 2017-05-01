@@ -24,6 +24,12 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool LocalFunctions { get; private set; }
 
+		public string AsyncLockFullTypeName { get; private set; }
+
+		public string AsyncLockMethodName { get; private set; }
+
+		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
+
 		public List<IDocumentTransformer> DocumentTransformers { get; } = new List<IDocumentTransformer>();
 
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
@@ -72,6 +78,13 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ParseOptions(ParseOptions parseOptions)
 		{
 			ParseOptions = parseOptions ?? throw new ArgumentNullException(nameof(parseOptions));
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AsyncLock(string fullTypeName, string methodName)
+		{
+			AsyncLockFullTypeName = fullTypeName ?? throw new ArgumentNullException(nameof(fullTypeName));
+			AsyncLockMethodName = methodName ?? throw new ArgumentNullException(nameof(methodName));
 			return this;
 		}
 

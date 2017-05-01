@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class MethodTransformationResult : TransformationResult, IMethodTransformationResult
+	internal class MethodTransformationResult : TransformationResult<MethodDeclarationSyntax>, IMethodTransformationResult
 	{
 		public MethodTransformationResult(IMethodAnalyzationResult result) : base(result.Node)
 		{
@@ -18,9 +19,9 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public IMethodAnalyzationResult AnalyzationResult { get; }
 
-		public MethodDeclarationSyntax TailMethodNode { get; set; }
+		public List<FieldDeclarationSyntax> Fields { get; set; }
 
-		public FieldDeclarationSyntax AsyncLockField { get; set; }
+		public List<MethodDeclarationSyntax> Methods { get; set; }
 
 		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 
@@ -34,13 +35,25 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public override IEnumerable<SyntaxNode> GetTransformedNodes()
 		{
-			if (TransformedNode != null)
+			if (Fields != null)
 			{
-				yield return TransformedNode;
+				foreach (var field in Fields)
+				{
+					yield return field;
+				}
 			}
-			if (TailMethodNode != null)
+
+			if (Transformed != null)
 			{
-				yield return TailMethodNode;
+				yield return Transformed;
+			}
+			if (Methods == null)
+			{
+				yield break;
+			}
+			foreach (var method in Methods)
+			{
+				yield return method;
 			}
 		}
 

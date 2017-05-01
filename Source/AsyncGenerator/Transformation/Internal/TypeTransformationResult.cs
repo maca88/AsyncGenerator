@@ -9,7 +9,23 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class TypeTransformationResult : TransformationResult, ITypeTransformationResult
+	/// <summary>
+	/// Holds the current information about the type that is under transformation process
+	/// </summary>
+	public interface ITypeTransformationMetadata
+	{
+		ITypeAnalyzationResult AnalyzationResult { get; }
+
+		IImmutableSet<string> MemberNames { get; }
+
+		SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+
+		SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		SyntaxTrivia IndentTrivia { get; set; }
+	}
+
+	internal class TypeTransformationResult : TransformationResult, ITypeTransformationResult, ITypeTransformationMetadata
 	{
 		public TypeTransformationResult(ITypeAnalyzationResult analyzationResult) : base(analyzationResult.Node)
 		{
@@ -22,7 +38,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<MethodTransformationResult> TransformedMethods { get; } = new List<MethodTransformationResult>();
 
-		public HashSet<string> ReservedFieldNames { get; set; }
+		public IImmutableSet<string> MemberNames { get; set; }
 
 		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 
@@ -34,7 +50,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private IReadOnlyList<IMethodTransformationResult> _cachedTransformedMethods;
 		IReadOnlyList<IMethodTransformationResult> ITypeTransformationResult.TransformedMethods =>
-			_cachedTransformedMethods ?? (_cachedTransformedMethods = TransformedMethods.Where(o => o.TransformedNode != null).ToImmutableList());
+			_cachedTransformedMethods ?? (_cachedTransformedMethods = TransformedMethods.Where(o => o.Transformed != null).ToImmutableList());
 
 		#endregion
 

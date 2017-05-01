@@ -121,7 +121,12 @@ namespace AsyncGenerator
 		{
 			configuration.RegisterPlugin(new DefaultAsyncCounterpartsFinder());
 			configuration.RegisterPlugin(new DefaultPreconditionChecker());
+
+			// Document transformers
 			configuration.RegisterPlugin(new IncludeFilePathTransformer());
+
+			// Method transformers
+			configuration.RegisterPlugin(new AsyncLockMethodTransformer());
 		}
 	}
 }

@@ -25,21 +25,15 @@ namespace AsyncGenerator.Transformation.Internal
 
 		#region IDocumentTransformationResult
 
-		CompilationUnitSyntax IDocumentTransformationResult.Original => OriginalNode;
-
-		CompilationUnitSyntax IDocumentTransformationResult.OriginalModified => OriginalModifiedNode;
-
-		CompilationUnitSyntax IDocumentTransformationResult.Transformed => TransformedNode;
-
 		private IReadOnlyList<INamespaceTransformationResult> _cachedTransformedNamespaces;
 		IReadOnlyList<INamespaceTransformationResult> IDocumentTransformationResult.TransformedNamespaces =>
 			_cachedTransformedNamespaces ?? (_cachedTransformedNamespaces = TransformedNamespaces
-				.SelectMany(o => o.GetSelfAndDescendantTransformedNamespaces().Where(n => n.TransformedNode != null)).ToImmutableArray());
+				.SelectMany(o => o.GetSelfAndDescendantTransformedNamespaces().Where(n => n.Transformed != null)).ToImmutableArray());
 
 		private IReadOnlyList<ITypeTransformationResult> _cachedTransformedTypes;
 		IReadOnlyList<ITypeTransformationResult> IDocumentTransformationResult.TransformedTypes =>
 			_cachedTransformedTypes ?? (_cachedTransformedTypes = TransformedTypes
-				.SelectMany(o => o.GetSelfAndDescendantTransformedTypes().Where(n => n.TransformedNode != null)).ToImmutableArray());
+				.SelectMany(o => o.GetSelfAndDescendantTransformedTypes().Where(n => n.Transformed != null)).ToImmutableArray());
 
 		#endregion
 	}

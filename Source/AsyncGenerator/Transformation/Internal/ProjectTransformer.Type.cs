@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -22,7 +23,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var startRootTypeSpan = rootTypeNode.SpanStart;
 			var rootTransformResult = new RootTypeTransformationResult(rootTypeResult)
 			{
-				ReservedFieldNames = new HashSet<string>(rootTypeResult.Symbol.MemberNames),
+				MemberNames = rootTypeResult.Symbol.MemberNames.ToImmutableHashSet(),
 
 			};
 			// We do this here because we want that the root node has span start equal to 0
@@ -49,7 +50,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					transformResult = new TypeTransformationResult(typeResult)
 					{
-						ReservedFieldNames = new HashSet<string>(typeResult.Symbol.MemberNames),
+						MemberNames = typeResult.Symbol.MemberNames.ToImmutableHashSet(),
 						IndentTrivia = typeNode.GetIndent(leadingWhitespace)
 					};
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
@@ -82,7 +83,7 @@ namespace AsyncGenerator.Transformation.Internal
 						var nameNode = rootTypeNode.GetSimpleName(refSpanStart, refSpanLength);
 						var transformedNode = new TransformationResult(nameNode)
 						{
-							TransformedNode = nameNode.WithIdentifier(Identifier(nameNode.Identifier.ValueText + "Async"))
+							Transformed = nameNode.WithIdentifier(Identifier(nameNode.Identifier.ValueText + "Async"))
 						};
 						transformResult.TransformedNodes.Add(transformedNode);
 						rootTypeNode = rootTypeNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
@@ -98,7 +99,46 @@ namespace AsyncGenerator.Transformation.Internal
 					var methodNode = rootTypeNode.DescendantNodes()
 						.OfType<MethodDeclarationSyntax>()
 						.First(o => o.SpanStart == methodSpanStart && o.Span.Length == methodSpanLength);
-					var transformedNode = TransformMethod(methodResult, transformResult.LeadingWhitespaceTrivia);
+					var transformedNode = TransformMethod(methodResult, transformResult);
+					if (transformedNode.Transformed != null)
+					{
+						foreach (var transformer in _configuration.MethodTransformers)
+						{
+							var methodTransformResult = transformer.Transform(transformedNode, transformResult);
+							if (methodTransformResult == MethodTransformerResult.Skip)
+							{
+								continue;
+							}
+							transformedNode.Transformed = methodTransformResult.TransformedNode ?? transformedNode.Transformed;
+							if (methodTransformResult.Fields != null)
+							{
+								if (transformedNode.Fields == null)
+								{
+									transformedNode.Fields = new List<FieldDeclarationSyntax>(1);
+								}
+								transformedNode.Fields.AddRange(methodTransformResult.Fields);
+								// Update member names  for next transformators
+								foreach (var variable in methodTransformResult.Fields.SelectMany(o => o.Declaration.Variables))
+								{
+									transformResult.MemberNames = transformResult.MemberNames.Add(variable.Identifier.Text);
+								}
+							}
+							if (methodTransformResult.Methods != null)
+							{
+								if (transformedNode.Methods == null)
+								{
+									transformedNode.Methods = new List<MethodDeclarationSyntax>(1);
+								}
+								transformedNode.Methods.AddRange(methodTransformResult.Methods);
+								// Update member names for next transformators
+								foreach (var method in methodTransformResult.Methods)
+								{
+									transformResult.MemberNames = transformResult.MemberNames.Add(method.Identifier.Text);
+								}
+							}
+						}
+					}
+
 					transformResult.TransformedMethods.Add(transformedNode);
 					rootTypeNode = rootTypeNode.ReplaceNode(methodNode, methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 				}
@@ -115,12 +155,12 @@ namespace AsyncGenerator.Transformation.Internal
 				// Add partial keyword on the original node if not present
 				if (typeResult.Conversion == TypeConversion.Partial && !typeResult.IsPartial)
 				{
-					if (rootTransformResult.OriginalModifiedNode == null)
+					if (rootTransformResult.OriginalModified == null)
 					{
-						rootTransformResult.OriginalModifiedNode = originalAnnotatedNode;
+						rootTransformResult.OriginalModified = originalAnnotatedNode;
 					}
-					var typeNode = rootTransformResult.OriginalModifiedNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
-					rootTransformResult.OriginalModifiedNode = rootTransformResult.OriginalModifiedNode.ReplaceNode(typeNode, typeNode.AddPartial());
+					var typeNode = rootTransformResult.OriginalModified.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
+					rootTransformResult.OriginalModified = rootTransformResult.OriginalModified.ReplaceNode(typeNode, typeNode.AddPartial());
 				}
 				// If the root type has to be a new type then all nested types have to be new types
 				if (typeResult.Conversion == TypeConversion.NewType)
@@ -129,14 +169,14 @@ namespace AsyncGenerator.Transformation.Internal
 					foreach (var rewNode in transformResult.TransformedNodes)
 					{
 						var node = rootTypeNode.GetAnnotatedNodes(rewNode.Annotation).First();
-						if (rewNode.TransformedNode == null)
+						if (rewNode.Transformed == null)
 						{
 							//TODO: fix regions
 							rootTypeNode = rootTypeNode.RemoveNode(node, SyntaxRemoveOptions.KeepNoTrivia);
 						}
 						else
 						{
-							rootTypeNode = rootTypeNode.ReplaceNode(node, rewNode.TransformedNode);
+							rootTypeNode = rootTypeNode.ReplaceNode(node, rewNode.Transformed);
 						}
 					}
 				}
@@ -152,6 +192,9 @@ namespace AsyncGenerator.Transformation.Internal
 					var newTypeNode = typeNode.AddPartial().WithoutAttributes();
 					var memberWhitespace = Whitespace(transformResult.LeadingWhitespaceTrivia.ToFullString() + transformResult.IndentTrivia.ToFullString());
 
+					// We need to remove all other members that are not methods or types
+					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => !(o is MethodDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
+
 					foreach (var methodTransform in transformResult.TransformedMethods.OrderByDescending(o => o.OriginalStartSpan))
 					{
 						if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore)
@@ -163,13 +206,8 @@ namespace AsyncGenerator.Transformation.Internal
 						var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
 							.OfType<MemberDeclarationSyntax>()
 							.First();
-						newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, methodTransform.GetTransformedNodes()
-							.OfType<MemberDeclarationSyntax>()
-							.ToImmutableList());
+						newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, methodTransform.Transformed, methodTransform.Fields, methodTransform.Methods);
 					}
-
-					// We need to remove all other members that are not methods or types
-					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => !(o is MethodDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
 
 					//foreach (var methodTransform in transformResult.TransformedMethods.Where(o => o.AnalyzationResult.Conversion == MethodConversion.Ignore)
 					//	.OrderByDescending(o => o.OriginalStartSpan))
@@ -189,12 +227,12 @@ namespace AsyncGenerator.Transformation.Internal
 					//	newNodes.Insert(0, methodTransform.AsyncLockField);
 					//}
 					//newTypeNode = newTypeNode.WithMembers(List(newNodes));
-					transformResult.TransformedNode = newTypeNode;
+					transformResult.Transformed = newTypeNode;
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 				}
 			}
 
-			rootTransformResult.TransformedNode = rootTypeNode;
+			rootTransformResult.Transformed = rootTypeNode;
 
 			return rootTransformResult;
 		}

@@ -244,65 +244,69 @@ namespace AsyncGenerator.Analyzation.Internal
 					.ToList();
 				// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
 				// or we have only one async invocation that is the last to be invoked
-				var canSkipAwaits = true;
-				foreach (var methodReference in methodData.BodyMethodReferences)
+				// Invocations in synchronized methods must be awaited to mimic the same behavior as their sync counterparts
+				if (!methodData.MustRunSynchronized)
 				{
-					if (methodReference.GetConversion() == ReferenceConversion.Ignore)
+					var canSkipAwaits = true;
+					foreach (var methodReference in methodData.BodyMethodReferences)
 					{
-						methodReference.AwaitInvocation = false;
-						continue;
-					}
+						if (methodReference.GetConversion() == ReferenceConversion.Ignore)
+						{
+							methodReference.AwaitInvocation = false;
+							continue;
+						}
 
-					if (!methodReference.UseAsReturnValue && !methodReference.LastInvocation)
-					{
-						canSkipAwaits = false;
-						break;
-					}
-					var functionData = methodReference.FunctionData;
+						if (!methodReference.UseAsReturnValue && !methodReference.LastInvocation)
+						{
+							canSkipAwaits = false;
+							break;
+						}
+						var functionData = methodReference.FunctionData;
 
-					if (methodReference.LastInvocation && functionData.Symbol.ReturnsVoid && (
-							(methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||
-							methodReference.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
-						))
-					{
-						continue;
-					}
+						if (methodReference.LastInvocation && functionData.Symbol.ReturnsVoid && (
+							    (methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||
+							    methodReference.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+						    ))
+						{
+							continue;
+						}
 
-					var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskType();
-					// We need to check the return value of the async counterpart
-					// eg. Task<IList<string>> to Task<IEnumerable<string>>, Task<long> -> Task<int> are not valid
-					// eg. Task<int> to Task is valid
-					if (!isReturnTypeTask &&
-						(
-							(
-								methodReference.ReferenceAsyncSymbols.Any() &&
-								!methodReference.ReferenceAsyncSymbols.All(o =>
-								{
-									var returnType = o.ReturnType as INamedTypeSymbol;
-									if (returnType == null || !returnType.IsGenericType)
-									{
-										return o.ReturnType.Equals(functionData.Symbol.ReturnType);
-									}
-									return returnType.TypeArguments.First().Equals(functionData.Symbol.ReturnType);
-								})
-								) ||
-							(
-								methodReference.ReferenceFunctionData != null &&
-								!methodReference.ReferenceFunctionData.Symbol.ReturnType.Equals(functionData.Symbol.ReturnType)
-								)
-							)
+						var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskType();
+						// We need to check the return value of the async counterpart
+						// eg. Task<IList<string>> to Task<IEnumerable<string>>, Task<long> -> Task<int> are not valid
+						// eg. Task<int> to Task is valid
+						if (!isReturnTypeTask &&
+						    (
+							    (
+								    methodReference.ReferenceAsyncSymbols.Any() &&
+								    !methodReference.ReferenceAsyncSymbols.All(o =>
+								    {
+									    var returnType = o.ReturnType as INamedTypeSymbol;
+									    if (returnType == null || !returnType.IsGenericType)
+									    {
+										    return o.ReturnType.Equals(functionData.Symbol.ReturnType);
+									    }
+									    return returnType.TypeArguments.First().Equals(functionData.Symbol.ReturnType);
+								    })
+							    ) ||
+							    (
+								    methodReference.ReferenceFunctionData != null &&
+								    !methodReference.ReferenceFunctionData.Symbol.ReturnType.Equals(functionData.Symbol.ReturnType)
+							    )
+						    )
 						)
-					{
-						canSkipAwaits = false;
-						break;
+						{
+							canSkipAwaits = false;
+							break;
+						}
 					}
-				}
-				if (canSkipAwaits)
-				{
-					foreach (var methodReference in asyncMethodReferences)
+					if (canSkipAwaits)
 					{
-						methodReference.AwaitInvocation = false;
-						methodReference.UseAsReturnValue = true;
+						foreach (var methodReference in asyncMethodReferences)
+						{
+							methodReference.AwaitInvocation = false;
+							methodReference.UseAsReturnValue = true;
+						}
 					}
 				}
 
