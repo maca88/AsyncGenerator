@@ -34,11 +34,6 @@ namespace AsyncGenerator.Configuration
 		//IProjectAnalyzeConfiguration TypeSelectionPredicate(Predicate<INamedTypeSymbol> predicate);
 
 		/// <summary>
-		/// Set a predicate that will decide if the method that can be converted to async should be converted
-		/// </summary>
-		IFluentProjectAnalyzeConfiguration ConvertMethodPredicate(Predicate<IMethodSymbol> predicate);
-
-		/// <summary>
 		/// Append a function that will try to find an async counterpart for the given method
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration FindAsyncCounterparts(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func);

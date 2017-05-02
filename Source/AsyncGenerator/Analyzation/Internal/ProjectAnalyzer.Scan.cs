@@ -28,15 +28,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
-
 				foreach (var methodData in typeData.Methods.Values
-					.Where(o => o.Conversion != MethodConversion.Ignore))
+					.Where(o => o.Conversion == MethodConversion.ToAsync || o.Conversion == MethodConversion.Smart))
 				{
-					await ScanMethodData(methodData);
-					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
-					{
-						// TODO: do we need something here?
-					}
+					await ScanMethodData(methodData).ConfigureAwait(false);
+					//foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
+					//{
+					//	// TODO: do we need something here?
+					//}
 				}
 			}
 		}
@@ -79,14 +78,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				foreach (var implementation in implementations.OfType<IMethodSymbol>())
 				{
 					syntax = implementation.DeclaringSyntaxReferences.Single();
-					documentData = ProjectData.GetDocumentData(document);
+					documentData = ProjectData.GetDocumentData(syntax);
 					methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
 					var implMethodData = documentData.GetMethodData(methodNode);
 
 					interfaceMethodData.RelatedMethods.TryAdd(implMethodData);
 					implMethodData.RelatedMethods.TryAdd(interfaceMethodData);
 
-					if (_configuration.ScanMethodBody)
+					if (_configuration.ScanMethodBody ||
+					    methodData.Conversion == MethodConversion.Smart ||
+					    methodData.Conversion == MethodConversion.ToAsync)
 					{
 						bodyScanMethodDatas.Add(implMethodData);
 					}
@@ -99,7 +100,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				baseMethodSymbol = methodData.BaseOverriddenMethod;
 			}
-			else if (methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract)
+			else if (!methodData.InterfaceMethod && (methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract)) // interface method has IsAbstract ture
 			{
 				baseMethodSymbol = methodData.Symbol;
 				baseMethodData = methodData;
@@ -121,7 +122,9 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 				}
 
-				if (baseMethodData != null && _configuration.ScanMethodBody)
+				if (baseMethodData != null && (_configuration.ScanMethodBody ||
+				                               methodData.Conversion == MethodConversion.Smart ||
+				                               methodData.Conversion == MethodConversion.ToAsync))
 				{
 					bodyScanMethodDatas.Add(baseMethodData);
 				}
@@ -150,7 +153,9 @@ namespace AsyncGenerator.Analyzation.Internal
 						overrideMethodData.ExternalRelatedMethods.TryAdd(baseMethodSymbol);
 					}
 
-					if (!overrideMethod.IsAbstract && _configuration.ScanMethodBody)
+					if (!overrideMethod.IsAbstract && (_configuration.ScanMethodBody ||
+					                                   methodData.Conversion == MethodConversion.Smart ||
+					                                   methodData.Conversion == MethodConversion.ToAsync))
 					{
 						bodyScanMethodDatas.Add(overrideMethodData);
 					}
@@ -275,6 +280,8 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<IMethodSymbol> _scannedMethodReferenceSymbols = new ConcurrentSet<IMethodSymbol>();
 
+		private readonly ConcurrentSet<ReferenceLocation> _scannedLocationsSymbols = new ConcurrentSet<ReferenceLocation>();
+
 		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth)
 		{
 			if (_scannedMethodReferenceSymbols.Contains(methodSymbol.OriginalDefinition))
@@ -289,6 +296,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			depth++;
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
+				if (_scannedLocationsSymbols.Contains(refLocation))
+				{
+					continue;
+				}
+				_scannedLocationsSymbols.TryAdd(refLocation);
+
 				if (refLocation.Document.Project != ProjectData.Project)
 				{
 					throw new InvalidOperationException($"Reference {refLocation} is located in a document from another project");
@@ -344,11 +357,14 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					continue; // No need to further scan a cref reference
 				}
+
 				var baseMethodData = await documentData.GetFunctionData(refMethodSymbol).ConfigureAwait(false);
-				if (baseMethodData == null)
+				if (baseMethodData == null) // TODO: Current is null for ctor, operator, destructor, conversion
 				{
+					Logger.Debug($"Method {refMethodSymbol} cannot be made async");
 					continue;
 				}
+
 				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
 				// Save the reference as it can be made async
 				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
@@ -372,8 +388,13 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue; // Reference already processed
 				}
 
+				if (baseMethodData.Conversion == MethodConversion.Ignore)
+				{
+					continue;
+				}
+
 				var methodData = baseMethodData as MethodData;
-				if (methodData != null)
+				if (methodData != null && !methodData.Scanned)
 				{
 					await ScanMethodData(methodData, depth).ConfigureAwait(false);
 				}

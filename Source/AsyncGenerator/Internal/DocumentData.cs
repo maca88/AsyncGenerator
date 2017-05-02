@@ -202,6 +202,11 @@ namespace AsyncGenerator.Internal
 					return typeData;
 				case SyntaxKind.NamespaceDeclaration:
 					return namespaceData;
+				case SyntaxKind.DestructorDeclaration:
+				case SyntaxKind.ConstructorDeclaration:
+				case SyntaxKind.OperatorDeclaration:
+				case SyntaxKind.ConversionOperatorDeclaration:
+					return null; // TODO: should we add them in the pre analyzation step?
 				default:
 					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
 			}

@@ -16,7 +16,7 @@ namespace AsyncGenerator.Transformation.Internal
 			Project = project;
 		}
 
-		public Project Project { get; }
+		public Project Project { get; set; }
 
 		public ConcurrentSet<DocumentTransformationResult> Documents { get; } = new ConcurrentSet<DocumentTransformationResult>();
 

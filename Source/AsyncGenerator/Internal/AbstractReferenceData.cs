@@ -31,7 +31,7 @@ namespace AsyncGenerator.Internal
 			{
 				return false;
 			}
-			return ReferenceLocation.Equals(((BodyFunctionReferenceData)obj).ReferenceLocation);
+			return ReferenceLocation.Equals(((AbstractFunctionReferenceData)obj).ReferenceLocation);
 		}
 	}
 }

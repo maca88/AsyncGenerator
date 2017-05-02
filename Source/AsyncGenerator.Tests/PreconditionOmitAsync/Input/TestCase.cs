@@ -23,7 +23,9 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 			SimpleFile.Read();
 		}
 
-		public string PreconditionToSplit(string name)
+		#region Split
+
+		public static string PreconditionToSplit(string name)
 		{
 			if (name == null)
 			{
@@ -32,6 +34,8 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 			SimpleFile.Read();
 			return "";
 		}
+
+		#endregion Split
 
 		public string SyncPrecondition(string name)
 		{

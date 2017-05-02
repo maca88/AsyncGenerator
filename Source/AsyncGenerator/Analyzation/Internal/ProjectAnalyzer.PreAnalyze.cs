@@ -326,12 +326,26 @@ namespace AsyncGenerator.Analyzation.Internal
 				var invocationNode = functionData.Node.Ancestors()
 				.TakeWhile(o => !o.IsKind(SyntaxKind.MethodDeclaration))
 				.OfType<InvocationExpressionSyntax>()
-				.First();
+				.FirstOrDefault();
+				if (invocationNode == null)
+				{
+					log($"Anonymous function inside method {functionData.MethodData.Symbol} is passed as an argument to a node that is not a InvocationExpressionSyntax which is not supported");
+					functionData.Conversion = MethodConversion.Ignore;
+					return;
+				}
+
 				var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
 				var argumentListNode = (ArgumentListSyntax)argumentNode.Parent;
 				var index = argumentListNode.Arguments.IndexOf(argumentNode);
-				var symbol = (IMethodSymbol)semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
-				functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(symbol, index);
+				var symbol = semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
+				var methodSymbol = symbol as IMethodSymbol;
+				if (methodSymbol == null)
+				{
+					log($"Anonymous function inside method {functionData.MethodData.Symbol} is passed as an argument to a {symbol} which is not supported");
+					functionData.Conversion = MethodConversion.Ignore;
+					return;
+				}
+				functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(methodSymbol, index);
 			}
 
 		}

@@ -14,7 +14,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 		{
 			var preconditionReturn = GetMethodName(o => o.PreconditionReturn(null));
 			var preconditionVoid = GetMethodName(o => o.PreconditionVoid(null));
-			var preconditionToSplit = GetMethodName(o => o.PreconditionToSplit(null));
+			var preconditionToSplit = GetMethodName(o => TestCase.PreconditionToSplit(null));
 			var syncPrecondition = GetMethodName(o => o.SyncPrecondition(null));
 			var readFile = GetMethodName(o => o.ReadFile());
 			var syncReadFile = GetMethodName(o => o.SyncReadFile());

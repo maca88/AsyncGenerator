@@ -8,6 +8,12 @@
 //------------------------------------------------------------------------------
 
 
+#region MyRegion
+
+// This is a test region
+
+#endregion
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

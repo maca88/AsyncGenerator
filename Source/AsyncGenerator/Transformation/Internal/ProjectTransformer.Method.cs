@@ -178,12 +178,16 @@ namespace AsyncGenerator.Transformation.Internal
 					var newNameNode = nameNode
 						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
 						.WithTriviaFrom(nameNode);
-					var invokeParent = invokeNode.Parent;
+					// We need to annotate the invocation node because of the AddAwait method as it needs the parent node
+					var invokeAnnotation = Guid.NewGuid().ToString();
 					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode
 						.ReplaceNode(nameNode, newNameNode)
 						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired)
-						.AddAwait(invokeParent, _configuration.ConfigureAwaitArgument)
+						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
+						//.AddAwait(invokeParent, _configuration.ConfigureAwaitArgument)
 					);
+					invokeNode = methodNode.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
+					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
 				}
 
 			}
@@ -225,12 +229,17 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				else
 				{
+					var tailMethodModifiers = TokenList(
+						Token(TriviaList(result.EndOfLineTrivia, result.LeadingWhitespaceTrivia), SyntaxKind.PrivateKeyword, TriviaList(Space)));
+					if (methodNode.Modifiers.Any(o => o.IsKind(SyntaxKind.StaticKeyword)))
+					{
+						tailMethodModifiers = tailMethodModifiers.Add(Token(TriviaList(), SyntaxKind.StaticKeyword, TriviaList(Space)));
+					}
 					var tailMethod = methodNode
 						.WithReturnType(methodNode.ReturnType.WithLeadingTrivia()) // Remove lead trivia in case the return type is the first node (eg. void Method())
 						.ReturnAsTask()
 						.WithIdentifier(tailIdentifier)
-						.WithModifiers(TokenList(
-							Token(TriviaList(methodNode.GetLeadingTrivia()), SyntaxKind.PrivateKeyword, TriviaList(Space))))
+						.WithModifiers(tailMethodModifiers)
 						.AddAsync()
 						.WithBody(tailMethodBody);
 					result.Methods = result.Methods ?? new List<MethodDeclarationSyntax>();

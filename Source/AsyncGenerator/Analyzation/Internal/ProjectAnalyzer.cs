@@ -37,25 +37,75 @@ namespace AsyncGenerator.Analyzation.Internal
 		public async Task<IProjectAnalyzationResult> Analyze()
 		{
 			Setup();
+			var parallel = false;
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
 			Logger.Info("Parsing documents started");
-			var documentData = await Task.WhenAll(_analyzeDocuments.Select(o => ProjectData.CreateDocumentData(o))).ConfigureAwait(false);
+			DocumentData[] documentData;
+			if (parallel)
+			{
+				documentData = await Task.WhenAll(_analyzeDocuments.Select(o => ProjectData.CreateDocumentData(o)))
+					.ConfigureAwait(false);
+			}
+			else
+			{
+				documentData = new DocumentData[_analyzeDocuments.Count];
+				var i = 0;
+				foreach (var analyzeDocument in _analyzeDocuments)
+				{
+					documentData[i] = await ProjectData.CreateDocumentData(analyzeDocument).ConfigureAwait(false);
+					i++;
+				}
+			}
 			Logger.Info("Parsing documents completed");
 
 			// 2. Step - Each method in a document will be pre-analyzed and saved in a structural tree
 			Logger.Info("Pre-analyzing documents started");
-			Parallel.ForEach(documentData, PreAnalyzeDocumentData);
+			if (parallel)
+			{
+				Parallel.ForEach(documentData, PreAnalyzeDocumentData);
+			}
+			else
+			{
+				foreach (var item in documentData)
+				{
+					PreAnalyzeDocumentData(item);
+				}
+			}
+				
 			//await Task.WhenAll(documentData.AsParallel()..Select(PreAnalyzeDocumentData)).ConfigureAwait(false);
 			Logger.Info("Pre-analyzing documents completed");
 
 			// 3. Step - Find all references for each method and optionally scan its body for async counterparts
 			Logger.Info("Scanning references started");
-			await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
+			if (parallel)
+			{
+				await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
+			}
+			else
+			{
+				foreach (var item in documentData)
+				{
+					await ScanDocumentData(item).ConfigureAwait(false);
+				}
+			}
+
+				
 			Logger.Info("Scanning references completed");
 
 			// 4. Step - Analyze all references found in the previous step
 			Logger.Info("Analyzing documents started");
-			Parallel.ForEach(documentData, AnalyzeDocumentData);
+			if (parallel)
+			{
+				Parallel.ForEach(documentData, AnalyzeDocumentData);
+			}
+			else
+			{
+				foreach (var item in documentData)
+				{
+					AnalyzeDocumentData(item);
+				}
+			}
+				
 			Logger.Info("Analyzing documents completed");
 
 			// 5. Step - Calculate the final conversion for all method data
@@ -142,9 +192,11 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			_configuration = ProjectData.Configuration.AnalyzeConfiguration;
 			_solution = ProjectData.Project.Solution;
-			_analyzeDocuments = ProjectData.Project.Documents.Where(o => _configuration.DocumentSelectionPredicate(o))
+			_analyzeDocuments = ProjectData.Project.Documents
+				.Where(o => _configuration.DocumentSelectionPredicate(o))
 				.ToImmutableHashSet();
-			_analyzeProjects = new[] { ProjectData.Project }.ToImmutableHashSet();
+			_analyzeProjects = new[] { ProjectData.Project }
+				.ToImmutableHashSet();
 		}
 	}
 }

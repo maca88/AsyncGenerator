@@ -14,7 +14,7 @@ namespace AsyncGenerator.Extensions
 {
 	static partial class SyntaxNodeExtensions
 	{
-		internal static ExpressionSyntax AddAwait(this ExpressionSyntax expression, SyntaxNode parent, ExpressionSyntax configureAwaitArgument)
+		internal static ExpressionSyntax AddAwait(this ExpressionSyntax expression, ExpressionSyntax configureAwaitArgument)
 		{
 			var awaitNode = ConvertToAwaitExpression(expression);
 			if (configureAwaitArgument != null)
@@ -28,7 +28,7 @@ namespace AsyncGenerator.Extensions
 						));
 			}
 
-			var nextToken = (parent ?? expression.Parent).ChildNodesAndTokens().FirstOrDefault(o => o.SpanStart >= expression.Span.End); // token can be in a new line
+			var nextToken = (expression.Parent).ChildNodesAndTokens().FirstOrDefault(o => o.SpanStart >= expression.Span.End); // token can be in a new line
 			if (nextToken.IsKind(SyntaxKind.DotToken) || nextToken.IsKind(SyntaxKind.BracketedArgumentList))
 			{
 				awaitNode = ParenthesizedExpression(awaitNode);

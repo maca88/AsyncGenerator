@@ -63,8 +63,8 @@ namespace AsyncGenerator.Transformation.Internal
 					transformResult.TransformedTypes.Add(transformTypeResult);
 					rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformTypeResult.Annotation)));
 
-					transformResult.ThreadingUsingRequired |= typeResult.Methods.Any(o => o.CancellationTokenRequired);
-					transformResult.SystemUsingRequired |= typeResult.Methods.Any(o => o.WrapInTryCatch);
+					transformResult.ThreadingUsingRequired |= typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.Methods).Any(o => o.CancellationTokenRequired);
+					transformResult.SystemUsingRequired |= typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.Methods).Any(o => o.WrapInTryCatch);
 				}
 			}
 

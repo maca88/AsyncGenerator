@@ -1,4 +1,10 @@
-﻿using System;
+﻿#region MyRegion
+
+// This is a test region
+
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

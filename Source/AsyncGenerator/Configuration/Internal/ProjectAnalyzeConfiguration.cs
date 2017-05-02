@@ -16,8 +16,6 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Predicate<Document> DocumentSelectionPredicate { get; private set; } = m => true;
 
-		public Predicate<IMethodSymbol> ConvertMethodPredicate { get; private set; } = m => true;
-
 		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>();
 
 		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>();
@@ -49,12 +47,6 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.DocumentSelection(Predicate<Document> predicate)
 		{
 			DocumentSelectionPredicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
-			return this;
-		}
-
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ConvertMethodPredicate(Predicate<IMethodSymbol> predicate)
-		{
-			ConvertMethodPredicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 

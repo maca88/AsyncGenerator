@@ -156,6 +156,16 @@ namespace AsyncGenerator.Transformation.Internal
 			return base.Visit(node);
 		}
 
+		public override SyntaxNode VisitReturnStatement(ReturnStatementSyntax node)
+		{
+			// If we have only a return statement rewrite it to a return Task.CompletedTask
+			if (node.Expression == null)
+			{
+				return GetReturnTaskCompleted().WithTriviaFrom(node);
+			}
+			return base.VisitReturnStatement(node);
+		}
+
 		public override SyntaxNode VisitThrowStatement(ThrowStatementSyntax node)
 		{
 			if (node.Expression == null)
@@ -225,15 +235,19 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax AddReturnStatement(BlockSyntax node)
 		{
-			return node.AddStatements(
-				ReturnStatement(
-					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
-					MemberAccessExpression(
-						SyntaxKind.SimpleMemberAccessExpression,
-						IdentifierName(nameof(Task)),
-						IdentifierName("CompletedTask")),
-					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
-				));
+			return node.AddStatements(GetReturnTaskCompleted());
+		}
+
+		private ReturnStatementSyntax GetReturnTaskCompleted()
+		{
+			return ReturnStatement(
+				Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					IdentifierName(nameof(Task)),
+					IdentifierName("CompletedTask")),
+				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
+			);
 		}
 
 		private BlockSyntax WrapInsideTryCatch(BlockSyntax node)

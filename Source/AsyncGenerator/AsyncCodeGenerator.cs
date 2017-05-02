@@ -59,10 +59,29 @@ namespace AsyncGenerator
 					{
 						action(transformResult);
 					}
+					projectData.Project = transformResult.Project; // updates also the solution
+
+					// Compile
+					var compileConfig = projectData.Configuration.CompileConfiguration;
+					if (compileConfig != null)
+					{
+						var compilation = await projectData.Project.GetCompilationAsync();
+						var emit = compilation.Emit(compileConfig.OutputPath, compileConfig.SymbolsPath, compileConfig.XmlDocumentationPath);
+						if (!emit.Success)
+						{
+							var messages = string.Join(
+								Environment.NewLine,
+								emit.Diagnostics.Where(o => o.Severity == DiagnosticSeverity.Error).Select(o => o.GetMessage()));
+							throw new InvalidOperationException(
+								$"Generation for Project {transformResult.Project.Name} failed to generate a valid code. Errors:{Environment.NewLine}{messages}");
+						}
+					}
+				}
+				if (config.ApplyChanges)
+				{
+					solutionData.Workspace.TryApplyChanges(solutionData.Solution);
 				}
 			}
-
-			//conf.SolutionConfigurations.First().ProjectConfigurations.First().TransformConfiguration.
 		}
 
 		private Task<IProjectAnalyzationResult> AnalyzeProject(ProjectData projectData)

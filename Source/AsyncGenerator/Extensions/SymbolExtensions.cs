@@ -48,7 +48,11 @@ namespace AsyncGenerator.Extensions
 			{
 				return true;
 			}
-			var candidateReturnType = (INamedTypeSymbol)candidateAsyncMethod.ReturnType;
+			var candidateReturnType = candidateAsyncMethod.ReturnType as INamedTypeSymbol;
+			if (candidateReturnType == null)
+			{
+				return false;
+			}
 			if (syncMethod.ReturnsVoid)
 			{
 				if (candidateReturnType.Name != nameof(Task) || candidateReturnType.TypeArguments.Any())
@@ -93,6 +97,30 @@ namespace AsyncGenerator.Extensions
 					return false;
 				}
 			}
+			// Check if the generic arguments are the same
+			if (syncMethod.TypeParameters.Length  != candidateAsyncMethod.TypeParameters.Length)
+			{
+				return false;
+			}
+			if (syncMethod.TypeParameters.Length > 0)
+			{
+				for (var i = 0; i < syncMethod.TypeParameters.Length; i++)
+				{
+					var param = syncMethod.TypeParameters[i];
+					var candidateParam = candidateAsyncMethod.TypeParameters[i];
+					if (param.Variance != candidateParam.Variance ||
+					    param.TypeParameterKind != candidateParam.TypeParameterKind ||
+					    param.ConstraintTypes.Length != candidateParam.ConstraintTypes.Length)
+					{
+						return false;
+					}
+					if (param.ConstraintTypes.Where((t, j) => !t.Equals(candidateParam.ConstraintTypes[j])).Any())
+					{
+						return false;
+					}
+				}
+			}
+
 			// Check if the return type matches
 			if (!ignoreReturnType && !IsAsyncCandidateForReturnType(syncMethod, candidateAsyncMethod))
 			{
@@ -123,7 +151,15 @@ namespace AsyncGenerator.Extensions
 					}
 					return false;
 				}
-				var typeSymbol = (INamedTypeSymbol)param.Type;
+				var typeSymbol = param.Type as INamedTypeSymbol;
+				if (typeSymbol == null)
+				{
+					if (param.Type.Equals(candidateParam.Type))
+					{
+						continue;
+					}
+					return false;
+				}
 				var origDelegate = typeSymbol.DelegateInvokeMethod;
 				if (origDelegate == null)
 				{

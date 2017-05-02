@@ -13,7 +13,22 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
 {
-	public abstract class BaseFixture<T>
+	public abstract class BaseFixture
+	{
+		public string GetBaseDirectory()
+		{
+			// BaseDirectory ends with a backslash when running with Visual Studio (Test Explorer), but when running with 
+			// Reshaper (Unit Test Session) there is no backslash at the end
+			var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+			if (!baseDirectory.EndsWith(@"\"))
+			{
+				baseDirectory += @"\";
+			}
+			return baseDirectory;
+		}
+	}
+
+	public abstract class BaseFixture<T> : BaseFixture
 	{
 		protected BaseFixture(string folderPath = null)
 		{
@@ -25,14 +40,8 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-			// BaseDirectory ends with a backslash when running with Visual Studio (Test Explorer), but when running with 
-			// Reshaper (Unit Test Session) there is no backslash at the end
-			var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-			if (!baseDirectory.EndsWith(@"\"))
-			{
-				baseDirectory += @"\";
-			}
-			var slnFilePath = Path.GetFullPath(baseDirectory + @"..\..\..\AsyncGenerator.sln");
+			
+			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.sln");
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
 					.ConfigureProject("AsyncGenerator.Tests", p =>

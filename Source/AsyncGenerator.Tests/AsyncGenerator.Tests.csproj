@@ -220,6 +220,7 @@
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
+    <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />

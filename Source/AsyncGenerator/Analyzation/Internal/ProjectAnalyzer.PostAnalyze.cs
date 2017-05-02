@@ -30,8 +30,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
 					var depMethodData = depFunctionData as MethodData;
+					var bodyReferences = depFunctionData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == currentMethodData).ToList();
 					if (depMethodData != null)
 					{
+						// Before setting the dependency to async we need to check if there is at least one invocation that will be converted to async
+						// Here we also need to consider that a method can be a dependency because is a related method
+						if (depMethodData.RelatedMethods.All(o => o != currentMethodData) && bodyReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
+						{
+							continue;
+						}
+
 						if (!toProcessMethodData.Contains(depMethodData))
 						{
 							continue;
@@ -51,7 +59,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 
 					// We need to update the CancellationTokenRequired for all invocations of the current method
-					foreach (var depFunctionRefData in depFunctionData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == currentMethodData))
+					foreach (var depFunctionRefData in bodyReferences)
 					{
 						depFunctionRefData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}

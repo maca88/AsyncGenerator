@@ -34,7 +34,9 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 			return SimpleFile.ReadAsync();
 		}
 
-		public Task<string> PreconditionToSplitAsync(string name)
+		#region Split
+
+		public static Task<string> PreconditionToSplitAsync(string name)
 		{
 			if (name == null)
 			{
@@ -43,11 +45,13 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 			return InternalPreconditionToSplitAsync(name);
 		}
 
-		private async Task<string> InternalPreconditionToSplitAsync(string name)
+		private static async Task<string> InternalPreconditionToSplitAsync(string name)
 		{
 			await (SimpleFile.ReadAsync());
 			return "";
 		}
+
+		#endregion Split
 
 		public Task<string> SyncPreconditionAsync(string name)
 		{
