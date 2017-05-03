@@ -16,15 +16,18 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private MethodTransformationResult TransformMethod(IMethodAnalyzationResult methodResult, ITypeTransformationMetadata typeMetadata)
+		private MethodTransformationResult TransformMethod(MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, MethodDeclarationSyntax customNode = null)
 		{
-			var result = new MethodTransformationResult(methodResult);
-			var methodNode = methodResult.Node;
+			//var result = new MethodTransformationResult(methodResult);
+			var methodResult = result.AnalyzationResult;
+			var methodNode = customNode ?? methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
+			var cancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
 			if (methodBodyNode == null)
 			{
 				result.Transformed = methodNode.ReturnAsTask()
-					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"))
+					.AddCancellationTokenParameterIf(cancellationTokenParamName, methodResult.CancellationTokenRequired);
 				return result;
 			}
 			var startMethodSpan = methodResult.Node.Span.Start;
@@ -91,8 +94,6 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 			}
 			
-			var cancellationTokenParamName = "cancellationToken";
-			// TODO: handle variable collision for token
 			methodNode = methodNode.AddCancellationTokenParameterIf(cancellationTokenParamName, methodResult.CancellationTokenRequired);
 
 			foreach (var pair in referenceAnnotations)
@@ -100,14 +101,26 @@ namespace AsyncGenerator.Transformation.Internal
 				var nameNode = methodNode.GetAnnotatedNodes(pair.Key).OfType<SimpleNameSyntax>().First();
 				var funReferenceResult = pair.Value;
 				var bodyFuncReferenceResult = funReferenceResult as IBodyFunctionReferenceAnalyzationResult;
-				// If we have a cref just change the name to the async counterpart (TODO: add the arguments as there may be multiple methods with the same name)
+				// If we have a cref change the name to the async counterpart and add/update arguments
 				if (bodyFuncReferenceResult == null)
 				{
 					var crefNode = (NameMemberCrefSyntax) nameNode.Parent;
 					var paramList = new List<CrefParameterSyntax>();
-					var asyncSymbol = funReferenceResult.AsyncCounterpartSymbol;
-					//TODO: take care of type namespaces
-					paramList.AddRange(asyncSymbol.Parameters.Select(o => CrefParameter(IdentifierName(o.Type.Name))));
+					// If the cref has already the parameters set then use them
+					if (crefNode.Parameters != null)
+					{
+						paramList.AddRange(crefNode.Parameters.Parameters);
+					}
+					else
+					{
+						// We have to add the parameter to avoid ambiguity
+						var asyncSymbol = funReferenceResult.AsyncCounterpartSymbol;
+						//TODO: take care of type namespaces (do not include the full type name if is not required)
+						paramList.AddRange(asyncSymbol.Parameters
+							.Select(o => CrefParameter(o.Type
+								.CreateTypeSyntax(true, methodResult.CancellationTokenRequired && o.Type.ContainingNamespace?.ToString() == "System.Threading"))));
+					}
+					
 					// If the async counterpart is internal and a token is required add a token parameter
 					if (funReferenceResult.AsyncCounterpartFunction?.GetMethod()?.CancellationTokenRequired == true)
 					{
@@ -221,8 +234,11 @@ namespace AsyncGenerator.Transformation.Internal
 						.AddAsync()
 						.WithLeadingTrivia(result.BodyLeadingWhitespaceTrivia)
 						.WithBody(tailMethodBody
-							.AddWhitespace(result.IndentTrivia)
 						);
+					tailFunction = methodResult.Node.NormalizeMethodBody(Block(SingletonList(tailFunction)), result.IndentTrivia, result.EndOfLineTrivia)
+						.Statements
+						.OfType<LocalFunctionStatementSyntax>()
+						.First();
 					bodyStatements = bodyStatements.Add(tailFunction);
 					// We do not need any parameter for the local function as we already have the parameters from the parent method
 					tailCallParameterList = ParameterList();

@@ -4,11 +4,20 @@ using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 {
+	/// <summary>
+	/// Transformation for the NHibernate project. 
+	/// Before running the test the following steps needs to be done:
+	///		- Fetch the NHibernate submodule
+	///		- Run the script to generate the SharedAssembly.cs
+	///		- Restore nuget packages for the NHibernate solution
+	///		- Run the test
+	/// </summary>
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
@@ -22,10 +31,13 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
+							//.UseCancellationTokenOverload(true)
 							.ScanMethodBody(true)
 						)
 						.ConfigureTransformation(t => t
 							.AsyncLock("NHibernate.Util.AsyncLock", "LockAsync")
+							.LocalFunctions(true)
+							.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
 						)
 					)
 					.ApplyChanges(true)
@@ -38,12 +50,22 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		{
 			switch (symbol.ContainingType.Name)
 			{
+				case "HqlSqlWalker":
+					// The Seed method that was recognized to be async is never used as async.
+					// IsIntegral checks that the type is either short, int, or long; 
+					// the only type where SeedAsync is possible is DbTimestampType type and it fails into the "else if" branch. 
+					// So, we need a way to mark certain method calls as sync only.
+					if (symbol.Name == "PostProcessInsert")
+					{
+						return MethodConversion.Ignore;
+					}
+					break;
 				case "IBatcher":
 					if (symbol.Name == "ExecuteReader" || symbol.Name == "ExecuteNonQuery")
 					{
 						return MethodConversion.ToAsync;
 					}
-					break;/*
+					break;
 				case "IAutoFlushEventListener":
 				case "IFlushEventListener":
 				case "IDeleteEventListener":
@@ -60,7 +82,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				case "IPreDeleteEventListener":
 				case "IPreInsertEventListener":
 				case "IPreUpdateEventListener":
-					return MethodConversion.ToAsync;*/
+					return MethodConversion.ToAsync;
 			}
 			return MethodConversion.Unknown;
 		}

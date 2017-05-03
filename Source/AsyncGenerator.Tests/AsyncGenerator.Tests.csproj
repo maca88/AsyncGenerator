@@ -219,6 +219,8 @@
   <ItemGroup>
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
+    <Compile Include="Cref\Fixture.cs" />
+    <Compile Include="Cref\Input\TestCase.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
     <Compile Include="FileComments\Fixture.cs" />
@@ -363,6 +365,15 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SynhronizedMethod\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Cref\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleClassInheritance\Output\TestCaseWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PreconditionOmitAsync\Output\TestCaseLocalFunctions.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

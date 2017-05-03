@@ -31,6 +31,14 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 			{
 				throw new ArgumentNullException(nameof(name));
 			}
+			for (var i = 0; i < 5; i++)
+			{
+				if (i == 1)
+				{
+					continue;
+				}
+				break;
+			}
 			SimpleFile.Read();
 			return "";
 		}

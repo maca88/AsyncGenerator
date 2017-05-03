@@ -13,14 +13,15 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
 {
 	using System.Threading.Tasks;
+	using System.Threading;
 	public partial interface IClass
 	{
-		Task ReadFileAsync();
+		Task ReadFileAsync(CancellationToken cancellationToken = default(CancellationToken));
 	}
 
 	public partial class BaseClass : IClass
 	{
-		public virtual Task ReadFileAsync()
+		public virtual Task ReadFileAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return Task.CompletedTask;
 		}
@@ -28,17 +29,17 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
 
 	public partial class DerivedClass : BaseClass
 	{
-		public override Task ReadFileAsync()
+		public override Task ReadFileAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.ReadAsync();
+			return SimpleFile.ReadAsync(cancellationToken);
 		}
 	}
 
 	public partial class TestCase
 	{
-		public Task ReadAsync()
+		public Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return new DerivedClass().ReadFileAsync();
+			return new DerivedClass().ReadFileAsync(cancellationToken);
 		}
 	}
 }

@@ -53,5 +53,25 @@ namespace AsyncGenerator.Tests.RegionDirective
 
 	#endregion Input
 
+	#region Nested type: TestCase4
+
+	/// <summary>
+	/// Test class
+	/// </summary>
+	public abstract partial class TestCase4
+	{
+
+		#region Members
+
+		public Task ReadAsync()
+		{
+			return SimpleFile.ReadAsync();
+		}
+
+		#endregion
+	}
+
+	#endregion
+
 }
 #endregion Namespace

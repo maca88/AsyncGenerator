@@ -145,21 +145,6 @@ namespace AsyncGenerator.Extensions
 				: (TypeSyntax) genericTaskNode;
 		}
 
-		internal static BlockSyntax AddWhitespace(this BlockSyntax blockNode, SyntaxTrivia whitespace)
-		{
-			var statements = new SyntaxList<StatementSyntax>();
-			foreach (var statement in blockNode.Statements)
-			{
-				statements = statements.Add(statement.WithLeadingTrivia(statement.GetLeadingTrivia().Add(whitespace)));
-			}
-			return blockNode
-				.WithStatements(statements)
-				.WithOpenBraceToken(
-					blockNode.OpenBraceToken.WithLeadingTrivia(blockNode.OpenBraceToken.LeadingTrivia.Add(whitespace)))
-				.WithCloseBraceToken(
-					blockNode.CloseBraceToken.WithLeadingTrivia(blockNode.CloseBraceToken.LeadingTrivia.Add(whitespace)));
-		}
-
 		internal static SyntaxTrivia GetLeadingWhitespace(this SyntaxNode node)
 		{
 			return node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
@@ -494,6 +479,14 @@ namespace AsyncGenerator.Extensions
 			return node.GetLeadingTrivia().Where(o => o.IsDirective);
 		}
 
+		/// <summary>
+		/// Normalize body by using the NormalizeWhitespace method using the original method that belongs to a <see cref="CompilationUnitSyntax"/>
+		/// </summary>
+		/// <param name="originalNode"></param>
+		/// <param name="body"></param>
+		/// <param name="indentTrivia"></param>
+		/// <param name="endOfLineTrivia"></param>
+		/// <returns></returns>
 		internal static BlockSyntax NormalizeMethodBody(this MethodDeclarationSyntax originalNode, BlockSyntax body, SyntaxTrivia indentTrivia, SyntaxTrivia endOfLineTrivia)
 		{
 			var annotation = Guid.NewGuid().ToString();
@@ -623,25 +616,59 @@ namespace AsyncGenerator.Extensions
 			return InvocationExpression(identifier, ArgumentList(SeparatedList<ArgumentSyntax>(argumentList)));
 		}
 
-		internal static NameSyntax ConstructNameSyntax(string name, SyntaxTrivia? trailingTrivia = null)
+		internal static NameSyntax ConstructNameSyntax(string name, SyntaxTrivia? trailingTrivia = null, bool insideCref = false, bool onlyName = false)
 		{
 			var names = name.Split('.').ToList();
+			if (onlyName)
+			{
+				return GetSimpleName(names.Last());
+			}
+
 			var trailingTriviaList = names.Count <= 2 && trailingTrivia.HasValue
 				? TriviaList(trailingTrivia.Value)
 				: TriviaList();
 			if (names.Count < 2)
 			{
-				return IdentifierName(Identifier(TriviaList(), name, trailingTriviaList));
+				return GetSimpleName(name, TriviaList(), trailingTriviaList, insideCref);
 			}
-			var result = QualifiedName(IdentifierName(names[0]), IdentifierName(Identifier(TriviaList(), names[1], trailingTriviaList)));
+			var result = QualifiedName(IdentifierName(names[0]), GetSimpleName(names[1], TriviaList(), trailingTriviaList, insideCref));
 			for (var i = 2; i < names.Count; i++)
 			{
 				trailingTriviaList = i + 1 == names.Count && trailingTrivia.HasValue
 					? TriviaList(trailingTrivia.Value)
 					: TriviaList();
-				result = QualifiedName(result, IdentifierName(Identifier(TriviaList(), names[i], trailingTriviaList)));
+				result = QualifiedName(result, GetSimpleName(names[i], TriviaList(), trailingTriviaList, insideCref));
 			}
 			return result;
+		}
+
+		// TODO: Use symbol for type arguments
+		private static SimpleNameSyntax GetSimpleName(string name, SyntaxTriviaList? leadingTrivia = null, SyntaxTriviaList? trailingTrivia = null, bool insideCref = false)
+		{
+			if (!name.Contains("<"))
+			{
+				return IdentifierName(Identifier(leadingTrivia ?? TriviaList(), name, trailingTrivia ?? TriviaList()));
+			}
+			var start = name.IndexOf('<');
+			var type = name.Substring(0, start);
+			var typeArguments = name.Substring(start + 1, name.Length - start - 2).Split(',').Select(o => o.Trim(' '));
+			var argList = new List<TypeSyntax>();
+			foreach (var argument in typeArguments)
+			{
+				argList.Add(GetSimpleName(argument));
+			}
+			var list = argList.Count == 1
+				? SingletonSeparatedList(argList[0])
+				: SeparatedList(argList);
+			var typeArgList = TypeArgumentList(list);
+			if (insideCref)
+			{
+				typeArgList = typeArgList
+					.WithLessThanToken(Token(TriviaList(), SyntaxKind.LessThanToken, "{", "{", TriviaList()))
+					.WithGreaterThanToken(Token(TriviaList(), SyntaxKind.GreaterThanToken, "}", "}", TriviaList()));
+			}
+			return GenericName(type)
+				.WithTypeArgumentList(typeArgList);
 		}
 
 	}

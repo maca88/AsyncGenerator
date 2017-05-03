@@ -252,7 +252,7 @@ namespace AsyncGenerator.Extensions
 			return symbol?.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
 		}
 
-		public static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol)
+		public static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol, bool insideCref = false, bool onlyName = false)
 		{
 			var predefinedType = symbol.SpecialType.ToPredefinedType();
 			if (predefinedType != null)
@@ -261,7 +261,7 @@ namespace AsyncGenerator.Extensions
 					? (TypeSyntax)NullableType(predefinedType)
 					: predefinedType;
 			}
-			return SyntaxNodeExtensions.ConstructNameSyntax(symbol.ToString());
+			return SyntaxNodeExtensions.ConstructNameSyntax(symbol.ToString(), insideCref: insideCref, onlyName: onlyName);
 		}
 	}
 }

@@ -22,7 +22,7 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 			{
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(3, result.Documents[0].Namespaces[0].Types.Count);
+				Assert.AreEqual(4, result.Documents[0].Namespaces[0].Types.Count);
 				var types = result.Documents[0].Namespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
 				Assert.AreEqual(1, types[nameof(DerivedClass)].Methods.Count);
@@ -59,6 +59,29 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestUseCancellationTokenOverloadAfterTransformation()
+		{
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.UseCancellationTokenOverload(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseWithTokens"), document.Transformed.ToFullString());
 					})
 				)
 			);

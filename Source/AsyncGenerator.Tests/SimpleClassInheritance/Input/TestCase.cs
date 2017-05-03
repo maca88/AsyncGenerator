@@ -2,7 +2,12 @@
 
 namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
 {
-	public class BaseClass
+	public interface IClass
+	{
+		void ReadFile();
+	}
+
+	public class BaseClass : IClass
 	{
 		public virtual void ReadFile()
 		{

@@ -62,5 +62,37 @@ namespace AsyncGenerator.Tests.RegionDirective
 	{
 	}
 
+	#region Nested type: TestCase4
+
+	/// <summary>
+	/// Test class
+	/// </summary>
+	public abstract class TestCase4
+	{
+		public System.Type Property1 { get; set; }
+
+		#region Members
+
+		public int Property2 { get; set; }
+
+		public abstract long Property3 { get; }
+
+		public abstract bool Property4 { get; }
+
+		public void Read()
+		{
+			SimpleFile.Read();
+		}
+
+		#endregion
+
+		protected virtual object SyncMethod(long value)
+		{
+			return null;
+		}
+	}
+
+	#endregion
+
 }
 #endregion Namespace

@@ -107,5 +107,28 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestLocalFunctionsAfterTransformation()
+		{
+			var syncReadFile = GetMethodName(o => o.SyncReadFile());
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == syncReadFile ? MethodConversion.Ignore : MethodConversion.ToAsync)
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseLocalFunctions"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
 	}
 }

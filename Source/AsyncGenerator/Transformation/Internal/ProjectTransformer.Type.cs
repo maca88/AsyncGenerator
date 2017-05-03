@@ -91,7 +91,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 				}
 
-				// Annotate and save the transformed methods
+				// Annotate and save an empty method transformation result
 				foreach (var methodResult in typeResult.Methods/*.Where(o => o.Conversion != MethodConversion.Ignore)*/)
 				{
 					var methodSpanStart = methodResult.Node.SpanStart - startRootTypeSpan;
@@ -99,46 +99,9 @@ namespace AsyncGenerator.Transformation.Internal
 					var methodNode = rootTypeNode.DescendantNodes()
 						.OfType<MethodDeclarationSyntax>()
 						.First(o => o.SpanStart == methodSpanStart && o.Span.Length == methodSpanLength);
-					var transformedNode = TransformMethod(methodResult, transformResult);
-					if (transformedNode.Transformed != null)
-					{
-						foreach (var transformer in _configuration.MethodTransformers)
-						{
-							var methodTransformResult = transformer.Transform(transformedNode, transformResult);
-							if (methodTransformResult == MethodTransformerResult.Skip)
-							{
-								continue;
-							}
-							transformedNode.Transformed = methodTransformResult.TransformedNode ?? transformedNode.Transformed;
-							if (methodTransformResult.Fields != null)
-							{
-								if (transformedNode.Fields == null)
-								{
-									transformedNode.Fields = new List<FieldDeclarationSyntax>(1);
-								}
-								transformedNode.Fields.AddRange(methodTransformResult.Fields);
-								// Update member names  for next transformators
-								foreach (var variable in methodTransformResult.Fields.SelectMany(o => o.Declaration.Variables))
-								{
-									transformResult.MemberNames = transformResult.MemberNames.Add(variable.Identifier.Text);
-								}
-							}
-							if (methodTransformResult.Methods != null)
-							{
-								if (transformedNode.Methods == null)
-								{
-									transformedNode.Methods = new List<MethodDeclarationSyntax>(1);
-								}
-								transformedNode.Methods.AddRange(methodTransformResult.Methods);
-								// Update member names for next transformators
-								foreach (var method in methodTransformResult.Methods)
-								{
-									transformResult.MemberNames = transformResult.MemberNames.Add(method.Identifier.Text);
-								}
-							}
-						}
-					}
-
+					// Only create the transformation result for the method and transform the method later as the method may change
+					// (a directive may be added to the method when removing type members)
+					var transformedNode = new MethodTransformationResult(methodResult);
 					transformResult.TransformedMethods.Add(transformedNode);
 					rootTypeNode = rootTypeNode.ReplaceNode(methodNode, methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 				}
@@ -204,8 +167,47 @@ namespace AsyncGenerator.Transformation.Internal
 							continue;
 						}
 						var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
-							.OfType<MemberDeclarationSyntax>()
+							.OfType<MethodDeclarationSyntax>()
 							.First();
+						var transformedNode = TransformMethod(methodTransform, transformResult, methodNode);
+						if (transformedNode.Transformed != null)
+						{
+							foreach (var transformer in _configuration.MethodTransformers)
+							{
+								var methodTransformResult = transformer.Transform(transformedNode, transformResult);
+								if (methodTransformResult == MethodTransformerResult.Skip)
+								{
+									continue;
+								}
+								transformedNode.Transformed = methodTransformResult.TransformedNode ?? transformedNode.Transformed;
+								if (methodTransformResult.Fields != null)
+								{
+									if (transformedNode.Fields == null)
+									{
+										transformedNode.Fields = new List<FieldDeclarationSyntax>(1);
+									}
+									transformedNode.Fields.AddRange(methodTransformResult.Fields);
+									// Update member names  for next transformators
+									foreach (var variable in methodTransformResult.Fields.SelectMany(o => o.Declaration.Variables))
+									{
+										transformResult.MemberNames = transformResult.MemberNames.Add(variable.Identifier.Text);
+									}
+								}
+								if (methodTransformResult.Methods != null)
+								{
+									if (transformedNode.Methods == null)
+									{
+										transformedNode.Methods = new List<MethodDeclarationSyntax>(1);
+									}
+									transformedNode.Methods.AddRange(methodTransformResult.Methods);
+									// Update member names for next transformators
+									foreach (var method in methodTransformResult.Methods)
+									{
+										transformResult.MemberNames = transformResult.MemberNames.Add(method.Identifier.Text);
+									}
+								}
+							}
+						}
 						newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, methodTransform.Transformed, methodTransform.Fields, methodTransform.Methods);
 					}
 
