@@ -11,6 +11,9 @@ namespace AsyncGenerator.Extensions
 {
 	internal static class SymbolExtensions
 	{
+		/// <summary>
+		/// Check if the type parameters are equals
+		/// </summary>
 		private static bool AreEqual(this ITypeParameterSymbol parameterSymbol, ITypeSymbol typeSymbol)
 		{
 			var candParamType = typeSymbol as ITypeParameterSymbol;
@@ -21,17 +24,92 @@ namespace AsyncGenerator.Extensions
 			return parameterSymbol.HasConstructorConstraint == candParamType.HasConstructorConstraint &&
 			       parameterSymbol.HasReferenceTypeConstraint == candParamType.HasReferenceTypeConstraint &&
 			       parameterSymbol.HasValueTypeConstraint == candParamType.HasValueTypeConstraint &&
-			       parameterSymbol.TypeParameterKind == candParamType.TypeParameterKind &&
-			       parameterSymbol.Ordinal == candParamType.Ordinal &&
+			       //parameterSymbol.TypeParameterKind == candParamType.TypeParameterKind && we do not care if the type parameter is form a method or a type
+				   //parameterSymbol.Ordinal == candParamType.Ordinal && // we do not care about the position index of the type parameter
 			       parameterSymbol.Variance == candParamType.Variance &&
 			       parameterSymbol.ConstraintTypes.Length == candParamType.ConstraintTypes.Length &&
 			       parameterSymbol.ConstraintTypes.All(o => candParamType.ConstraintTypes.Contains(o));
 		}
 
-		internal static bool IsTaskType(this ITypeSymbol typeSymbol)
+		/// <summary>
+		/// Check if the given type satisfies the constraints of the type parameter
+		/// </summary>
+		/// <param name="parameterSymbol"></param>
+		/// <param name="typeSymbol"></param>
+		/// <returns></returns>
+		internal static bool CanApply(this ITypeParameterSymbol parameterSymbol, ITypeSymbol typeSymbol)
 		{
-			return typeSymbol.Name == nameof(Task) &&
-					typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
+			// Check if the given type symbol is also a type parameter
+			if (parameterSymbol.AreEqual(typeSymbol))
+			{
+				return true;
+			}
+			// We have to check if all constraints can be applied to the given type
+			if (parameterSymbol.HasConstructorConstraint)
+			{
+				// TODO: check if is a public ctor
+				if (typeSymbol is INamedTypeSymbol namedTypeSymbol && !namedTypeSymbol.Constructors.Any(o => !o.Parameters.Any()))
+				{
+					return false;
+				}
+				return false;
+			}
+			if (parameterSymbol.HasReferenceTypeConstraint && !typeSymbol.IsReferenceType)
+			{
+				return false;
+			}
+			if (parameterSymbol.HasReferenceTypeConstraint && !typeSymbol.IsReferenceType)
+			{
+				return false;
+			}
+			return parameterSymbol.ConstraintTypes.All(typeSymbol.InheritsFromOrEquals);
+		}
+
+		/// <summary>
+		/// Check if the retrived type can be returned without having an await. We need to consider that the given types will be wrapped in a <see cref="Task{T}"/>.
+		/// Also when dealing with type parameters we need to check if the they can be applied to the given type
+		/// </summary>
+		/// <param name="retrivedType"></param>
+		/// <param name="toReturnType"></param>
+		/// <returns></returns>
+		internal static bool IsAwaitRequired(this ITypeSymbol retrivedType, ITypeSymbol toReturnType)
+		{
+			if (retrivedType.Equals(toReturnType))
+			{
+				return true;
+			}
+			var retrivedNamedType = retrivedType as INamedTypeSymbol;
+			var toReturnNamedType = toReturnType as INamedTypeSymbol;
+			if (retrivedNamedType == null)
+			{
+				if (retrivedType is ITypeParameterSymbol retrivedParamType)
+				{
+					return retrivedParamType.CanApply(toReturnType);
+				}
+				return false;
+			}
+			if (toReturnNamedType == null)
+			{
+				if (toReturnType is ITypeParameterSymbol toReturnParamType)
+				{
+					return toReturnParamType.CanApply(retrivedType);
+				}
+				return false;
+			}
+
+			if (!retrivedType.OriginalDefinition.Equals(toReturnType.OriginalDefinition))
+			{
+				return false;
+			}
+			// If the original definitions are equal then we need to check the type arguments if they match
+			for (var i = 0; i < retrivedNamedType.TypeArguments.Length; i++)
+			{
+				if (!retrivedNamedType.TypeArguments[i].IsAwaitRequired(toReturnNamedType.TypeArguments[i]))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		/// <summary>
@@ -207,7 +285,7 @@ namespace AsyncGenerator.Extensions
 			var asyncName = methodSymbol.Name + "Async";
 			if (searchInheritedTypes)
 			{
-				return methodSymbol.ContainingType.EnumerateBaseTypesAndSelf()
+				return methodSymbol.ContainingType.GetBaseTypesAndThis()
 					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
 					.OfType<IMethodSymbol>()
 					.Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters, hasCancellationToken, ignoreReturnType));
@@ -217,15 +295,47 @@ namespace AsyncGenerator.Extensions
 							   .Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters, hasCancellationToken, ignoreReturnType));
 		}
 
-		public static IEnumerable<INamedTypeSymbol> EnumerateBaseTypesAndSelf(this INamedTypeSymbol type)
+		// Determine if "type" inherits from "baseType", ignoring constructed types, optionally including interfaces,
+		// dealing only with original types.
+		public static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType, bool includeInterfaces)
 		{
-			yield return type;
-			var currType = type.BaseType;
-			while (currType != null)
+			if (!includeInterfaces)
 			{
-				yield return currType;
-				currType = currType.BaseType;
+				return InheritsFromOrEquals(type, baseType);
 			}
+
+			return type.GetBaseTypesAndThis().Concat(type.AllInterfaces).Any(t => t.Equals(baseType));
+		}
+
+		// Determine if "type" inherits from "baseType", ignoring constructed types and interfaces, dealing
+		// only with original types.
+		public static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType)
+		{
+			return type.GetBaseTypesAndThis().Any(t => t.Equals(baseType));
+		}
+
+		// Determine if "type" inherits from "baseType", ignoring constructed types, and dealing
+		// only with original types.
+		public static bool InheritsFromOrEqualsIgnoringConstruction(this ITypeSymbol type, ITypeSymbol baseType)
+		{
+			var originalBaseType = baseType.OriginalDefinition;
+			return type.GetBaseTypesAndThis().Any(t => t.OriginalDefinition.Equals(originalBaseType));
+		}
+
+		internal static IEnumerable<ITypeSymbol> GetBaseTypesAndThis(this ITypeSymbol type)
+		{
+			var current = type;
+			while (current != null)
+			{
+				yield return current;
+				current = current.BaseType;
+			}
+		}
+
+		internal static bool IsTaskType(this ITypeSymbol typeSymbol)
+		{
+			return typeSymbol.Name == nameof(Task) &&
+			       typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
 		}
 
 		public static bool IsAccessor(this ISymbol symbol)

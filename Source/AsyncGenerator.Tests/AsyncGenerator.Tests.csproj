@@ -227,6 +227,8 @@
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
+    <Compile Include="Generics\Fixture.cs" />
+    <Compile Include="Generics\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
     <Compile Include="LocalFunctions\Input\TestCase.cs" />
     <Compile Include="NestedNamespaces\Fixture.cs" />
@@ -376,6 +378,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PreconditionOmitAsync\Output\TestCaseLocalFunctions.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Generics\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Exceptions\Output\TestCase.txt" />

@@ -292,14 +292,14 @@ namespace AsyncGenerator.Analyzation.Internal
 									    var returnType = o.ReturnType as INamedTypeSymbol;
 									    if (returnType == null || !returnType.IsGenericType)
 									    {
-										    return o.ReturnType.Equals(functionData.Symbol.ReturnType);
+										    return o.ReturnType.IsAwaitRequired(functionData.Symbol.ReturnType);
 									    }
-									    return returnType.TypeArguments.First().Equals(functionData.Symbol.ReturnType);
+									    return returnType.TypeArguments.First().IsAwaitRequired(functionData.Symbol.ReturnType);
 								    })
 							    ) ||
 							    (
 								    methodReference.ReferenceFunctionData != null &&
-								    !methodReference.ReferenceFunctionData.Symbol.ReturnType.Equals(functionData.Symbol.ReturnType)
+								    !methodReference.ReferenceFunctionData.Symbol.ReturnType.IsAwaitRequired(functionData.Symbol.ReturnType)
 							    )
 						    )
 						)
