@@ -168,6 +168,11 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public override SyntaxNode VisitThrowStatement(ThrowStatementSyntax node)
 		{
+			if (_methodResult.Faulted)
+			{
+				return node;
+			}
+
 			if (node.Expression == null)
 			{
 				var catchNode = node.Ancestors().OfType<CatchClauseSyntax>().First();
@@ -228,7 +233,7 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			if (_methodResult.Symbol.ReturnsVoid && !body.EndsWithReturnStatement())
 			{
-				return AddReturnStatement(body);
+				return !_methodResult.Faulted ? AddReturnStatement(body) : body;
 			}
 			return _methodResult.WrapInTryCatch ? WrapInsideTryCatch(body) : body;
 		}

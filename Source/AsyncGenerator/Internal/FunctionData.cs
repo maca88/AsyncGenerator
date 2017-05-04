@@ -112,6 +112,8 @@ namespace AsyncGenerator.Internal
 
 		public bool WrapInTryCatch { get; set; }
 
+		public bool Faulted { get; set; }
+
 		#endregion
 
 		#region IFunctionAnalyzationResult

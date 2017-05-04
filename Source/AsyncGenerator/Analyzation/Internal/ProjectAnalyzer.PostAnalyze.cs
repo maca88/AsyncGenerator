@@ -318,6 +318,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 				}
 
+				// If the method has a block body
 				if (methodData.Node.Body != null)
 				{
 					// Some async methods may not have any async invocations because were forced to be async (overloads)
@@ -327,6 +328,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						.FirstOrDefault();
 					var semanticModel = methodData.TypeData.NamespaceData.DocumentData.SemanticModel;
 					// Search for preconditions until a statement has not been qualified as a precondition or we encounter an async invocation
+					// The faulted property is set to true when the first statement is a throw statement
 					foreach (var statement in methodData.Node.Body.Statements)
 					{
 						if (methodRefSpan != null && statement.Span.End > methodRefSpan.SourceSpan.Start)
@@ -335,6 +337,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						}
 						if (!_configuration.PreconditionCheckers.Any(o => o.IsPrecondition(statement, semanticModel)))
 						{
+							methodData.Faulted = statement.IsKind(SyntaxKind.ThrowStatement);
 							break;
 						}
 						methodData.Preconditions.Add(statement);
@@ -346,14 +349,18 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.SplitTail = true;
 					}
 				}
+				else
+				{
+					methodData.Faulted = methodData.Node.ExpressionBody.IsKind(SyntaxKind.ThrowExpression);
+				}
 
 				// The async keyword shall be omitted when the method does not have any awaitable invocation or we have to tail split
 				if (methodData.SplitTail || !methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
 				{
 					methodData.OmitAsync = true;
 				}
-				// When the async keyword is omitted we need to calculate if the method body shall be wrapped in a try/catch block
-				if (methodData.OmitAsync)
+				// When the async keyword is omitted and the method is not faulted we need to calculate if the method body shall be wrapped in a try/catch block
+				if (!methodData.Faulted && methodData.OmitAsync)
 				{
 					CalculateWrapInTryCatch(methodData);
 				}

@@ -62,6 +62,11 @@ namespace AsyncGenerator.Analyzation
 		bool WrapInTryCatch { get; }
 
 		/// <summary>
+		/// When true, the first statement (preconditions omitted) is a throw statement (eg. not implemented methods)
+		/// </summary>
+		bool Faulted { get; }
+
+		/// <summary>
 		/// When true, yield statements in method body will be rewritten to return statements
 		/// </summary>
 		bool RewriteYields { get; }
