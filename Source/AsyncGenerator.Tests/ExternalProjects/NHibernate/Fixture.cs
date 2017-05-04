@@ -150,6 +150,15 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					}
 					break;
 
+				case "PositionalParameterSpecification":
+				case "NamedParameterSpecification":
+					if (symbol.Name == "Bind" && symbol.Parameters.Length == 4)
+					{
+						//For some reason it's not generated
+						return MethodConversion.ToAsync;
+					}
+					break;
+
 				case "IBatcher":
 					if (symbol.Name == "ExecuteReader" || symbol.Name == "ExecuteNonQuery")
 					{
