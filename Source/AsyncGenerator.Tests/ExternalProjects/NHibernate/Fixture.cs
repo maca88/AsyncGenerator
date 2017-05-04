@@ -150,6 +150,34 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					}
 					break;
 
+				case "AbstractPersistentCollection":
+					if (symbol.Name == "ReadSize" ||
+					    symbol.Name == "ReadIndexExistence" ||
+					    symbol.Name == "ReadElementExistence" ||
+					    symbol.Name == "ReadElementByIndex" ||
+					    symbol.Name == "Read" || // Called by methods above
+					    symbol.Name == "Write"
+					)
+					{
+						//No one calls us :'(
+						return MethodConversion.Ignore;
+					}
+					break;
+
+				case "ICollectionPersister": // Called by AbstractPersistentCollection
+				case "AbstractCollectionPersister": // Implementation of ICollectionPersister
+					if (symbol.Name == "GetSize" ||
+					    symbol.Name == "IndexExists" ||
+					    symbol.Name == "ElementExists" ||
+					    symbol.Name == "GetElementByIndex" || 
+						symbol.Name == "Exists"
+					)
+					{
+						//No one calls us :'(
+						return MethodConversion.Ignore;
+					}
+					break;
+
 				case "PositionalParameterSpecification":
 				case "NamedParameterSpecification":
 					if (symbol.Name == "Bind" && symbol.Parameters.Length == 4)
