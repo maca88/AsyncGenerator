@@ -1,4 +1,4 @@
 [submodule "NHibernate"]
 	path = Source/AsyncGenerator.Tests/ExternalProjects/NHibernate/Source
-	url = https://github.com/OnurGumus/nhibernate-core.git
+	url = https://github.com/hazzik/nhibernate-core.git
 	branch = NH-2088
