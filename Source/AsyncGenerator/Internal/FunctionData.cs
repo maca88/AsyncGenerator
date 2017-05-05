@@ -25,6 +25,8 @@ namespace AsyncGenerator.Internal
 
 		public MethodConversion Conversion { get; set; }
 
+		public string IgnoredReason { get; private set; }
+
 		/// <summary>
 		/// References to other methods that are referenced/invoked inside this function/method and are candidates to be async
 		/// </summary>
@@ -71,6 +73,12 @@ namespace AsyncGenerator.Internal
 		public IEnumerable<ChildFunctionData> GetDescendantsChildFunctions(Func<ChildFunctionData, bool> predicate = null)
 		{
 			return ChildFunctions.Values.SelectMany(o => o.GetSelfAndDescendantsFunctionsRecursively(o, predicate));
+		}
+
+		internal void Ignore(string reason)
+		{
+			Conversion = MethodConversion.Ignore;
+			IgnoredReason = reason;
 		}
 
 		private IEnumerable<T> GetSelfAndDescendantsFunctionsRecursively<T>(T functionData, Func<T, bool> predicate = null)

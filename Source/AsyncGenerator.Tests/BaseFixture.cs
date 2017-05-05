@@ -9,12 +9,18 @@ using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Transformation;
+using log4net.Config;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
 {
 	public abstract class BaseFixture
 	{
+		protected BaseFixture()
+		{
+			XmlConfigurator.Configure();
+		}
+
 		public string GetBaseDirectory()
 		{
 			// BaseDirectory ends with a backslash when running with Visual Studio (Test Explorer), but when running with 

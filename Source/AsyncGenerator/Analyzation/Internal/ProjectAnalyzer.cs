@@ -71,7 +71,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					PreAnalyzeDocumentData(item);
 				}
 			}
-				
+
 			//await Task.WhenAll(documentData.AsParallel()..Select(PreAnalyzeDocumentData)).ConfigureAwait(false);
 			Logger.Info("Pre-analyzing documents completed");
 
@@ -89,7 +89,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-				
+
 			Logger.Info("Scanning references completed");
 
 			// 4. Step - Analyze all references found in the previous step
@@ -105,7 +105,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					AnalyzeDocumentData(item);
 				}
 			}
-				
+
 			Logger.Info("Analyzing documents completed");
 
 			// 5. Step - Calculate the final conversion for all method data
@@ -197,6 +197,20 @@ namespace AsyncGenerator.Analyzation.Internal
 				.ToImmutableHashSet();
 			_analyzeProjects = new[] { ProjectData.Project }
 				.ToImmutableHashSet();
+		}
+
+		private void DebugLogIgnoredReason(FunctionData functionData)
+		{
+			Logger.Debug($"Method {functionData.Symbol} was ignored. Reason: {functionData.IgnoredReason}");
+		}
+
+		private void WarnLogIgnoredReason(FunctionData functionData)
+		{
+			Logger.Warn($"Method {functionData.Symbol} was ignored. Reason: {functionData.IgnoredReason}");
+		}
+
+		private void VoidLog(FunctionData functionData)
+		{
 		}
 	}
 }

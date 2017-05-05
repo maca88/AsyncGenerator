@@ -32,7 +32,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					var methodData = documentData.GetOrCreateMethodData(methodNode, typeData);
 					if (typeData.Conversion == TypeConversion.Ignore)
 					{
-						methodData.Conversion = MethodConversion.Ignore;
+						methodData.Ignore("Ignored by TypeConversion function");
 					}
 					else
 					{
@@ -89,36 +89,36 @@ namespace AsyncGenerator.Analyzation.Internal
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
 			if (methodData.Conversion == MethodConversion.Ignore)
 			{
-				Logger.Debug($"Method {methodSymbol} will be ignored because of MethodConversionFunction");
+				methodData.Ignore("Ignored by MethodConversion function");
 				return;
 			}
 
 			var forceAsync = methodData.Conversion == MethodConversion.ToAsync;
-			var log = forceAsync ? Logger.Warn : (Action<object>)Logger.Debug;
+			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
 			if (methodSymbol.IsAsync || methodSymbol.Name.EndsWith("Async"))
 			{
-				log($"Symbol {methodSymbol} is already async");
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.Ignore("Is already async");
 				methodData.IsAsync = true;
+				log(methodData);
 				return;
 			}
 			if (!ProjectData.Contains(methodSymbol))
 			{
-				log($"Method {methodSymbol} is external and cannot be made async");
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.Ignore("Is an external method");
+				log(methodData);
 				return;
 			}
 			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
 			{
-				log($"Method {methodSymbol} is a {methodSymbol.MethodKind} and cannot be made async");
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.Ignore($"Unsupported method kind {methodSymbol.MethodKind}");
+				log(methodData);
 				return;
 			}
 
 			if (methodSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				log($"Method {methodSymbol} has out parameters and cannot be made async");
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.Ignore("Has out parameters");
+				log(methodData);
 				return;
 			}
 
@@ -139,8 +139,8 @@ namespace AsyncGenerator.Analyzation.Internal
 
 						if (asyncConterPart == null)
 						{
-							log($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
-							methodData.Conversion = MethodConversion.Ignore;
+							methodData.Ignore($"Explicity implements an external interface {interfaceMember} that has not an async counterpart");
+							log(methodData);
 							return;
 						}
 						methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -172,9 +172,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 					if (asyncConterPart == null)
 					{
-						log(
-							$"Method {methodSymbol} overrides an external method {overridenMethod} that has not an async counterpart... method will not be converted");
-						methodData.Conversion = MethodConversion.Ignore;
+						methodData.Ignore($"Overrides an external method {overridenMethod} that has not an async counterpart");
+						log(methodData);
 						return;
 						//if (!asyncMethods.Any() || (asyncMethods.Any() && !overridenMethod.IsOverride && !overridenMethod.IsVirtual))
 						//{
@@ -232,8 +231,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 					if (asyncConterPart == null)
 					{
-						log($"Method {methodSymbol} implements an external interface {interfaceMember} and cannot be made async");
-						methodData.Conversion = MethodConversion.Ignore;
+						methodData.Ignore($"Implements an external interface {interfaceMember} that has not an async counterpart");
+						log(methodData);
 						return;
 					}
 					methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -289,8 +288,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					(!_configuration.UseCancellationTokenOverload && asyncCounterparts.Count == 1)
 				)
 				{
-					log($"Method {methodSymbol} has already an async counterpart {asyncCounterparts.First()}");
-					methodData.Conversion = MethodConversion.Ignore;
+					methodData.Ignore($"Has an already an async counterpart {asyncCounterparts.First()}");
+					log(methodData);
 					return;
 				}
 			}
@@ -300,25 +299,25 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			var funcionSymbol = functionData.Symbol;
 			var forceAsync = functionData.MethodData.Conversion == MethodConversion.ToAsync;
-			var log = forceAsync ? Logger.Warn : (Action<object>)Logger.Debug;
+			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog;
 			if (funcionSymbol.IsAsync)
 			{
-				log($"Anonymous function inside method {functionData.MethodData.Symbol} is already async");
-				functionData.Conversion = MethodConversion.Ignore;
+				functionData.Ignore("Is already async");
+				log(functionData);
 				functionData.IsAsync = true;
 				return;
 			}
 			if (funcionSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				log($"Anonymous function inside method {functionData.MethodData.Symbol} has out parameters and cannot be made async");
-				functionData.Conversion = MethodConversion.Ignore;
+				functionData.Ignore("Has out parameters");
+				log(functionData);
 				return;
 			}
 
 			if (!functionData.Node.Parent.IsKind(SyntaxKind.Argument))
 			{
-				log($"Anonymous function inside method {functionData.MethodData.Symbol} is not passed as an argument but as a {Enum.GetName(typeof(SyntaxKind),functionData.Node.Parent.Kind())} which is not supported");
-				functionData.Conversion = MethodConversion.Ignore;
+				functionData.Ignore($"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported");
+				log(functionData);
 				return;
 			}
 			else
@@ -329,8 +328,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				.FirstOrDefault();
 				if (invocationNode == null)
 				{
-					log($"Anonymous function inside method {functionData.MethodData.Symbol} is passed as an argument to a node that is not a InvocationExpressionSyntax which is not supported");
-					functionData.Conversion = MethodConversion.Ignore;
+					functionData.Ignore("Is passed as an argument to a non InvocationExpressionSyntax node that is currently not supported");
+					log(functionData);
 					return;
 				}
 
@@ -341,8 +340,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				var methodSymbol = symbol as IMethodSymbol;
 				if (methodSymbol == null)
 				{
-					log($"Anonymous function inside method {functionData.MethodData.Symbol} is passed as an argument to a {symbol} which is not supported");
-					functionData.Conversion = MethodConversion.Ignore;
+					functionData.Ignore($"Is passed as an argument to a symbol {symbol} which is currently not supported");
+					log(functionData);
 					return;
 				}
 				functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(methodSymbol, index);

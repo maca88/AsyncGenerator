@@ -100,7 +100,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				baseMethodSymbol = methodData.BaseOverriddenMethod;
 			}
-			else if (!methodData.InterfaceMethod && (methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract)) // interface method has IsAbstract ture
+			else if (!methodData.InterfaceMethod && (methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract)) // interface method has IsAbstract true
 			{
 				baseMethodSymbol = methodData.Symbol;
 				baseMethodData = methodData;
@@ -361,7 +361,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				var baseMethodData = await documentData.GetFunctionData(refMethodSymbol).ConfigureAwait(false);
 				if (baseMethodData == null) // TODO: Current is null for ctor, operator, destructor, conversion
 				{
-					Logger.Debug($"Method {refMethodSymbol} cannot be made async");
+					Logger.Warn($"Method {refMethodSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
 					continue;
 				}
 
@@ -390,6 +390,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				if (baseMethodData.Conversion == MethodConversion.Ignore)
 				{
+					WarnLogIgnoredReason(baseMethodData);
 					continue;
 				}
 

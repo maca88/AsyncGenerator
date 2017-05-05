@@ -48,7 +48,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					if (depFunctionData.Conversion == MethodConversion.Ignore)
 					{
-						Logger.Info($"Ignored method {depFunctionData.Symbol} has a method invocation that can be async");
+						Logger.Warn($"Ignored method {depFunctionData.Symbol} has a method invocation that can be async");
 						continue;
 					}
 					depFunctionData.Conversion = MethodConversion.ToAsync;
@@ -183,7 +183,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					if (methodData.Conversion == MethodConversion.Ignore)
 					{
-						Logger.Info($"Ignored method {methodData.Symbol} has a method invocation that can be async");
+						Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
 						continue;
 					}
 					methodData.Conversion = MethodConversion.ToAsync;
