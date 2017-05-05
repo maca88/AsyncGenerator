@@ -54,7 +54,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					// The Seed method that was recognized to be async is never used as async.
 					// IsIntegral checks that the type is either short, int, or long; 
 					// the only type where SeedAsync is possible is DbTimestampType type and it fails into the "else if" branch. 
-					// So, we need a way to mark certain method calls as sync only.
 					if (symbol.Name == "PostProcessInsert")
 					{
 						return MethodConversion.Ignore;
@@ -177,16 +176,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						return MethodConversion.Ignore;
 					}
 					break;
-
-				case "PositionalParameterSpecification":
-				case "NamedParameterSpecification":
-					if (symbol.Name == "Bind" && symbol.Parameters.Length == 4)
-					{
-						//For some reason it's not generated
-						return MethodConversion.ToAsync;
-					}
-					break;
-
 				case "IBatcher":
 					if (symbol.Name == "ExecuteReader" || symbol.Name == "ExecuteNonQuery")
 					{
