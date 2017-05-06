@@ -25,14 +25,15 @@ namespace AsyncGenerator.Analyzation.Internal
 				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
 				PreAnalyzeType(typeData);
 
-				foreach (var methodNode in typeNode
-					.DescendantNodes()
+				// TODO: we have to pre-analyze properties as they can also contains some async calls.
+				// TODO: fields can have anonymous functions that have async calls
+				foreach (var methodNode in typeNode.Members
 					.OfType<MethodDeclarationSyntax>())
 				{
 					var methodData = documentData.GetOrCreateMethodData(methodNode, typeData);
 					if (typeData.Conversion == TypeConversion.Ignore)
 					{
-						methodData.Ignore("Ignored by TypeConversion function");
+						methodData.Ignore("Ignored by TypeConversion function", true);
 					}
 					else
 					{
@@ -89,7 +90,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
 			if (methodData.Conversion == MethodConversion.Ignore)
 			{
-				methodData.Ignore("Ignored by MethodConversion function");
+				methodData.Ignore("Ignored by MethodConversion function", true);
 				return;
 			}
 

@@ -62,8 +62,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				case "SqlStatementLogger": //Generated because of Console.WriteLineAsync
 					return MethodConversion.Ignore;
 				case "IInterceptor": //We need to adjust proxy code generation to call IInterceptor async
-				case "DefaultDynamicLazyFieldInterceptor": //The implementor of IInterceptor
-				case "DefaultLazyInitializer": //The implementor of IInterceptor
 				case "IFieldInterceptor": //Is called by DefaultDynamicLazyFieldInterceptor.Intercept
 				case "AbstractFieldInterceptor":// The implementor of IFieldInterceptor
 					if (symbol.Name == "Intercept" || 
@@ -76,8 +74,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				case "ILazyPropertyInitializer": // Is called by AbstractFieldInterceptor.Intercept
 				case "AbstractEntityPersister":
 					if (symbol.Name == "InitializeLazyProperty" || 
-						symbol.Name == "InitializeLazyPropertiesFromDatastore" ||
-						symbol.Name == "InitializeLazyPropertiesFromCache")
+						symbol.Name == "InitializeLazyPropertiesFromDatastore" || // Private method from AbstractEntityPersister
+						symbol.Name == "InitializeLazyPropertiesFromCache") // Private method from AbstractEntityPersister
 					{
 						return MethodConversion.Ignore;
 					}
@@ -130,9 +128,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						return MethodConversion.Ignore;
 					}
 					break;
-
-				case "StatelessSessionImpl": // Probably bug here.
-				case "SessionImpl":
+				case "ISession":
+				case "ISessionImplementor":
 					if (symbol.Name == "BestGuessEntityName" || 
 						symbol.Name == "Contains")
 					{

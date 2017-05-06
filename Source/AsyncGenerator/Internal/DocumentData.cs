@@ -132,6 +132,14 @@ namespace AsyncGenerator.Internal
 					case SyntaxKind.LocalFunctionStatement:
 						if (methodData == null)
 						{
+							// ParenthesizedLambda, AnonymousMethod and SimpleLambda can be also defined inside a type
+							if (!n.IsKind(SyntaxKind.LocalFunctionStatement))
+							{
+								if (typeData != null)
+								{
+									return null; // TODO: A type can have one or many FuncionData so we need to register them
+								}
+							}
 							throw new InvalidOperationException($"Anonymous function {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
 						}
 						var symbol = SemanticModel.GetSymbolInfo(n).Symbol as IMethodSymbol;

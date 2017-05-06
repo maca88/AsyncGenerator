@@ -52,8 +52,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				AnalyzeCrefMethodReference(documentData, methodData, reference);
 			}
 
-			// Check if there is any 
-
 			if (methodData.Conversion == MethodConversion.ToAsync)
 			{
 				return;
@@ -66,6 +64,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
 				{
 					methodData.Conversion = MethodConversion.Ignore;
+					methodData.Ignore("Method is never used and has no async invocations");
+					LogIgnoredReason(methodData);
 					return;
 				}
 

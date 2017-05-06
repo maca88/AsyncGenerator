@@ -135,6 +135,29 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.GetAllNamespaceDatas(m => m.Conversion != NamespaceConversion.Ignore))
 				.ToList();
 
+			// We need to take care of explictly ignored methods as we have to implicitly ignore also the related methods.
+			// Here the conversion for the type is not yet calculated so we have to process all types
+			foreach (var methodData in allNamespaceData
+				.SelectMany(o => o.Types.Values)
+				.SelectMany(o => o.GetSelfAndDescendantsTypeData())
+				.SelectMany(o => o.Methods.Values.Where(m => m.ExplicitlyIgnored)))
+			{
+				// TODO: what to do if an abstract method is explictly ignored, should we implicitly ignore all overrides or just remove the override keyword?.
+				// TODO: if an override implements an interface that is not ignored, we would need to remove the override method and not ignore it
+				if (!methodData.InterfaceMethod)
+				{
+					continue;
+				}
+				// If an interface method is explictly ignored then we need to implicitly ignore the related methods, 
+				// but only if a related method implements just the ignored one.
+				// TODO: remove override keyword if exist for the non removed related methods
+				foreach (var relatedMethodData in methodData.RelatedMethods.Where(i => !i.RelatedMethods.Any(r => r != methodData && r.InterfaceMethod)))
+				{
+					relatedMethodData.Ignore($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}");
+					WarnLogIgnoredReason(relatedMethodData);
+				}
+			}
+
 			// If a type data is ignored then also its method data are ignored
 			var allTypeData = allNamespaceData
 				.SelectMany(o => o.Types.Values)
@@ -199,7 +222,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 3. Step - Mark all remaining method to be ignored
 			foreach (var methodData in toProcessMethodData)
 			{
-				methodData.Conversion = MethodConversion.Ignore;
+				methodData.Ignore("Method is never used.");
+				LogIgnoredReason(methodData);
 			}
 
 			// 4. Step - Calculate the final type conversion

@@ -10,12 +10,18 @@ namespace AsyncGenerator.Tests.AbstractClass.Input
 	public interface ITestInteraface
 	{
 		void Read();
+
+		bool Write(string content);
 	}
 
 
 	public abstract class AbstractTest : ITestInteraface
 	{
-		public abstract void Read();
+		public virtual void Read()
+		{
+		}
+
+		public abstract bool Write(string content);
 	}
 
 	public class TestCase : AbstractTest
@@ -24,7 +30,7 @@ namespace AsyncGenerator.Tests.AbstractClass.Input
 		{
 		}
 
-		public bool Write(string content)
+		public override bool Write(string content)
 		{
 			return SimpleFile.Write(content);
 		}

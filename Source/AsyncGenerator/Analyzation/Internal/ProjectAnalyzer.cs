@@ -199,14 +199,22 @@ namespace AsyncGenerator.Analyzation.Internal
 				.ToImmutableHashSet();
 		}
 
-		private void DebugLogIgnoredReason(FunctionData functionData)
+		private void LogIgnoredReason(FunctionData functionData, bool warn = false)
 		{
-			Logger.Debug($"Method {functionData.Symbol} was ignored. Reason: {functionData.IgnoredReason}");
+			var message = $"Method {functionData.Symbol} was ignored. Reason: {functionData.IgnoredReason}";
+			if (warn)
+			{
+				Logger.Warn(message);
+			}
+			else
+			{
+				Logger.Debug(message);
+			}
 		}
 
 		private void WarnLogIgnoredReason(FunctionData functionData)
 		{
-			Logger.Warn($"Method {functionData.Symbol} was ignored. Reason: {functionData.IgnoredReason}");
+			LogIgnoredReason(functionData, true);
 		}
 
 		private void VoidLog(FunctionData functionData)

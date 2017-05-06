@@ -42,31 +42,66 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<IMethodSymbol> _searchedOverrides = new ConcurrentSet<IMethodSymbol>();
 
-		private async Task FindOverrides(IMethodSymbol methodSymbol, Action<IMethodSymbol, MethodData> action)
+		private Task FindOverrides(IMethodSymbol methodSymbol, Action<IMethodSymbol, MethodData> action)
 		{
 			methodSymbol = methodSymbol.OriginalDefinition;
-			if (_searchedOverrides.Contains(methodSymbol))
+			if (!_searchedOverrides.TryAdd(methodSymbol))
 			{
-				return;
+				return Task.CompletedTask;
 			}
-			_searchedOverrides.TryAdd(methodSymbol);
 
-			var overrides = await SymbolFinder.FindOverridesAsync(methodSymbol, _solution, _analyzeProjects)
-				.ConfigureAwait(false);
-			foreach (var overrideMethod in overrides.OfType<IMethodSymbol>())
+			async Task Find()
 			{
-				var syntax = overrideMethod.DeclaringSyntaxReferences.Single();
-				var overrideDocument = _solution.GetDocument(syntax.SyntaxTree);
-				if (!CanProcessDocument(overrideDocument))
+				var overrides = await SymbolFinder.FindOverridesAsync(methodSymbol, _solution, _analyzeProjects)
+					.ConfigureAwait(false);
+				foreach (var overrideMethod in overrides.OfType<IMethodSymbol>())
 				{
-					continue;
-				}
-				var overrideDocumentData = ProjectData.GetDocumentData(overrideDocument);
-				var overrideMethodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-				var overrideMethodData = overrideDocumentData.GetMethodData(overrideMethodNode);
+					var syntax = overrideMethod.DeclaringSyntaxReferences.Single();
+					var overrideDocument = _solution.GetDocument(syntax.SyntaxTree);
+					if (!CanProcessDocument(overrideDocument))
+					{
+						continue;
+					}
+					var overrideDocumentData = ProjectData.GetDocumentData(overrideDocument);
+					var overrideMethodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
+					var overrideMethodData = overrideDocumentData.GetMethodData(overrideMethodNode);
 
-				action(overrideMethod, overrideMethodData);
+					action(overrideMethod, overrideMethodData);
+				}
 			}
+			return Find();
+		}
+
+		private readonly ConcurrentSet<IMethodSymbol> _searchedImplementations = new ConcurrentSet<IMethodSymbol>();
+
+		private Task FindImplementations(IMethodSymbol methodSymbol, Func<IMethodSymbol, MethodData, Task> action)
+		{
+			methodSymbol = methodSymbol.OriginalDefinition;
+			if (!_searchedImplementations.TryAdd(methodSymbol))
+			{
+				return Task.CompletedTask;
+			}
+
+			async Task Find()
+			{
+				var implementations = await SymbolFinder.FindImplementationsAsync(methodSymbol, _solution, _analyzeProjects)
+					.ConfigureAwait(false);
+				foreach (var implMethod in implementations.OfType<IMethodSymbol>())
+				{
+					var syntax = implMethod.DeclaringSyntaxReferences.Single();
+					var document = _solution.GetDocument(syntax.SyntaxTree);
+					if (!CanProcessDocument(document))
+					{
+						continue;
+					}
+					var documentData = ProjectData.GetDocumentData(syntax);
+					var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
+					var implMethodData = documentData.GetMethodData(methodNode);
+
+					await action(implMethod, implMethodData).ConfigureAwait(false);
+				}
+			}
+			return Find();
 		}
 
 		private async Task ScanMethodData(MethodData methodData, int depth = 0)
@@ -108,51 +143,38 @@ namespace AsyncGenerator.Analyzation.Internal
 				var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
 				var interfaceMethodData = documentData.GetMethodData(methodNode);
 
-				// NOTE: FindImplementationsAsync will not find all not implementations when we have an abstract implementation of the interface.
-				// In this case we will get only the abstract implementation so we have to find all overrides for it manually
-				var implementations = await SymbolFinder.FindImplementationsAsync(
-					interfaceMethod.OriginalDefinition, _solution, _analyzeProjects)
-					.ConfigureAwait(false);
-				foreach (var implementation in implementations.OfType<IMethodSymbol>())
+				// NOTE: FindImplementationsAsync will not find all implementations when we have an abstract/virtual implementation of the interface.
+				// In this case we will get only the abstract/virtual method so we have to find all overrides for it manually
+				await FindImplementations(interfaceMethod, async (implMethod, implMethodData) =>
 				{
-					syntax = implementation.DeclaringSyntaxReferences.Single();
-					document = _solution.GetDocument(syntax.SyntaxTree);
-					if (!CanProcessDocument(document))
-					{
-						continue;
-					}
-					documentData = ProjectData.GetDocumentData(syntax);
-					methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-					var implMethodData = documentData.GetMethodData(methodNode);
-
 					interfaceMethodData.RelatedMethods.TryAdd(implMethodData);
 					implMethodData.RelatedMethods.TryAdd(interfaceMethodData);
 
 					if (_configuration.ScanMethodBody ||
-					    implMethodData.Conversion == MethodConversion.Smart ||
-					    implMethodData.Conversion == MethodConversion.ToAsync)
+						implMethodData.Conversion == MethodConversion.Smart ||
+						implMethodData.Conversion == MethodConversion.ToAsync)
 					{
 						bodyScanMethodDatas.Add(implMethodData);
 					}
-					if (!implementation.IsAbstract)
+					if (!implMethod.IsAbstract && !implMethod.IsVirtual)
 					{
-						continue;
+						return;
 					}
 					// Find all overrides
-					await FindOverrides(implementation, (overrideSymbol, overrideMethodData) =>
+					await FindOverrides(implMethod, (overrideSymbol, overrideMethodData) =>
 					{
 						overrideMethodData.RelatedMethods.TryAdd(interfaceMethodData);
 						interfaceMethodData.RelatedMethods.TryAdd(overrideMethodData);
 						implMethodData.RelatedMethods.TryAdd(overrideMethodData);
 						overrideMethodData.RelatedMethods.TryAdd(implMethodData);
 						if (_configuration.ScanMethodBody ||
-						    overrideMethodData.Conversion == MethodConversion.Smart ||
-						    overrideMethodData.Conversion == MethodConversion.ToAsync)
+							overrideMethodData.Conversion == MethodConversion.Smart ||
+							overrideMethodData.Conversion == MethodConversion.ToAsync)
 						{
 							bodyScanMethodDatas.Add(overrideMethodData);
 						}
 					}).ConfigureAwait(false);
-				}
+				}).ConfigureAwait(false);
 			}
 
 			MethodData baseMethodData = null;
@@ -433,7 +455,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				if (baseMethodData.Conversion == MethodConversion.Ignore)
 				{
-					WarnLogIgnoredReason(baseMethodData);
+					LogIgnoredReason(baseMethodData, !baseMethodData.ExplicitlyIgnored);
 					continue;
 				}
 

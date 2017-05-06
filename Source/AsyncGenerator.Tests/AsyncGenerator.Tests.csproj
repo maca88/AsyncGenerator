@@ -240,6 +240,8 @@
     <Compile Include="NestedNamespaces\Input\TestCase.cs" />
     <Compile Include="NestedTypes\Fixture.cs" />
     <Compile Include="NestedTypes\Input\TestCase.cs" />
+    <Compile Include="OutsideMethodFunction\Fixture.cs" />
+    <Compile Include="OutsideMethodFunction\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
     <Compile Include="Preconditions\Fixture.cs" />
@@ -391,7 +393,16 @@
     <EmbeddedResource Include="Exceptions\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="AbstractClass\Output\TestCase.txt" />
+    <EmbeddedResource Include="AbstractClass\Output\IgnoreFromInterface.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AbstractClass\Output\AsyncFromInterface.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AbstractClass\Output\AsyncFromImplementation.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="OutsideMethodFunction\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

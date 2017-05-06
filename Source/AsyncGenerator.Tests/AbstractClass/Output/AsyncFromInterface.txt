@@ -20,12 +20,19 @@ namespace AsyncGenerator.Tests.AbstractClass.Input
 	public partial interface ITestInteraface
 	{
 		Task ReadAsync();
+
+		Task<bool> WriteAsync(string content);
 	}
 
 
 	public abstract partial class AbstractTest : ITestInteraface
 	{
-		public abstract Task ReadAsync();
+		public virtual Task ReadAsync()
+		{
+			return Task.CompletedTask;
+		}
+
+		public abstract Task<bool> WriteAsync(string content);
 	}
 
 	public partial class TestCase : AbstractTest
@@ -33,6 +40,18 @@ namespace AsyncGenerator.Tests.AbstractClass.Input
 		public override Task ReadAsync()
 		{
 			return Task.CompletedTask;
+		}
+
+		public override Task<bool> WriteAsync(string content)
+		{
+			try
+			{
+				return Task.FromResult<bool>(SimpleFile.Write(content));
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<bool>(ex);
+			}
 		}
 	}
 }
