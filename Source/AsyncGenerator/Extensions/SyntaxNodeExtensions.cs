@@ -115,10 +115,47 @@ namespace AsyncGenerator.Extensions
 					);
 		}
 
-		internal static bool EndsWithReturnStatement(this BlockSyntax node)
+		internal static bool IsReturnStatementRequired(this BlockSyntax node)
 		{
 			var lastStatement = node.Statements.LastOrDefault();
-			return lastStatement?.IsKind(SyntaxKind.ReturnStatement) == true;
+			if (lastStatement == null)
+			{
+				return true;
+			}
+			if (lastStatement.IsKind(SyntaxKind.ReturnStatement))
+			{
+				return false;
+			}
+			// We need to check if the body has an if else statement and both have a return statement
+			if (lastStatement is IfStatementSyntax ifStatement)
+			{
+				return IsReturnStatementRequired(ifStatement);
+			}
+			return true;
+		}
+
+		internal static bool IsReturnStatementRequired(this IfStatementSyntax ifStatement)
+		{
+			if (ifStatement.Else?.Statement == null || ifStatement.Statement == null)
+			{
+				return true;
+			}
+			var isReturnRequired = ifStatement.Statement.IsKind(SyntaxKind.ReturnKeyword) ||
+			                       (
+				                       ifStatement.Statement.IsKind(SyntaxKind.Block) &&
+				                       IsReturnStatementRequired((BlockSyntax)ifStatement.Statement)
+			                       );
+			var elseStatement = ifStatement.Else.Statement;
+			var elseIsReturnRequired = elseStatement.IsKind(SyntaxKind.ReturnKeyword) ||
+			                           (
+				                           elseStatement.IsKind(SyntaxKind.Block) &&
+				                           IsReturnStatementRequired((BlockSyntax)elseStatement)
+			                           ) ||
+			                           (
+				                           elseStatement.IsKind(SyntaxKind.IfStatement) &&
+				                           IsReturnStatementRequired((IfStatementSyntax)elseStatement)
+			                           );
+			return isReturnRequired || elseIsReturnRequired;
 		}
 
 		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, bool withFullName = false)

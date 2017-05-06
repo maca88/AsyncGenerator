@@ -151,6 +151,21 @@ namespace AsyncGenerator.Transformation.Internal
 			var expression = node as ExpressionSyntax;
 			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any())
 			{
+				// Before wrapping into a task we need to check if is a conditional expression as we can have a conditional expression and one or both parts can return a Task
+				if (node is ConditionalExpressionSyntax conditionalExpression)
+				{
+					var isWhenTrueTask = conditionalExpression.WhenTrue.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any();
+					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any();
+					var whenFalse = isWhenFalseTask
+						? conditionalExpression.WhenFalse
+						: WrapInTaskFromResult(conditionalExpression.WhenFalse);
+					var whenTrue = isWhenTrueTask
+						? conditionalExpression.WhenTrue
+						: WrapInTaskFromResult(conditionalExpression.WhenTrue);
+					return conditionalExpression
+						.WithWhenFalse(whenFalse)
+						.WithWhenTrue(whenTrue);
+				}
 				return WrapInTaskFromResult(expression);
 			}
 			return base.Visit(node);
@@ -231,9 +246,13 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax RewriteFunctionBody(BlockSyntax body)
 		{
-			if (_methodResult.Symbol.ReturnsVoid && !body.EndsWithReturnStatement())
+			if (_methodResult.Faulted)
 			{
-				return !_methodResult.Faulted ? AddReturnStatement(body) : body;
+				return body;
+			}
+			if (_methodResult.Symbol.ReturnsVoid && body.IsReturnStatementRequired())
+			{
+				body = AddReturnStatement(body);
 			}
 			return _methodResult.WrapInTryCatch ? WrapInsideTryCatch(body) : body;
 		}

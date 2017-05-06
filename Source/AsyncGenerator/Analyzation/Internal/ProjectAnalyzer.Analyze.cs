@@ -276,24 +276,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-			if (node.Parent.IsKind(SyntaxKind.ReturnStatement))
-			{
-				functionReferenceData.UseAsReturnValue = true;
-			}
-
-			// Calculate if node is the last statement
-			if (node.Parent.Equals(functionBodyNode) || //eg. bool ExpressionReturn() => SimpleFile.Write();
-				node.Equals(functionBodyNode) // eg. Func<bool> fn = () => SimpleFile.Write();
-			)
-			{
-				functionReferenceData.LastInvocation = true;
-				functionReferenceData.UseAsReturnValue = !methodSymbol.ReturnsVoid;
-			}
-			var bodyBlock = functionBodyNode as BlockSyntax;
-			if (bodyBlock?.Statements.Last() == node.Parent)
-			{
-				functionReferenceData.LastInvocation = true;
-			}
+			CalculateLastInvocation(node, functionReferenceData);
 
 			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)
 			{
@@ -307,6 +290,81 @@ namespace AsyncGenerator.Analyzation.Internal
 				var methodData = functionData.GetMethodData();
 				methodData.CancellationTokenRequired = true;
 			}
+		}
+
+		private void CalculateLastInvocation(InvocationExpressionSyntax node, BodyFunctionReferenceData functionReferenceData)
+		{
+			var functionData = functionReferenceData.FunctionData;
+			var methodSymbol = functionReferenceData.ReferenceSymbol;
+			var functionBodyNode = functionData.GetBodyNode();
+			if (functionBodyNode == null)
+			{
+				return;
+			}
+			// Check if the invocation node is returned in an expression body
+			if (node.Parent.Equals(functionBodyNode) || //eg. bool ExpressionReturn() => SimpleFile.Write();
+			    node.Equals(functionBodyNode) // eg. Func<bool> fn = () => SimpleFile.Write();
+			)
+			{
+				functionReferenceData.LastInvocation = true;
+				functionReferenceData.UseAsReturnValue = !methodSymbol.ReturnsVoid;
+				return;
+			}
+			if (!functionBodyNode.IsKind(SyntaxKind.Block))
+			{
+				return; // The invocation node is inside an expression body but is not the last statement
+			}
+			// Check if the invocation is the last statement to be executed inside the method
+			SyntaxNode currNode = node;
+			StatementSyntax statement = null;
+			while (!currNode.Equals(functionBodyNode))
+			{
+				currNode = currNode.Parent;
+				switch (currNode.Kind())
+				{
+					case SyntaxKind.ReturnStatement:
+						functionReferenceData.LastInvocation = true;
+						functionReferenceData.UseAsReturnValue = true;
+						return;
+					case SyntaxKind.ConditionalExpression: // return num > 5 ? SimpleFile.Write() : false 
+						var conditionExpression = (ConditionalExpressionSyntax)currNode;
+						if (conditionExpression.Condition.Contains(node))
+						{
+							return;
+						}
+						continue;
+					case SyntaxKind.IfStatement:
+						var ifStatement = (IfStatementSyntax) currNode;
+						if (ifStatement.Condition.Contains(node))
+						{
+							return;
+						}
+						statement = (StatementSyntax)currNode;
+						continue;
+					case SyntaxKind.ElseClause:
+						continue;
+					case SyntaxKind.ExpressionStatement:
+						statement = (StatementSyntax) currNode;
+						continue;
+					case SyntaxKind.Block:
+						if (statement == null)
+						{
+							return;
+						}
+						// We need to check that the current statement is the last block statement
+						var block = (BlockSyntax) currNode;
+						if (!statement.Equals(block.Statements.Last()))
+						{
+							return;
+						}
+						statement = block;
+						continue;
+					default:
+						return;
+				}
+			}
+			functionReferenceData.LastInvocation = true;
+			functionReferenceData.UseAsReturnValue = !methodSymbol.ReturnsVoid; // here we don't now if the method will be converted to async or not
 		}
 
 		private void AnalyzeArgumentExpression(SyntaxNode node, SimpleNameSyntax nameNode, BodyFunctionReferenceData result)
