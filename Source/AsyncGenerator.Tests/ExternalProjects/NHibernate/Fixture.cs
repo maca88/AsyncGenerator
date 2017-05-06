@@ -165,6 +165,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 
 				case "ICollectionPersister": // Called by AbstractPersistentCollection
 				case "AbstractCollectionPersister": // Implementation of ICollectionPersister
+				case "OneToManyPersister": // Implementor of AbstractCollectionPersister with own implementation of GetElementByIndex
 					if (symbol.Name == "GetSize" ||
 					    symbol.Name == "IndexExists" ||
 					    symbol.Name == "ElementExists" ||
