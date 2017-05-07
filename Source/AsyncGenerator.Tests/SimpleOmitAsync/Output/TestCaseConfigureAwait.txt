@@ -14,6 +14,9 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 {
 	using System.Threading.Tasks;
 	using System;
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
 	public partial class TestCase
 	{
 		public Task<bool> SimpleReturnAsync()

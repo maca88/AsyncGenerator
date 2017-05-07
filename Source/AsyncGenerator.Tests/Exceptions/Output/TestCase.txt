@@ -17,6 +17,9 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.Exceptions.Input
 {
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
 	public partial class TestCase
 	{
 		public Task NotImplementedAsync()

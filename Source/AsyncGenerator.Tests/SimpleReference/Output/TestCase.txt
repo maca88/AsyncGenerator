@@ -14,9 +14,9 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SimpleReference.Input
 {
 	using System.Threading.Tasks;
-	/// <summary>
-	/// A simple example of using <see cref="SimpleFile.Read"/>
-	/// </summary>
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
 	public partial class TestCase
 	{
 		public Task CallCallReadFileAsync()

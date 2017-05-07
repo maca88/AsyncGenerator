@@ -635,6 +635,71 @@ namespace AsyncGenerator.Extensions
 			return TriviaList(triviaList);
 		}
 
+		internal static TypeDeclarationSyntax WithXmlContentTrivia(this TypeDeclarationSyntax node, SyntaxTrivia endOfLineTrivia, SyntaxTrivia leadingSyntaxTrivia)
+		{
+			var endOfLine = endOfLineTrivia.ToFullString();
+			var leadingSpace = leadingSyntaxTrivia.ToFullString();
+			var comment = DocumentationCommentTrivia(
+				SyntaxKind.SingleLineDocumentationCommentTrivia,
+				List(
+					new XmlNodeSyntax[]
+					{
+						XmlText()
+							.WithTextTokens(
+								TokenList(XmlTextLiteral(TriviaList(DocumentationCommentExterior("///")), " ", " ", TriviaList()))),
+						XmlExampleElement(
+								SingletonList<XmlNodeSyntax>(
+									XmlText()
+										.WithTextTokens(
+											TokenList(
+												XmlTextNewLine(TriviaList(), endOfLine, endOfLine, TriviaList()),
+												XmlTextLiteral(
+													TriviaList(DocumentationCommentExterior($"{leadingSpace}///")),
+													" Contains generated async methods",
+													" Contains generated async methods",
+													TriviaList()),
+												XmlTextNewLine(
+													TriviaList(),
+													endOfLine,
+													endOfLine,
+													TriviaList()),
+												XmlTextLiteral(
+													TriviaList(DocumentationCommentExterior($"{leadingSpace}///")),
+													" ",
+													" ",
+													TriviaList())))))
+							.WithStartTag(XmlElementStartTag(XmlName(Identifier("content"))))
+							.WithEndTag(XmlElementEndTag(XmlName(Identifier("content")))),
+						XmlText()
+							.WithTextTokens(TokenList(XmlTextNewLine(TriviaList(), endOfLine, endOfLine, TriviaList())))
+					}));
+
+			// We have to preserve directives, so we need to modify the existing leading trivia
+			var leadingTrivia = node.GetLeadingTrivia();
+			var trivias = leadingTrivia
+				.Where(o => o.IsKind(SyntaxKind.SingleLineCommentTrivia) || // double slash
+				            o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia)) // triple slash
+				.ToList();
+			if (trivias.Any())
+			{
+				// We have to replace the last comment with ours and remove other if they exist
+				var indexes = trivias.Select(o => leadingTrivia.IndexOf(o)).OrderByDescending(o => o).ToList();
+				leadingTrivia = leadingTrivia.Replace(leadingTrivia.ElementAt(indexes[0]), Trivia(comment));
+				foreach (var index in indexes.Skip(1))
+				{
+					leadingTrivia = leadingTrivia.RemoveAt(index);
+				}
+			}
+			else
+			{
+				leadingTrivia = leadingTrivia.AddRange(TriviaList(
+					Trivia(comment),
+					leadingSyntaxTrivia
+				));
+			}
+			return node.WithLeadingTrivia(leadingTrivia);
+		}
+
 		internal static InvocationExpressionSyntax Invoke(this IdentifierNameSyntax identifier, ParameterListSyntax parameterList)
 		{
 			var callArguments = parameterList.Parameters

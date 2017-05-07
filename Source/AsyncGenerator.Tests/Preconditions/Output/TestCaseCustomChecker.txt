@@ -15,6 +15,9 @@ namespace AsyncGenerator.Tests.Preconditions.Input
 {
 	using System.Threading.Tasks;
 
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
 	public partial class TestCase
 	{
 		public Task ReadFileAsync(string path)

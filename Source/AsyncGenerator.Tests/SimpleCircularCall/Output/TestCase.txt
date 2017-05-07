@@ -13,6 +13,9 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SimpleCircularCall.Input
 {
 	using System.Threading.Tasks;
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
 	public partial class TestCase
 	{
 		public Task Method1Async()

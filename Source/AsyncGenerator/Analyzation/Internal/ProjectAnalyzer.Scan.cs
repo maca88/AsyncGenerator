@@ -426,7 +426,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				var baseMethodData = await documentData.GetFunctionData(refMethodSymbol).ConfigureAwait(false);
 				if (baseMethodData == null) // TODO: Current is null for ctor, operator, destructor, conversion
 				{
-					Logger.Warn($"Method {refMethodSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
+					if (refMethodSymbol.MethodKind == MethodKind.AnonymousFunction || refMethodSymbol.MethodKind == MethodKind.LambdaMethod)
+					{
+						Logger.Warn($"Function inside member {refMethodSymbol.ContainingSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
+					}
+					else
+					{
+						Logger.Warn($"Method {refMethodSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
+					}
+
+					
 					continue;
 				}
 

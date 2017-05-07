@@ -229,6 +229,9 @@ namespace AsyncGenerator.Transformation.Internal
 					//	newNodes.Insert(0, methodTransform.AsyncLockField);
 					//}
 					//newTypeNode = newTypeNode.WithMembers(List(newNodes));
+
+					// Add the <content> instead of <summary> tag
+					newTypeNode = newTypeNode.WithXmlContentTrivia(transformResult.EndOfLineTrivia, transformResult.LeadingWhitespaceTrivia);
 					transformResult.Transformed = newTypeNode;
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 				}

@@ -15,6 +15,9 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SynhronizedMethod.Input
 {
 	using System.Threading.Tasks;
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
 	public partial class TestCase
 	{
 		private readonly Test.MyAsyncLock _synhronized = new Test.MyAsyncLock();
