@@ -386,7 +386,17 @@ namespace AsyncGenerator.Analyzation.Internal
 				// When the async keyword is omitted and the method is not faulted we need to calculate if the method body shall be wrapped in a try/catch block
 				if (!methodData.Faulted && methodData.OmitAsync)
 				{
-					CalculateWrapInTryCatch(methodData);
+					// For sync forwarding we will always wrap into try catch
+					if (methodData.BodyMethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CallForwarding(methodData.Symbol))
+					{
+						methodData.WrapInTryCatch = true;
+						methodData.ForwardCall = true;
+					}
+					else
+					{
+						CalculateWrapInTryCatch(methodData);
+					}
+					
 				}
 				
 			}

@@ -223,6 +223,8 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="BaseFixture.cs" />
+    <Compile Include="CallForwarding\Fixture.cs" />
+    <Compile Include="CallForwarding\Input\TestCase.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="Cref\Fixture.cs" />
     <Compile Include="Cref\Input\TestCase.cs" />
@@ -408,6 +410,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="OmitAsync\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CallForwarding\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

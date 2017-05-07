@@ -134,6 +134,12 @@ namespace AsyncGenerator.Internal
 
 		#endregion
 
+		#region Post-Analyzation step
+
+		public bool ForwardCall { get; set; }
+
+		#endregion
+
 		public IEnumerable<MethodData> GetAllRelatedMethods()
 		{
 			var result = new HashSet<MethodData>();

@@ -30,6 +30,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool UseCancellationTokenOverload { get; private set; }
 
+		public Predicate<IMethodSymbol> CallForwarding { get; set; } = symbol => false;
+
 		#region IFluentProjectAnalyzeConfiguration
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
@@ -73,6 +75,18 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanMethodBody(bool value)
 		{
 			ScanMethodBody = value;
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CallForwarding(bool value)
+		{
+			CallForwarding = symbol => value;
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CallForwarding(Predicate<IMethodSymbol> predicate)
+		{
+			CallForwarding = predicate;
 			return this;
 		}
 

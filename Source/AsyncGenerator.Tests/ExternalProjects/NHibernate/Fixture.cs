@@ -31,6 +31,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
+							.CallForwarding(true)
 							//.UseCancellationTokenOverload(true)
 							.ScanMethodBody(true)
 						)

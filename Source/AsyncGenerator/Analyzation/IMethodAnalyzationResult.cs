@@ -42,5 +42,10 @@ namespace AsyncGenerator.Analyzation
 		/// is not supported for async methods
 		/// </summary>
 		bool MustRunSynchronized { get; }
+
+		/// <summary>
+		/// When true, the async method will forward the call to the sync counterpart
+		/// </summary>
+		bool ForwardCall { get; }
 	}
 }
