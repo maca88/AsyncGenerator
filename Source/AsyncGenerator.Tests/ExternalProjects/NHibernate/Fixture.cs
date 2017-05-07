@@ -48,6 +48,10 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 
 		private MethodConversion GetMethodConversion(IMethodSymbol symbol)
 		{
+			if (symbol.GetAttributes().Any(a => a.AttributeClass.Name == "ObsoleteAttribute"))
+			{
+				return MethodConversion.Ignore;
+			}
 			switch (symbol.ContainingType.Name)
 			{
 				case "HqlSqlWalker":
