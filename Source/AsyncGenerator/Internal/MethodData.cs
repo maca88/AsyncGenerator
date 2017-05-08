@@ -5,12 +5,13 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
-	internal class MethodData : FunctionData, IMethodAnalyzationResult
+	internal class MethodData : FunctionData, IMethodAnalyzationResult, IMethodSymbolInfo
 	{
 		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node) : base(symbol)
 		{
@@ -93,6 +94,18 @@ namespace AsyncGenerator.Internal
 
 		#endregion
 
+		#region IMethodSymbolInfo
+
+		private IReadOnlyList<IMethodSymbol> _cachedImplementedInterfaces;
+		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.ImplementedInterfaces => 
+			_cachedImplementedInterfaces ?? (_cachedImplementedInterfaces = ImplementedInterfaces.ToImmutableArray());
+
+		private IReadOnlyList<IMethodSymbol> _cachedOverridenMethods;
+		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.OverridenMethods =>
+			_cachedOverridenMethods ?? (_cachedOverridenMethods = OverridenMethods.ToImmutableArray());
+
+		#endregion
+
 		#region IMemberAnalyzationResult
 
 		public IMemberAnalyzationResult GetNext()
@@ -137,6 +150,10 @@ namespace AsyncGenerator.Internal
 		#region Post-Analyzation step
 
 		public bool ForwardCall { get; set; }
+
+		public CancellationTokenMethodGeneration CancellationTokenGeneration { get; set; }
+
+		public bool AddCancellationTokenGuards { get; set; }
 
 		#endregion
 

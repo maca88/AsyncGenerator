@@ -24,6 +24,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 
+		public FluentProjectCancellationTokenConfiguration CancellationTokens { get; } = new FluentProjectCancellationTokenConfiguration();
+
 		public bool ScanMethodBody { get; private set; }
 
 		public bool ScanForMissingAsyncMembers { get; private set; }
@@ -87,6 +89,17 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CallForwarding(Predicate<IMethodSymbol> predicate)
 		{
 			CallForwarding = predicate;
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			CancellationTokens.Enabled = true;
+			action(CancellationTokens);
 			return this;
 		}
 

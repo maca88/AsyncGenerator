@@ -27,6 +27,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				var currentMethodData = processingMetodData.Dequeue();
 				toProcessMethodData.Remove(currentMethodData);
+
+				if (currentMethodData.CancellationTokenRequired)
+				{
+					currentMethodData.CancellationTokenGeneration = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
+					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
+				}
+
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
 					var depMethodData = depFunctionData as MethodData;

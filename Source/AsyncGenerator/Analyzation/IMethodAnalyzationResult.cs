@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using AsyncGenerator.Configuration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -47,5 +48,9 @@ namespace AsyncGenerator.Analyzation
 		/// When true, the async method will forward the call to the sync counterpart
 		/// </summary>
 		bool ForwardCall { get; }
+
+		CancellationTokenMethodGeneration CancellationTokenGeneration { get; }
+
+		bool AddCancellationTokenGuards { get; }
 	}
 }

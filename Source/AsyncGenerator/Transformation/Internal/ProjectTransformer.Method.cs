@@ -211,6 +211,7 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
 			}
 
+			// TODO: move the logic inside a method transformer
 			// The method with SplitTail needs to be splitted into two methods
 			if (methodResult.SplitTail)
 			{

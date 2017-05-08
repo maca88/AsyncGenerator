@@ -1,11 +1,92 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration
 {
+	public enum CancellationTokenMethodGeneration
+	{
+		WithDefaultParameter = 0,
+		WithParameter,
+		WithAndWithoutParameter
+	}
+
+	public interface IMethodSymbolInfo
+	{
+		IMethodSymbol Symbol { get; }
+
+		IReadOnlyList<IMethodSymbol> ImplementedInterfaces { get; }
+
+		IReadOnlyList<IMethodSymbol> OverridenMethods { get; }
+
+		IMethodSymbol BaseOverriddenMethod { get; }
+	}
+
+	public interface ICancellationTokenMethodGenerationBehavior
+	{
+		CancellationTokenMethodGeneration GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo);
+	}
+
+	public class DefaultCancellationTokenMethodGenerationBehavior : ICancellationTokenMethodGenerationBehavior
+	{
+		public CancellationTokenMethodGeneration GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo)
+		{
+			return CancellationTokenMethodGeneration.WithDefaultParameter;
+		}
+	}
+
+	public class CustomCancellationTokenMethodGenerationBehavior : ICancellationTokenMethodGenerationBehavior
+	{
+		public CancellationTokenMethodGeneration GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo)
+		{
+			// If this is an virtual or abstract method, then generate virtual or abstract method with cancellation token and a sealed (non virtual) 
+			// method which calls the virtual method with the default cancellation token (None).
+			if (methodSymbolInfo.Symbol.IsVirtual || methodSymbolInfo.Symbol.IsAbstract)
+			{
+				// TODO: sealed option
+				return CancellationTokenMethodGeneration.WithAndWithoutParameter;
+			}
+			// If it is an interface, then generate only method with cancellation token.
+			if (methodSymbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || methodSymbolInfo.OverridenMethods.Any())
+			{
+				return CancellationTokenMethodGeneration.WithParameter;
+			}
+
+			return CancellationTokenMethodGeneration.WithAndWithoutParameter;
+		}
+	}
+
+	public interface IFluentProjectCancellationTokenConfiguration
+	{
+		IFluentProjectCancellationTokenConfiguration Guards(bool value);
+
+		IFluentProjectCancellationTokenConfiguration MethodGeneration(Func<IMethodSymbolInfo, CancellationTokenMethodGeneration> func);
+	}
+
+	internal class FluentProjectCancellationTokenConfiguration : IFluentProjectCancellationTokenConfiguration
+	{
+		public bool Enabled { get; internal set; }
+
+		public bool Guards { get; private set; }
+
+		public Func<IMethodSymbolInfo, CancellationTokenMethodGeneration> MethodGeneration { get; private set; } = symbol => CancellationTokenMethodGeneration.WithDefaultParameter;
+
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.Guards(bool value)
+		{
+			Guards = value;
+			return this;
+		}
+
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbolInfo, CancellationTokenMethodGeneration> func)
+		{
+			MethodGeneration = func ?? throw new ArgumentNullException(nameof(func));
+			return this;
+		}
+	}
+
 	public interface IFluentProjectAnalyzeConfiguration
 	{
 		/// <summary>
@@ -54,6 +135,9 @@ namespace AsyncGenerator.Configuration
 		/// The predicate will be called only for methods that do not have any async invocations.
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration CallForwarding(Predicate<IMethodSymbol> predicate);
+
+
+		IFluentProjectAnalyzeConfiguration CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action);
 
 		/// <summary>
 		/// Enable or disable scanning for async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.

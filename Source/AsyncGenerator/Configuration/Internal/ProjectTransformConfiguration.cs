@@ -28,6 +28,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public string AsyncLockMethodName { get; private set; }
 
+		public FluentProjectCancellationTokenConfiguration CancellationTokens { get; } = new FluentProjectCancellationTokenConfiguration();
+
 		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
 
 		public List<IDocumentTransformer> DocumentTransformers { get; } = new List<IDocumentTransformer>();
@@ -85,6 +87,17 @@ namespace AsyncGenerator.Configuration.Internal
 		{
 			AsyncLockFullTypeName = fullTypeName ?? throw new ArgumentNullException(nameof(fullTypeName));
 			AsyncLockMethodName = methodName ?? throw new ArgumentNullException(nameof(methodName));
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			CancellationTokens.Enabled = true;
+			action(CancellationTokens);
 			return this;
 		}
 
