@@ -225,6 +225,8 @@
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CallForwarding\Fixture.cs" />
     <Compile Include="CallForwarding\Input\TestCase.cs" />
+    <Compile Include="CancellationTokens\Fixture.cs" />
+    <Compile Include="CancellationTokens\Input\TestCase.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="Cref\Fixture.cs" />
     <Compile Include="Cref\Input\TestCase.cs" />
@@ -315,7 +317,7 @@
     <Folder Include="VariousTaskRunUsages\Output\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="SimpleReference\Output\TestCaseWithToken.txt" />
+    <EmbeddedResource Include="SimpleReference\Output\TestCaseDefaultToken.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="SimpleCircularCall\Output\TestCase.txt" />
@@ -385,7 +387,7 @@
     <EmbeddedResource Include="Cref\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="SimpleClassInheritance\Output\TestCaseWithTokens.txt" />
+    <EmbeddedResource Include="SimpleClassInheritance\Output\TestCaseDefaultTokens.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PreconditionOmitAsync\Output\TestCaseLocalFunctions.txt" />
@@ -413,6 +415,21 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CallForwarding\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleReference\Output\TestCaseParameterToken.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleReference\Output\TestCaseOverloadToken.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SimpleClassInheritance\Output\TestCaseCustomTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AbstractClass\Output\TestCaseDefaultTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CancellationTokens\Output\CustomTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

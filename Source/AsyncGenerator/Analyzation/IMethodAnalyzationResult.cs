@@ -34,7 +34,7 @@ namespace AsyncGenerator.Analyzation
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> CrefMethodReferences { get; }
 
 		/// <summary>
-		/// When true, the method has at least one invocation that needs a <see cref="CancellationToken"/> as a parameter.
+		/// When true, the method has at least one invocation that needs a <see cref="System.Threading.CancellationToken"/> as a parameter.
 		/// </summary>
 		bool CancellationTokenRequired { get; }
 
@@ -49,7 +49,7 @@ namespace AsyncGenerator.Analyzation
 		/// </summary>
 		bool ForwardCall { get; }
 
-		CancellationTokenMethodGeneration CancellationTokenGeneration { get; }
+		CancellationTokenMethod? CancellationToken { get; }
 
 		bool AddCancellationTokenGuards { get; }
 	}

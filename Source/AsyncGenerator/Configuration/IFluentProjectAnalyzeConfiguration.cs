@@ -1,17 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration
 {
-	public enum CancellationTokenMethodGeneration
+	[Flags]
+	public enum CancellationTokenMethod
 	{
-		WithDefaultParameter = 0,
-		WithParameter,
-		WithAndWithoutParameter
+		/// <summary>
+		/// Generates one method with an additional optional <see cref="CancellationToken"/> parameter. This option cannot be combined with other options.
+		/// </summary>
+		DefaultParameter = 1,
+		/// <summary>
+		/// Generates one method with an additional required <see cref="CancellationToken"/> parameter.
+		/// </summary>
+		Parameter = 2,
+		/// <summary>
+		/// Generates one overload method without additional parameters that will forward the call to a method with an additional <see cref="CancellationToken"/> parameter
+		/// using <see cref="CancellationToken.None"/> as argument.
+		/// This option shall be combined with <see cref="Parameter"/> option.
+		/// </summary>
+		NoParameterForward = 4,
+		/// <summary>
+		/// The same as <see cref="NoParameterForward"/> with the addition that the sealed keyword will be added for overrides and virtual keyword removed from the virtual methods.
+		/// This option shall be combined with <see cref="Parameter"/> option.
+		/// </summary>
+		SealedNoParameterForward = 8
 	}
 
 	public interface IMethodSymbolInfo
@@ -27,52 +45,30 @@ namespace AsyncGenerator.Configuration
 
 	public interface ICancellationTokenMethodGenerationBehavior
 	{
-		CancellationTokenMethodGeneration GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo);
-	}
-
-	public class DefaultCancellationTokenMethodGenerationBehavior : ICancellationTokenMethodGenerationBehavior
-	{
-		public CancellationTokenMethodGeneration GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo)
-		{
-			return CancellationTokenMethodGeneration.WithDefaultParameter;
-		}
-	}
-
-	public class CustomCancellationTokenMethodGenerationBehavior : ICancellationTokenMethodGenerationBehavior
-	{
-		public CancellationTokenMethodGeneration GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo)
-		{
-			// If this is an virtual or abstract method, then generate virtual or abstract method with cancellation token and a sealed (non virtual) 
-			// method which calls the virtual method with the default cancellation token (None).
-			if (methodSymbolInfo.Symbol.IsVirtual || methodSymbolInfo.Symbol.IsAbstract)
-			{
-				// TODO: sealed option
-				return CancellationTokenMethodGeneration.WithAndWithoutParameter;
-			}
-			// If it is an interface, then generate only method with cancellation token.
-			if (methodSymbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || methodSymbolInfo.OverridenMethods.Any())
-			{
-				return CancellationTokenMethodGeneration.WithParameter;
-			}
-
-			return CancellationTokenMethodGeneration.WithAndWithoutParameter;
-		}
+		CancellationTokenMethod GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo);
 	}
 
 	public interface IFluentProjectCancellationTokenConfiguration
 	{
 		IFluentProjectCancellationTokenConfiguration Guards(bool value);
 
-		IFluentProjectCancellationTokenConfiguration MethodGeneration(Func<IMethodSymbolInfo, CancellationTokenMethodGeneration> func);
+		IFluentProjectCancellationTokenConfiguration MethodGeneration(Func<IMethodSymbol, CancellationTokenMethod> func);
 	}
 
-	internal class FluentProjectCancellationTokenConfiguration : IFluentProjectCancellationTokenConfiguration
+	public interface IProjectCancellationTokenConfiguration
+	{
+		bool Guards { get; }
+
+		Func<IMethodSymbol, CancellationTokenMethod> MethodGeneration { get; }
+	}
+
+	internal class FluentProjectCancellationTokenConfiguration : IFluentProjectCancellationTokenConfiguration, IProjectCancellationTokenConfiguration
 	{
 		public bool Enabled { get; internal set; }
 
 		public bool Guards { get; private set; }
 
-		public Func<IMethodSymbolInfo, CancellationTokenMethodGeneration> MethodGeneration { get; private set; } = symbol => CancellationTokenMethodGeneration.WithDefaultParameter;
+		public Func<IMethodSymbol, CancellationTokenMethod> MethodGeneration { get; private set; } = symbol => CancellationTokenMethod.DefaultParameter;
 
 		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.Guards(bool value)
 		{
@@ -80,7 +76,7 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbolInfo, CancellationTokenMethodGeneration> func)
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbol, CancellationTokenMethod> func)
 		{
 			MethodGeneration = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
@@ -136,15 +132,20 @@ namespace AsyncGenerator.Configuration
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration CallForwarding(Predicate<IMethodSymbol> predicate);
 
-
-		IFluentProjectAnalyzeConfiguration CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action);
-
 		/// <summary>
-		/// Enable or disable scanning for async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
+		/// Enable or disable scanning and generating async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
 		/// When true, the <see cref="AsyncCounterpartsSearchOptions.HasCancellationToken"/> option will be passed for all registered async counterpart finders.
+		/// For more control over the generation use the overload with the action parameter.
 		/// <para>Default is set to false.</para>
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration UseCancellationTokenOverload(bool value);
+		IFluentProjectAnalyzeConfiguration CancellationTokens(bool value);
+
+		/// <summary>
+		/// Enables scanning and generating async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
+		/// The <see cref="AsyncCounterpartsSearchOptions.HasCancellationToken"/> option will be passed for all registered async counterpart finders.
+		/// </summary>
+		/// <returns></returns>
+		IFluentProjectAnalyzeConfiguration CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action);
 
 		/// <summary>
 		/// Enable or disable scanning for missing async counterparts.

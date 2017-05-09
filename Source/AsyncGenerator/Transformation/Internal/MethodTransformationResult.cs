@@ -34,6 +34,12 @@ namespace AsyncGenerator.Transformation.Internal
 		// TODO: find a better approach
 		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
 
+		public void AddMethod(MethodDeclarationSyntax node)
+		{
+			Methods = Methods ?? new List<MethodDeclarationSyntax>();
+			Methods.Add(node);
+		}
+
 		public override IEnumerable<SyntaxNode> GetTransformedNodes()
 		{
 			if (Fields != null)

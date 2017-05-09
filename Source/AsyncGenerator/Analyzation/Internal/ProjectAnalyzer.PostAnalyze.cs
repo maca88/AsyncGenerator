@@ -30,7 +30,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				if (currentMethodData.CancellationTokenRequired)
 				{
-					currentMethodData.CancellationTokenGeneration = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
+					currentMethodData.CancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData.Symbol);
 					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
 				}
 
@@ -178,7 +178,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
-			if (_configuration.UseCancellationTokenOverload)
+			if (_configuration.UseCancellationTokens)
 			{
 				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired).ToList();
 				foreach (var tokenMethodData in tokenMethodDatas)

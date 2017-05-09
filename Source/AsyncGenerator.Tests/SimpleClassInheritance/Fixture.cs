@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
 using AsyncGenerator.Tests.SimpleClassInheritance.Input;
 using AsyncGenerator.Tests.TestCases;
+using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.SimpleClassInheritance
@@ -67,12 +69,12 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 		}
 
 		[Test]
-		public void TestUseCancellationTokenOverloadAfterTransformation()
+		public void TestCancellationTokensAfterTransformation()
 		{
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -81,7 +83,38 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseWithTokens"), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile("TestCaseDefaultTokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestCancellationTokensCustomGenerationAfterTransformation()
+		{
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.MethodGeneration(symbol =>
+						{
+							if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null)
+							{
+								return CancellationTokenMethod.Parameter;
+							}
+							return CancellationTokenMethod.Parameter | CancellationTokenMethod.SealedNoParameterForward;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseCustomTokens"), document.Transformed.ToFullString());
 					})
 				)
 			);

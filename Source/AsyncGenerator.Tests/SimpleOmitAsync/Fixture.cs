@@ -199,7 +199,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>

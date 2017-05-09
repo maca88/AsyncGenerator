@@ -30,7 +30,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ScanForMissingAsyncMembers { get; private set; }
 
-		public bool UseCancellationTokenOverload { get; private set; }
+		public bool UseCancellationTokens => CancellationTokens.Enabled;
 
 		public Predicate<IMethodSymbol> CallForwarding { get; set; } = symbol => false;
 
@@ -92,6 +92,12 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CancellationTokens(bool value)
+		{
+			CancellationTokens.Enabled = value;
+			return this;
+		}
+
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action)
 		{
 			if (action == null)
@@ -109,12 +115,6 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.UseCancellationTokenOverload(bool value)
-		{
-			UseCancellationTokenOverload = value;
-			return this;
-		}
-
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AfterAnalyzation(Action<IProjectAnalyzationResult> action)
 		{
 			if (action == null)
@@ -124,6 +124,12 @@ namespace AsyncGenerator.Configuration.Internal
 			AfterAnalyzation.Add(action);
 			return this;
 		}
+
+		#endregion
+
+		#region IProjectAnalyzeConfiguration
+
+		IProjectCancellationTokenConfiguration IProjectAnalyzeConfiguration.CancellationTokens => CancellationTokens;
 
 		#endregion
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
@@ -23,22 +24,22 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodNode = customNode ?? methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
 			var cancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
+
+			// Calculate whitespace method trivias
+			result.EndOfLineTrivia = methodNode.GetEndOfLine();
+			result.LeadingWhitespaceTrivia = methodNode.GetLeadingWhitespace();
+			result.IndentTrivia = methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
+			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
+
 			if (methodBodyNode == null)
 			{
 				result.Transformed = methodNode.ReturnAsTask()
-					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"))
-					.AddCancellationTokenParameterIf(cancellationTokenParamName, methodResult.CancellationTokenRequired);
+					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 				return result;
 			}
 			var startMethodSpan = methodResult.Node.Span.Start;
 			methodNode = methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 			startMethodSpan -= methodNode.SpanStart;
-
-			// Calculate whitespace method trivias
-			result.EndOfLineTrivia = methodNode.GetEndOfLine();
-			result.LeadingWhitespaceTrivia = methodNode.GetLeadingWhitespace();
-			result.IndentTrivia =  methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
-			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
 			if (methodResult.Conversion == MethodConversion.Ignore)
 			{
@@ -93,8 +94,6 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode
 							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 			}
-			
-			methodNode = methodNode.AddCancellationTokenParameterIf(cancellationTokenParamName, methodResult.CancellationTokenRequired);
 
 			foreach (var pair in referenceAnnotations)
 			{
@@ -259,8 +258,7 @@ namespace AsyncGenerator.Transformation.Internal
 						.WithModifiers(tailMethodModifiers)
 						.AddAsync()
 						.WithBody(tailMethodBody);
-					result.Methods = result.Methods ?? new List<MethodDeclarationSyntax>();
-					result.Methods.Add(tailMethod);
+					result.AddMethod(tailMethod);
 					// Tail call shall contain the cancellation token parameter
 					tailCallParameterList = methodNode.ParameterList;
 				}

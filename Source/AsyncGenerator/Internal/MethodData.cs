@@ -71,7 +71,7 @@ namespace AsyncGenerator.Internal
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
 		/// <summary>
-		/// Reference to the async counterpart that has a <see cref="CancellationToken"/>
+		/// Reference to the async counterpart that has a <see cref="System.Threading.CancellationToken"/>
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartWithTokenSymbol { get; set; }
 
@@ -151,7 +151,7 @@ namespace AsyncGenerator.Internal
 
 		public bool ForwardCall { get; set; }
 
-		public CancellationTokenMethodGeneration CancellationTokenGeneration { get; set; }
+		public CancellationTokenMethod? CancellationToken { get; set; }
 
 		public bool AddCancellationTokenGuards { get; set; }
 

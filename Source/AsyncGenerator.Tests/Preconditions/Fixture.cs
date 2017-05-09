@@ -186,12 +186,12 @@ namespace AsyncGenerator.Tests.Preconditions
 		}
 
 		[Test]
-		public void TestUseCancellationTokenOverloadAfterTransformation()
+		public void TestCancellationTokensAfterTransformation()
 		{
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -208,12 +208,12 @@ namespace AsyncGenerator.Tests.Preconditions
 		}
 
 		[Test]
-		public void TestUseCancellationTokenOverloadLocalFunctionsAfterTransformation()
+		public void TestCancellationTokensLocalFunctionsAfterTransformation()
 		{
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
 					.LocalFunctions(true)

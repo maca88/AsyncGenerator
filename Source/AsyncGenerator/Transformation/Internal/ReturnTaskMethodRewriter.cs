@@ -278,36 +278,12 @@ namespace AsyncGenerator.Transformation.Internal
 			);
 		}
 
+		
+
 		private BlockSyntax ForwardCall()
 		{
 			var methodNode = _methodResult.Node;
-			var name = methodNode.TypeParameterList != null
-				? GenericName(methodNode.Identifier.ValueText)
-					.WithTypeArgumentList(
-						TypeArgumentList(
-							SeparatedList<TypeSyntax>(
-								methodNode.TypeParameterList.Parameters.Select(o => IdentifierName(o.Identifier.ValueText))
-							)))
-				: (SimpleNameSyntax)IdentifierName(methodNode.Identifier.ValueText);
-			MemberAccessExpressionSyntax accessExpression = null;
-			if (_methodResult.Symbol.MethodKind == MethodKind.ExplicitInterfaceImplementation)
-			{
-				// Explicit implementations needs an explicit cast (ie. ((Type)this).SyncMethod() )
-				accessExpression = MemberAccessExpression(
-					SyntaxKind.SimpleMemberAccessExpression,
-					ParenthesizedExpression(
-						CastExpression(
-							IdentifierName(_methodResult.Symbol.ExplicitInterfaceImplementations.Single().ContainingType.Name),
-							ThisExpression())),
-					name);
-			}
-			var invocation = InvocationExpression(accessExpression ?? (ExpressionSyntax)name)
-				.WithArgumentList(
-					ArgumentList(
-						SeparatedList(
-							methodNode.ParameterList.Parameters
-								.Select(o => Argument(IdentifierName(o.Identifier.Text)))
-						)));
+			var invocation = methodNode.ForwardCall(_methodResult.Symbol, methodNode.Identifier.ValueText);
 			var block = Block()
 				.WithCloseBraceToken(methodNode.Body.CloseBraceToken)
 				.WithOpenBraceToken(methodNode.Body.OpenBraceToken);

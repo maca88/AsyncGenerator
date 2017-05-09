@@ -261,6 +261,7 @@
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
     <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
+    <Compile Include="Transformation\Internal\CancellationTokenMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />
     <Compile Include="Transformation\Internal\MethodTransformationResult.cs" />

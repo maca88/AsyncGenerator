@@ -135,7 +135,7 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
@@ -150,7 +150,7 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
