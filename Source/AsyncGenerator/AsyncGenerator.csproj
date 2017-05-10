@@ -181,7 +181,10 @@
   <ItemGroup>
     <Compile Include="Analyzation\IAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
+    <Compile Include="Configuration\IFluentProjectCancellationTokenConfiguration.cs" />
+    <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
+    <Compile Include="Configuration\IProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\IProjectConfiguration.cs" />
     <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
@@ -205,6 +208,7 @@
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.Scan.cs" />
     <Compile Include="Internal\ChildFunctionData.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
+    <Compile Include="MethodCancellationToken.cs" />
     <Compile Include="NamespaceConversion.cs" />
     <Compile Include="Plugins\IDocumentTransformer.cs" />
     <Compile Include="Plugins\IMethodTransformer.cs" />
@@ -256,6 +260,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internal\SolutionData.cs" />
     <Compile Include="Transformation\IDocumentTransformationResult.cs" />
+    <Compile Include="Transformation\IFunctionReferenceTransformationResult.cs" />
     <Compile Include="Transformation\IMemberTransformationResult.cs" />
     <Compile Include="Transformation\IMethodTransformationResult.cs" />
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
@@ -263,6 +268,7 @@
     <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\CancellationTokenMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\FunctionReferenceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />
     <Compile Include="Transformation\Internal\MethodTransformationResult.cs" />
     <Compile Include="Transformation\Internal\NamespaceTransformationResult.cs" />
@@ -274,6 +280,7 @@
     <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
     <Compile Include="Transformation\Internal\RootNamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\RootTypeTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\SplitTailMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\TransformationResult.cs" />
     <Compile Include="Transformation\Internal\TypeTransformationResult.cs" />
     <Compile Include="Transformation\Internal\YieldRewriter.cs" />

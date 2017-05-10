@@ -206,7 +206,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(ct => ct
-						.MethodGeneration(symbol => CancellationTokenMethod.Parameter))
+						.MethodGeneration(symbol => MethodCancellationToken.Parameter))
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
 				.ConfigureTransformation(t => t
@@ -231,7 +231,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(ct => ct
-						.MethodGeneration(symbol => CancellationTokenMethod.Parameter | CancellationTokenMethod.NoParameterForward))
+						.MethodGeneration(symbol => MethodCancellationToken.Parameter | MethodCancellationToken.NoParameterForward))
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
 				.ConfigureTransformation(t => t

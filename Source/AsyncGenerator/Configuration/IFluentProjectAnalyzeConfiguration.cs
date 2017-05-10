@@ -3,86 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Transformation;
+using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration
 {
-	[Flags]
-	public enum CancellationTokenMethod
-	{
-		/// <summary>
-		/// Generates one method with an additional optional <see cref="CancellationToken"/> parameter. This option cannot be combined with other options.
-		/// </summary>
-		DefaultParameter = 1,
-		/// <summary>
-		/// Generates one method with an additional required <see cref="CancellationToken"/> parameter.
-		/// </summary>
-		Parameter = 2,
-		/// <summary>
-		/// Generates one overload method without additional parameters that will forward the call to a method with an additional <see cref="CancellationToken"/> parameter
-		/// using <see cref="CancellationToken.None"/> as argument.
-		/// This option shall be combined with <see cref="Parameter"/> option.
-		/// </summary>
-		NoParameterForward = 4,
-		/// <summary>
-		/// The same as <see cref="NoParameterForward"/> with the addition that the sealed keyword will be added for overrides and virtual keyword removed from the virtual methods.
-		/// This option shall be combined with <see cref="Parameter"/> option.
-		/// </summary>
-		SealedNoParameterForward = 8
-	}
-
-	public interface IMethodSymbolInfo
-	{
-		IMethodSymbol Symbol { get; }
-
-		IReadOnlyList<IMethodSymbol> ImplementedInterfaces { get; }
-
-		IReadOnlyList<IMethodSymbol> OverridenMethods { get; }
-
-		IMethodSymbol BaseOverriddenMethod { get; }
-	}
-
-	public interface ICancellationTokenMethodGenerationBehavior
-	{
-		CancellationTokenMethod GetMethodGeneration(IMethodSymbolInfo methodSymbolInfo);
-	}
-
-	public interface IFluentProjectCancellationTokenConfiguration
-	{
-		IFluentProjectCancellationTokenConfiguration Guards(bool value);
-
-		IFluentProjectCancellationTokenConfiguration MethodGeneration(Func<IMethodSymbol, CancellationTokenMethod> func);
-	}
-
-	public interface IProjectCancellationTokenConfiguration
-	{
-		bool Guards { get; }
-
-		Func<IMethodSymbol, CancellationTokenMethod> MethodGeneration { get; }
-	}
-
-	internal class FluentProjectCancellationTokenConfiguration : IFluentProjectCancellationTokenConfiguration, IProjectCancellationTokenConfiguration
-	{
-		public bool Enabled { get; internal set; }
-
-		public bool Guards { get; private set; }
-
-		public Func<IMethodSymbol, CancellationTokenMethod> MethodGeneration { get; private set; } = symbol => CancellationTokenMethod.DefaultParameter;
-
-		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.Guards(bool value)
-		{
-			Guards = value;
-			return this;
-		}
-
-		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbol, CancellationTokenMethod> func)
-		{
-			MethodGeneration = func ?? throw new ArgumentNullException(nameof(func));
-			return this;
-		}
-	}
-
 	public interface IFluentProjectAnalyzeConfiguration
 	{
 		/// <summary>

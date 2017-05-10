@@ -278,6 +278,7 @@ namespace AsyncGenerator.Extensions
 			}
 		}
 
+		// TODO: remove
 		/// <summary>
 		/// Check if the node is returned with a <see cref="ReturnStatementSyntax"/>
 		/// </summary>
@@ -600,6 +601,7 @@ namespace AsyncGenerator.Extensions
 			SyntaxTrivia leadingWhitespace,
 			SyntaxTrivia endOfLine)
 		{
+			var totalParameters = node.ParameterList.Parameters.Count;
 			var parameter = Parameter(
 					Identifier(
 						TriviaList(),
@@ -636,48 +638,61 @@ namespace AsyncGenerator.Extensions
 			
 			var commentTrivia = node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));
 			var commentNode = (DocumentationCommentTriviaSyntax)commentTrivia.GetStructure();
-			if (commentNode != null)
+			if (commentNode == null)
 			{
-				var lastParam = commentNode.Content.OfType<XmlElementSyntax>()
-					.LastOrDefault(o => o.StartTag.Name.ToString() == "param");
-				var eol = endOfLine.ToFullString();
-				var leadingSpace = leadingWhitespace.ToFullString();
-				int index;
-				if (lastParam != null)
-				{
-					index = commentNode.Content.IndexOf(lastParam);
-				}
-				else
-				{
-					// If there is no param tags we need to insert after the summary tag
-					var summaryNode = commentNode.Content.OfType<XmlElementSyntax>()
-						.First(o => o.StartTag.Name.ToString() == "summary");
-					index = commentNode.Content.IndexOf(summaryNode);
-				}
-				var xmlText = XmlText()
-					.WithTextTokens(
-						TokenList(
-							XmlTextNewLine(
-								TriviaList(),
-								eol,
-								eol,
-								TriviaList()), XmlTextLiteral(
-								TriviaList(
-									DocumentationCommentExterior($"{leadingSpace}///")),
-								" ",
-								" ",
-								TriviaList())));
-				var newCommentNode = commentNode
-					.WithContent(
-						commentNode.Content
-							.InsertRange(index + 1, new XmlNodeSyntax[]
-							{
-								xmlText,
-								CreateParameter(parameterName, "A cancellation token that can be used to cancel the work")
-							})
-					);
-				node = node.ReplaceNode(commentNode, newCommentNode);
+				return node;
 			}
+			
+			var lastParam = commentNode.Content.OfType<XmlElementSyntax>()
+				.LastOrDefault(o => o.StartTag.Name.ToString() == "param");
+			var eol = endOfLine.ToFullString();
+			var leadingSpace = leadingWhitespace.ToFullString();
+			int index;
+			if (lastParam != null)
+			{
+				index = commentNode.Content.IndexOf(lastParam);
+			}
+			else
+			{
+				// If the method have at least one parameter and non of them has a param tag then we do not want to add a param tag in order to avoid warnings
+				if (totalParameters > 0)
+				{
+					return node;
+				}
+				// If there is no param tags we need to insert after the summary tag
+				var summaryNode = commentNode.Content.OfType<XmlElementSyntax>()
+					.FirstOrDefault(o => o.StartTag.Name.ToString() == "summary");
+				if (summaryNode == null)
+				{
+					// Can be a include or inheritdoc tag
+					return node;
+				}
+				index = commentNode.Content.IndexOf(summaryNode);
+			}
+			var xmlText = XmlText()
+				.WithTextTokens(
+					TokenList(
+						XmlTextNewLine(
+							TriviaList(),
+							eol,
+							eol,
+							TriviaList()), XmlTextLiteral(
+							TriviaList(
+								DocumentationCommentExterior($"{leadingSpace}///")),
+							" ",
+							" ",
+							TriviaList())));
+			var newCommentNode = commentNode
+				.WithContent(
+					commentNode.Content
+						.InsertRange(index + 1, new XmlNodeSyntax[]
+						{
+							xmlText,
+							CreateParameter(parameterName, "A cancellation token that can be used to cancel the work")
+						})
+				);
+			node = node.ReplaceNode(commentNode, newCommentNode);
+			
 
 			return node;
 		}

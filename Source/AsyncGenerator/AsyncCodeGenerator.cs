@@ -147,6 +147,7 @@ namespace AsyncGenerator
 			// Method transformers
 			configuration.RegisterPlugin(new AsyncLockMethodTransformer());
 			configuration.RegisterPlugin(new CancellationTokenMethodTransformer());
+			configuration.RegisterPlugin(new SplitTailMethodTransformer());
 		}
 	}
 }

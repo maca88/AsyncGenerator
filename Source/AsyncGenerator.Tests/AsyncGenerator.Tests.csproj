@@ -431,6 +431,12 @@
   <ItemGroup>
     <EmbeddedResource Include="CancellationTokens\Output\CustomTokens.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CancellationTokens\Output\GuardsCustomTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="RegionDirective\Output\TestCaseTokens.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

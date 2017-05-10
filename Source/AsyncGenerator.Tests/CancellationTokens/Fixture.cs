@@ -24,9 +24,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 						{
 							if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null)
 							{
-								return CancellationTokenMethod.Parameter;
+								return MethodCancellationToken.Parameter;
 							}
-							return CancellationTokenMethod.Parameter | CancellationTokenMethod.SealedNoParameterForward;
+							return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
 						}))
 				)
 				.ConfigureTransformation(t => t
@@ -58,9 +58,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 						{
 							if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null)
 							{
-								return CancellationTokenMethod.Parameter;
+								return MethodCancellationToken.Parameter;
 							}
-							return CancellationTokenMethod.Parameter | CancellationTokenMethod.SealedNoParameterForward;
+							return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
 						}))
 				)
 				.ConfigureTransformation(t => t

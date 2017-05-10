@@ -24,7 +24,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 
-		public FluentProjectCancellationTokenConfiguration CancellationTokens { get; } = new FluentProjectCancellationTokenConfiguration();
+		public ProjectCancellationTokenConfiguration CancellationTokens { get; } = new ProjectCancellationTokenConfiguration();
 
 		public bool ScanMethodBody { get; private set; }
 

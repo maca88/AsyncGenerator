@@ -49,8 +49,14 @@ namespace AsyncGenerator.Analyzation
 		/// </summary>
 		bool ForwardCall { get; }
 
-		CancellationTokenMethod? CancellationToken { get; }
+		/// <summary>
+		/// Specifies how shall the cancellation token parameter be generated for the method
+		/// </summary>
+		MethodCancellationToken? MethodCancellationToken { get; }
 
+		/// <summary>
+		/// When true, cancellation token guards will be inserted into the method
+		/// </summary>
 		bool AddCancellationTokenGuards { get; }
 	}
 }

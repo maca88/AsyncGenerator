@@ -283,13 +283,13 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.AsyncCounterpartSymbol = asyncCounterpart;
 					}
 				}
-
-				if (
-					(_configuration.UseCancellationTokens && asyncCounterparts.Count == 2) ||
-					(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)
+				// TODO: define a better logic
+				if (asyncCounterparts.Any()
+				/*(_configuration.UseCancellationTokens && asyncCounterparts.Count == 2) ||
+			(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)*/
 				)
 				{
-					methodData.Ignore($"Has an already an async counterpart {asyncCounterparts.First()}");
+					methodData.Ignore($"Has already an async counterpart {asyncCounterparts.First()}");
 					log(methodData);
 					return;
 				}

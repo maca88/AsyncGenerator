@@ -23,7 +23,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodResult = result.AnalyzationResult;
 			var methodNode = customNode ?? methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
-			var cancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
+			var cancellationTokenParamName = "cancellationToken"; // TODO: remove
 
 			// Calculate whitespace method trivias
 			result.EndOfLineTrivia = methodNode.GetEndOfLine();
@@ -59,18 +59,18 @@ namespace AsyncGenerator.Transformation.Internal
 				typeReferencesAnnotations.Add(annotation);
 			}
 
-			var referenceAnnotations = new Dictionary<string, IFunctionReferenceAnalyzationResult>();
+			//var referenceAnnotations = new Dictionary<string, IFunctionReferenceAnalyzationResult>();
 			foreach (var referenceResult in methodResult.CrefMethodReferences
 				.Union(methodResult.MethodReferences)
 				.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
 			{
+				var transfromReference = new FunctionReferenceTransformationResult(referenceResult);
 				var isCref = referenceResult is CrefFunctionReferenceData;
 				var reference = referenceResult.ReferenceLocation;
 				var startSpan = reference.Location.SourceSpan.Start - startMethodSpan;
 				var nameNode = methodNode.GetSimpleName(startSpan, reference.Location.SourceSpan.Length, isCref);
-				var annotation = Guid.NewGuid().ToString();
-				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
-				referenceAnnotations.Add(annotation, referenceResult);
+				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transfromReference.Annotation)));
+				result.TransformedFunctionReferences.Add(transfromReference);
 
 				if (isCref || !methodResult.OmitAsync)
 				{
@@ -95,11 +95,15 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 			}
 
-			foreach (var pair in referenceAnnotations)
+			foreach (var transfromReference in result.TransformedFunctionReferences)
 			{
-				var nameNode = methodNode.GetAnnotatedNodes(pair.Key).OfType<SimpleNameSyntax>().First();
-				var funReferenceResult = pair.Value;
+				var nameNode = methodNode.GetAnnotatedNodes(transfromReference.Annotation).OfType<SimpleNameSyntax>().First();
+				var funReferenceResult = transfromReference.AnalyzationResult;
 				var bodyFuncReferenceResult = funReferenceResult as IBodyFunctionReferenceAnalyzationResult;
+				var newNameNode = nameNode
+					.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
+					.WithTriviaFrom(nameNode);
+				transfromReference.Transformed = newNameNode;
 				// If we have a cref change the name to the async counterpart and add/update arguments
 				if (bodyFuncReferenceResult == null)
 				{
@@ -127,9 +131,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					methodNode = methodNode
 						.ReplaceNode(crefNode, crefNode
-								.ReplaceNode(nameNode, nameNode
-									.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
-									.WithTriviaFrom(nameNode))
+								.ReplaceNode(nameNode, newNameNode)
 								.WithParameters(CrefParameterList(SeparatedList(paramList))))
 						;
 					continue;
@@ -144,9 +146,6 @@ namespace AsyncGenerator.Transformation.Internal
 				if (!bodyFuncReferenceResult.AwaitInvocation)
 				{
 					var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
-					var newNameNode = nameNode
-						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
-						.WithTriviaFrom(nameNode);
 					// An arrow method does not have a statement
 					if (statement == null)
 					{
@@ -187,16 +186,13 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				else
 				{
-					var newNameNode = nameNode
-						.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
-						.WithTriviaFrom(nameNode);
 					// We need to annotate the invocation node because of the AddAwait method as it needs the parent node
 					var invokeAnnotation = Guid.NewGuid().ToString();
-					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode
+					methodNode = methodNode
+						.ReplaceNode(invokeNode, invokeNode
 						.ReplaceNode(nameNode, newNameNode)
 						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired)
 						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
-						//.AddAwait(invokeParent, _configuration.ConfigureAwaitArgument)
 					);
 					invokeNode = methodNode.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
 					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
@@ -210,75 +206,12 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
 			}
 
-			// TODO: move the logic inside a method transformer
-			// The method with SplitTail needs to be splitted into two methods
-			if (methodResult.SplitTail)
-			{
-				// Tail method body shall contain all statements after preconditions
-				var tailMethodBody = methodNode.Body
-						.WithStatements(new SyntaxList<StatementSyntax>()
-							.AddRange(methodNode.Body.Statements.Skip(methodResult.Preconditions.Count)));
-				// Main method shall contain only preconditions and a call to the tail method
-				var bodyStatements = new SyntaxList<StatementSyntax>()
-					.AddRange(methodNode.Body.Statements.Take(methodResult.Preconditions.Count));
-				ParameterListSyntax tailCallParameterList;
-				// TODO: handle name collisions
-				var tailIdentifier = Identifier("Internal" + methodNode.Identifier.Value + "Async");
-				if (_configuration.LocalFunctions)
-				{
-					var tailFunction = LocalFunctionStatement(
-							methodNode.ReturnType.WrapIntoTask().WithoutLeadingTrivia(),
-							tailIdentifier)
-						.WithParameterList(ParameterList()
-							.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(result.EndOfLineTrivia))))
-						.AddAsync()
-						.WithLeadingTrivia(result.BodyLeadingWhitespaceTrivia)
-						.WithBody(tailMethodBody
-						);
-					tailFunction = methodResult.Node.NormalizeMethodBody(Block(SingletonList(tailFunction)), result.IndentTrivia, result.EndOfLineTrivia)
-						.Statements
-						.OfType<LocalFunctionStatementSyntax>()
-						.First();
-					bodyStatements = bodyStatements.Add(tailFunction);
-					// We do not need any parameter for the local function as we already have the parameters from the parent method
-					tailCallParameterList = ParameterList();
-				}
-				else
-				{
-					var tailMethodModifiers = TokenList(
-						Token(TriviaList(result.EndOfLineTrivia, result.LeadingWhitespaceTrivia), SyntaxKind.PrivateKeyword, TriviaList(Space)));
-					if (methodNode.Modifiers.Any(o => o.IsKind(SyntaxKind.StaticKeyword)))
-					{
-						tailMethodModifiers = tailMethodModifiers.Add(Token(TriviaList(), SyntaxKind.StaticKeyword, TriviaList(Space)));
-					}
-					var tailMethod = methodNode
-						.WithReturnType(methodNode.ReturnType.WithLeadingTrivia()) // Remove lead trivia in case the return type is the first node (eg. void Method())
-						.ReturnAsTask()
-						.WithIdentifier(tailIdentifier)
-						.WithModifiers(tailMethodModifiers)
-						.AddAsync()
-						.WithBody(tailMethodBody);
-					result.AddMethod(tailMethod);
-					// Tail call shall contain the cancellation token parameter
-					tailCallParameterList = methodNode.ParameterList;
-				}
-
-				var tailCall = ReturnStatement(
-					Token(TriviaList(result.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
-					IdentifierName(tailIdentifier).Invoke(tailCallParameterList),
-					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(result.EndOfLineTrivia))
-				);
-				bodyStatements = bodyStatements.Add(tailCall);
-
-				methodNode = methodNode.WithBody(methodNode.Body
-					.WithStatements(bodyStatements));
-			}
-			else if (methodResult.OmitAsync)
+			if (!methodResult.SplitTail && methodResult.OmitAsync)
 			{
 				var rewriter = new ReturnTaskMethodRewriter(result);
 				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
 			}
-			else
+			else if(!methodResult.SplitTail)
 			{
 				methodNode = methodNode.AddAsync();
 			}

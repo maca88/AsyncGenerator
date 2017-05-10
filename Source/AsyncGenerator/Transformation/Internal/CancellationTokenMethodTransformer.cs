@@ -36,11 +36,11 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			var cancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
-			var generationOptions = methodResult.CancellationToken.GetValueOrDefault();
+			var generationOptions = methodResult.MethodCancellationToken.GetValueOrDefault();
 			var methodNode = transformResult.Transformed;
 			methodNode = methodNode
 				.AddCancellationTokenParameter(cancellationTokenParamName,
-					generationOptions.HasFlag(CancellationTokenMethod.DefaultParameter),
+					generationOptions.HasFlag(MethodCancellationToken.DefaultParameter),
 					transformResult.LeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia);
 
@@ -58,11 +58,52 @@ namespace AsyncGenerator.Transformation.Internal
 					methodBody.WithStatements(
 						methodBody.Statements.Insert(methodResult.Preconditions.Count, startGuard))
 					);
+				// We need to get all statements have at least one async invocation without a cancellation token argument, to prepend an extra guard
+				var statements = new Dictionary<int, string>();
+				foreach (var functionReference in transformResult.TransformedFunctionReferences)
+				{
+					if (!(functionReference.AnalyzationResult is IBodyFunctionReferenceAnalyzationResult bodyFunctionReference))
+					{
+						continue;
+					}
+					if (bodyFunctionReference.GetConversion() != ReferenceConversion.ToAsync || bodyFunctionReference.CancellationTokenRequired)
+					{
+						continue;
+					}
+					var statement = methodNode
+						.GetAnnotatedNodes(functionReference.Annotation)
+						.First().Ancestors().OfType<StatementSyntax>().First();
+					if (statements.ContainsKey(statement.SpanStart))
+					{
+						continue;
+					}
+					var annotation = Guid.NewGuid().ToString();
+					methodNode = methodNode
+						.ReplaceNode(statement, statement.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
+					statements.Add(statement.SpanStart, annotation);
+				}
+				// For each statement we need to find the index where is located in the block.
+				// TODO: Add support when the parent is not a block syntax
+				foreach (var pair in statements)
+				{
+					var statement = methodNode.GetAnnotatedNodes(pair.Value).OfType<StatementSyntax>().First();
+					var parentBlock = statement.Parent as BlockSyntax;
+					if (parentBlock == null)
+					{
+						continue; // Currently not supported
+					}
+					var index = parentBlock.Statements.IndexOf(statement);
+					var newParentBlock = parentBlock
+						.WithStatements(parentBlock.Statements
+							.Insert(index, GetAsyncGuard(cancellationTokenParamName, statement.GetLeadingWhitespace(), transformResult.EndOfLineTrivia)));
+					methodNode = methodNode
+						.ReplaceNode(parentBlock, newParentBlock);
+				}
 			}
 
 			// Add an additional overload if specified
-			if (!generationOptions.HasFlag(CancellationTokenMethod.NoParameterForward) &&
-				!generationOptions.HasFlag(CancellationTokenMethod.SealedNoParameterForward))
+			if (!generationOptions.HasFlag(MethodCancellationToken.NoParameterForward) &&
+				!generationOptions.HasFlag(MethodCancellationToken.SealedNoParameterForward))
 			{
 				return MethodTransformerResult.Update(methodNode);
 			}
@@ -71,6 +112,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithTriviaFrom(transformResult.Transformed) // We want to have the sumamry of the transformed node but not the parameter list
 				.WithoutAnnotations(transformResult.Annotation)
 				.WithIdentifier(Identifier(methodNode.Identifier.ValueText));
+
 			// We can have abstract methods that don't have a body
 			if (methodResult.Symbol.IsAbstract)
 			{
@@ -107,7 +149,7 @@ namespace AsyncGenerator.Transformation.Internal
 								.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia)))
 						)
 					));
-			if (generationOptions.HasFlag(CancellationTokenMethod.SealedNoParameterForward))
+			if (generationOptions.HasFlag(MethodCancellationToken.SealedNoParameterForward))
 			{
 				if (methodResult.Symbol.IsVirtual)
 				{
@@ -127,6 +169,11 @@ namespace AsyncGenerator.Transformation.Internal
 					overloadNode = overloadNode
 						.WithModifiers(TokenList(methodResult.Node.Modifiers.Where(o => !o.IsKind(SyntaxKind.AbstractKeyword))));
 				}
+			}
+			// We need to remove all directives
+			while (overloadNode.ContainsDirectives)
+			{
+				overloadNode = overloadNode.RemoveNode(overloadNode.GetFirstDirective(), SyntaxRemoveOptions.KeepNoTrivia);
 			}
 
 			return MethodTransformerResult.Update(methodNode)
@@ -174,7 +221,7 @@ namespace AsyncGenerator.Transformation.Internal
 													SingletonSeparatedList(
 														methodResult.Symbol.ReturnsVoid
 															? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-															: methodResult.Node.ReturnType)
+															: methodResult.Node.ReturnType.WithTrailingTrivia())
 														))))
 									.WithArgumentList(
 										ArgumentList(

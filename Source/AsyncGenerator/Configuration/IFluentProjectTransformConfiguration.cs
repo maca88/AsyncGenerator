@@ -53,8 +53,6 @@ namespace AsyncGenerator.Configuration
 		/// <returns></returns>
 		IFluentProjectTransformConfiguration AsyncLock(string fullTypeName, string methodName);
 
-		IFluentProjectTransformConfiguration CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action);
-
 		/// <summary>
 		/// Add a callback that is called when the transformation for the project is completed
 		/// </summary>
