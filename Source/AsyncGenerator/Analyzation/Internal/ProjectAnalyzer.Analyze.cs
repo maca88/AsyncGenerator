@@ -150,7 +150,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			var functionData = functionReferenceData.FunctionData;
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionNode = functionData.GetNode();
-			var functionBodyNode = functionData.GetBodyNode();
 			var queryExpression = node.Ancestors()
 				.TakeWhile(o => o != functionNode)
 				.OfType<QueryExpressionSyntax>()
@@ -163,7 +162,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			var searchOptions = AsyncCounterpartsSearchOptions.Default;
-			if (_configuration.UseCancellationTokenOverload)
+			if (_configuration.UseCancellationTokens)
 			{
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
@@ -176,7 +175,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
 				}
 				// Set CancellationTokenRequired if we detect that one of the async counterparts has a cancellation token as a parameter
-				if (_configuration.UseCancellationTokenOverload)
+				if (_configuration.UseCancellationTokens)
 				{
 					var tokenOverload = functionReferenceData.ReferenceAsyncSymbols
 						.SingleOrDefault(o => o.Parameters.Length > methodSymbol.Parameters.Length); // TODO: select the right one if we have more than one

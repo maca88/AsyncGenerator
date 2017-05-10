@@ -195,11 +195,7 @@ namespace AsyncGenerator.Transformation.Internal
 								}
 								if (methodTransformResult.Methods != null)
 								{
-									if (transformedNode.Methods == null)
-									{
-										transformedNode.Methods = new List<MethodDeclarationSyntax>(1);
-									}
-									transformedNode.Methods.AddRange(methodTransformResult.Methods);
+									transformedNode.AddMethods(methodTransformResult.Methods);
 									// Update member names for next transformators
 									foreach (var method in methodTransformResult.Methods)
 									{

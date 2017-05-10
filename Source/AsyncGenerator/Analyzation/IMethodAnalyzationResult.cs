@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using AsyncGenerator.Configuration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -33,7 +34,7 @@ namespace AsyncGenerator.Analyzation
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> CrefMethodReferences { get; }
 
 		/// <summary>
-		/// When true, the method has at least one invocation that needs a <see cref="CancellationToken"/> as a parameter.
+		/// When true, the method has at least one invocation that needs a <see cref="System.Threading.CancellationToken"/> as a parameter.
 		/// </summary>
 		bool CancellationTokenRequired { get; }
 
@@ -47,5 +48,15 @@ namespace AsyncGenerator.Analyzation
 		/// When true, the async method will forward the call to the sync counterpart
 		/// </summary>
 		bool ForwardCall { get; }
+
+		/// <summary>
+		/// Specifies how shall the cancellation token parameter be generated for the method
+		/// </summary>
+		MethodCancellationToken? MethodCancellationToken { get; }
+
+		/// <summary>
+		/// When true, cancellation token guards will be inserted into the method
+		/// </summary>
+		bool AddCancellationTokenGuards { get; }
 	}
 }

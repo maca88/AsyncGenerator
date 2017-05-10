@@ -32,7 +32,28 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
 							.CallForwarding(true)
-							//.UseCancellationTokenOverload(true)
+							.CancellationTokens(t => t
+								.Guards(true)
+								.MethodGeneration(symbol =>
+								{
+									// If it is an interface, then generate only method with cancellation token.
+									// If this is an virtual or abstract method, then generate virtual or abstract method with cancellation 
+									// token and a sealed (non virtual) method which calls the virtual method with the default cancellation token (None).
+									if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null || symbol.ExplicitInterfaceImplementations.Any())
+									{
+										return MethodCancellationToken.Parameter;
+									}
+									return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
+								})
+								.RequireCancellationToken(symbol =>
+								{
+									if (IsEventListener(symbol.ContainingType))
+									{
+										return true;
+									}
+									return null; // Leave the decision to the generator
+								})
+							)
 							.ScanMethodBody(true)
 						)
 						.ConfigureTransformation(t => t
@@ -184,7 +205,20 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						return MethodConversion.ToAsync;
 					}
 					break;
+				default:
+					if (IsEventListener(symbol.ContainingType))
+					{
+						return MethodConversion.ToAsync;
+					}
+					break;
+			}
+			return MethodConversion.Unknown;
+		}
 
+		private bool IsEventListener(INamedTypeSymbol type)
+		{
+			switch (type.Name)
+			{
 				case "IAutoFlushEventListener":
 				case "IFlushEventListener":
 				case "IDeleteEventListener":
@@ -202,9 +236,9 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				case "IPreInsertEventListener":
 				case "IPreLoadEventListener":
 				case "IPreUpdateEventListener":
-					return MethodConversion.ToAsync;
+					return true;
 			}
-			return MethodConversion.Unknown;
+			return false;
 		}
 	}
 }

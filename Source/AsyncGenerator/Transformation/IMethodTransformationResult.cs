@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Transformation
@@ -16,5 +18,9 @@ namespace AsyncGenerator.Transformation
 		/// The transformed method
 		/// </summary>
 		MethodDeclarationSyntax Transformed { get; }
+
+		SyntaxTrivia BodyLeadingWhitespaceTrivia { get; }
+
+		IReadOnlyList<IFunctionReferenceTransformationResult> TransformedFunctionReferences { get; }
 	}
 }

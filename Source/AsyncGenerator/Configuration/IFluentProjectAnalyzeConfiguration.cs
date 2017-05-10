@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Transformation;
+using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -56,11 +60,19 @@ namespace AsyncGenerator.Configuration
 		IFluentProjectAnalyzeConfiguration CallForwarding(Predicate<IMethodSymbol> predicate);
 
 		/// <summary>
-		/// Enable or disable scanning for async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
+		/// Enable or disable scanning and generating async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
 		/// When true, the <see cref="AsyncCounterpartsSearchOptions.HasCancellationToken"/> option will be passed for all registered async counterpart finders.
+		/// For more control over the generation use the overload with the action parameter.
 		/// <para>Default is set to false.</para>
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration UseCancellationTokenOverload(bool value);
+		IFluentProjectAnalyzeConfiguration CancellationTokens(bool value);
+
+		/// <summary>
+		/// Enables scanning and generating async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
+		/// The <see cref="AsyncCounterpartsSearchOptions.HasCancellationToken"/> option will be passed for all registered async counterpart finders.
+		/// </summary>
+		/// <returns></returns>
+		IFluentProjectAnalyzeConfiguration CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action);
 
 		/// <summary>
 		/// Enable or disable scanning for missing async counterparts.

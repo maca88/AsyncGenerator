@@ -33,6 +33,7 @@ namespace AsyncGenerator.Tests.SimpleReference.Input
 		/// <summary>
 		/// Use <see cref="SimpleFile.ReadAsync(CancellationToken)"/> to read a file
 		/// </summary>
+		/// <param name="cancellationToken">A cancellation token that can be used to cancel the work</param>
 		public Task ReadFileAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return SimpleFile.ReadAsync(cancellationToken);

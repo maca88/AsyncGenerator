@@ -27,6 +27,20 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				var currentMethodData = processingMetodData.Dequeue();
 				toProcessMethodData.Remove(currentMethodData);
+
+				if (currentMethodData.CancellationTokenRequired)
+				{
+					currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData.Symbol);
+					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
+				}
+				else if (_configuration.UseCancellationTokens)
+				{
+					// Permit the consumer to decide require the cancellation parameter
+					currentMethodData.CancellationTokenRequired =
+						_configuration.CancellationTokens.RequireCancellationToken(currentMethodData.Symbol) ??
+						currentMethodData.CancellationTokenRequired;
+				}
+
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
 					var depMethodData = depFunctionData as MethodData;
@@ -56,17 +70,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (!currentMethodData.CancellationTokenRequired)
 					{
 						continue;
-					}
-
-					// We need to update the CancellationTokenRequired for all invocations of the current method
-					foreach (var depFunctionRefData in bodyReferences)
-					{
-						depFunctionRefData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
-					}
-					// Update also references of the dependency function into the current one (circular dependency) if any
-					foreach (var functionRefData in currentMethodData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == depFunctionData))
-					{
-						functionRefData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
 					// Propagate the CancellationTokenRequired for the dependency method data
 					if (depMethodData != null)
@@ -171,7 +174,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
-			if (_configuration.UseCancellationTokenOverload)
+			if (_configuration.UseCancellationTokens)
 			{
 				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired).ToList();
 				foreach (var tokenMethodData in tokenMethodDatas)
@@ -224,6 +227,21 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				methodData.Ignore("Method is never used.");
 				LogIgnoredReason(methodData);
+			}
+
+			// Update CancellationTokenRequired for all body function references that requires a cancellation token
+			if (_configuration.UseCancellationTokens)
+			{
+				foreach (var methodData in allTypeData
+					.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
+				{
+					foreach (var functionRefData in methodData.BodyMethodReferences
+						.Where(o => o.ReferenceFunctionData != null && o.ReferenceFunctionData.Conversion == MethodConversion.ToAsync &&
+									o.ReferenceFunctionData.GetMethodData().CancellationTokenRequired))
+					{
+						functionRefData.CancellationTokenRequired = true;
+					}
+				}
 			}
 
 			// 4. Step - Calculate the final type conversion

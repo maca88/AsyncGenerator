@@ -278,6 +278,7 @@ namespace AsyncGenerator.Extensions
 			}
 		}
 
+		// TODO: remove
 		/// <summary>
 		/// Check if the node is returned with a <see cref="ReturnStatementSyntax"/>
 		/// </summary>
@@ -558,49 +559,169 @@ namespace AsyncGenerator.Extensions
 			return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
 		}
 
-		internal static MethodDeclarationSyntax AddCancellationTokenParameterIf(this MethodDeclarationSyntax node, string parameterName, bool condition)
+		internal static InvocationExpressionSyntax ForwardCall(this MethodDeclarationSyntax methodNode, IMethodSymbol symbol, string identifier, params ArgumentSyntax[] additionalArgs)
 		{
-			if (!condition)
+			var name = methodNode.TypeParameterList != null
+				? GenericName(identifier)
+					.WithTypeArgumentList(
+						TypeArgumentList(
+							SeparatedList<TypeSyntax>(
+								methodNode.TypeParameterList.Parameters.Select(o => IdentifierName(o.Identifier.ValueText))
+							)))
+				: (SimpleNameSyntax)IdentifierName(identifier);
+			MemberAccessExpressionSyntax accessExpression = null;
+			if (symbol.MethodKind == MethodKind.ExplicitInterfaceImplementation)
 			{
-				return node;
+				// Explicit implementations needs an explicit cast (ie. ((Type)this).SyncMethod() )
+				accessExpression = MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					ParenthesizedExpression(
+						CastExpression(
+							IdentifierName(symbol.ExplicitInterfaceImplementations.Single().ContainingType.Name),
+							ThisExpression())),
+					name);
 			}
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
+			var arguments = methodNode.ParameterList.Parameters
+				.Select(o => Argument(IdentifierName(o.Identifier.Text)))
+				.Union(additionalArgs)
+				.SelectMany((o, i) => i == 0
+					? new SyntaxNodeOrToken[] {o}
+					: new SyntaxNodeOrToken[] {comma, o});
+
+			return InvocationExpression(accessExpression ?? (ExpressionSyntax)name)
+				.WithArgumentList(
+					ArgumentList(
+						SeparatedList<ArgumentSyntax>(arguments)));
+		}
+
+		internal static MethodDeclarationSyntax AddCancellationTokenParameter(this MethodDeclarationSyntax node, 
+			string parameterName, 
+			bool defaultParameter,
+			SyntaxTrivia leadingWhitespace,
+			SyntaxTrivia endOfLine)
+		{
+			var totalParameters = node.ParameterList.Parameters.Count;
 			var parameter = Parameter(
 					Identifier(
 						TriviaList(),
 						parameterName,
-						TriviaList(
-							Space)))
+						defaultParameter ? TriviaList(Space) : TriviaList()))
 				.WithType(
 					IdentifierName(
 						Identifier(
 							TriviaList(),
 							nameof(CancellationToken),
-							TriviaList(
-								Space))))
-				.WithDefault(
-					EqualsValueClause(
-							DefaultExpression(
-								IdentifierName(nameof(CancellationToken))))
-						.WithEqualsToken(
-							Token(
-								TriviaList(),
-								SyntaxKind.EqualsToken,
-								TriviaList(
-									Space))));
-			if (!node.ParameterList.Parameters.Any())
+							TriviaList(Space))));
+			if (defaultParameter)
 			{
-				return node.AddParameterListParameters(parameter);
+				parameter = parameter
+					.WithDefault(
+						EqualsValueClause(
+								DefaultExpression(
+									IdentifierName(nameof(CancellationToken))))
+							.WithEqualsToken(
+								Token(
+									TriviaList(),
+									SyntaxKind.EqualsToken,
+									TriviaList(
+										Space))));
 			}
-			// We need to add an extra space after the comma
-			var parameterList = SeparatedList<ParameterSyntax>(
-				node.ParameterList.Parameters.GetWithSeparators()
-					.Concat(new SyntaxNodeOrToken[]
-					{
-						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
-						parameter
-					})
-			);
-			return node.WithParameterList(node.ParameterList.WithParameters(parameterList));
+
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
+			var parameters = node.ParameterList.Parameters
+				.Union(new []{ parameter })
+				.SelectMany((o, i) => i == 0
+					? new SyntaxNodeOrToken[] { o }
+					: new SyntaxNodeOrToken[] { comma, o });
+			node = node.WithParameterList(node.ParameterList.WithParameters(SeparatedList<ParameterSyntax>(parameters)));
+			
+			var commentTrivia = node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));
+			var commentNode = (DocumentationCommentTriviaSyntax)commentTrivia.GetStructure();
+			if (commentNode == null)
+			{
+				return node;
+			}
+			
+			var lastParam = commentNode.Content.OfType<XmlElementSyntax>()
+				.LastOrDefault(o => o.StartTag.Name.ToString() == "param");
+			var eol = endOfLine.ToFullString();
+			var leadingSpace = leadingWhitespace.ToFullString();
+			int index;
+			if (lastParam != null)
+			{
+				index = commentNode.Content.IndexOf(lastParam);
+			}
+			else
+			{
+				// If the method have at least one parameter and non of them has a param tag then we do not want to add a param tag in order to avoid warnings
+				if (totalParameters > 0)
+				{
+					return node;
+				}
+				// If there is no param tags we need to insert after the summary tag
+				var summaryNode = commentNode.Content.OfType<XmlElementSyntax>()
+					.FirstOrDefault(o => o.StartTag.Name.ToString() == "summary");
+				if (summaryNode == null)
+				{
+					// Can be a include or inheritdoc tag
+					return node;
+				}
+				index = commentNode.Content.IndexOf(summaryNode);
+			}
+			var xmlText = XmlText()
+				.WithTextTokens(
+					TokenList(
+						XmlTextNewLine(
+							TriviaList(),
+							eol,
+							eol,
+							TriviaList()), XmlTextLiteral(
+							TriviaList(
+								DocumentationCommentExterior($"{leadingSpace}///")),
+							" ",
+							" ",
+							TriviaList())));
+			var newCommentNode = commentNode
+				.WithContent(
+					commentNode.Content
+						.InsertRange(index + 1, new XmlNodeSyntax[]
+						{
+							xmlText,
+							CreateParameter(parameterName, "A cancellation token that can be used to cancel the work")
+						})
+				);
+			node = node.ReplaceNode(commentNode, newCommentNode);
+			
+
+			return node;
+		}
+
+		private static XmlElementSyntax CreateParameter(string identifierName, string description)
+		{
+			var identifier = Identifier(identifierName);
+
+			var attribute = XmlNameAttribute(
+				XmlName(Identifier(TriviaList(Space), "name", TriviaList())),
+				Token(SyntaxKind.DoubleQuoteToken),
+				IdentifierName(identifier),
+				Token(SyntaxKind.DoubleQuoteToken));
+
+			var startTag = XmlElementStartTag(XmlName("param"))
+				.WithAttributes(new SyntaxList<XmlAttributeSyntax>().Add(attribute));
+
+			var endTag = XmlElementEndTag(XmlName("param"));
+
+			var content = SingletonList<XmlNodeSyntax>(
+				XmlText()
+					.WithTextTokens(
+						TokenList(
+							XmlTextLiteral(
+								TriviaList(),
+								description,
+								description,
+								TriviaList()))));
+			return XmlElement(startTag, content, endTag);
 		}
 
 		internal static InvocationExpressionSyntax AddArgument(this InvocationExpressionSyntax node, string argumentName)

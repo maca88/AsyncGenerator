@@ -254,19 +254,19 @@ namespace AsyncGenerator.Analyzation.Internal
 			//TODO: this is not correct when generating methods with a cancellation token as here we do not know
 			// if the generated method will have the cancellation token parameter or not
 			var searchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
-			if (_configuration.UseCancellationTokenOverload)
+			if (_configuration.UseCancellationTokens)
 			{
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).ToList();
 			if (asyncCounterparts.Any())
 			{
-				if (!_configuration.UseCancellationTokenOverload && asyncCounterparts.Count > 1)
+				if (!_configuration.UseCancellationTokens && asyncCounterparts.Count > 1)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than one async counterpart");
 				}
 				// We shall get a maximum of two async counterparts when the HasCancellationToken flag is used
-				if (_configuration.UseCancellationTokenOverload && asyncCounterparts.Count > 2)
+				if (_configuration.UseCancellationTokens && asyncCounterparts.Count > 2)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than two async counterparts");
 				}
@@ -283,13 +283,13 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.AsyncCounterpartSymbol = asyncCounterpart;
 					}
 				}
-
-				if (
-					(_configuration.UseCancellationTokenOverload && asyncCounterparts.Count == 2) ||
-					(!_configuration.UseCancellationTokenOverload && asyncCounterparts.Count == 1)
+				// TODO: define a better logic
+				if (asyncCounterparts.Any()
+				/*(_configuration.UseCancellationTokens && asyncCounterparts.Count == 2) ||
+			(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)*/
 				)
 				{
-					methodData.Ignore($"Has an already an async counterpart {asyncCounterparts.First()}");
+					methodData.Ignore($"Has already an async counterpart {asyncCounterparts.First()}");
 					log(methodData);
 					return;
 				}

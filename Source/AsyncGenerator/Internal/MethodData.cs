@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -70,7 +71,7 @@ namespace AsyncGenerator.Internal
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
 		/// <summary>
-		/// Reference to the async counterpart that has a <see cref="CancellationToken"/>
+		/// Reference to the async counterpart that has a <see cref="System.Threading.CancellationToken"/>
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartWithTokenSymbol { get; set; }
 
@@ -137,6 +138,10 @@ namespace AsyncGenerator.Internal
 		#region Post-Analyzation step
 
 		public bool ForwardCall { get; set; }
+
+		public MethodCancellationToken? MethodCancellationToken { get; set; }
+
+		public bool AddCancellationTokenGuards { get; set; }
 
 		#endregion
 

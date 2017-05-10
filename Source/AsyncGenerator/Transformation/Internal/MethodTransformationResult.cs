@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -21,7 +22,9 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<FieldDeclarationSyntax> Fields { get; set; }
 
-		public List<MethodDeclarationSyntax> Methods { get; set; }
+		public List<MethodDeclarationSyntax> Methods { get; private set; }
+
+		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
 
 		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 
@@ -33,6 +36,27 @@ namespace AsyncGenerator.Transformation.Internal
 
 		// TODO: find a better approach
 		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
+
+		#region IMethodTransformationResult
+
+		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
+		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodTransformationResult.TransformedFunctionReferences =>
+			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
+
+		#endregion
+
+
+		public void AddMethod(MethodDeclarationSyntax node)
+		{
+			Methods = Methods ?? new List<MethodDeclarationSyntax>();
+			Methods.Add(node);
+		}
+
+		public void AddMethods(IEnumerable<MethodDeclarationSyntax> nodes)
+		{
+			Methods = Methods ?? new List<MethodDeclarationSyntax>();
+			Methods.AddRange(nodes);
+		}
 
 		public override IEnumerable<SyntaxNode> GetTransformedNodes()
 		{
@@ -61,6 +85,11 @@ namespace AsyncGenerator.Transformation.Internal
 		public IMemberAnalyzationResult GetAnalyzationResult()
 		{
 			return AnalyzationResult;
+		}
+
+		IMemberAnalyzationResult IMemberTransformationResult.GetAnalyzationResult()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

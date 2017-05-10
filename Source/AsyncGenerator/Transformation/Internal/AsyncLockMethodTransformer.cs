@@ -56,6 +56,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.AddField(field);
 		}
 
+		// TODO: helper method
 		private static string GetLockFieldName(IMethodSymbol symbol, ITypeTransformationMetadata typeTransformMetadata)
 		{
 			var fieldName = symbol.Name;

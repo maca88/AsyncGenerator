@@ -24,11 +24,13 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 
+		public ProjectCancellationTokenConfiguration CancellationTokens { get; } = new ProjectCancellationTokenConfiguration();
+
 		public bool ScanMethodBody { get; private set; }
 
 		public bool ScanForMissingAsyncMembers { get; private set; }
 
-		public bool UseCancellationTokenOverload { get; private set; }
+		public bool UseCancellationTokens => CancellationTokens.Enabled;
 
 		public Predicate<IMethodSymbol> CallForwarding { get; set; } = symbol => false;
 
@@ -90,15 +92,26 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CancellationTokens(bool value)
 		{
-			ScanForMissingAsyncMembers = value;
+			CancellationTokens.Enabled = value;
 			return this;
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.UseCancellationTokenOverload(bool value)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action)
 		{
-			UseCancellationTokenOverload = value;
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			CancellationTokens.Enabled = true;
+			action(CancellationTokens);
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
+		{
+			ScanForMissingAsyncMembers = value;
 			return this;
 		}
 
@@ -111,6 +124,12 @@ namespace AsyncGenerator.Configuration.Internal
 			AfterAnalyzation.Add(action);
 			return this;
 		}
+
+		#endregion
+
+		#region IProjectAnalyzeConfiguration
+
+		IProjectCancellationTokenConfiguration IProjectAnalyzeConfiguration.CancellationTokens => CancellationTokens;
 
 		#endregion
 

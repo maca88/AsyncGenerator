@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Configuration;
 using AsyncGenerator.TestCases;
 using AsyncGenerator.Tests.SimpleReference.Input;
 using AsyncGenerator.Transformation;
@@ -96,7 +97,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 		}
 
 		[Test]
-		public void TestUseCancellationTokenOverloadAfterAnalyzation()
+		public void TestCancellationTokensAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 			var callReadFile = GetMethodName(o => o.CallReadFile);
@@ -163,7 +164,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(methodConversion)
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
@@ -174,13 +175,13 @@ namespace AsyncGenerator.Tests.SimpleReference
 
 
 		[Test]
-		public void TestUseCancellationTokenOverloadAfterTransformation()
+		public void TestCancellationTokensAfterTransformation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.UseCancellationTokenOverload(true)
+					.CancellationTokens(true)
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
 				.ConfigureTransformation(t => t
@@ -189,7 +190,57 @@ namespace AsyncGenerator.Tests.SimpleReference
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseWithToken"), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile("TestCaseDefaultToken"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestCancellationTokenParameterAfterTransformation()
+		{
+			var readFile = GetMethodName(o => o.ReadFile);
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.CancellationTokens(ct => ct
+						.MethodGeneration(symbol => MethodCancellationToken.Parameter))
+					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseParameterToken"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestCancellationTokenOverloadAfterTransformation()
+		{
+			var readFile = GetMethodName(o => o.ReadFile);
+
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.CancellationTokens(ct => ct
+						.MethodGeneration(symbol => MethodCancellationToken.Parameter | MethodCancellationToken.NoParameterForward))
+					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseOverloadToken"), document.Transformed.ToFullString());
 					})
 				)
 			);

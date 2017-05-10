@@ -12,6 +12,8 @@ namespace AsyncGenerator.Configuration
 
 		bool ScanForMissingAsyncMembers { get; }
 
-		bool UseCancellationTokenOverload { get; }
+		bool UseCancellationTokens { get; }
+
+		IProjectCancellationTokenConfiguration CancellationTokens { get; }
 	}
 }
