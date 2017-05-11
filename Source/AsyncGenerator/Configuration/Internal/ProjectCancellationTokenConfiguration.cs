@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration.Internal
@@ -13,7 +14,10 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool Guards { get; private set; }
 
-		public Func<IMethodSymbol, MethodCancellationToken> MethodGeneration { get; private set; } = symbol => MethodCancellationToken.DefaultParameter;
+		public Func<IMethodSymbolInfo, MethodCancellationToken> MethodGeneration { get; private set; } =
+			symbolInfo => symbolInfo.Symbol.ExplicitInterfaceImplementations.Any()
+				? MethodCancellationToken.Parameter
+				: MethodCancellationToken.DefaultParameter;
 
 		public Func<IMethodSymbol, bool?> RequireCancellationToken { get; private set; } = symbol => null;
 
@@ -23,7 +27,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbol, MethodCancellationToken> func)
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbolInfo, MethodCancellationToken> func)
 		{
 			MethodGeneration = func ?? throw new ArgumentNullException(nameof(func));
 			return this;

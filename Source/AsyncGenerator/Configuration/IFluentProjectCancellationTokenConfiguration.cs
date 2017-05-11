@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration
@@ -19,7 +20,7 @@ namespace AsyncGenerator.Configuration
 		/// <summary>
 		/// Specify the desired generation of the additional <see cref="CancellationToken"/> parameter for the given method
 		/// </summary>
-		IFluentProjectCancellationTokenConfiguration MethodGeneration(Func<IMethodSymbol, MethodCancellationToken> func);
+		IFluentProjectCancellationTokenConfiguration MethodGeneration(Func<IMethodSymbolInfo, MethodCancellationToken> func);
 
 		/// <summary>
 		/// Override the default behavior for calculating the requirement of the cancellation token for the given method.

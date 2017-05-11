@@ -28,17 +28,17 @@ namespace AsyncGenerator.Analyzation.Internal
 				var currentMethodData = processingMetodData.Dequeue();
 				toProcessMethodData.Remove(currentMethodData);
 
-				if (currentMethodData.CancellationTokenRequired)
-				{
-					currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData.Symbol);
-					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
-				}
-				else if (_configuration.UseCancellationTokens)
+				if (_configuration.UseCancellationTokens)
 				{
 					// Permit the consumer to decide require the cancellation parameter
 					currentMethodData.CancellationTokenRequired =
 						_configuration.CancellationTokens.RequireCancellationToken(currentMethodData.Symbol) ??
 						currentMethodData.CancellationTokenRequired;
+				}
+				if (currentMethodData.CancellationTokenRequired)
+				{
+					currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
+					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
 				}
 
 				foreach (var depFunctionData in currentMethodData.Dependencies)

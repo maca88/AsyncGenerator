@@ -20,9 +20,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbol =>
+						.MethodGeneration(symbolInfo =>
 						{
-							if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null)
+							if (symbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || symbolInfo.Symbol.OverriddenMethod != null)
 							{
 								return MethodCancellationToken.Parameter;
 							}
@@ -54,9 +54,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
 					.CancellationTokens(t => t
 						.Guards(true)
-						.MethodGeneration(symbol =>
+						.MethodGeneration(symbolInfo =>
 						{
-							if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null)
+							if (symbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || symbolInfo.Symbol.OverriddenMethod != null)
 							{
 								return MethodCancellationToken.Parameter;
 							}

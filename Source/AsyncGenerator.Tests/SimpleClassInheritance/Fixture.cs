@@ -98,9 +98,9 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbol =>
+						.MethodGeneration(symbolInfo =>
 						{
-							if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null)
+							if (symbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || symbolInfo.Symbol.OverriddenMethod != null)
 							{
 								return MethodCancellationToken.Parameter;
 							}

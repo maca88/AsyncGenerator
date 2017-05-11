@@ -181,6 +181,7 @@
   <ItemGroup>
     <Compile Include="Analyzation\IAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IMethodSymbolInfo.cs" />
     <Compile Include="Configuration\IFluentProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />

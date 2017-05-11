@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration
@@ -11,7 +12,7 @@ namespace AsyncGenerator.Configuration
 	{
 		bool Guards { get; }
 
-		Func<IMethodSymbol, MethodCancellationToken> MethodGeneration { get; }
+		Func<IMethodSymbolInfo, MethodCancellationToken> MethodGeneration { get; }
 
 		Func<IMethodSymbol, bool?> RequireCancellationToken { get; }
 	}

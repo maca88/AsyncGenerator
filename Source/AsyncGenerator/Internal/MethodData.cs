@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
-	internal class MethodData : FunctionData, IMethodAnalyzationResult
+	internal class MethodData : FunctionData, IMethodAnalyzationResult, IMethodSymbolInfo
 	{
 		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node) : base(symbol)
 		{
@@ -120,6 +120,18 @@ namespace AsyncGenerator.Internal
 		{
 			return TypeData == analyzationResult;
 		}
+
+		#endregion
+
+		#region IMethodSymbolInfo
+
+		private IReadOnlyList<IMethodSymbol> _cachedImplementedInterfaces;
+		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.ImplementedInterfaces => 
+			_cachedImplementedInterfaces ?? (_cachedImplementedInterfaces = ImplementedInterfaces.ToImmutableArray());
+
+		private IReadOnlyList<IMethodSymbol> _cachedOverridenMethods;
+		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.OverridenMethods =>
+			_cachedOverridenMethods ?? (_cachedOverridenMethods = OverridenMethods.ToImmutableArray());
 
 		#endregion
 

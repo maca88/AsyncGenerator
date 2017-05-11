@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AsyncGenerator.Analyzation;
@@ -21,6 +22,14 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
+		private readonly HashSet<string> _publicTypes = new HashSet<string>
+		{
+			"ISession",
+			"IQuery",
+			"IQueryOver",
+			"ICriteria"
+		};
+
 		[Explicit]
 		[Test]
 		public void TestAfterTransformation()
@@ -34,16 +43,18 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.CallForwarding(true)
 							.CancellationTokens(t => t
 								.Guards(true)
-								.MethodGeneration(symbol =>
+								.MethodGeneration(symbolInfo =>
 								{
-									// If it is an interface, then generate only method with cancellation token.
-									// If this is an virtual or abstract method, then generate virtual or abstract method with cancellation 
-									// token and a sealed (non virtual) method which calls the virtual method with the default cancellation token (None).
-									if (symbol.ContainingType.TypeKind == TypeKind.Interface || symbol.OverriddenMethod != null || symbol.ExplicitInterfaceImplementations.Any())
+									// Explicit interface implementors should not have the default parameter as it produces a warning
+									if (!symbolInfo.Symbol.ExplicitInterfaceImplementations.Any() &&
+										(
+											_publicTypes.Contains(symbolInfo.Symbol.ContainingType.Name) || // For public types generate default parameter
+											symbolInfo.ImplementedInterfaces.Any(o => _publicTypes.Contains(o.ContainingType.Name) // The rule for public types shall be passed to implementors
+										)))
 									{
-										return MethodCancellationToken.Parameter;
+										return MethodCancellationToken.DefaultParameter;
 									}
-									return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
+									return MethodCancellationToken.Parameter;
 								})
 								.RequireCancellationToken(symbol =>
 								{
