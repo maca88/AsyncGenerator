@@ -28,7 +28,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				var currentMethodData = processingMetodData.Dequeue();
 				toProcessMethodData.Remove(currentMethodData);
 
-				if (_configuration.UseCancellationTokens)
+				// Missing methods have already calculated the CancellationTokenRequired and MethodCancellationToken in the scanning step
+				if (!currentMethodData.Missing && _configuration.UseCancellationTokens)
 				{
 					// Permit the consumer to decide require the cancellation parameter
 					currentMethodData.CancellationTokenRequired =
@@ -37,7 +38,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				if (currentMethodData.CancellationTokenRequired)
 				{
-					currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
+					if (!currentMethodData.Missing)
+					{
+						currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
+					}
 					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
 				}
 
@@ -242,7 +246,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
-			if (_configuration.UseCancellationTokens)
+			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
 			{
 				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired).ToList();
 				foreach (var tokenMethodData in tokenMethodDatas)
@@ -298,7 +302,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// Update CancellationTokenRequired for all body function references that requires a cancellation token
-			if (_configuration.UseCancellationTokens)
+			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
 			{
 				foreach (var methodData in allTypeData
 					.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))

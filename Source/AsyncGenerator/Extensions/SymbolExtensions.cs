@@ -248,8 +248,8 @@ namespace AsyncGenerator.Extensions
 					return false;
 				}
 				// Candidate delegate argument must be equal or has to be an async candidate
-				var candidateTypeSymbol = (INamedTypeSymbol)candidateParam.Type;
-				var candidateDelegate = candidateTypeSymbol.DelegateInvokeMethod;
+				var candidateTypeSymbol = candidateParam.Type as INamedTypeSymbol;
+				var candidateDelegate = candidateTypeSymbol?.DelegateInvokeMethod;
 				if (candidateDelegate == null)
 				{
 					return false;

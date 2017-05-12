@@ -240,6 +240,8 @@
     <Compile Include="Generics\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
     <Compile Include="LocalFunctions\Input\TestCase.cs" />
+    <Compile Include="MissingMembers\Fixture.cs" />
+    <Compile Include="MissingMembers\Input\TestCase.cs" />
     <Compile Include="NestedNamespaces\Fixture.cs" />
     <Compile Include="NestedNamespaces\Input\TestCase.cs" />
     <Compile Include="NestedTypes\Fixture.cs" />
@@ -436,6 +438,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="RegionDirective\Output\TestCaseTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

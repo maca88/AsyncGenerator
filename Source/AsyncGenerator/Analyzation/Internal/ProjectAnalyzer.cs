@@ -161,7 +161,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var documentData = methodData.TypeData.NamespaceData.DocumentData;
 			var semanticModel = documentData.SemanticModel;
 			var searchOptions = AsyncCounterpartsSearchOptions.Default;
-			if (_configuration.UseCancellationTokens)
+			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
 			{
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}

@@ -183,7 +183,9 @@
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodSymbolInfo.cs" />
     <Compile Include="Configuration\IFluentProjectCancellationTokenConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectParseConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
+    <Compile Include="Configuration\Internal\ProjectParseConfiguration.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\IProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IProjectCompileConfiguration.cs" />

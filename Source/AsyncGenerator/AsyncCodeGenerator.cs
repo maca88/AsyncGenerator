@@ -44,6 +44,10 @@ namespace AsyncGenerator
 					{
 						await registeredPlugin.Initialize(projectData.Project, projectData.Configuration).ConfigureAwait(false);
 					}
+
+					// Setup parsing
+					SetupParsing(projectData);
+
 					// Analyze project
 					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
 					var analyzationResult = await AnalyzeProject(projectData).ConfigureAwait(false);
@@ -84,6 +88,30 @@ namespace AsyncGenerator
 			}
 		}
 
+		private void SetupParsing(ProjectData projectData)
+		{
+			var parseOptions = (CSharpParseOptions)projectData.Project.ParseOptions;
+			var parseConfig = projectData.Configuration.ParseConfiguration;
+			var currentProcessorSymbolNames = parseOptions.PreprocessorSymbolNames.ToList();
+			foreach (var name in parseConfig.RemovePreprocessorSymbolNames)
+			{
+				if (!currentProcessorSymbolNames.Remove(name))
+				{
+					throw new InvalidOperationException($"Unable to remove a preprocessor symbol with the name {name} as it does not exist");
+				}
+			}
+			foreach (var name in parseConfig.AddPreprocessorSymbolNames)
+			{
+				currentProcessorSymbolNames.Add(name);
+			}
+			var newParseOptions = new CSharpParseOptions(
+				parseConfig.LanguageVersion ?? parseOptions.SpecifiedLanguageVersion,
+				parseOptions.DocumentationMode,
+				parseOptions.Kind,
+				currentProcessorSymbolNames);
+			projectData.Project = projectData.Project.WithParseOptions(newParseOptions);
+		}
+
 		private Task<IProjectAnalyzationResult> AnalyzeProject(ProjectData projectData)
 		{
 			var analyzer = new ProjectAnalyzer(projectData);
@@ -95,7 +123,6 @@ namespace AsyncGenerator
 			var transformer = new ProjectTransformer(configuration);
 			return transformer.Transform(analyzationResult);
 		}
-
 
 		private async Task<SolutionData> CreateSolutionData(SolutionConfiguration configuration)
 		{

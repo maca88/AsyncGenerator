@@ -16,12 +16,10 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	public class CancellationTokenMethodTransformer : IMethodTransformer
 	{
-		private bool _enabled;
 		private IProjectCancellationTokenConfiguration _configuration;
 
 		public Task Initialize(Project project, IProjectConfiguration configuration)
 		{
-			_enabled = configuration.AnalyzeConfiguration.UseCancellationTokens;
 			_configuration = configuration.AnalyzeConfiguration.CancellationTokens;
 			return Task.CompletedTask;
 		}
@@ -30,7 +28,7 @@ namespace AsyncGenerator.Transformation.Internal
 			ITypeTransformationMetadata typeTransformMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;
-			if (!_enabled || !methodResult.CancellationTokenRequired)
+			if (!methodResult.CancellationTokenRequired)
 			{
 				return MethodTransformerResult.Skip;
 			}

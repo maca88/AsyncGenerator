@@ -139,6 +139,8 @@ namespace AsyncGenerator.Internal
 
 		internal bool Scanned { get; set; }
 
+		internal bool Missing { get; set; }
+
 		#endregion
 
 		#region Analyzation step

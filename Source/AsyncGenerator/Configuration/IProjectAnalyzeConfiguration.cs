@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration
 {
@@ -10,7 +11,7 @@ namespace AsyncGenerator.Configuration
 	{
 		bool ScanMethodBody { get; }
 
-		bool ScanForMissingAsyncMembers { get; }
+		Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; }
 
 		bool UseCancellationTokens { get; }
 
