@@ -254,19 +254,21 @@ namespace AsyncGenerator.Analyzation.Internal
 			//TODO: this is not correct when generating methods with a cancellation token as here we do not know
 			// if the generated method will have the cancellation token parameter or not
 			var searchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
-			if (_configuration.UseCancellationTokens)
+			// When searhing for missing async member we have to search also for overloads with a cancellation token
+			var searchWithTokens = _configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null;
+			if (searchWithTokens)
 			{
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).ToList();
 			if (asyncCounterparts.Any())
 			{
-				if (!_configuration.UseCancellationTokens && asyncCounterparts.Count > 1)
+				if (!searchWithTokens && asyncCounterparts.Count > 1)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than one async counterpart");
 				}
 				// We shall get a maximum of two async counterparts when the HasCancellationToken flag is used
-				if (_configuration.UseCancellationTokens && asyncCounterparts.Count > 2)
+				if (searchWithTokens && asyncCounterparts.Count > 2)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than two async counterparts");
 				}

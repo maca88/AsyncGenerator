@@ -81,6 +81,12 @@ namespace AsyncGenerator.Configuration
 		IFluentProjectAnalyzeConfiguration ScanForMissingAsyncMembers(bool value);
 
 		/// <summary>
+		/// Conditionally scan for missing async counterparts based on the given predicate.
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration ScanForMissingAsyncMembers(Predicate<INamedTypeSymbol> predicate);
+		
+
+		/// <summary>
 		/// Appends a callback that will be called after the analyzation step.
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration AfterAnalyzation(Action<IProjectAnalyzationResult> action);

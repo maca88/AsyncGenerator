@@ -24,7 +24,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					await ScanForTypeReferences(typeData).ConfigureAwait(false);
 				}
 
-				if (_configuration.ScanForMissingAsyncMembers)
+				if (_configuration.ScanForMissingAsyncMembers != null && _configuration.ScanForMissingAsyncMembers(typeData.Symbol))
 				{
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
@@ -285,7 +285,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					o.Symbol.MethodKind == MethodKind.ExplicitInterfaceImplementation
 						? o.Symbol.Name.Split('.').Last()
 						: o.Symbol.Name);
-			//var methodDatas = new List<MethodData>();
 
 			foreach (var asyncMember in typeData.Symbol.AllInterfaces
 												  .SelectMany(o => o.GetMembers().OfType<IMethodSymbol>()
@@ -303,10 +302,19 @@ namespace AsyncGenerator.Analyzation.Internal
 					Logger.Debug($"Sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 					continue;
 				}
-				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, false, false));
+				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, true, false));
 				var methodData = documentData.GetMethodData(nonAsyncMember.Node);
 				methodData.Conversion = MethodConversion.ToAsync;
-				//methodDatas.Add(methodData);
+				methodData.Missing = true;
+				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
+				if (asyncMember.Parameters.Length > nonAsyncMember.Symbol.Parameters.Length)
+				{
+					methodData.CancellationTokenRequired = true;
+					// We suppose that the cancellation token is the last parameter
+					methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
+						? MethodCancellationToken.DefaultParameter
+						: MethodCancellationToken.Parameter;
+				}
 			}
 
 			// Find all abstract non implemented async methods. Descend base types until we find a non abstract one.
@@ -327,7 +335,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
-					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, false, false));
+					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, true, false));
 					if (nonAsyncMember == null)
 					{
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
@@ -335,7 +343,16 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					var methodData = documentData.GetMethodData(nonAsyncMember.Node);
 					methodData.Conversion = MethodConversion.ToAsync;
-					//methodDatas.Add(methodData);
+					methodData.Missing = true;
+					// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
+					if (asyncMember.Parameters.Length > nonAsyncMember.Symbol.Parameters.Length)
+					{
+						methodData.CancellationTokenRequired = true;
+						// We suppose that the cancellation token is the last parameter
+						methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
+							? MethodCancellationToken.DefaultParameter
+							: MethodCancellationToken.Parameter;
+					}
 				}
 				baseType = baseType.BaseType;
 			}

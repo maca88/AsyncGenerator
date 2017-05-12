@@ -10,12 +10,15 @@ namespace AsyncGenerator.Configuration.Internal
 		public ProjectConfiguration(string name)
 		{
 			Name = name;
+			ParseConfiguration = new ProjectParseConfiguration();
 			AnalyzeConfiguration = new ProjectAnalyzeConfiguration();
 			TransformConfiguration = new ProjectTransformConfiguration();
 			RegisteredPlugins = new List<IPlugin>();
 		}
 
 		public string Name { get; }
+
+		public ProjectParseConfiguration ParseConfiguration { get; }
 
 		public ProjectAnalyzeConfiguration AnalyzeConfiguration { get; }
 
@@ -37,6 +40,16 @@ namespace AsyncGenerator.Configuration.Internal
 
 		#region IFluentProjectConfiguration
 
+		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureParsing(Action<IFluentProjectParseConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			action(ParseConfiguration);
+			return this;
+		}
+
 		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureAnalyzation(Action<IFluentProjectAnalyzeConfiguration> action)
 		{
 			if (action == null)
@@ -57,11 +70,21 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
+		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureCompilation(string outputPath)
+		{
+			if (outputPath == null)
+			{
+				throw new ArgumentNullException(nameof(outputPath));
+			}
+			CompileConfiguration = new ProjectCompileConfiguration(outputPath);
+			return this;
+		}
+
 		IFluentProjectConfiguration IFluentProjectConfiguration.ConfigureCompilation(string outputPath, Action<IFluentProjectCompileConfiguration> action)
 		{
-			if (action == null)
+			if (outputPath == null)
 			{
-				throw new ArgumentNullException(nameof(action));
+				throw new ArgumentNullException(nameof(outputPath));
 			}
 			if (action == null)
 			{

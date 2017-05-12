@@ -9,9 +9,13 @@ namespace AsyncGenerator.Configuration
 {
 	public interface IFluentProjectConfiguration
 	{
+		IFluentProjectConfiguration ConfigureParsing(Action<IFluentProjectParseConfiguration> action);
+
 		IFluentProjectConfiguration ConfigureAnalyzation(Action<IFluentProjectAnalyzeConfiguration> action);
 
 		IFluentProjectConfiguration ConfigureTransformation(Action<IFluentProjectTransformConfiguration> action);
+
+		IFluentProjectConfiguration ConfigureCompilation(string outputPath);
 
 		IFluentProjectConfiguration ConfigureCompilation(string outputPath, Action<IFluentProjectCompileConfiguration> action);
 

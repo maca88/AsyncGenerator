@@ -14,12 +14,6 @@ namespace AsyncGenerator.Configuration.Internal
 	{
 		public string AsyncFolder { get; private set; } = "Async";
 
-		public Func<CompilationUnitSyntax, IEnumerable<string>> AdditionalDocumentNamespaces { get; private set; }
-
-		public HashSet<string> AssemblyReferences { get; } = new HashSet<string>();
-
-		public ParseOptions ParseOptions { get; private set; }
-
 		public ExpressionSyntax ConfigureAwaitArgument { get; private set; }
 
 		public bool LocalFunctions { get; private set; }
@@ -51,33 +45,6 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.LocalFunctions(bool enabled)
 		{
 			LocalFunctions = enabled;
-			return this;
-		}
-
-		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AdditionalDocumentNamespaces(
-			Func<CompilationUnitSyntax, IEnumerable<string>> func)
-		{
-			AdditionalDocumentNamespaces = func ?? throw new ArgumentNullException(nameof(func));
-			return this;
-		}
-
-		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AddAssemblyReference(string assemblyPath)
-		{
-			if (assemblyPath == null)
-			{
-				throw new ArgumentNullException(nameof(assemblyPath));
-			}
-			if (!File.Exists(assemblyPath))
-			{
-				throw new FileNotFoundException(assemblyPath);
-			}
-			AssemblyReferences.Add(assemblyPath);
-			return this;
-		}
-
-		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ParseOptions(ParseOptions parseOptions)
-		{
-			ParseOptions = parseOptions ?? throw new ArgumentNullException(nameof(parseOptions));
 			return this;
 		}
 

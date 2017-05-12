@@ -28,7 +28,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ScanMethodBody { get; private set; }
 
-		public bool ScanForMissingAsyncMembers { get; private set; }
+		public Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; private set; }
 
 		public bool UseCancellationTokens => CancellationTokens.Enabled;
 
@@ -111,7 +111,20 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(bool value)
 		{
-			ScanForMissingAsyncMembers = value;
+			if (value)
+			{
+				ScanForMissingAsyncMembers = symbol => true;
+			}
+			else
+			{
+				ScanForMissingAsyncMembers = null;
+			}
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(Predicate<INamedTypeSymbol> predicate)
+		{
+			ScanForMissingAsyncMembers = predicate;
 			return this;
 		}
 

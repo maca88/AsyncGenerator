@@ -69,6 +69,12 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
 						)
 					)
+					.ConfigureProject("NHibernate.DomainModel", p => p
+						.ConfigureAnalyzation(a => a
+							.ScanForMissingAsyncMembers(true)
+							.ScanMethodBody(true)
+						)
+					)
 					.ApplyChanges(true)
 				);
 			var generator = new AsyncCodeGenerator();

@@ -31,21 +31,6 @@ namespace AsyncGenerator.Configuration
 		IFluentProjectTransformConfiguration LocalFunctions(bool enabled);
 
 		/// <summary>
-		/// Set a function that can return a number of namespaces to import in a given document
-		/// </summary>
-		IFluentProjectTransformConfiguration AdditionalDocumentNamespaces(Func<CompilationUnitSyntax, IEnumerable<string>> func);
-
-		/// <summary>
-		/// Add a assembly reference to the project
-		/// </summary>
-		IFluentProjectTransformConfiguration AddAssemblyReference(string assemblyPath);
-
-		/// <summary>
-		/// Set the parse options of the project
-		/// </summary>
-		IFluentProjectTransformConfiguration ParseOptions(ParseOptions parseOptions);
-
-		/// <summary>
 		/// Set the async locking system of the project. Used only if the project contains methods with <see cref="MethodImplOptions.Synchronized"/> option.
 		/// </summary>
 		/// <param name="fullTypeName">The full type name of the async lock</param>
