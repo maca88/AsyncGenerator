@@ -45,12 +45,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 								.Guards(true)
 								.MethodGeneration(symbolInfo =>
 								{
-									// Explicit interface implementors should not have the default parameter as it produces a warning
-									if (!symbolInfo.Symbol.ExplicitInterfaceImplementations.Any() &&
-										(
-											_publicTypes.Contains(symbolInfo.Symbol.ContainingType.Name) || // For public types generate default parameter
-											symbolInfo.ImplementedInterfaces.Any(o => _publicTypes.Contains(o.ContainingType.Name) // The rule for public types shall be passed to implementors
-										)))
+									if (_publicTypes.Contains(symbolInfo.Symbol.ContainingType.Name) || // For public types generate default parameter
+										symbolInfo.ImplementedInterfaces.Any(o => _publicTypes.Contains(o.ContainingType.Name))) // The rule for public types shall be passed to implementors
 									{
 										return MethodCancellationToken.DefaultParameter;
 									}

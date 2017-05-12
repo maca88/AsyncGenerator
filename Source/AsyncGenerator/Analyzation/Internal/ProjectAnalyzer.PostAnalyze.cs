@@ -128,6 +128,72 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
+		private void ValidateMethodCancellationToken(MethodData methodData)
+		{
+			var methodGeneration = methodData.MethodCancellationToken.GetValueOrDefault();
+
+			if (!methodGeneration.HasFlag(MethodCancellationToken.DefaultParameter) &&
+			    !methodGeneration.HasFlag(MethodCancellationToken.Parameter))
+			{
+				methodGeneration |= MethodCancellationToken.DefaultParameter;
+				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				            "The method must have atleast Parameter or DefaultParameter option set. " +
+				            "DefaultParameter option will be added.");
+			}
+			else if (methodGeneration.HasFlag(MethodCancellationToken.DefaultParameter) &&
+					 methodGeneration.HasFlag(MethodCancellationToken.Parameter))
+			{
+				methodGeneration &= ~MethodCancellationToken.Parameter;
+				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				            "The method cannot have Parameter and DefaultParameter options set at once. " +
+				            "Parameter option will be removed.");
+			}
+			if (methodGeneration.HasFlag(MethodCancellationToken.NoParameterForward) &&
+			    methodGeneration.HasFlag(MethodCancellationToken.SealedNoParameterForward))
+			{
+				methodGeneration &= ~MethodCancellationToken.NoParameterForward;
+				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				            "The method cannot have NoParameterForward and SealedNoParameterForward options set at once. " +
+				            "NoParameterForward option will be removed.");
+			}
+			if (methodGeneration.HasFlag(MethodCancellationToken.DefaultParameter) &&
+			    (
+					methodGeneration.HasFlag(MethodCancellationToken.NoParameterForward) ||
+					methodGeneration.HasFlag(MethodCancellationToken.SealedNoParameterForward)
+				)
+			)
+			{
+				methodGeneration = MethodCancellationToken.DefaultParameter;
+				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				            "The DefaultParameter option cannot be combined with NoParameterForward or SealedNoParameterForward option. " +
+				            "NoParameterForward and SealedNoParameterForward options will be removed.");
+			}
+
+			// Explicit implementor can have only Parameter combined with NoParameterForward or SealedNoParameterForward
+			if (methodData.Symbol.ExplicitInterfaceImplementations.Any() && !methodGeneration.HasFlag(MethodCancellationToken.Parameter))
+			{
+				methodData.MethodCancellationToken = MethodCancellationToken.Parameter;
+				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				            "Explicit implementor can have only Parameter option combined with NoParameterForward or SealedNoParameterForward option. " +
+				            $"The MethodGeneration will be set to '{methodData.MethodCancellationToken}'");
+				return;
+			}
+
+			// Interface method can have only Parameter or DefaultParameter
+			if (methodData.InterfaceMethod && methodGeneration.HasFlag(MethodCancellationToken.Parameter) &&
+				(
+					methodGeneration.HasFlag(MethodCancellationToken.NoParameterForward) ||
+					methodGeneration.HasFlag(MethodCancellationToken.SealedNoParameterForward)
+				)
+			)
+			{
+				methodData.MethodCancellationToken = MethodCancellationToken.Parameter;
+				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+							"Interface method can have NoParameterForward or SealedNoParameterForward option. " +
+				            $"The MethodGeneration will be set to '{methodData.MethodCancellationToken}'");
+			}
+		}
+
 		/// <summary>
 		/// Calculates the final conversion for all currently not ignored method/type/namespace data
 		/// </summary>
@@ -235,6 +301,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				foreach (var methodData in allTypeData
 					.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
 				{
+					ValidateMethodCancellationToken(methodData);
 					foreach (var functionRefData in methodData.BodyMethodReferences
 						.Where(o => o.ReferenceFunctionData != null && o.ReferenceFunctionData.Conversion == MethodConversion.ToAsync &&
 									o.ReferenceFunctionData.GetMethodData().CancellationTokenRequired))
