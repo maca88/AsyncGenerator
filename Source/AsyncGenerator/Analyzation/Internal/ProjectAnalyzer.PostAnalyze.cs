@@ -191,7 +191,9 @@ namespace AsyncGenerator.Analyzation.Internal
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 							"Interface method can have NoParameterForward or SealedNoParameterForward option. " +
 				            $"The MethodGeneration will be set to '{methodData.MethodCancellationToken}'");
+				return;
 			}
+			methodData.MethodCancellationToken = methodGeneration;
 		}
 
 		/// <summary>
