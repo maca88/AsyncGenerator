@@ -274,6 +274,9 @@
     <Compile Include="SimpleClassInheritance\Input\TestCase.cs" />
     <Compile Include="SimpleReference\Input\TestCase.cs" />
     <Compile Include="SynhronizedMethod\Input\TestCase.cs" />
+    <Compile Include="TaskConflict\Fixture.cs" />
+    <Compile Include="TaskConflict\Input\Task.cs" />
+    <Compile Include="TaskConflict\Input\TestCase.cs" />
     <Compile Include="TestCases\TestCase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleOmitAsync\Input\TestCase.cs" />
@@ -289,6 +292,7 @@
     <None Include="FileComments\TestCase.cs.xmldoc" />
     <None Include="FileComments\Input\TestCase.cs.xmldoc" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="TaskConflict\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj">

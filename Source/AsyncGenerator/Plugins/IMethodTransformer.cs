@@ -57,8 +57,8 @@ namespace AsyncGenerator.Plugins
 
 	public interface IMethodTransformer : IPlugin
 	{
-
-		MethodTransformerResult Transform(IMethodTransformationResult methodTransformResult, ITypeTransformationMetadata typeTransformMetadata);
+		MethodTransformerResult Transform(IMethodTransformationResult methodTransformResult,
+			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata);
 
 	}
 }

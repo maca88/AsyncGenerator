@@ -51,6 +51,8 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				transformResult.LeadingWhitespaceTrivia = leadingWhitespace;
 				transformResult.EndOfLineTrivia = node.GetEndOfLine();
+				transformResult.TaskConflict = rootResult.ContainsType(nameof(Task));
+				transformResult.UsingSystem = result.Node.HasUsing("System");
 
 				foreach (var typeResult in result.Types/*.Where(o => o.Conversion != TypeConversion.Ignore)*/)
 				{
@@ -59,12 +61,11 @@ namespace AsyncGenerator.Transformation.Internal
 					var typeNode = rootNode.DescendantNodesAndSelf()
 						.OfType<TypeDeclarationSyntax>()
 						.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-					var transformTypeResult = TransformType(typeResult, transformResult.LeadingWhitespaceTrivia);
+					var transformTypeResult = TransformType(typeResult, transformResult);
 					transformResult.TransformedTypes.Add(transformTypeResult);
 					rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformTypeResult.Annotation)));
 
 					transformResult.ThreadingUsingRequired |= typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.Methods).Any(o => o.CancellationTokenRequired);
-					transformResult.SystemUsingRequired |= typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.Methods).Any(o => o.WrapInTryCatch);
 				}
 			}
 
@@ -106,18 +107,14 @@ namespace AsyncGenerator.Transformation.Internal
 				// We need to remove all other members that are not namespaces or types
 				newNode = newNode.RemoveMembersKeepDirectives(o => !(o is NamespaceDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
 
-				//TODO: check if Task is conflicted inside namespace
-				if (!rootResult.Node.HasUsing("System.Threading.Tasks"))
+				// TODO: adding namespaces can introduce name conflicts, we should avoid it
+				if (!transformResult.TaskConflict && !rootResult.Node.HasUsing("System.Threading.Tasks"))
 				{
 					newNode = newNode.AddUsing("System.Threading.Tasks", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
 				}
 				if (transformResult.ThreadingUsingRequired && !rootResult.Node.HasUsing("System.Threading"))
 				{
 					newNode = newNode.AddUsing("System.Threading", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
-				}
-				if (transformResult.SystemUsingRequired && !rootResult.Node.HasUsing("System"))
-				{
-					newNode = newNode.AddUsing("System", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
 				}
 				// TODO: add locking namespaces
 

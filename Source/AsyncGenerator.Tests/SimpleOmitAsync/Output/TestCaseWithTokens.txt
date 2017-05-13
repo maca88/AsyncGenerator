@@ -14,7 +14,6 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 {
 	using System.Threading.Tasks;
 	using System.Threading;
-	using System;
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
@@ -36,7 +35,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 			{
 				return Task.FromResult<string>(SyncReadFile());
 			}
-			catch (Exception ex)
+			catch (System.Exception ex)
 			{
 				return Task.FromException<string>(ex);
 			}
@@ -54,7 +53,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 				SyncReadFile();
 				return SimpleFile.ReadAsync(cancellationToken);
 			}
-			catch (Exception ex)
+			catch (System.Exception ex)
 			{
 				return Task.FromException<object>(ex);
 			}

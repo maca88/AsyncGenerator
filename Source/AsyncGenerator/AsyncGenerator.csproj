@@ -266,6 +266,7 @@
     <Compile Include="Transformation\IFunctionReferenceTransformationResult.cs" />
     <Compile Include="Transformation\IMemberTransformationResult.cs" />
     <Compile Include="Transformation\IMethodTransformationResult.cs" />
+    <Compile Include="Transformation\INamespaceTransformationMetadata.cs" />
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
     <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
@@ -290,6 +291,7 @@
     <Compile Include="Transformation\IProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
     <Compile Include="Transformation\ITransformationResult.cs" />
+    <Compile Include="Transformation\ITypeTransformationMetadata.cs" />
     <Compile Include="Transformation\ITypeTransformationResult.cs" />
     <Compile Include="TypeConversion.cs" />
     <Compile Include="Internal\TypeData.cs" />

@@ -17,7 +17,7 @@ namespace AsyncGenerator.Transformation.Internal
 	partial class ProjectTransformer
 	{
 		// TODO: Missing members
-		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult, SyntaxTrivia parentLeadingWhitespace)
+		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var rootTypeNode = rootTypeResult.Node;
 			var startRootTypeSpan = rootTypeNode.SpanStart;
@@ -44,7 +44,7 @@ namespace AsyncGenerator.Transformation.Internal
 				if (typeNode == rootTypeNode)
 				{
 					transformResult = rootTransformResult;
-					transformResult.IndentTrivia = typeNode.GetIndent(leadingWhitespace, parentLeadingWhitespace);
+					transformResult.IndentTrivia = typeNode.GetIndent(leadingWhitespace, namespaceMetadata.LeadingWhitespaceTrivia);
 				}
 				else
 				{
@@ -169,12 +169,12 @@ namespace AsyncGenerator.Transformation.Internal
 						var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
 							.OfType<MethodDeclarationSyntax>()
 							.First();
-						var transformedNode = TransformMethod(methodTransform, transformResult, methodNode);
+						var transformedNode = TransformMethod(methodTransform, transformResult, namespaceMetadata, methodNode);
 						if (transformedNode.Transformed != null)
 						{
 							foreach (var transformer in _configuration.MethodTransformers)
 							{
-								var methodTransformResult = transformer.Transform(transformedNode, transformResult);
+								var methodTransformResult = transformer.Transform(transformedNode, transformResult, namespaceMetadata);
 								if (methodTransformResult == MethodTransformerResult.Skip)
 								{
 									continue;

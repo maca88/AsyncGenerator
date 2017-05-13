@@ -25,7 +25,7 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 		public MethodTransformerResult Transform(IMethodTransformationResult transformResult,
-			ITypeTransformationMetadata typeTransformMetadata)
+			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;
 			if (!methodResult.CancellationTokenRequired)
@@ -106,7 +106,7 @@ namespace AsyncGenerator.Transformation.Internal
 				return MethodTransformerResult.Update(methodNode);
 			}
 			var overloadNode = methodResult.Node
-				.ReturnAsTask()
+				.ReturnAsTask(namespaceMetadata.TaskConflict)
 				.WithTriviaFrom(transformResult.Transformed) // We want to have the sumamry of the transformed node but not the parameter list
 				.WithoutAnnotations(transformResult.Annotation)
 				.WithIdentifier(Identifier(methodNode.Identifier.ValueText));

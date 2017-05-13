@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class NamespaceTransformationResult : TransformationResult, INamespaceTransformationResult
+	internal class NamespaceTransformationResult : TransformationResult, INamespaceTransformationResult, INamespaceTransformationMetadata
 	{
 		public NamespaceTransformationResult(INamespaceAnalyzationResult analyzationResult) : base(analyzationResult.Node)
 		{
@@ -24,9 +25,14 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public SyntaxTrivia IndentTrivia { get; set; }
 
-		public bool ThreadingUsingRequired { get; set; }
+		public bool TaskConflict { get; set; }
 
-		public bool SystemUsingRequired { get; set; }
+		public bool UsingSystem { get; set; }
+
+		/// <summary>
+		/// Used for check if we have to add the System.Threading namespace because of <see cref="CancellationToken"/>
+		/// </summary>
+		public bool ThreadingUsingRequired { get; set; }
 
 		public List<RootTypeTransformationResult> TransformedTypes { get; } = new List<RootTypeTransformationResult>();
 

@@ -17,7 +17,8 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private MethodTransformationResult TransformMethod(MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, MethodDeclarationSyntax customNode = null)
+		private MethodTransformationResult TransformMethod(MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, 
+			INamespaceTransformationMetadata namespaceMetadata, MethodDeclarationSyntax customNode = null)
 		{
 			//var result = new MethodTransformationResult(methodResult);
 			var methodResult = result.AnalyzationResult;
@@ -33,7 +34,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (methodBodyNode == null)
 			{
-				result.Transformed = methodNode.ReturnAsTask()
+				result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
 					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 				return result;
 			}
@@ -208,7 +209,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (!methodResult.SplitTail && methodResult.OmitAsync)
 			{
-				var rewriter = new ReturnTaskMethodRewriter(result);
+				var rewriter = new ReturnTaskMethodRewriter(result, namespaceMetadata);
 				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
 			}
 			else if(!methodResult.SplitTail)
@@ -216,7 +217,7 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode.AddAsync();
 			}
 
-			methodNode = methodNode.ReturnAsTask()
+			methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
 				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 			result.Transformed = methodNode;
 

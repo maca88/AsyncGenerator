@@ -15,6 +15,8 @@ namespace AsyncGenerator.Internal
 	internal class ProjectData : IProjectAnalyzationResult
 	{
 		private readonly SolutionData _solutionData;
+		private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, bool>> _typeNamespace =
+			new ConcurrentDictionary<string, ConcurrentDictionary<string, bool>>();
 
 		public ProjectData(SolutionData solutionData, ProjectId projectId, ProjectConfiguration configuration)
 		{
@@ -37,6 +39,19 @@ namespace AsyncGenerator.Internal
 		}
 
 		public ConcurrentDictionary<string, DocumentData> Documents { get; } = new ConcurrentDictionary<string, DocumentData>();
+
+		public bool ContainsType(INamespaceSymbol namespaceSymbol, string typeName)
+		{
+			var result = false;
+			while (namespaceSymbol != null && !result)
+			{
+				var namespaceName = namespaceSymbol.ToString();
+				var dict = _typeNamespace.GetOrAdd(namespaceName, k => new ConcurrentDictionary<string, bool>());
+				result |= dict.GetOrAdd(typeName, k => namespaceSymbol.ConstituentNamespaces.Any(o => o.GetMembers(typeName).Any()));
+				namespaceSymbol = namespaceSymbol.ContainingNamespace;
+			}
+			return result;
+		}
 
 		public bool Contains(SyntaxReference syntax)
 		{

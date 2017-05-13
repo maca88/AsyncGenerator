@@ -22,6 +22,7 @@ namespace AsyncGenerator.Transformation.Internal
 			// Annotate so that the annotation exposed is valid
 			rootNode = rootNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 
+			var globalNsTransformResult = new RootNamespaceTransformationResult(documentResult.GlobalNamespace);
 			foreach (var typeResult in documentResult.GlobalNamespace.Types.Where(o => o.Conversion != TypeConversion.Ignore))
 			{
 				var typeSpanStart = typeResult.Node.SpanStart;
@@ -29,7 +30,7 @@ namespace AsyncGenerator.Transformation.Internal
 				var typeNode = rootNode.DescendantNodesAndSelf()
 					.OfType<TypeDeclarationSyntax>()
 					.First(o => o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-				var transformResult = TransformType(typeResult, default(SyntaxTrivia));
+				var transformResult = TransformType(typeResult, globalNsTransformResult);
 				result.TransformedTypes.Add(transformResult);
 				rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 			}

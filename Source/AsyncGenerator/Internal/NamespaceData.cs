@@ -37,6 +37,11 @@ namespace AsyncGenerator.Internal
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NestedNamespaces { get; } = 
 			new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
 
+		public bool ContainsType(string name)
+		{
+			return DocumentData.ProjectData.ContainsType(Symbol, name);
+		}
+
 		public override SyntaxNode GetNode()
 		{
 			return Node;

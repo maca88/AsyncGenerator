@@ -21,5 +21,10 @@ namespace AsyncGenerator.Analyzation
 		IReadOnlyList<ITypeAnalyzationResult> Types { get; }
 
 		IReadOnlyList<INamespaceAnalyzationResult> NestedNamespaces { get; }
+
+		/// <summary>
+		/// Check if the current merged namespace or any of the merged parent namespaces have a type with the given name
+		/// </summary>
+		bool ContainsType(string name);
 	}
 }

@@ -32,10 +32,8 @@ namespace AsyncGenerator.Transformation.Internal
 		/// <summary>
 		/// The method with SplitTail needs to be splitted into two methods
 		/// </summary>
-		/// <param name="transformResult"></param>
-		/// <param name="typeTransformMetadata"></param>
-		/// <returns></returns>
-		public MethodTransformerResult Transform(IMethodTransformationResult transformResult, ITypeTransformationMetadata typeTransformMetadata)
+		public MethodTransformerResult Transform(IMethodTransformationResult transformResult, 
+			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;
 			if (!methodResult.SplitTail)

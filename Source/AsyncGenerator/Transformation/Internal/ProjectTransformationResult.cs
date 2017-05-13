@@ -23,7 +23,8 @@ namespace AsyncGenerator.Transformation.Internal
 		#region IProjectTransformationResult
 
 		private IReadOnlyList<IDocumentTransformationResult> _cachedDocuments;
-		IReadOnlyList<IDocumentTransformationResult> IProjectTransformationResult.Documents => _cachedDocuments ?? (_cachedDocuments = Documents.Values.ToImmutableArray());
+		IReadOnlyList<IDocumentTransformationResult> IProjectTransformationResult.Documents => 
+			_cachedDocuments ?? (_cachedDocuments = Documents.Values.Where(o => o.Transformed != null).ToImmutableArray());
 
 		#endregion
 

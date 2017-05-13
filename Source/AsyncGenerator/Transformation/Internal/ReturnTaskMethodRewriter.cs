@@ -20,12 +20,14 @@ namespace AsyncGenerator.Transformation.Internal
 	{
 		private readonly IMethodAnalyzationResult _methodResult;
 		private readonly MethodTransformationResult _transformResult;
+		private readonly INamespaceTransformationMetadata _namespaceMetadata;
 		private SyntaxKind? _rewritingSyntaxKind;
 
-		public ReturnTaskMethodRewriter(MethodTransformationResult transformResult)
+		public ReturnTaskMethodRewriter(MethodTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			_transformResult = transformResult;
 			_methodResult = transformResult.AnalyzationResult;
+			_namespaceMetadata = namespaceMetadata;
 		}
 
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
@@ -209,7 +211,9 @@ namespace AsyncGenerator.Transformation.Internal
 			return InvocationExpression(
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
-						IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
+						_namespaceMetadata.TaskConflict 
+							? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
+							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
 						GenericName(
 								Identifier("FromResult"))
 							.WithTypeArgumentList(
@@ -229,7 +233,9 @@ namespace AsyncGenerator.Transformation.Internal
 			return InvocationExpression(
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
-						IdentifierName(Identifier(TriviaList(), nameof(Task), TriviaList())),
+						_namespaceMetadata.TaskConflict
+							? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
+							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
 						GenericName(
 								Identifier("FromException"))
 							.WithTypeArgumentList(
@@ -272,7 +278,9 @@ namespace AsyncGenerator.Transformation.Internal
 				Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 				MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
-					IdentifierName(nameof(Task)),
+					_namespaceMetadata.TaskConflict
+						? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
+						: IdentifierName(nameof(Task)),
 					IdentifierName("CompletedTask")),
 				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
 			);
@@ -311,7 +319,11 @@ namespace AsyncGenerator.Transformation.Internal
 					CatchClause()
 						.WithCatchKeyword(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CatchKeyword, TriviaList(Space)))
 						.WithDeclaration(
-							CatchDeclaration(IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space))))
+							CatchDeclaration(
+								_namespaceMetadata.UsingSystem
+									? IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space)))
+									: Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Exception", Space)
+								)
 								.WithIdentifier(Identifier("ex"))
 								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_transformResult.EndOfLineTrivia)))
 						)
@@ -340,7 +352,9 @@ namespace AsyncGenerator.Transformation.Internal
 								InvocationExpression(
 										MemberAccessExpression(
 											SyntaxKind.SimpleMemberAccessExpression,
-											IdentifierName(nameof(Task)),
+											_namespaceMetadata.TaskConflict
+												? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
+												: IdentifierName(nameof(Task)),
 											GenericName(
 													Identifier("FromException"))
 												.WithTypeArgumentList(

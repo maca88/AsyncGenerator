@@ -25,14 +25,15 @@ namespace AsyncGenerator.Transformation.Internal
 			return Task.CompletedTask;
 		}
 
-		public MethodTransformerResult Transform(IMethodTransformationResult result, ITypeTransformationMetadata typeTransformMetadata)
+		public MethodTransformerResult Transform(IMethodTransformationResult result, 
+			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			if (!result.AnalyzationResult.MustRunSynchronized)
 			{
 				return MethodTransformerResult.Skip;
 			}
 			var methodSymbol = result.AnalyzationResult.Symbol;
-			var fieldName = GetLockFieldName(methodSymbol, typeTransformMetadata);
+			var fieldName = GetLockFieldName(methodSymbol, typeMetadata);
 			var node = result.Transformed;
 			var newBody = Block(SingletonList(
 				UsingStatement(node.Body)
