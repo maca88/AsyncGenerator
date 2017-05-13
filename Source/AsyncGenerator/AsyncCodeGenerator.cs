@@ -34,7 +34,7 @@ namespace AsyncGenerator
 			foreach (var config in configuration.SolutionConfigurations)
 			{
 				var solutionData = await CreateSolutionData(config).ConfigureAwait(false);
-				foreach (var projectData in solutionData.ProjectData.Values)
+				foreach (var projectData in solutionData.GetProjects())
 				{
 					// Register internal plugins
 					RegisterInternalPlugins(projectData.Configuration);
@@ -134,13 +134,17 @@ namespace AsyncGenerator
 			var solution = await workspace.OpenSolutionAsync(configuration.Path).ConfigureAwait(false);
 			var solutionData = new SolutionData(solution, workspace, configuration);
 
-			var projectConfigs = configuration.ProjectConfigurations.ToDictionary(o => o.Name);
-			foreach (var project in solution.Projects.Where(o => projectConfigs.ContainsKey(o.Name)))
+			var projects = solution.Projects.ToDictionary(o => o.Name);
+			foreach (var config in configuration.ProjectConfigurations)
 			{
-				var config = projectConfigs[project.Name];
+				if (!projects.ContainsKey(config.Name))
+				{
+					throw new InvalidOperationException($"Project '{config.Name}' does not exist in solution '{solution.FilePath}'");
+				}
+				var project = projects[config.Name];
 				var projectData = new ProjectData(solutionData, project.Id, config);
 				RemoveGeneratedDocuments(projectData);
-				solutionData.ProjectData.AddOrUpdate(project.Id, projectData, (id, data) => projectData);
+				solutionData.ProjectData.Add(project.Id, projectData);
 			}
 			return solutionData;
 		}
