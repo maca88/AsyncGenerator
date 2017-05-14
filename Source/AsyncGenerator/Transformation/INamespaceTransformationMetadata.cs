@@ -21,11 +21,13 @@ namespace AsyncGenerator.Transformation
 
 		SyntaxTrivia IndentTrivia { get; }
 
+		// TODO: remove - use AnalyzationResult.ContainsType
 		/// <summary>
 		/// When true, the namespace contains a type with the name Task which is conflict with the built-in <see cref="Task"/> type
 		/// </summary>
 		bool TaskConflict { get; }
 
+		//TODO: remove - use AnalyzationResult.IsIncluded
 		/// <summary>
 		/// When true, the current namespace or one of its parents have a using for System
 		/// </summary>

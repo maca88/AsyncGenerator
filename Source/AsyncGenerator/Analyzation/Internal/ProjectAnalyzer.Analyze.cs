@@ -63,7 +63,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				// If we have to create a new type we need to consider also the external related methods
 				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
 				{
-					methodData.Conversion = MethodConversion.Ignore;
 					methodData.Ignore("Method is never used and has no async invocations");
 					LogIgnoredReason(methodData);
 					return;
@@ -72,13 +71,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeAnonymousFunctionData(DocumentData documentData, FunctionData methodData)
+		private void AnalyzeAnonymousFunctionData(DocumentData documentData, FunctionData functionData)
 		{
-			foreach (var reference in methodData.BodyMethodReferences)
+			foreach (var reference in functionData.BodyMethodReferences)
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
-			methodData.RewriteYields = methodData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			functionData.RewriteYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodData methoData, CrefFunctionReferenceData crefData)
@@ -273,6 +272,32 @@ namespace AsyncGenerator.Analyzation.Internal
 				else
 				{
 					functionReferenceData.SynchronouslyAwaited = true;
+				}
+			}
+
+			for (var i = 0; i < node.ArgumentList.Arguments.Count; i++)
+			{
+				var argument = node.ArgumentList.Arguments[i];
+				var argumentExpression = argument.Expression;
+				if (argumentExpression.IsFunction())
+				{
+					var anonFunction = (AnonymousFunctionData)functionData.ChildFunctions[argumentExpression];
+					functionReferenceData.AddFunctionArgument(new FunctionArgumentData(anonFunction, i));
+					anonFunction.ArgumentOfFunctionInvocation = functionReferenceData;
+					continue;
+				}
+				// TODO: SimpleMemberAccessExpression
+				if (argumentExpression.IsKind(SyntaxKind.IdentifierName))
+				{
+					var argMethodSymbol = documentData.SemanticModel.GetSymbolInfo(argumentExpression).Symbol as IMethodSymbol;
+					if (argMethodSymbol == null)
+					{
+						continue;
+					}
+					var argFunctionData = documentData.ProjectData.GetFunctionData(argMethodSymbol);
+					functionReferenceData.AddFunctionArgument(argFunctionData == null
+						? new FunctionArgumentData(argMethodSymbol, i, GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, searchOptions))
+						: new FunctionArgumentData(argFunctionData, i));
 				}
 			}
 

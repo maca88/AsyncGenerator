@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
@@ -50,6 +51,11 @@ namespace AsyncGenerator.Analyzation
 		/// When true, the async keyword will be omitted
 		/// </summary>
 		bool OmitAsync { get; }
+
+		/// <summary>
+		/// When true, the return type of the generated method will not be wrapped into a <see cref="Task{TResult}"/>
+		/// </summary>
+		bool KeepReturnType { get; }
 
 		/// <summary>
 		/// When true, the method will be splitted into two. 

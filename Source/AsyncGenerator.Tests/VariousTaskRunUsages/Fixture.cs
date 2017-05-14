@@ -41,8 +41,8 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				{
 					Assert.AreEqual(1, methods[awaitableMethod].MethodReferences.Count);
 					methodReference = methods[awaitableMethod].MethodReferences[0];
-					Assert.IsTrue(methodReference.AwaitInvocation);
-					Assert.IsTrue(methodReference.SynchronouslyAwaited);
+					Assert.IsTrue(methodReference.AwaitInvocation, awaitableMethod);
+					Assert.IsTrue(methodReference.SynchronouslyAwaited, awaitableMethod);
 				}
 
 				var notAwaitableMethods = new[]

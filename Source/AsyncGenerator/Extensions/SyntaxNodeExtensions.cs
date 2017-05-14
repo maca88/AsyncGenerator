@@ -844,7 +844,7 @@ namespace AsyncGenerator.Extensions
 			var names = name.Split('.').ToList();
 			if (onlyName)
 			{
-				return GetSimpleName(names.Last());
+				return GetSimpleName(names.Last(), insideCref: insideCref);
 			}
 
 			var trailingTriviaList = names.Count <= 2 && trailingTrivia.HasValue

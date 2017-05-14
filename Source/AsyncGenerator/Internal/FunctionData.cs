@@ -82,6 +82,10 @@ namespace AsyncGenerator.Internal
 			Conversion = MethodConversion.Ignore;
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
+			foreach (var childFunction in GetDescendantsChildFunctions())
+			{
+				childFunction.Ignore("Cascade ignored.");
+			}
 		}
 
 		private IEnumerable<T> GetSelfAndDescendantsFunctionsRecursively<T>(T functionData, Func<T, bool> predicate = null)
@@ -120,6 +124,8 @@ namespace AsyncGenerator.Internal
 		public bool SplitTail { get; set; }
 
 		public bool OmitAsync { get; set; }
+
+		public bool KeepReturnType { get; set; }
 
 		public bool WrapInTryCatch { get; set; }
 

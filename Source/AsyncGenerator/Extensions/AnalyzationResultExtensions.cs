@@ -68,5 +68,34 @@ namespace AsyncGenerator.Extensions
 				}
 			}
 		}
+
+		public static IEnumerable<IFunctionAnalyzationResult> GetSelfAndDescendantsFunctions(this IFunctionAnalyzationResult funcResult, Func<IFunctionAnalyzationResult, bool> predicate = null)
+		{
+			return GetSelfAndDescendantsFunctionsRecursively(funcResult, predicate);
+		}
+
+		private static IEnumerable<IFunctionAnalyzationResult> GetSelfAndDescendantsFunctionsRecursively(IFunctionAnalyzationResult fucData, Func<IFunctionAnalyzationResult, bool> predicate = null)
+		{
+			if (predicate?.Invoke(fucData) == false)
+			{
+				yield break;
+			}
+			yield return fucData;
+			foreach (var subFuncData in fucData.ChildFunctions)
+			{
+				if (predicate?.Invoke(subFuncData) == false)
+				{
+					continue;
+				}
+				foreach (var td in GetSelfAndDescendantsFunctionsRecursively(subFuncData, predicate))
+				{
+					if (predicate?.Invoke(td) == false)
+					{
+						continue;
+					}
+					yield return td;
+				}
+			}
+		}
 	}
 }
