@@ -45,7 +45,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.AreEqual(1, methods[readFile].MethodReferences.Count);
 				var methodReference = methods[readFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.IsFalse(methodReference.Ignore);
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsNull(methodReference.ReferenceFunction);
@@ -129,7 +129,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.AreEqual(1, methods[readFile].MethodReferences.Count);
 				var methodReference = methods[readFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.IsFalse(methodReference.Ignore);
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
@@ -141,14 +141,14 @@ namespace AsyncGenerator.Tests.SimpleReference
 
 				methodReference = methods[callReadFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.IsFalse(methodReference.Ignore);
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);
 
 				methodReference = methods[callCallReadFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.IsFalse(methodReference.Ignore);
+				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.CancellationTokenRequired);

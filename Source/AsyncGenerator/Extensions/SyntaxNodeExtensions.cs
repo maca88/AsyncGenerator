@@ -140,22 +140,28 @@ namespace AsyncGenerator.Extensions
 			{
 				return true;
 			}
-			var isReturnRequired = ifStatement.Statement.IsKind(SyntaxKind.ReturnKeyword) ||
-			                       (
-				                       ifStatement.Statement.IsKind(SyntaxKind.Block) &&
-				                       IsReturnStatementRequired((BlockSyntax)ifStatement.Statement)
-			                       );
+
+			var isReturnRequired = !ifStatement.Statement.IsKind(SyntaxKind.ReturnStatement);
+			if (isReturnRequired && ifStatement.Statement.IsKind(SyntaxKind.Block))
+			{
+				isReturnRequired = IsReturnStatementRequired((BlockSyntax) ifStatement.Statement);
+			}
+			if (isReturnRequired)
+			{
+				return true;
+			}
+
 			var elseStatement = ifStatement.Else.Statement;
-			var elseIsReturnRequired = elseStatement.IsKind(SyntaxKind.ReturnKeyword) ||
-			                           (
-				                           elseStatement.IsKind(SyntaxKind.Block) &&
-				                           IsReturnStatementRequired((BlockSyntax)elseStatement)
-			                           ) ||
-			                           (
-				                           elseStatement.IsKind(SyntaxKind.IfStatement) &&
-				                           IsReturnStatementRequired((IfStatementSyntax)elseStatement)
-			                           );
-			return isReturnRequired || elseIsReturnRequired;
+			var elseIsReturnRequired = !elseStatement.IsKind(SyntaxKind.ReturnStatement);
+			if (elseIsReturnRequired && elseStatement.IsKind(SyntaxKind.Block))
+			{
+				elseIsReturnRequired = IsReturnStatementRequired((BlockSyntax)elseStatement);
+			}
+			else if (elseIsReturnRequired && elseStatement.IsKind(SyntaxKind.IfStatement))
+			{
+				elseIsReturnRequired = IsReturnStatementRequired((IfStatementSyntax)elseStatement);
+			}
+			return elseIsReturnRequired;
 		}
 
 		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, bool withFullName = false)

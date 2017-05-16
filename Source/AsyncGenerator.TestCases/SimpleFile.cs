@@ -27,6 +27,15 @@ namespace AsyncGenerator.TestCases
 			return Task.CompletedTask;
 		}
 
+		public static void StreamRead()
+		{
+		}
+
+		public static Task StreamReadAsync(CancellationToken cancellationToken)
+		{
+			return Task.CompletedTask;
+		}
+
 		public static bool Write(string content)
 		{
 			return true;

@@ -24,6 +24,8 @@ namespace AsyncGenerator.Internal
 				: ReferenceConversion.Ignore;
 		}
 
+		public override ReferenceConversion Conversion { get; set; }
+
 		public override string AsyncCounterpartName
 		{
 			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync

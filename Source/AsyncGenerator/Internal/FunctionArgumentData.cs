@@ -12,23 +12,19 @@ namespace AsyncGenerator.Internal
 	{
 		public FunctionArgumentData(FunctionData functionData, int index)
 		{
-			MethodSymbol = functionData.Symbol;
 			Index = index;
 			FunctionData = functionData;
 		}
 
-		public FunctionArgumentData(IMethodSymbol methodSymbol, int index, IEnumerable<IMethodSymbol> asyncCounterparts)
+		public FunctionArgumentData(BodyFunctionReferenceData functionReference, int index)
 		{
-			MethodSymbol = methodSymbol;
+			FunctionReference = functionReference;
 			Index = index;
-			AsyncCounterparts = asyncCounterparts.ToImmutableArray();
 		}
 
-		public IMethodSymbol MethodSymbol { get; }
+		public BodyFunctionReferenceData FunctionReference { get; }
 
 		public FunctionData FunctionData { get; }
-
-		public IReadOnlyList<IMethodSymbol> AsyncCounterparts { get; }
 
 		public int Index { get; }
 	}

@@ -16,6 +16,8 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 		}
 	}
 
+	public delegate bool WriteDelegate(string content);
+
 	public class TestCase
 	{
 		public void Read()
@@ -53,16 +55,30 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 			SimpleFile.Read();
 		}
 
-		//TODO
-		//public void Read3()
-		//{
-		//	Assert.DoesNotThrow(Read);
-		//}
+		public void Read5()
+		{
+			Assert.DoesNotThrow(SimpleFile.Read);
+		}
+
+		public void Read6()
+		{
+			ReadInternal(SimpleFile.Read);
+		}
+
+		public void Read7()
+		{
+			Assert.DoesNotThrow(SimpleFile.StreamRead);
+		}
+
+		private void ReadInternal(TestDelegate del)
+		{
+			del();
+		}
 
 		//TODO
-		//public void Read4()
+		//public void Read5()
 		//{
-		//	Assert.DoesNotThrow(SimpleFile.Read);
+		//	Assert.DoesNotThrow(Read);
 		//}
 
 	}
