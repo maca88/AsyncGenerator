@@ -19,7 +19,7 @@ namespace AsyncGenerator.Configuration.Internal
 				? MethodCancellationToken.Parameter
 				: MethodCancellationToken.DefaultParameter;
 
-		public Func<IMethodSymbol, bool?> RequireCancellationToken { get; private set; } = symbol => null;
+		public Func<IMethodSymbol, bool?> RequiresCancellationToken { get; private set; } = symbol => null;
 
 		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.Guards(bool value)
 		{
@@ -33,9 +33,9 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.RequireCancellationToken(Func<IMethodSymbol, bool?> func)
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.RequiresCancellationToken(Func<IMethodSymbol, bool?> func)
 		{
-			RequireCancellationToken = func ?? throw new ArgumentNullException(nameof(func));
+			RequiresCancellationToken = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
 		}
 	}

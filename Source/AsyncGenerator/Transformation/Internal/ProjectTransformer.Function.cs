@@ -83,7 +83,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				foreach (var transfromReference in transformResult.TransformedFunctionReferences)
 				{
-					rootFuncNode = TransformFunctionReference(rootFuncNode, transfromReference, namespaceMetadata);
+					rootFuncNode = TransformFunctionReference(rootFuncNode, rootFuncResult, transfromReference, namespaceMetadata);
 				}
 
 				var funcNode = rootFuncNode.GetAnnotatedNodes(transformResult.Annotation).First();

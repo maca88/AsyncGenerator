@@ -55,7 +55,7 @@ namespace AsyncGenerator.Analyzation
 		/// <summary>
 		/// When true, the return type of the generated method will not be wrapped into a <see cref="Task{TResult}"/>
 		/// </summary>
-		bool KeepReturnType { get; }
+		bool PreserveReturnType { get; }
 
 		/// <summary>
 		/// When true, the method will be splitted into two. 

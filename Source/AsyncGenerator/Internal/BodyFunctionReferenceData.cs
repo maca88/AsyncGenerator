@@ -35,7 +35,11 @@ namespace AsyncGenerator.Internal
 
 		public bool UseAsReturnValue { get; internal set; }
 
+		public bool WrapInsideFunction { get; internal set; }
+
 		public bool LastInvocation { get; internal set; }
+
+		public IMethodSymbol AsyncDelegateArgument { get; set; }
 
 		public BodyFunctionReferenceData ArgumentOfFunctionInvocation { get; set; }
 

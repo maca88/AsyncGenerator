@@ -27,6 +27,10 @@ namespace AsyncGenerator.Analyzation
 
 		bool UseAsReturnValue { get; }
 
+		bool WrapInsideFunction { get; }
+
 		bool LastInvocation { get; }
+
+		IMethodSymbol AsyncDelegateArgument { get; }
 	}
 }

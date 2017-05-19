@@ -549,9 +549,14 @@ namespace AsyncGenerator.Extensions
 			{
 				return node;
 			}
+
+			ExpressionSyntax argExpression = argumentName != null 
+				? IdentifierName(argumentName) 
+				: ConstructNameSyntax("CancellationToken.None");
+
 			if (!node.ArgumentList.Arguments.Any())
 			{
-				return node.AddArgumentListArguments(Argument(IdentifierName(argumentName)));
+				return node.AddArgumentListArguments(Argument(argExpression));
 			}
 			// We need to add an extra space after the comma
 			var argumentList = SeparatedList<ArgumentSyntax>(
@@ -559,7 +564,7 @@ namespace AsyncGenerator.Extensions
 					.Concat(new SyntaxNodeOrToken[]
 					{
 						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
-						Argument(IdentifierName(argumentName))
+						Argument(argExpression)
 					})
 			);
 			return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
@@ -599,6 +604,57 @@ namespace AsyncGenerator.Extensions
 				.WithArgumentList(
 					ArgumentList(
 						SeparatedList<ArgumentSyntax>(arguments)));
+		}
+
+		private static ReturnStatementSyntax GetReturnTaskCompleted(bool useQualifiedName)
+		{
+			return ReturnStatement(
+				Token(TriviaList(), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					useQualifiedName
+						? ConstructNameSyntax("System.Threading.Tasks.Task")
+						: IdentifierName(nameof(Task)),
+					IdentifierName("CompletedTask")),
+				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList())
+			);
+		}
+
+		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(this ExpressionSyntax expression, IMethodSymbol delegateSymbol,
+			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc)
+		{
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
+			var parameters = delegateSymbol.Parameters
+				.Select(o => Parameter(Identifier(o.Name)))
+				.SelectMany((o, i) => i == 0
+					? new SyntaxNodeOrToken[] { o }
+					: new SyntaxNodeOrToken[] { comma, o });
+			var arguments = delegateSymbol.Parameters
+				.Select(o => Argument(IdentifierName(o.Name)))
+				.SelectMany((o, i) => i == 0
+					? new SyntaxNodeOrToken[] { o }
+					: new SyntaxNodeOrToken[] { comma, o });
+			var invocation = InvocationExpression(expression)
+				.WithArgumentList(ArgumentList(SeparatedList<ArgumentSyntax>(arguments)));
+			invocation = invocationModifierFunc(invocation);
+			CSharpSyntaxNode body = invocation;
+			if (returnTypeMismatch)
+			{
+				// TODO: non void return type
+				body = Block()
+					.WithStatements(new SyntaxList<StatementSyntax>().AddRange(new StatementSyntax[]
+					{
+						ExpressionStatement(invocation),
+						GetReturnTaskCompleted(taskConflict)
+					}));
+			}
+
+			var lambda = ParenthesizedLambdaExpression(body)
+				.WithParameterList(ParameterList(SeparatedList<ParameterSyntax>(parameters))
+					.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(Space))))
+				.WithArrowToken(Token(TriviaList(), SyntaxKind.EqualsGreaterThanToken, TriviaList(Space)));
+
+			return lambda;
 		}
 
 		internal static MethodDeclarationSyntax AddCancellationTokenParameter(this MethodDeclarationSyntax node, 

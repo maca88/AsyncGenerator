@@ -15,11 +15,9 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private T TransformFunctionReference<T>(T node, FunctionReferenceTransformationResult transfromReference, INamespaceTransformationMetadata namespaceMetadata)
+		private T TransformFunctionReference<T>(T node, IFunctionAnalyzationResult funcResult, FunctionReferenceTransformationResult transfromReference, INamespaceTransformationMetadata namespaceMetadata)
 			where T : SyntaxNode
 		{
-			var cancellationTokenParamName = "cancellationToken"; // TODO: remove
-
 			var nameNode = node.GetAnnotatedNodes(transfromReference.Annotation).OfType<SimpleNameSyntax>().First();
 			var funReferenceResult = transfromReference.AnalyzationResult;
 			var bodyFuncReferenceResult = funReferenceResult as IBodyFunctionReferenceAnalyzationResult;
@@ -27,6 +25,9 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
 				.WithTriviaFrom(nameNode);
 			transfromReference.Transformed = newNameNode;
+
+			var cancellationTokenParamName = funcResult.GetMethod().CancellationTokenRequired ? "cancellationToken" : null; // TODO: remove
+
 			// If we have a cref change the name to the async counterpart and add/update arguments
 			if (bodyFuncReferenceResult == null)
 			{
@@ -56,6 +57,54 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, newNameNode)
 							.WithParameters(CrefParameterList(SeparatedList(paramList))))
 					;
+				return node;
+			}
+			// If we have a method passed as an argument we need to check if we have to wrap it inside a function
+			if (bodyFuncReferenceResult.AsyncDelegateArgument != null)
+			{
+				if (bodyFuncReferenceResult.WrapInsideFunction)
+				{
+					// TODO: move to analyze step
+					var argumentNode = nameNode.Ancestors().OfType<ArgumentSyntax>().First();
+					var delReturnType = (INamedTypeSymbol)bodyFuncReferenceResult.AsyncDelegateArgument.ReturnType;
+					var returnType = bodyFuncReferenceResult.AsyncCounterpartSymbol.ReturnType;
+					bool returnTypeMismatch;
+					if (bodyFuncReferenceResult.ReferenceFunction != null)
+					{
+						var refMethod = bodyFuncReferenceResult.ReferenceFunction as IMethodAnalyzationResult;
+						if (refMethod != null && refMethod.PreserveReturnType)
+						{
+							returnTypeMismatch = !delReturnType.Equals(returnType); // TODO Generics
+						}
+						else if (delReturnType.IsGenericType) // Generic Task
+						{
+							returnTypeMismatch = delReturnType.TypeArguments.First().IsAwaitRequired(returnType);
+						}
+						else
+						{
+							returnTypeMismatch = delReturnType.IsAwaitRequired(returnType);
+						}
+					}
+					else
+					{
+						returnTypeMismatch = !delReturnType.Equals(returnType); // TODO Generics
+					}
+					
+					var newArgumentExpression = argumentNode.Expression
+						.ReplaceNode(nameNode, newNameNode)
+						.WrapInsideFunction(bodyFuncReferenceResult.AsyncDelegateArgument, returnTypeMismatch,
+							namespaceMetadata.TaskConflict,
+							invocation => invocation.AddCancellationTokenArgumentIf(cancellationTokenParamName,
+								bodyFuncReferenceResult.CancellationTokenRequired));
+
+					node = node
+						.ReplaceNode(argumentNode.Expression, newArgumentExpression);
+				}
+				else
+				{
+					node = node
+						.ReplaceNode(nameNode, newNameNode);
+				}
 				return node;
 			}
 

@@ -7,6 +7,7 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Internal;
 using log4net;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Document = Microsoft.CodeAnalysis.Document;
@@ -179,10 +180,28 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					continue;
 				}
-				var asyncCounterparts = GetAsyncCounterparts(methodSymbol, searchOptions, true).ToList();
-				if (asyncCounterparts.Any())
+				// Add method only if new
+				if (GetAsyncCounterparts(methodSymbol, searchOptions, true).Any())
 				{
 					result.Add(methodSymbol);
+				}
+				if (!GetAsyncCounterparts(methodSymbol, searchOptions).Any())
+				{
+					continue;
+				}
+				// Check if there is any method passed as argument that have also an async counterpart
+				foreach (var argument in invocation.ArgumentList.Arguments
+					.Where(o => o.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression) || o.Expression.IsKind(SyntaxKind.IdentifierName)))
+				{
+					var argMethodSymbol = semanticModel.GetSymbolInfo(argument.Expression).Symbol as IMethodSymbol;
+					if (argMethodSymbol == null)
+					{
+						continue;
+					}
+					if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, searchOptions, true).Any())
+					{
+						result.Add(argMethodSymbol);
+					}
 				}
 			}
 			return result;

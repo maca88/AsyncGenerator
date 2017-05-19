@@ -18,30 +18,51 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
+	using System.Threading;
 
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
 	public partial class TestCase
 	{
-		public void ReadAsync()
+		public Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Assert.DoesNotThrowAsync(() =>
+			try
 			{
-				Console.WriteLine();
-				return SimpleFile.ReadAsync();
-			});
+				Assert.DoesNotThrowAsync(() =>
+				{
+					Console.WriteLine();
+					return SimpleFile.ReadAsync(cancellationToken);
+				}
+
+				);
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 
-		public void Read3Async()
+		public Task Read3Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			Assert.DoesNotThrowAsync(() =>
+			try
 			{
-				return SimpleFile.ReadAsync();
-			});
+				Assert.DoesNotThrowAsync(() =>
+				{
+					return SimpleFile.ReadAsync(cancellationToken);
+				}
+
+				);
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 
-		public Task Read4Async()
+		public Task Read4Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			try
 			{
@@ -52,7 +73,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 				}
 
 				));
-				return SimpleFile.ReadAsync();
+				return SimpleFile.ReadAsync(cancellationToken);
 			}
 			catch (Exception ex)
 			{
@@ -60,17 +81,44 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 			}
 		}
 
-		//TODO
-		//public void Read3()
-		//{
-		//	Assert.DoesNotThrow(Read);
-		//}
+		public Task Read5Async(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			try
+			{
+				Assert.DoesNotThrowAsync(() => SimpleFile.ReadAsync(cancellationToken));
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
 
-		//TODO
-		//public void Read4()
-		//{
-		//	Assert.DoesNotThrow(SimpleFile.Read);
-		//}
+		public Task Read7Async(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			try
+			{
+				Assert.DoesNotThrowAsync(() => SimpleFile.StreamReadAsync(cancellationToken));
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
+
+		public Task Read8Async(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			try
+			{
+				Assert.DoesNotThrowAsync(() => ReadAsync(cancellationToken));
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
 
 	}
 }

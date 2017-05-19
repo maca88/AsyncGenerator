@@ -52,7 +52,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 									}
 									return MethodCancellationToken.Parameter;
 								})
-								.RequireCancellationToken(symbol =>
+								.RequiresCancellationToken(symbol =>
 								{
 									if (IsEventListener(symbol.ContainingType))
 									{

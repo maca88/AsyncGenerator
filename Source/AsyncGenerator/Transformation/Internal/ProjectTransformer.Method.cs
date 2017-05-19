@@ -116,7 +116,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			foreach (var transfromReference in result.TransformedFunctionReferences)
 			{
-				methodNode = TransformFunctionReference(methodNode, transfromReference, namespaceMetadata);
+				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}
 
 			if (methodResult.RewriteYields)
@@ -125,7 +125,7 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
 			}
 
-			if (!methodResult.SplitTail && !methodResult.KeepReturnType && methodResult.OmitAsync)
+			if (!methodResult.SplitTail && !methodResult.PreserveReturnType && methodResult.OmitAsync)
 			{
 				var rewriter = new ReturnTaskMethodRewriter(result, namespaceMetadata);
 				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
@@ -137,7 +137,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			methodNode = methodNode
 				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
-			if (!methodResult.KeepReturnType)
+			if (!methodResult.PreserveReturnType)
 			{
 				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
 			}

@@ -75,11 +75,10 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 			del();
 		}
 
-		//TODO
-		//public void Read5()
-		//{
-		//	Assert.DoesNotThrow(Read);
-		//}
+		public void Read8()
+		{
+			Assert.DoesNotThrow(Read);
+		}
 
 	}
 }

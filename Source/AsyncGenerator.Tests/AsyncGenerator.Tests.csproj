@@ -451,6 +451,12 @@
   <ItemGroup>
     <EmbeddedResource Include="AnonymousFunctions\Output\TestCase.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\PreserveReturnType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\PreserveReturnTypeWithoutTokens.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

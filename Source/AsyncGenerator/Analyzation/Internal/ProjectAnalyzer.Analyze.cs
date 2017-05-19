@@ -247,24 +247,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					functionReferenceData.AddFunctionArgument(new FunctionArgumentData(argRefFunction, i));
 					argRefFunction.ArgumentOfFunctionInvocation = functionReferenceData;
-					// Check if we need to await
-					var asyncCounterpart = functionReferenceData.AsyncCounterpartSymbol;
-					if (asyncCounterpart != null)
-					{
-						var delegateFun = (IMethodSymbol)asyncCounterpart.Parameters[i].Type.GetMembers("Invoke").First();
-						if (argRefFunction.AsyncCounterpartSymbol != null && !argRefFunction.AsyncCounterpartSymbol.Equals(argRefFunction.ReferenceSymbol))
-						{
-							argRefFunction.AwaitInvocation = !argRefFunction.AsyncCounterpartSymbol.ReturnType.Equals(delegateFun.ReturnType); // TODO: better comparison
-							if (delegateFun.Parameters.Length < argRefFunction.AsyncCounterpartSymbol.Parameters.Length)
-							{
-								//TODO: wrap into function
-							}
-						}
-						else
-						{
-							// TODO: define
-						}
-					}
 				}
 			}
 
@@ -374,7 +356,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				// TODO: debug and document
 				return;
 			}
-			
+			result.AwaitInvocation = false; // we cannot await something that is not invoked
+
 			var delegateMethod = (IMethodSymbol)methodArgTypeInfo.ConvertedType.GetMembers("Invoke").First();
 			if (!delegateMethod.IsAsync)
 			{
@@ -382,6 +365,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					return;
 				}
+				// Propagate CancellationTokenRequired to the method data only if the argument can be async 
+				if (result.CancellationTokenRequired && result.Conversion == ReferenceConversion.ToAsync)
+				{
+					// We need to set CancellationTokenRequired to true for the method that contains this invocation
+					var methodData = result.FunctionData.GetMethodData();
+					methodData.CancellationTokenRequired = true;
+				}
+
 				// Check if the method is passed as an argument to a candidate method
 				//var invokedByMethod = result.FunctionData.BodyMethodReferences
 				//	.Where(o => o.ReferenceNode.IsKind(SyntaxKind.InvocationExpression))

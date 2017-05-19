@@ -125,7 +125,7 @@ namespace AsyncGenerator.Internal
 
 		public bool OmitAsync { get; set; }
 
-		public bool KeepReturnType { get; set; }
+		public bool PreserveReturnType { get; set; }
 
 		public bool WrapInTryCatch { get; set; }
 
