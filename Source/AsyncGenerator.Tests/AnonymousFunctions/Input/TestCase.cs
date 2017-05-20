@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -80,5 +81,37 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 			Assert.DoesNotThrow(Read);
 		}
 
+		public void Read9()
+		{
+			Assert.Throws<Exception>(SimpleFile.Read);
+		}
+
+		public bool Read10()
+		{
+			var result = false;
+			Assert.That(() => result = SimpleFile.Write(""), Throws.Nothing);
+
+			RunFunction test = null;
+			Assert.That(() => test = SimpleFile.Write<RunFunction>(""), Throws.Nothing);
+
+			SimpleFile.Read();
+			return result;
+		}
+
+		public void Read11()
+		{
+			Assert.Throws<Exception>(SimpleFile.Clear);
+		}
+
+		public void Read12()
+		{
+			TextWriter tw = new StringWriter();
+			Runner.Run(tw.Write);
+		}
+
+		public void Read13()
+		{
+			Runner.Run(Console.WriteLine);
+		}
 	}
 }

@@ -27,8 +27,6 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		//public Tuple<IMethodSymbol, int> ArgumentOfMethod { get; set; }
 
-		public BodyFunctionReferenceData ArgumentOfFunctionInvocation { get; set; }
-
 		public override SyntaxNode GetNode()
 		{
 			return Node;

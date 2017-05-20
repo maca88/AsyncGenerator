@@ -233,8 +233,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					bodyRefData.Ignore($"Arguments at indexes '{string.Join(", ", nonAsyncArgs.Select(o => o.Index))}' cannot be converted to async");
 					continue;
 				}
-				// TODO: check if the async counterpart matches the argument
-
 				var asyncCounterpart = bodyRefData.AsyncCounterpartSymbol;
 				if (asyncCounterpart == null)
 				{
@@ -251,6 +249,13 @@ namespace AsyncGenerator.Analyzation.Internal
 
 					if (argRefFunction.AsyncCounterpartSymbol != null)
 					{
+						// TODO: check internal functions, parameters
+						if (argRefFunction.ReferenceFunctionData == null && !argRefFunction.AsyncCounterpartSymbol.ReturnType.Equals(delegateFun.ReturnType))
+						{
+							bodyRefData.Ignore("One of the arguments does not match the with the async delegate parameter");
+							break;
+						}
+
 						// If the argument is an internal method and it will be generated with an additinal parameter we need to wrap it inside a function
 						if (argRefFunction.ReferenceFunctionData != null)
 						{
@@ -271,7 +276,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				// A method may be already calculated to be async, but we will ignore it if the method does not have any dependency and was not explicitly set to be async
 				var methodData = functionData as MethodData;
-				if (methodData == null || (!methodData.Dependencies.Any() && !asyncMethodDatas.Contains(methodData)))
+				if (methodData == null || (!methodData.Missing && !methodData.Dependencies.Any() && !asyncMethodDatas.Contains(methodData)))
 				{
 					functionData.Ignore("Does not have any async invocations");
 				}

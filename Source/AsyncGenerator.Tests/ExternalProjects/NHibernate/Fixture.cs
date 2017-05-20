@@ -75,6 +75,34 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.ScanMethodBody(true)
 						)
 					)
+					//.ConfigureProject("NHibernate.Test", p => p
+					//	.ConfigureAnalyzation(a => a
+					//		//.DocumentSelection(o =>
+					//		//	{
+					//		//		return o.FilePath.EndsWith("ConfigFixture.cs");
+					//		//	})
+					//		.MethodConversion(symbol =>
+					//			{
+					//				return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute")
+					//					? MethodConversion.Smart
+					//					: MethodConversion.Unknown;
+					//			})
+					//		.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
+					//		.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
+					//		.CancellationTokens(t => t
+					//			.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
+					//		.ScanMethodBody(true)
+					//		.TypeConversion(o =>
+					//			{
+					//				if (o.Name == "NorthwindDbCreator")
+					//				{
+					//					return TypeConversion.Ignore;
+					//				}
+					//				// TODO: new types
+					//				return TypeConversion.Unknown;
+					//			})
+					//	)
+					//)
 					.ApplyChanges(true)
 				);
 			var generator = new AsyncCodeGenerator();

@@ -129,6 +129,11 @@ namespace AsyncGenerator.Extensions
 			var candidateReturnType = candidateAsyncMethod.ReturnType as INamedTypeSymbol;
 			if (candidateReturnType == null)
 			{
+				var candParamType = candidateAsyncMethod.ReturnType as ITypeParameterSymbol;
+				if (candParamType != null)
+				{
+					return candParamType.AreEqual(syncMethod.ReturnType);
+				}
 				return false;
 			}
 			if (syncMethod.ReturnsVoid)

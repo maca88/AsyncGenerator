@@ -45,5 +45,20 @@ namespace AsyncGenerator.TestCases
 		{
 			return Task.FromResult(true);
 		}
+
+		public static T Write<T>(string content)
+		{
+			return default(T);
+		}
+
+		public static Task<T> WriteAsync<T>(string content)
+		{
+			return Task.FromResult<T>(default(T));
+		}
+
+		public static void Clear()
+		{
+			
+		}
 	}
 }

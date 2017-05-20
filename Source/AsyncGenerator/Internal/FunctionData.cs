@@ -117,6 +117,8 @@ namespace AsyncGenerator.Internal
 
 		public bool RewriteYields { get; set; }
 
+		public BodyFunctionReferenceData ArgumentOfFunctionInvocation { get; set; }
+
 		#endregion
 
 		#region Post analyze step
