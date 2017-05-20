@@ -27,6 +27,15 @@ namespace AsyncGenerator.TestCases
 			return Task.CompletedTask;
 		}
 
+		public static void StreamRead()
+		{
+		}
+
+		public static Task StreamReadAsync(CancellationToken cancellationToken)
+		{
+			return Task.CompletedTask;
+		}
+
 		public static bool Write(string content)
 		{
 			return true;
@@ -35,6 +44,21 @@ namespace AsyncGenerator.TestCases
 		public static Task<bool> WriteAsync(string content)
 		{
 			return Task.FromResult(true);
+		}
+
+		public static T Write<T>(string content)
+		{
+			return default(T);
+		}
+
+		public static Task<T> WriteAsync<T>(string content)
+		{
+			return Task.FromResult<T>(default(T));
+		}
+
+		public static void Clear()
+		{
+			
 		}
 	}
 }

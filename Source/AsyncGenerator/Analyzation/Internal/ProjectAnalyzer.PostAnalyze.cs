@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
@@ -33,7 +34,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					// Permit the consumer to decide require the cancellation parameter
 					currentMethodData.CancellationTokenRequired =
-						_configuration.CancellationTokens.RequireCancellationToken(currentMethodData.Symbol) ??
+						_configuration.CancellationTokens.RequiresCancellationToken(currentMethodData.Symbol) ??
 						currentMethodData.CancellationTokenRequired;
 				}
 				if (currentMethodData.CancellationTokenRequired)
@@ -44,6 +45,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
 				}
+
+				CalculatePreserveReturnType(currentMethodData);
 
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
@@ -88,47 +91,62 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// Skip wrapping a method into a try/catch only when we have one statement (except preconditions) that is an invocation
 		/// which returns a Task. This statement must have only one invocation.
 		/// </summary>
-		/// <param name="methodData"></param>
-		private void CalculateWrapInTryCatch(MethodData methodData)
+		private void CalculateWrapInTryCatch(FunctionData functionData)
 		{
-			var methodDataBody = methodData.Node.Body;
-			if (methodDataBody == null || !methodDataBody.Statements.Any() || methodData.SplitTail)
+			var functionDataBody = functionData.GetBodyNode() as BlockSyntax;
+			if (functionDataBody == null || !functionDataBody.Statements.Any() || functionData.SplitTail)
 			{
 				return;
 			}
-			if (methodDataBody.Statements.Count != methodData.Preconditions.Count + 1)
+			if (functionDataBody.Statements.Count != functionData.Preconditions.Count + 1)
 			{
-				methodData.WrapInTryCatch = true;
+				functionData.WrapInTryCatch = true;
 				return;
 			}
 			// Do not look into child functions
-			var statements = methodDataBody.Statements
-				.First(o => !methodData.Preconditions.Contains(o))
+			var statements = functionDataBody.Statements
+				.First(o => !functionData.Preconditions.Contains(o))
 				.DescendantNodesAndSelf(o => !o.IsFunction())
 				.OfType<StatementSyntax>()
 				.ToList();
 			if (statements.Count != 1)
 			{
-				methodData.WrapInTryCatch = true;
+				functionData.WrapInTryCatch = true;
 				return;
 			}
 			var lastStatement = statements[0];
 			var invocationExps = lastStatement?.DescendantNodes(o => !o.IsFunction()).OfType<InvocationExpressionSyntax>().ToList();
 			if (invocationExps?.Count != 1)
 			{
-				methodData.WrapInTryCatch = true;
+				functionData.WrapInTryCatch = true;
 				return;
 			}
 			var invocationExpr = invocationExps[0];
-			var refData = methodData.BodyMethodReferences.FirstOrDefault(o => o.ReferenceNode == invocationExpr);
+			var refData = functionData.BodyMethodReferences.FirstOrDefault(o => o.ReferenceNode == invocationExpr);
 			if (refData == null)
 			{
-				methodData.WrapInTryCatch = true;
+				functionData.WrapInTryCatch = true;
 				return;
 			}
 			if (refData.GetConversion() == ReferenceConversion.Ignore || refData.ReferenceAsyncSymbols.Any(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))
 			{
-				methodData.WrapInTryCatch = true;
+				functionData.WrapInTryCatch = true;
+			}
+		}
+
+		private void CalculatePreserveReturnType(MethodData methodData)
+		{
+			// Shall not wrap the return type into Task when all async invocations do not return a task. Here we mark only methods that do not contain 
+			// any references to internal methods
+			if (!methodData.RelatedMethods.Any() &&
+				methodData.BodyMethodReferences
+					.Where(o => o.ArgumentOfFunctionInvocation == null)
+					.All(o =>
+						o.GetConversion() == ReferenceConversion.ToAsync &&
+						o.ReferenceFunctionData == null &&
+						!o.AsyncCounterpartSymbol.ReturnType.IsTaskType()))
+			{
+				methodData.PreserveReturnType = _configuration.PreserveReturnType(methodData.Symbol);
 			}
 		}
 
@@ -200,6 +218,84 @@ namespace AsyncGenerator.Analyzation.Internal
 			methodData.MethodCancellationToken = methodGeneration;
 		}
 
+		private void CalculateFinalFunctionConversion(FunctionData functionData, ICollection<MethodData> asyncMethodDatas)
+		{
+			// Before checking the conversion of method references we have to calculate the conversion of invocations that have one or more methods passed as an argument as the current calculated conversion may be wrong
+			// (eg. one of the arguments may be ignored in the post-analyze step)
+			foreach (var bodyRefData in functionData.BodyMethodReferences.Values.Where(o => o.FunctionArguments != null))
+			{
+				var nonAsyncArgs = bodyRefData.FunctionArguments.Where(o =>
+						(o.FunctionData != null && o.FunctionData.Conversion == MethodConversion.Ignore) ||
+						(o.FunctionReference != null && o.FunctionReference.GetConversion() == ReferenceConversion.Ignore))
+					.ToList();
+				if (nonAsyncArgs.Any())
+				{
+					bodyRefData.Ignore($"Arguments at indexes '{string.Join(", ", nonAsyncArgs.Select(o => o.Index))}' cannot be converted to async");
+					continue;
+				}
+				var asyncCounterpart = bodyRefData.AsyncCounterpartSymbol;
+				if (asyncCounterpart == null)
+				{
+					// TODO: define
+					throw new InvalidOperationException($"AsyncCounterpartSymbol is null {bodyRefData.ReferenceNode}");
+				}
+				// Check if we need to wrap the argument into an anonymous function. We can skip anonymous functions passed as argument as they will never have an additinal parameter
+				// TODO: maybe this should be moved elsewhere
+				foreach (var funArgument in bodyRefData.FunctionArguments.Where(o => o.FunctionReference != null))
+				{
+					var argRefFunction = funArgument.FunctionReference;
+					var delegateFun = (IMethodSymbol)asyncCounterpart.Parameters[funArgument.Index].Type.GetMembers("Invoke").First();
+					argRefFunction.AsyncDelegateArgument = delegateFun;
+
+					if (argRefFunction.AsyncCounterpartSymbol != null)
+					{
+						// TODO: check internal functions, parameters
+						if (argRefFunction.ReferenceFunctionData == null && !argRefFunction.AsyncCounterpartSymbol.ReturnType.Equals(delegateFun.ReturnType))
+						{
+							bodyRefData.Ignore("One of the arguments does not match the with the async delegate parameter");
+							break;
+						}
+
+						// If the argument is an internal method and it will be generated with an additinal parameter we need to wrap it inside a function
+						if (argRefFunction.ReferenceFunctionData != null)
+						{
+							// TODO: check return type
+							argRefFunction.WrapInsideFunction = argRefFunction.ReferenceFunctionData is MethodData argRefMethodData &&
+																(argRefMethodData.CancellationTokenRequired || argRefMethodData.PreserveReturnType);
+						}
+						// For now we check only if the parameters matches in case the async counterpart has a cancellation token parameter
+						else if (delegateFun.Parameters.Length < argRefFunction.AsyncCounterpartSymbol.Parameters.Length)
+						{
+							argRefFunction.WrapInsideFunction = true;
+						}
+					}
+				}
+			}
+
+			if (functionData.Conversion != MethodConversion.Ignore && functionData.BodyMethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
+			{
+				// A method may be already calculated to be async, but we will ignore it if the method does not have any dependency and was not explicitly set to be async
+				var methodData = functionData as MethodData;
+				if (methodData == null || (!methodData.Missing && !methodData.Dependencies.Any() && !asyncMethodDatas.Contains(methodData)))
+				{
+					functionData.Ignore("Does not have any async invocations");
+				}
+				return;
+			}
+
+			switch (functionData.Conversion)
+			{
+				case MethodConversion.ToAsync:
+					return;
+				case MethodConversion.Ignore:
+					return;
+			}
+
+			functionData.Conversion = functionData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync) 
+				? MethodConversion.ToAsync 
+				: MethodConversion.Ignore;
+		}
+
 		/// <summary>
 		/// Calculates the final conversion for all currently not ignored method/type/namespace data
 		/// </summary>
@@ -239,7 +335,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData(t => t.Conversion != TypeConversion.Ignore))
 				//.Where(o => o.Conversion != TypeConversion.Ignore)
 				.ToList();
-			// TODO: nested functions
 			var toProcessMethodData = new HashSet<MethodData>(allTypeData
 				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
 			//TODO: optimize steps for better performance
@@ -277,20 +372,40 @@ namespace AsyncGenerator.Analyzation.Internal
 			var remainingMethodData = toProcessMethodData.ToList();
 			foreach (var methodData in remainingMethodData)
 			{
-				if (methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
+				// We have to calculate the conversion from bottom to top as a body reference may depend on a child function (passed by argument)
+				//foreach (var childFunction in methodData.GetDescendantsChildFunctions().OrderByDescending(o => o.GetBodyNode().SpanStart))
+				//{
+				//	// TODO: we have ignore when the parent invocation that have this method as an argument cannot be async
+				//}
+
+				//CalculateFunctionConversion(methodData);
+				//if (methodData.Conversion != MethodConversion.ToAsync)
+				//{
+				//	continue;
+				//}
+
+				//// Set all dependencies to be async for the newly discovered async method
+				//PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
+				//if (toProcessMethodData.Count == 0)
+				//{
+				//	break;
+				//}
+
+				if (methodData.BodyMethodReferences.Where(o => o.ArgumentOfFunctionInvocation == null).All(o => o.GetConversion() != ReferenceConversion.ToAsync))
 				{
-					if (methodData.Conversion == MethodConversion.Ignore)
-					{
-						Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
-						continue;
-					}
-					methodData.Conversion = MethodConversion.ToAsync;
-					// Set all dependencies to be async for the newly discovered async method
-					PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
-					if (toProcessMethodData.Count == 0)
-					{
-						break;
-					}
+					continue;
+				}
+				if (methodData.Conversion == MethodConversion.Ignore)
+				{
+					Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
+					continue;
+				}
+				methodData.Conversion = MethodConversion.ToAsync;
+				// Set all dependencies to be async for the newly discovered async method
+				PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
+				if (toProcessMethodData.Count == 0)
+				{
+					break;
 				}
 			}
 
@@ -301,16 +416,23 @@ namespace AsyncGenerator.Analyzation.Internal
 				LogIgnoredReason(methodData);
 			}
 
-			// Update CancellationTokenRequired for all body function references that requires a cancellation token
-			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
+
+			// We need to calculate the final conversion for the local/anonymous functions
+			foreach (var methodData in allTypeData.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
 			{
-				foreach (var methodData in allTypeData
-					.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
+				// We have to calculate the conversion from bottom to top as a body reference may depend on a child function (passed by argument)
+				foreach (var childFunction in methodData.GetSelfAndDescendantsFunctions().Where(o => o.GetBodyNode() != null).OrderByDescending(o => o.GetBodyNode().SpanStart))
+				{
+					CalculateFinalFunctionConversion(childFunction, asyncMethodDatas);
+				}
+
+				// Update CancellationTokenRequired for all body function references that requires a cancellation token
+				if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
 				{
 					ValidateMethodCancellationToken(methodData);
 					foreach (var functionRefData in methodData.BodyMethodReferences
 						.Where(o => o.ReferenceFunctionData != null && o.ReferenceFunctionData.Conversion == MethodConversion.ToAsync &&
-									o.ReferenceFunctionData.GetMethodData().CancellationTokenRequired))
+						            o.ReferenceFunctionData.GetMethodData().CancellationTokenRequired))
 					{
 						functionRefData.CancellationTokenRequired = true;
 					}
@@ -354,142 +476,169 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// 6. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
-			foreach (var methodData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
+			foreach (var functionData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
+				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore))
+				.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
 			{
-				if (methodData.GetBodyNode() == null)
-				{
-					continue;
-				}
+				CalculateFinalFlags(functionData);
+			}
+		}
 
-				var asyncMethodReferences = methodData.BodyMethodReferences
-					.Where(o => o.GetConversion() == ReferenceConversion.ToAsync)
-					.ToList();
-				// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
-				// or we have only one async invocation that is the last to be invoked
-				// Invocations in synchronized methods must be awaited to mimic the same behavior as their sync counterparts
-				if (!methodData.MustRunSynchronized)
+
+		private void CalculateFinalFlags(FunctionData functionData)
+		{
+			if (functionData.GetBodyNode() == null)
+			{
+				return;
+			}
+			var methodData = functionData as MethodData;
+			var asyncMethodReferences = functionData.BodyMethodReferences
+				.Where(o => o.GetConversion() == ReferenceConversion.ToAsync)
+				.ToList();
+			var nonArgumentReferences = functionData.BodyMethodReferences
+				.Where(o => o.ArgumentOfFunctionInvocation == null)
+				.ToList();
+			// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
+			// or we have only one async invocation that is the last to be invoked
+			// Invocations in synchronized methods must be awaited to mimic the same behavior as their sync counterparts
+			if (methodData == null || !methodData.MustRunSynchronized)
+			{
+				var canSkipAwaits = true;
+				// Skip functions that are passed as arguments 
+				foreach (var methodReference in nonArgumentReferences)
 				{
-					var canSkipAwaits = true;
-					foreach (var methodReference in methodData.BodyMethodReferences)
+					if (methodReference.GetConversion() == ReferenceConversion.Ignore)
 					{
-						if (methodReference.GetConversion() == ReferenceConversion.Ignore)
-						{
-							methodReference.AwaitInvocation = false;
-							continue;
-						}
-
-						if (!methodReference.UseAsReturnValue && !methodReference.LastInvocation)
-						{
-							canSkipAwaits = false;
-							break;
-						}
-						var functionData = methodReference.FunctionData;
-
-						if (methodReference.LastInvocation && functionData.Symbol.ReturnsVoid && (
-							    (methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||
-							    methodReference.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
-						    ))
-						{
-							continue;
-						}
-
-						var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskType();
-						// We need to check the return value of the async counterpart
-						// eg. Task<IList<string>> to Task<IEnumerable<string>>, Task<long> -> Task<int> are not valid
-						// eg. Task<int> to Task is valid
-						if (!isReturnTypeTask &&
-						    (
-							    (
-								    methodReference.ReferenceAsyncSymbols.Any() &&
-								    !methodReference.ReferenceAsyncSymbols.All(o =>
-								    {
-									    var returnType = o.ReturnType as INamedTypeSymbol;
-									    if (returnType == null || !returnType.IsGenericType)
-									    {
-										    return o.ReturnType.IsAwaitRequired(functionData.Symbol.ReturnType);
-									    }
-									    return returnType.TypeArguments.First().IsAwaitRequired(functionData.Symbol.ReturnType);
-								    })
-							    ) ||
-							    (
-								    methodReference.ReferenceFunctionData != null &&
-								    !methodReference.ReferenceFunctionData.Symbol.ReturnType.IsAwaitRequired(functionData.Symbol.ReturnType)
-							    )
-						    )
-						)
-						{
-							canSkipAwaits = false;
-							break;
-						}
+						methodReference.AwaitInvocation = false;
+						continue;
 					}
-					if (canSkipAwaits)
+					if (methodReference.AwaitInvocation == false)
 					{
-						foreach (var methodReference in asyncMethodReferences)
+						continue;
+					}
+
+					if (!methodReference.UseAsReturnValue && !methodReference.LastInvocation)
+					{
+						canSkipAwaits = false;
+						break;
+					}
+					var referenceFunctionData = methodReference.FunctionData;
+
+					if (methodReference.LastInvocation && referenceFunctionData.Symbol.ReturnsVoid && (
+						    (methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||
+						    methodReference.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+					    ))
+					{
+						continue;
+					}
+
+					var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskType();
+					// We need to check the return value of the async counterpart
+					// eg. Task<IList<string>> to Task<IEnumerable<string>>, Task<long> -> Task<int> are not valid
+					// eg. Task<int> to Task is valid
+					if (!isReturnTypeTask &&
+					    (
+						    (
+							    methodReference.ReferenceAsyncSymbols.Any() &&
+							    !methodReference.ReferenceAsyncSymbols.All(o =>
+							    {
+								    var returnType = o.ReturnType as INamedTypeSymbol;
+								    if (returnType == null || !returnType.IsGenericType)
+								    {
+									    return o.ReturnType.IsAwaitRequired(referenceFunctionData.Symbol.ReturnType);
+								    }
+								    return returnType.TypeArguments.First().IsAwaitRequired(referenceFunctionData.Symbol.ReturnType);
+							    })
+						    ) ||
+						    (
+							    methodReference.ReferenceFunctionData != null &&
+							    !methodReference.ReferenceFunctionData.Symbol.ReturnType.IsAwaitRequired(referenceFunctionData.Symbol.ReturnType)
+						    )
+					    )
+					)
+					{
+						canSkipAwaits = false;
+						break;
+					}
+				}
+				if (canSkipAwaits)
+				{
+					foreach (var methodReference in asyncMethodReferences.Where(o => o.ArgumentOfFunctionInvocation == null))
+					{
+						// If the async counterpart of a method reference do not return a task we cannot set UseAsReturnValue to true
+						if (methodReference.AwaitInvocation != false)
 						{
-							methodReference.AwaitInvocation = false;
 							methodReference.UseAsReturnValue = true;
 						}
+						methodReference.AwaitInvocation = false;
 					}
 				}
+			}
 
-				// If the method has a block body
-				if (methodData.Node.Body != null)
+			var functionBody = functionData.GetBodyNode();
+			// If the method has a block body
+			if (functionBody is BlockSyntax functionBlockBody)
+			{
+				// Some async methods may not have any async invocations because were forced to be async (overloads)
+				var methodRefSpan = asyncMethodReferences
+					.Select(o => o.ReferenceLocation.Location)
+					.OrderBy(o => o.SourceSpan.Start)
+					.FirstOrDefault();
+				var semanticModel = functionData.TypeData.NamespaceData.DocumentData.SemanticModel;
+				// Search for preconditions until a statement has not been qualified as a precondition or we encounter an async invocation
+				// The faulted property is set to true when the first statement is a throw statement
+				foreach (var statement in functionBlockBody.Statements)
 				{
-					// Some async methods may not have any async invocations because were forced to be async (overloads)
-					var methodRefSpan = asyncMethodReferences
-						.Select(o => o.ReferenceLocation.Location)
-						.OrderBy(o => o.SourceSpan.Start)
-						.FirstOrDefault();
-					var semanticModel = methodData.TypeData.NamespaceData.DocumentData.SemanticModel;
-					// Search for preconditions until a statement has not been qualified as a precondition or we encounter an async invocation
-					// The faulted property is set to true when the first statement is a throw statement
-					foreach (var statement in methodData.Node.Body.Statements)
+					if (methodRefSpan != null && statement.Span.End > methodRefSpan.SourceSpan.Start)
 					{
-						if (methodRefSpan != null && statement.Span.End > methodRefSpan.SourceSpan.Start)
-						{
-							break;
-						}
-						if (!_configuration.PreconditionCheckers.Any(o => o.IsPrecondition(statement, semanticModel)))
-						{
-							methodData.Faulted = statement.IsKind(SyntaxKind.ThrowStatement);
-							break;
-						}
-						methodData.Preconditions.Add(statement);
+						break;
 					}
+					if (!_configuration.PreconditionCheckers.Any(o => o.IsPrecondition(statement, semanticModel)))
+					{
+						functionData.Faulted = statement.IsKind(SyntaxKind.ThrowStatement);
+						break;
+					}
+					functionData.Preconditions.Add(statement);
+				}
 
-					// A method shall be tail splitted when has at least one precondition and there is at least one awaitable invocation
-					if (methodData.Preconditions.Any() && methodData.BodyMethodReferences.Any(o => o.AwaitInvocation == true))
-					{
-						methodData.SplitTail = true;
-					}
+				// A method shall be tail splitted when has at least one precondition and there is at least one awaitable invocation
+				if (functionData.Preconditions.Any() && functionData.BodyMethodReferences.Any(o => o.AwaitInvocation == true))
+				{
+					functionData.SplitTail = true;
+				}
+			}
+			else if(functionBody is ArrowExpressionClauseSyntax functionArrowBody)
+			{
+				functionData.Faulted = functionArrowBody.IsKind(SyntaxKind.ThrowExpression);
+			}
+
+			// The async keyword shall be omitted when the method does not have any awaitable invocation or we have to tail split
+			if (functionData.SplitTail || !nonArgumentReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
+			{
+				functionData.OmitAsync = true;
+			}
+
+			// TODO: what about anonymous functions
+			if (methodData != null && functionData.OmitAsync)
+			{
+				CalculatePreserveReturnType(methodData);
+			}
+
+			// When the async keyword is omitted and the method is not faulted we need to calculate if the method body shall be wrapped in a try/catch block
+			// Also we do need to wrap into a try/catch when the return type remains the same
+			if (!functionData.Faulted && !functionData.PreserveReturnType && functionData.OmitAsync)
+			{
+				// For sync forwarding we will always wrap into try catch
+				if (methodData != null && methodData.BodyMethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CallForwarding(functionData.Symbol))
+				{
+					methodData.WrapInTryCatch = true;
+					methodData.ForwardCall = true;
 				}
 				else
 				{
-					methodData.Faulted = methodData.Node.ExpressionBody.IsKind(SyntaxKind.ThrowExpression);
+					CalculateWrapInTryCatch(functionData);
 				}
 
-				// The async keyword shall be omitted when the method does not have any awaitable invocation or we have to tail split
-				if (methodData.SplitTail || !methodData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync && o.AwaitInvocation == true))
-				{
-					methodData.OmitAsync = true;
-				}
-				// When the async keyword is omitted and the method is not faulted we need to calculate if the method body shall be wrapped in a try/catch block
-				if (!methodData.Faulted && methodData.OmitAsync)
-				{
-					// For sync forwarding we will always wrap into try catch
-					if (methodData.BodyMethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CallForwarding(methodData.Symbol))
-					{
-						methodData.WrapInTryCatch = true;
-						methodData.ForwardCall = true;
-					}
-					else
-					{
-						CalculateWrapInTryCatch(methodData);
-					}
-					
-				}
-				
 			}
 		}
 	}

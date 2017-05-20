@@ -24,7 +24,5 @@ namespace AsyncGenerator.Analyzation
 		IMethodSymbol ReferenceSymbol { get; }
 
 		IReadOnlyList<IMethodSymbol> ReferenceAsyncSymbols { get; }
-
-		bool Ignore { get; set; }
 	}
 }

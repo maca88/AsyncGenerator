@@ -40,7 +40,6 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 				Assert.IsFalse(method.WrapInTryCatch);
 				var methodReference = method.MethodReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.Ignore);
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsNotNull(methodReference.ReferenceFunction);

@@ -11,6 +11,39 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Transformation.Internal
 {
+	internal class RootFunctionTransformationResult : FunctionTransformationResult
+	{
+		public RootFunctionTransformationResult(IFunctionAnalyzationResult result) : base(result)
+		{
+		}
+
+		public List<FunctionTransformationResult> DescendantTransformedFunctions { get; } = new List<FunctionTransformationResult>();
+
+		public IEnumerable<FunctionTransformationResult> GetSelfAndDescendantTransformedFunctions()
+		{
+			yield return this;
+			foreach (var transformFunc in DescendantTransformedFunctions)
+			{
+				yield return transformFunc;
+			}
+		}
+	}
+
+	internal class FunctionTransformationResult : TransformationResult
+	{
+		public FunctionTransformationResult(IFunctionAnalyzationResult result) : base(result.GetNode())
+		{
+			AnalyzationResult = result;
+		}
+
+		public IFunctionAnalyzationResult AnalyzationResult { get; }
+
+		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
+
+		// TODO: find a better approach
+		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
+	}
+
 	internal class MethodTransformationResult : TransformationResult<MethodDeclarationSyntax>, IMethodTransformationResult
 	{
 		public MethodTransformationResult(IMethodAnalyzationResult result) : base(result.Node)
@@ -25,6 +58,8 @@ namespace AsyncGenerator.Transformation.Internal
 		public List<MethodDeclarationSyntax> Methods { get; private set; }
 
 		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
+
+		public List<RootFunctionTransformationResult> TransformedFunctions { get; } = new List<RootFunctionTransformationResult>();
 
 		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 

@@ -16,6 +16,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Predicate<Document> DocumentSelectionPredicate { get; private set; } = m => true;
 
+		public Predicate<IMethodSymbol> PreserveReturnType { get; private set; } = m => false;
+
 		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>();
 
 		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>();
@@ -106,6 +108,12 @@ namespace AsyncGenerator.Configuration.Internal
 			}
 			CancellationTokens.Enabled = true;
 			action(CancellationTokens);
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PreserveReturnType(Predicate<IMethodSymbol> predicate)
+		{
+			PreserveReturnType = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 

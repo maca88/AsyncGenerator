@@ -26,6 +26,8 @@ namespace AsyncGenerator.Internal
 
 		public abstract ReferenceConversion GetConversion();
 
+		public abstract ReferenceConversion Conversion { get; set; }
+
 		#region IReferenceAnalyzationResult
 
 		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.ReferenceFunction => ReferenceFunctionData;

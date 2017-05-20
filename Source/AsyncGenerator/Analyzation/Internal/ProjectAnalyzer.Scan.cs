@@ -417,7 +417,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Try to find the real node where the cref is located
 					var crefReferenceNameNode = crefTypeData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
 					var crefReferenceSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(crefReferenceNameNode).Symbol;
-					var crefReferenceMethodData = await ProjectData.GetMethodData(crefReferenceSymbol).ConfigureAwait(false);
+					var crefReferenceMethodData = ProjectData.GetMethodData(crefReferenceSymbol);
 					var crefReferenceData = new CrefFunctionReferenceData(refLocation, crefReferenceNameNode, crefReferenceSymbol, crefReferenceMethodData);
 
 					var memberNode = crefReferenceNameNode.Ancestors().OfType<MemberDeclarationSyntax>().First();
@@ -440,7 +440,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue; // No need to further scan a cref reference
 				}
 
-				var baseMethodData = await documentData.GetFunctionData(refMethodSymbol).ConfigureAwait(false);
+				var baseMethodData = documentData.GetFunctionData(refMethodSymbol);
 				if (baseMethodData == null) // TODO: Current is null for ctor, operator, destructor, conversion
 				{
 					if (refMethodSymbol.MethodKind == MethodKind.AnonymousFunction || refMethodSymbol.MethodKind == MethodKind.LambdaMethod)
@@ -460,7 +460,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Save the reference as it can be made async
 				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
 				var referenceSymbol = (IMethodSymbol) documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
-				var referenceMethodData = await ProjectData.GetMethodData(referenceSymbol).ConfigureAwait(false);
+				var referenceMethodData = ProjectData.GetMethodData(referenceSymbol);
 				// Check if the reference is a cref reference
 				if (nameNode.Parent.IsKind(SyntaxKind.NameMemberCref))
 				{

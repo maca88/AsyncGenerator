@@ -60,7 +60,7 @@ namespace AsyncGenerator.Tests.Cref.Input
 		}
 
 		/// <summary>
-		/// Uses <see cref="WriteToFileAsync(bool,byte[],System.Collections.Generic.IList{bool})"/>
+		/// Uses <see cref="WriteToFileAsync(bool,byte[],IList{bool})"/>
 		/// </summary>
 		/// <returns></returns>
 		public Task<bool> WriteAsync()

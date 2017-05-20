@@ -26,5 +26,11 @@ namespace AsyncGenerator.Analyzation
 		/// Check if the current merged namespace or any of the merged parent namespaces have a type with the given name
 		/// </summary>
 		bool ContainsType(string name);
+
+		/// <summary>
+		/// Check whether the given namespace is included in the current namespace or one of its parents. 
+		/// A namespace is included when imported using the using keyword or is the parent of the current one.
+		/// </summary>
+		bool IsIncluded(string fullNamespace);
 	}
 }

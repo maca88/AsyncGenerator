@@ -25,7 +25,7 @@ namespace AsyncGenerator.Internal
 		/// <summary>
 		/// Symbol of the method that uses this function as an argument, value represents the index of the argument
 		/// </summary>
-		public Tuple<IMethodSymbol, int> ArgumentOfMethod { get; set; }
+		//public Tuple<IMethodSymbol, int> ArgumentOfMethod { get; set; }
 
 		public override SyntaxNode GetNode()
 		{

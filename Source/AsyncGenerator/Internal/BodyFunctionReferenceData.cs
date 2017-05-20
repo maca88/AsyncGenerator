@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -20,7 +21,9 @@ namespace AsyncGenerator.Internal
 
 		public HashSet<IMethodSymbol> ReferenceAsyncSymbols { get; set; }
 
-		public bool Ignore { get; set; }
+		public override ReferenceConversion Conversion { get; set; }
+
+		public string IgnoredReason { get; private set; }
 
 		public bool? AwaitInvocation { get; internal set; }
 
@@ -32,14 +35,60 @@ namespace AsyncGenerator.Internal
 
 		public bool UseAsReturnValue { get; internal set; }
 
+		public bool WrapInsideFunction { get; internal set; }
+
 		public bool LastInvocation { get; internal set; }
+
+		public IMethodSymbol AsyncDelegateArgument { get; set; }
+
+		public BodyFunctionReferenceData ArgumentOfFunctionInvocation { get; set; }
+
+		/// <summary>
+		/// Functions passed as arguments
+		/// </summary>
+		public List<FunctionArgumentData> FunctionArguments { get; set; }
+
+		public void AddFunctionArgument(FunctionArgumentData functionArgument)
+		{
+			FunctionArguments = FunctionArguments ?? new List<FunctionArgumentData>();
+			FunctionArguments.Add(functionArgument);
+		}
+
+		public void Ignore(string reason)
+		{
+			Conversion = ReferenceConversion.Ignore;
+			IgnoredReason = reason;
+			if (FunctionArguments == null)
+			{
+				return;
+			}
+			foreach (var functionArgument in FunctionArguments)
+			{
+				functionArgument.FunctionData?.Ignore("Cascade ignored.");
+				functionArgument.FunctionReference?.Ignore("Cascade ignored.");
+			}
+		}
 
 		public override ReferenceConversion GetConversion()
 		{
-			return !Ignore &&
-			       (ReferenceAsyncSymbols?.Count > 0 || ReferenceFunctionData?.Conversion == MethodConversion.ToAsync)
+			if (Conversion != ReferenceConversion.Unknown)
+			{
+				return Conversion;
+			}
+			var conversion = ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
 				? ReferenceConversion.ToAsync
 				: ReferenceConversion.Ignore;
+			if (conversion == ReferenceConversion.Ignore || FunctionArguments == null || !FunctionArguments.Any())
+			{
+				return conversion;
+			}
+			// If there is any function passed as an argument we have to check if they can all be async
+			if (!FunctionArguments.All(o => o.FunctionReference?.GetConversion() == ReferenceConversion.ToAsync ||
+			                                o.FunctionData?.Conversion == MethodConversion.ToAsync))
+			{
+				return ReferenceConversion.Ignore;
+			}
+			return ReferenceConversion.ToAsync;
 		}
 
 		#region IFunctionReferenceAnalyzationResult

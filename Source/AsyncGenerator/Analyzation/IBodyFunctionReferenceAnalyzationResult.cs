@@ -17,8 +17,6 @@ namespace AsyncGenerator.Analyzation
 	{
 		IReadOnlyList<IMethodSymbol> ReferenceAsyncSymbols { get; }
 
-		bool Ignore { get; }
-
 		bool AwaitInvocation { get; }
 
 		bool CancellationTokenRequired { get; }
@@ -29,6 +27,10 @@ namespace AsyncGenerator.Analyzation
 
 		bool UseAsReturnValue { get; }
 
+		bool WrapInsideFunction { get; }
+
 		bool LastInvocation { get; }
+
+		IMethodSymbol AsyncDelegateArgument { get; }
 	}
 }

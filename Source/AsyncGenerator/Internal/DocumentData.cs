@@ -219,12 +219,25 @@ namespace AsyncGenerator.Internal
 					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
 			}
 		}
-
+		/*
 		public async Task<FunctionData> GetFunctionData(IMethodSymbol symbol)
 		{
 			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
 			var node = await syntax.GetSyntaxAsync().ConfigureAwait(false);
 			return (FunctionData)GetNodeData(node);
+		}
+		*/
+		public FunctionData GetFunctionData(IMethodSymbol methodSymbol)
+		{
+			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
+			{
+				return null;
+			}
+			return GetAllTypeDatas()
+				.SelectMany(o => o.Methods.Values)
+				.SelectMany(o => o.GetSelfAndDescendantsFunctions())
+				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
 		}
 
 		#region AnonymousFunctionData
@@ -248,12 +261,17 @@ namespace AsyncGenerator.Internal
 
 		#region MethodData
 
+		public MethodData GetMethodData(IMethodSymbol symbol)
+		{
+			return (MethodData)GetFunctionData(symbol);
+		}
+		/*
 		public async Task<MethodData> GetMethodData(IMethodSymbol symbol)
 		{
 			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
 			var node = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
 			return (MethodData)GetNodeData(node);
-		}
+		}*/
 
 		public MethodData GetMethodData(MethodDeclarationSyntax node)
 		{

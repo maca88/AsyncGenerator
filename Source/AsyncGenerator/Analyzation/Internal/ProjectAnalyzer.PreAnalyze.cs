@@ -49,9 +49,9 @@ namespace AsyncGenerator.Analyzation.Internal
 							case SyntaxKind.AnonymousMethodExpression:
 							case SyntaxKind.SimpleLambdaExpression:
 								var anonFunData = documentData.GetOrCreateAnonymousFunctionData((AnonymousFunctionExpressionSyntax)node, methodData);
-								if (typeData.Conversion == TypeConversion.Ignore)
+								if (methodData.Conversion == MethodConversion.Ignore)
 								{
-									methodData.Conversion = MethodConversion.Ignore;
+									anonFunData.Ignore("Cascade ignored.");
 								}
 								else
 								{
@@ -60,9 +60,9 @@ namespace AsyncGenerator.Analyzation.Internal
 								break;
 							case SyntaxKind.LocalFunctionStatement:
 								var localFunData = documentData.GetOrCreateLocalFunctionData((LocalFunctionStatementSyntax)node, methodData);
-								if (typeData.Conversion == TypeConversion.Ignore)
+								if (methodData.Conversion == MethodConversion.Ignore)
 								{
-									methodData.Conversion = MethodConversion.Ignore;
+									localFunData.Ignore("Cascade ignored.");
 								}
 								else
 								{
@@ -323,33 +323,25 @@ namespace AsyncGenerator.Analyzation.Internal
 				log(functionData);
 				return;
 			}
-			else
+			var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
+			if (!argumentNode.Parent.Parent.IsKind(SyntaxKind.InvocationExpression))
 			{
-				var invocationNode = functionData.Node.Ancestors()
-				.TakeWhile(o => !o.IsKind(SyntaxKind.MethodDeclaration))
-				.OfType<InvocationExpressionSyntax>()
-				.FirstOrDefault();
-				if (invocationNode == null)
-				{
-					functionData.Ignore("Is passed as an argument to a non InvocationExpressionSyntax node that is currently not supported");
-					log(functionData);
-					return;
-				}
-
-				var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
-				var argumentListNode = (ArgumentListSyntax)argumentNode.Parent;
-				var index = argumentListNode.Arguments.IndexOf(argumentNode);
-				var symbol = semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
-				var methodSymbol = symbol as IMethodSymbol;
-				if (methodSymbol == null)
-				{
-					functionData.Ignore($"Is passed as an argument to a symbol {symbol} which is currently not supported");
-					log(functionData);
-					return;
-				}
-				functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(methodSymbol, index);
+				functionData.Ignore($"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported");
+				log(functionData);
+				return;
 			}
-
+			var invocationNode = (InvocationExpressionSyntax)argumentNode.Parent.Parent;
+			var argumentListNode = (ArgumentListSyntax)argumentNode.Parent;
+			var index = argumentListNode.Arguments.IndexOf(argumentNode);
+			var symbol = semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
+			var methodSymbol = symbol as IMethodSymbol;
+			if (methodSymbol == null)
+			{
+				functionData.Ignore($"Is passed as an argument to a symbol {symbol} which is currently not supported");
+				log(functionData);
+				return;
+			}
+			//functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(methodSymbol, index);
 		}
 
 		private void PreAnalyzeLocalFunction(LocalFunctionData functionData, SemanticModel semanticModel)

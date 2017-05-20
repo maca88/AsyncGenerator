@@ -68,7 +68,7 @@ namespace AsyncGenerator.Internal
 		{
 			return GetDocumentData(Project.Solution.GetDocument(syntax.SyntaxTree));
 		}
-
+		/*
 		public async Task<MethodData> GetMethodData(IMethodSymbol methodSymbol)
 		{
 			var syntax = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
@@ -79,17 +79,28 @@ namespace AsyncGenerator.Internal
 			var documentData = GetDocumentData(syntax);
 			var node = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
 			return documentData.GetMethodData(node);
+		}*/
+
+		public MethodData GetMethodData(IMethodSymbol symbol)
+		{
+			return (MethodData)GetFunctionData(symbol);
 		}
 
-		public Task<FunctionData> GetFunctionData(IMethodSymbol methodSymbol)
+		public FunctionData GetFunctionData(IMethodSymbol methodSymbol)
 		{
-			var syntax = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
-			if (syntax == null || !Contains(syntax))
+			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntaxReference == null)
 			{
-				return Task.FromResult<FunctionData>(null);
+				return null;
 			}
-			var documentData = GetDocumentData(syntax);
-			return documentData.GetFunctionData(methodSymbol);
+			if (!Documents.TryGetValue(syntaxReference.SyntaxTree.FilePath, out var documentData))
+			{
+				return null;
+			}
+			return documentData.GetAllTypeDatas()
+				.SelectMany(o => o.Methods.Values)
+				.SelectMany(o => o.GetSelfAndDescendantsFunctions())
+				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
 		}
 
 		public DocumentData GetDocumentData(Document document)

@@ -24,7 +24,6 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodResult = result.AnalyzationResult;
 			var methodNode = customNode ?? methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
-			var cancellationTokenParamName = "cancellationToken"; // TODO: remove
 
 			// Calculate whitespace method trivias
 			result.EndOfLineTrivia = methodNode.GetEndOfLine();
@@ -60,7 +59,19 @@ namespace AsyncGenerator.Transformation.Internal
 				typeReferencesAnnotations.Add(annotation);
 			}
 
-			//var referenceAnnotations = new Dictionary<string, IFunctionReferenceAnalyzationResult>();
+			foreach (var childFunction in methodResult.ChildFunctions.Where(o => o.Conversion != MethodConversion.Ignore))
+			{
+				var functionNode = childFunction.GetNode();
+				var functionKind = functionNode.Kind();
+				var typeSpanStart = functionNode.SpanStart - startMethodSpan;
+				var typeSpanLength = functionNode.Span.Length;
+				var funcNode = methodNode.DescendantNodesAndSelf()
+					.First(o => o.IsKind(functionKind) && o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
+				var transformFuncResult = TransformFunction(childFunction, typeMetadata, namespaceMetadata);
+				result.TransformedFunctions.Add(transformFuncResult);
+				methodNode = methodNode.ReplaceNode(funcNode, funcNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformFuncResult.Annotation)));
+			}
+
 			foreach (var referenceResult in methodResult.CrefMethodReferences
 				.Union(methodResult.MethodReferences)
 				.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
@@ -96,109 +107,16 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 			}
 
+			foreach (var transformFunction in result.TransformedFunctions)
+			{
+				var funcNode = methodNode.GetAnnotatedNodes(transformFunction.Annotation).First();
+				methodNode = methodNode
+					.ReplaceNode(funcNode, transformFunction.Transformed);
+			}
+
 			foreach (var transfromReference in result.TransformedFunctionReferences)
 			{
-				var nameNode = methodNode.GetAnnotatedNodes(transfromReference.Annotation).OfType<SimpleNameSyntax>().First();
-				var funReferenceResult = transfromReference.AnalyzationResult;
-				var bodyFuncReferenceResult = funReferenceResult as IBodyFunctionReferenceAnalyzationResult;
-				var newNameNode = nameNode
-					.WithIdentifier(Identifier(funReferenceResult.AsyncCounterpartName))
-					.WithTriviaFrom(nameNode);
-				transfromReference.Transformed = newNameNode;
-				// If we have a cref change the name to the async counterpart and add/update arguments
-				if (bodyFuncReferenceResult == null)
-				{
-					var crefNode = (NameMemberCrefSyntax) nameNode.Parent;
-					var paramList = new List<CrefParameterSyntax>();
-					// If the cref has already the parameters set then use them
-					if (crefNode.Parameters != null)
-					{
-						paramList.AddRange(crefNode.Parameters.Parameters);
-					}
-					else
-					{
-						// We have to add the parameter to avoid ambiguity
-						var asyncSymbol = funReferenceResult.AsyncCounterpartSymbol;
-						//TODO: take care of type namespaces (do not include the full type name if is not required)
-						paramList.AddRange(asyncSymbol.Parameters
-							.Select(o => CrefParameter(o.Type
-								.CreateTypeSyntax(true, methodResult.CancellationTokenRequired && o.Type.ContainingNamespace?.ToString() == "System.Threading"))));
-					}
-					
-					// If the async counterpart is internal and a token is required add a token parameter
-					if (funReferenceResult.AsyncCounterpartFunction?.GetMethod()?.CancellationTokenRequired == true)
-					{
-						paramList.Add(CrefParameter(IdentifierName(nameof(CancellationToken))));
-					}
-					methodNode = methodNode
-						.ReplaceNode(crefNode, crefNode
-								.ReplaceNode(nameNode, newNameNode)
-								.WithParameters(CrefParameterList(SeparatedList(paramList))))
-						;
-					continue;
-				}
-
-				InvocationExpressionSyntax invokeNode = null;
-				if (bodyFuncReferenceResult.CancellationTokenRequired || bodyFuncReferenceResult.AwaitInvocation)
-				{
-					invokeNode = nameNode.Ancestors().OfType<InvocationExpressionSyntax>().First();
-				}
-
-				if (!bodyFuncReferenceResult.AwaitInvocation)
-				{
-					var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
-					// An arrow method does not have a statement
-					if (statement == null)
-					{
-						if (invokeNode != null)
-						{
-							methodNode = methodNode.ReplaceNode(invokeNode, invokeNode
-								.ReplaceNode(nameNode, newNameNode)
-								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired));
-						}
-						else
-						{
-							methodNode = methodNode
-								.ReplaceNode(nameNode, newNameNode);
-						}
-					}
-					else
-					{
-						StatementSyntax newStatement;
-						if (invokeNode != null)
-						{
-							newStatement = statement.ReplaceNode(invokeNode, invokeNode
-								.ReplaceNode(nameNode, newNameNode)
-								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired));
-						}
-						else
-						{
-							newStatement = statement.ReplaceNode(nameNode, newNameNode);
-						}
-
-						if (bodyFuncReferenceResult.UseAsReturnValue)
-						{
-							newStatement = newStatement.ToReturnStatement();
-						}
-
-						methodNode = methodNode
-							.ReplaceNode(statement, newStatement);
-					}
-				}
-				else
-				{
-					// We need to annotate the invocation node because of the AddAwait method as it needs the parent node
-					var invokeAnnotation = Guid.NewGuid().ToString();
-					methodNode = methodNode
-						.ReplaceNode(invokeNode, invokeNode
-						.ReplaceNode(nameNode, newNameNode)
-						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired)
-						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
-					);
-					invokeNode = methodNode.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
-					methodNode = methodNode.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
-				}
-
+				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}
 
 			if (methodResult.RewriteYields)
@@ -207,18 +125,22 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
 			}
 
-			if (!methodResult.SplitTail && methodResult.OmitAsync)
+			if (!methodResult.SplitTail && !methodResult.PreserveReturnType && methodResult.OmitAsync)
 			{
 				var rewriter = new ReturnTaskMethodRewriter(result, namespaceMetadata);
 				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
 			}
-			else if(!methodResult.SplitTail)
+			else if(!methodResult.OmitAsync)
 			{
 				methodNode = methodNode.AddAsync();
 			}
 
-			methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
+			methodNode = methodNode
 				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+			if (!methodResult.PreserveReturnType)
+			{
+				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
+			}
 			result.Transformed = methodNode;
 
 			return result;

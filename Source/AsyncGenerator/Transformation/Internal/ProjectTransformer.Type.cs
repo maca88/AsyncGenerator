@@ -16,7 +16,6 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		// TODO: Missing members
 		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var rootTypeNode = rootTypeResult.Node;

@@ -96,5 +96,13 @@ namespace AsyncGenerator.Tests.OmitAsync.Input
 			else
 				SimpleFile.Write(null);
 		}
+
+		public void IfElseNoBlockAsyncOmitted2(string content)
+		{
+			if (content == null)
+				Console.WriteLine();
+			else
+				SimpleFile.Write(null);
+		}
 	}
 }

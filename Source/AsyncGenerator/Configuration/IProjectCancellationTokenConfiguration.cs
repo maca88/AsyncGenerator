@@ -14,6 +14,6 @@ namespace AsyncGenerator.Configuration
 
 		Func<IMethodSymbolInfo, MethodCancellationToken> MethodGeneration { get; }
 
-		Func<IMethodSymbol, bool?> RequireCancellationToken { get; }
+		Func<IMethodSymbol, bool?> RequiresCancellationToken { get; }
 	}
 }

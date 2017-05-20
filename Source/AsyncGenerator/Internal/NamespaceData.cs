@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -40,6 +41,28 @@ namespace AsyncGenerator.Internal
 		public bool ContainsType(string name)
 		{
 			return DocumentData.ProjectData.ContainsType(Symbol, name);
+		}
+
+		public bool IsIncluded(string fullNamespace)
+		{
+			if (fullNamespace == null)
+			{
+				return true; // Global namespace
+			}
+			if (Symbol.ToString().StartsWith(fullNamespace))
+			{
+				return true;
+			}
+			if (Node.HasUsing(fullNamespace))
+			{
+				return true;
+			}
+			if(fullNamespace == "System.Threading" && Types.Values
+				.Any(o => o.GetSelfAndDescendantsTypeData().Any(t => t.Methods.Values.Any(m => m.CancellationTokenRequired))))
+			{
+				return true;
+			}
+			return false;
 		}
 
 		public override SyntaxNode GetNode()

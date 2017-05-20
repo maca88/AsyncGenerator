@@ -156,5 +156,21 @@ namespace AsyncGenerator.Tests.OmitAsync.Input
 				return Task.FromException<object>(ex);
 			}
 		}
+
+		public Task IfElseNoBlockAsyncOmitted2Async(string content)
+		{
+			try
+			{
+				if (content == null)
+					Console.WriteLine();
+				else
+					return SimpleFile.WriteAsync(null);
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
 	}
 }

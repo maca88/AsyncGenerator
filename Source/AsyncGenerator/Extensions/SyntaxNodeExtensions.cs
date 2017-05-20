@@ -140,22 +140,28 @@ namespace AsyncGenerator.Extensions
 			{
 				return true;
 			}
-			var isReturnRequired = ifStatement.Statement.IsKind(SyntaxKind.ReturnKeyword) ||
-			                       (
-				                       ifStatement.Statement.IsKind(SyntaxKind.Block) &&
-				                       IsReturnStatementRequired((BlockSyntax)ifStatement.Statement)
-			                       );
+
+			var isReturnRequired = !ifStatement.Statement.IsKind(SyntaxKind.ReturnStatement);
+			if (isReturnRequired && ifStatement.Statement.IsKind(SyntaxKind.Block))
+			{
+				isReturnRequired = IsReturnStatementRequired((BlockSyntax) ifStatement.Statement);
+			}
+			if (isReturnRequired)
+			{
+				return true;
+			}
+
 			var elseStatement = ifStatement.Else.Statement;
-			var elseIsReturnRequired = elseStatement.IsKind(SyntaxKind.ReturnKeyword) ||
-			                           (
-				                           elseStatement.IsKind(SyntaxKind.Block) &&
-				                           IsReturnStatementRequired((BlockSyntax)elseStatement)
-			                           ) ||
-			                           (
-				                           elseStatement.IsKind(SyntaxKind.IfStatement) &&
-				                           IsReturnStatementRequired((IfStatementSyntax)elseStatement)
-			                           );
-			return isReturnRequired || elseIsReturnRequired;
+			var elseIsReturnRequired = !elseStatement.IsKind(SyntaxKind.ReturnStatement);
+			if (elseIsReturnRequired && elseStatement.IsKind(SyntaxKind.Block))
+			{
+				elseIsReturnRequired = IsReturnStatementRequired((BlockSyntax)elseStatement);
+			}
+			else if (elseIsReturnRequired && elseStatement.IsKind(SyntaxKind.IfStatement))
+			{
+				elseIsReturnRequired = IsReturnStatementRequired((IfStatementSyntax)elseStatement);
+			}
+			return elseIsReturnRequired;
 		}
 
 		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, bool withFullName = false)
@@ -543,9 +549,14 @@ namespace AsyncGenerator.Extensions
 			{
 				return node;
 			}
+
+			ExpressionSyntax argExpression = argumentName != null 
+				? IdentifierName(argumentName) 
+				: ConstructNameSyntax("CancellationToken.None");
+
 			if (!node.ArgumentList.Arguments.Any())
 			{
-				return node.AddArgumentListArguments(Argument(IdentifierName(argumentName)));
+				return node.AddArgumentListArguments(Argument(argExpression));
 			}
 			// We need to add an extra space after the comma
 			var argumentList = SeparatedList<ArgumentSyntax>(
@@ -553,7 +564,7 @@ namespace AsyncGenerator.Extensions
 					.Concat(new SyntaxNodeOrToken[]
 					{
 						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
-						Argument(IdentifierName(argumentName))
+						Argument(argExpression)
 					})
 			);
 			return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
@@ -593,6 +604,57 @@ namespace AsyncGenerator.Extensions
 				.WithArgumentList(
 					ArgumentList(
 						SeparatedList<ArgumentSyntax>(arguments)));
+		}
+
+		private static ReturnStatementSyntax GetReturnTaskCompleted(bool useQualifiedName)
+		{
+			return ReturnStatement(
+				Token(TriviaList(), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					useQualifiedName
+						? ConstructNameSyntax("System.Threading.Tasks.Task")
+						: IdentifierName(nameof(Task)),
+					IdentifierName("CompletedTask")),
+				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList())
+			);
+		}
+
+		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(this ExpressionSyntax expression, IMethodSymbol delegateSymbol,
+			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc)
+		{
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
+			var parameters = delegateSymbol.Parameters
+				.Select(o => Parameter(Identifier(o.Name)))
+				.SelectMany((o, i) => i == 0
+					? new SyntaxNodeOrToken[] { o }
+					: new SyntaxNodeOrToken[] { comma, o });
+			var arguments = delegateSymbol.Parameters
+				.Select(o => Argument(IdentifierName(o.Name)))
+				.SelectMany((o, i) => i == 0
+					? new SyntaxNodeOrToken[] { o }
+					: new SyntaxNodeOrToken[] { comma, o });
+			var invocation = InvocationExpression(expression)
+				.WithArgumentList(ArgumentList(SeparatedList<ArgumentSyntax>(arguments)));
+			invocation = invocationModifierFunc(invocation);
+			CSharpSyntaxNode body = invocation;
+			if (returnTypeMismatch)
+			{
+				// TODO: non void return type
+				body = Block()
+					.WithStatements(new SyntaxList<StatementSyntax>().AddRange(new StatementSyntax[]
+					{
+						ExpressionStatement(invocation),
+						GetReturnTaskCompleted(taskConflict)
+					}));
+			}
+
+			var lambda = ParenthesizedLambdaExpression(body)
+				.WithParameterList(ParameterList(SeparatedList<ParameterSyntax>(parameters))
+					.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(Space))))
+				.WithArrowToken(Token(TriviaList(), SyntaxKind.EqualsGreaterThanToken, TriviaList(Space)));
+
+			return lambda;
 		}
 
 		internal static MethodDeclarationSyntax AddCancellationTokenParameter(this MethodDeclarationSyntax node, 
@@ -844,7 +906,7 @@ namespace AsyncGenerator.Extensions
 			var names = name.Split('.').ToList();
 			if (onlyName)
 			{
-				return GetSimpleName(names.Last());
+				return GetSimpleName(names.Last(), insideCref: insideCref);
 			}
 
 			var trailingTriviaList = names.Count <= 2 && trailingTrivia.HasValue

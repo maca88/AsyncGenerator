@@ -222,6 +222,8 @@
   <ItemGroup>
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
+    <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="AnonymousFunctions\Input\TestCase.cs" />
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CallForwarding\Fixture.cs" />
     <Compile Include="CallForwarding\Input\TestCase.cs" />
@@ -445,6 +447,15 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MissingMembers\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\PreserveReturnType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\PreserveReturnTypeWithoutTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
