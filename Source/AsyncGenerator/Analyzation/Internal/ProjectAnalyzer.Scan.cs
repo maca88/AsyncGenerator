@@ -263,13 +263,17 @@ namespace AsyncGenerator.Analyzation.Internal
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
 				// We need to find the type where the reference location is
 				var node = documentData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
-				var typeReference = new TypeReferenceData(refLocation, node, typeData.Symbol);
+				var typeReference = new TypeReferenceData(refLocation, node, typeData.Symbol)
+				{
+					IsCref = node.Parent.IsKind(SyntaxKind.NameMemberCref)
+				};
 				if (!typeData.SelfReferences.TryAdd(typeReference))
 				{
 					Logger.Debug($"Performance hit: Self reference for type {typeData.Symbol} already exists");
 					continue; // Reference already processed
 				}
-				var dataNode = documentData.GetNearestNodeData(node.Parent);
+				var isCref = node.Parent.IsKind(SyntaxKind.NameMemberCref);
+				var dataNode = documentData.GetNearestNodeData(node.Parent, isCref);
 				dataNode?.TypeReferences.TryAdd(typeReference);
 			}
 		}

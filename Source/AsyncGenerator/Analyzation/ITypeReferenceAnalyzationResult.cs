@@ -9,5 +9,6 @@ namespace AsyncGenerator.Analyzation
 {
 	public interface ITypeReferenceAnalyzationResult : IReferenceAnalyzationResult<INamedTypeSymbol>
 	{
+		bool IsCref { get; }
 	}
 }

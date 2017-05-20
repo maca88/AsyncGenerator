@@ -33,6 +33,11 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (methodBodyNode == null)
 			{
+				if (methodResult.Conversion == MethodConversion.Copy)
+				{
+					result.Transformed = methodResult.Node;
+					return result;
+				}
 				result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
 					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
 				return result;
@@ -45,7 +50,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				return result;
 			}
-
+			
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
 			var typeReferencesAnnotations = new List<string>();
@@ -57,6 +62,20 @@ namespace AsyncGenerator.Transformation.Internal
 				var annotation = Guid.NewGuid().ToString();
 				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
 				typeReferencesAnnotations.Add(annotation);
+			}
+
+			// For copied methods we need just to replace type references
+			if (methodResult.Conversion == MethodConversion.Copy)
+			{
+				// Modify references
+				foreach (var refAnnotation in typeReferencesAnnotations)
+				{
+					var nameNode = methodNode.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
+					methodNode = methodNode
+						.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
+				}
+				result.Transformed = methodNode;
+				return result;
 			}
 
 			foreach (var childFunction in methodResult.ChildFunctions.Where(o => o.Conversion != MethodConversion.Ignore))

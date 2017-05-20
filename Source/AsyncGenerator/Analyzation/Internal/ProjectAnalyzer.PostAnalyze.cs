@@ -412,13 +412,20 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 3. Step - Mark all remaining method to be ignored
 			foreach (var methodData in toProcessMethodData)
 			{
-				methodData.Ignore("Method is never used.");
+				if (methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+				{
+					methodData.Copy();
+				}
+				else
+				{
+					methodData.Ignore("Method is never used.");
+				}
 				LogIgnoredReason(methodData);
 			}
 
 
 			// We need to calculate the final conversion for the local/anonymous functions
-			foreach (var methodData in allTypeData.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
+			foreach (var methodData in allTypeData.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore && m.Conversion != MethodConversion.Copy)))
 			{
 				// We have to calculate the conversion from bottom to top as a body reference may depend on a child function (passed by argument)
 				foreach (var childFunction in methodData.GetSelfAndDescendantsFunctions().Where(o => o.GetBodyNode() != null).OrderByDescending(o => o.GetBodyNode().SpanStart))
@@ -442,16 +449,23 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 4. Step - Calculate the final type conversion
 			foreach (var typeData in allTypeData)
 			{
-				if (typeData.Conversion != TypeConversion.Unknown)
+				if (typeData.Conversion == TypeConversion.Ignore)
 				{
 					continue;
 				}
 				// A type can be ignored only if it has no async methods that will get converted
-				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore)))
+				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore || o.Conversion == MethodConversion.Copy)))
 				{
-					typeData.Conversion = TypeConversion.Ignore;
+					if (typeData.ParentTypeData?.Conversion == TypeConversion.NewType)
+					{
+						typeData.Copy();
+					}
+					else
+					{
+						typeData.Ignore("Has no async methods");
+					}
 				}
-				else
+				else if(typeData.Conversion == TypeConversion.Unknown)
 				{
 					typeData.Conversion = TypeConversion.Partial;
 				}
@@ -477,7 +491,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 6. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
 			foreach (var functionData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore))
+				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore && m.Conversion != MethodConversion.Copy))
 				.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
 			{
 				CalculateFinalFlags(functionData);

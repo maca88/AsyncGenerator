@@ -20,6 +20,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<TransformationResult> TransformedNodes { get; } = new List<TransformationResult>();
 
+		public Dictionary<string, SyntaxToken> TransformedTokens { get; } = new Dictionary<string, SyntaxToken>();
+
 		public List<MethodTransformationResult> TransformedMethods { get; } = new List<MethodTransformationResult>();
 
 		public IImmutableSet<string> MemberNames { get; set; }

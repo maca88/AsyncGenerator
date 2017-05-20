@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -55,6 +56,22 @@ namespace AsyncGenerator.Tests
 						p.ConfigureAnalyzation(a => a
 							.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath)
 							);
+						action?.Invoke(p);
+					})
+
+				);
+		}
+
+		public AsyncCodeConfiguration Configure(string fileName, Action<IFluentProjectConfiguration> action = null)
+		{
+			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.sln");
+			return AsyncCodeConfiguration.Create()
+				.ConfigureSolution(slnFilePath, c => c
+					.ConfigureProject("AsyncGenerator.Tests", p =>
+					{
+						p.ConfigureAnalyzation(a => a
+							.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath && o.Name == fileName + ".cs")
+						);
 						action?.Invoke(p);
 					})
 

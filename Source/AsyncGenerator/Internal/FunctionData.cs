@@ -77,6 +77,15 @@ namespace AsyncGenerator.Internal
 			return ChildFunctions.Values.SelectMany(o => o.GetSelfAndDescendantsFunctionsRecursively(o, predicate));
 		}
 
+		internal void Copy()
+		{
+			Conversion = MethodConversion.Copy;
+			foreach (var childFunction in GetDescendantsChildFunctions())
+			{
+				childFunction.Conversion = MethodConversion.Copy;
+			}
+		}
+
 		internal void Ignore(string reason, bool explicitlyIgnored = false)
 		{
 			Conversion = MethodConversion.Ignore;

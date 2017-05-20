@@ -79,9 +79,17 @@ namespace AsyncGenerator.Internal
 					.SelectMany(o => o.GetSelfAndDescendantsNamespaceData(predicate)));
 		}
 
-		public AbstractData GetNearestNodeData(SyntaxNode node)
+		public AbstractData GetNearestNodeData(SyntaxNode node, bool isCref = false)
 		{
 			var currentNode = node;
+			if (isCref)
+			{
+				currentNode = Node.DescendantNodes()
+					.OfType<MemberDeclarationSyntax>()
+					.OrderByDescending(o => o.SpanStart)
+					.First(o => o.FullSpan.Contains(node.FullSpan));
+			}
+			
 			while (currentNode != null)
 			{
 				if (_validDataKinds.Contains(currentNode.Kind()))

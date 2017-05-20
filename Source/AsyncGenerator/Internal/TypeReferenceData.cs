@@ -11,5 +11,7 @@ namespace AsyncGenerator.Internal
 			: base(reference, referenceNameNode, referenceSymbol)
 		{
 		}
+
+		public bool IsCref { get; set; }
 	}
 }

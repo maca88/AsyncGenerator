@@ -29,6 +29,10 @@ namespace AsyncGenerator
 		/// Also the method body will get scanned for method invocations that have an async counterpart.
 		/// Use this conversion for methods that need to be async even if there is no method invocations with async counterpart inside the method body.
 		/// </summary>
-		ToAsync = 3
+		ToAsync = 3,
+		/// <summary>
+		/// The method will be copied into the new type
+		/// </summary>
+		Copy = 4
 	}
 }
