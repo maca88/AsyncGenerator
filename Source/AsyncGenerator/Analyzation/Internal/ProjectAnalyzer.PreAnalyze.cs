@@ -39,7 +39,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						PreAnalyzeMethodData(methodData);
 					}
-					
+
 					foreach (var node in methodNode
 						.DescendantNodes())
 					{
@@ -77,10 +77,18 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeType(TypeData typeData)
 		{
+			// TODO: validate conversion
 			if (typeData.Conversion == TypeConversion.Ignore)
 			{
 				return;
 			}
+			if (typeData.Conversion == TypeConversion.Unknown && typeData.ParentTypeData?.GetSelfAndAncestorsTypeData()
+				    .Any(o => o.Conversion == TypeConversion.NewType) == true)
+			{
+				typeData.Conversion = TypeConversion.Copy;
+			}
+
+
 			typeData.IsPartial = typeData.Node.IsPartial();
 		}
 
@@ -95,31 +103,35 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			var forceAsync = methodData.Conversion == MethodConversion.ToAsync;
+			var newType = methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
 			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
+			void IgnoreOrCopy(string reason)
+			{
+				if (newType)
+				{
+					methodData.Copy();
+				}
+				else
+				{
+					methodData.Ignore(reason);
+					log(methodData);
+				}
+			}
+
 			if (methodSymbol.IsAsync || methodSymbol.Name.EndsWith("Async"))
 			{
-				methodData.Ignore("Is already async");
-				methodData.IsAsync = true;
-				log(methodData);
-				return;
-			}
-			if (!ProjectData.Contains(methodSymbol))
-			{
-				methodData.Ignore("Is an external method");
-				log(methodData);
+				IgnoreOrCopy("Is already async");
 				return;
 			}
 			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
 			{
-				methodData.Ignore($"Unsupported method kind {methodSymbol.MethodKind}");
-				log(methodData);
+				IgnoreOrCopy($"Unsupported method kind {methodSymbol.MethodKind}");
 				return;
 			}
 
 			if (methodSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				methodData.Ignore("Has out parameters");
-				log(methodData);
+				IgnoreOrCopy("Has out parameters");
 				return;
 			}
 
@@ -140,8 +152,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 						if (asyncConterPart == null)
 						{
-							methodData.Ignore($"Explicity implements an external interface {interfaceMember} that has not an async counterpart");
-							log(methodData);
+							IgnoreOrCopy($"Explicity implements an external interface {interfaceMember} that has not an async counterpart");
 							return;
 						}
 						methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -173,8 +184,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 					if (asyncConterPart == null)
 					{
-						methodData.Ignore($"Overrides an external method {overridenMethod} that has not an async counterpart");
-						log(methodData);
+						IgnoreOrCopy($"Overrides an external method {overridenMethod} that has not an async counterpart");
 						return;
 						//if (!asyncMethods.Any() || (asyncMethods.Any() && !overridenMethod.IsOverride && !overridenMethod.IsVirtual))
 						//{
@@ -232,8 +242,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
 					if (asyncConterPart == null)
 					{
-						methodData.Ignore($"Implements an external interface {interfaceMember} that has not an async counterpart");
-						log(methodData);
+						IgnoreOrCopy($"Implements an external interface {interfaceMember} that has not an async counterpart");
 						return;
 					}
 					methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
@@ -291,8 +300,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)*/
 				)
 				{
-					methodData.Ignore($"Has already an async counterpart {asyncCounterparts.First()}");
-					log(methodData);
+					IgnoreOrCopy($"Has already an async counterpart {asyncCounterparts.First()}");
 					return;
 				}
 			}
@@ -300,6 +308,11 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeAnonymousFunction(AnonymousFunctionData functionData, SemanticModel semanticModel)
 		{
+			if (functionData.MethodData.Conversion == MethodConversion.Copy)
+			{
+				functionData.Conversion = MethodConversion.Copy;
+				return;
+			}
 			var funcionSymbol = functionData.Symbol;
 			var forceAsync = functionData.MethodData.Conversion == MethodConversion.ToAsync;
 			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog;
@@ -307,7 +320,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				functionData.Ignore("Is already async");
 				log(functionData);
-				functionData.IsAsync = true;
 				return;
 			}
 			if (funcionSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
@@ -346,6 +358,11 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeLocalFunction(LocalFunctionData functionData, SemanticModel semanticModel)
 		{
+			if (functionData.MethodData.Conversion == MethodConversion.Copy)
+			{
+				functionData.Conversion = MethodConversion.Copy;
+				return;
+			}
 			//TODO
 		}
 	}

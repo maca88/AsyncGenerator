@@ -75,12 +75,9 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.ScanMethodBody(true)
 						)
 					)
+
 					//.ConfigureProject("NHibernate.Test", p => p
 					//	.ConfigureAnalyzation(a => a
-					//		//.DocumentSelection(o =>
-					//		//	{
-					//		//		return o.FilePath.EndsWith("ConfigFixture.cs");
-					//		//	})
 					//		.MethodConversion(symbol =>
 					//			{
 					//				return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute")
@@ -92,13 +89,25 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					//		.CancellationTokens(t => t
 					//			.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
 					//		.ScanMethodBody(true)
-					//		.TypeConversion(o =>
+					//		.TypeConversion(type =>
 					//			{
-					//				if (o.Name == "NorthwindDbCreator")
+					//				if (type.Name == "NorthwindDbCreator")
 					//				{
 					//					return TypeConversion.Ignore;
 					//				}
-					//				// TODO: new types
+					//				if (type.GetAttributes().Any(o => o.AttributeClass.Name == "TestFixtureAttribute"))
+					//				{
+					//					return TypeConversion.NewType;
+					//				}
+					//				var currentType = type;
+					//				while (currentType != null)
+					//				{
+					//					if (currentType.Name == "TestCase")
+					//					{
+					//						return TypeConversion.Ignore;
+					//					}
+					//					currentType = currentType.BaseType;
+					//				}
 					//				return TypeConversion.Unknown;
 					//			})
 					//	)

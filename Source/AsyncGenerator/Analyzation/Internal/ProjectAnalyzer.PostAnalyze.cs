@@ -313,7 +313,24 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData())
 				.SelectMany(o => o.Methods.Values.Where(m => m.ExplicitlyIgnored)))
 			{
-				// TODO: what to do if an abstract method is explictly ignored, should we implicitly ignore all overrides or just remove the override keyword?.
+				// If an abstract method is ignored we have to ignore also the overrides otherwise we may break the functionality and the code from compiling (eg. base.Call())
+				if (methodData.Symbol.IsAbstract || methodData.Symbol.IsVirtual)
+				{
+					foreach (var relatedMethodData in methodData.RelatedMethods.Where(i => i.RelatedMethods.All(r => r == methodData)))
+					{
+						if (relatedMethodData.TypeData.Conversion == TypeConversion.NewType ||
+						    relatedMethodData.TypeData.Conversion == TypeConversion.Copy)
+						{
+							relatedMethodData.Copy();
+						}
+						else
+						{
+							relatedMethodData.Ignore($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}");
+							WarnLogIgnoredReason(relatedMethodData);
+
+						}
+					}
+				}
 				// TODO: if an override implements an interface that is not ignored, we would need to remove the override method and not ignore it
 				if (!methodData.InterfaceMethod)
 				{
@@ -336,7 +353,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				//.Where(o => o.Conversion != TypeConversion.Ignore)
 				.ToList();
 			var toProcessMethodData = new HashSet<MethodData>(allTypeData
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
+				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore && m.Conversion != MethodConversion.Copy)));
 			//TODO: optimize steps for better performance
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired

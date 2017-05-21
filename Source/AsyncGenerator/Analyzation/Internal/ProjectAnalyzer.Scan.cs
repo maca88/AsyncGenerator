@@ -18,7 +18,8 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
-				// If the type have to be defined as a new type then we need to find all references to that type 
+				// If the type have to be defined as a new type then we need to find all references to that type. 
+				// We must not scan for nested types as they will not be renamed
 				if (typeData.Conversion == TypeConversion.NewType)
 				{
 					await ScanForTypeReferences(typeData).ConfigureAwait(false);

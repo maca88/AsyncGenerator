@@ -32,6 +32,23 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
+			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
+			var baseMethods = methodData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
+			if (methodData.Conversion != MethodConversion.ToAsync && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
+			{
+				if (methodData.TypeData.GetSelfAndAncestorsTypeData()
+					.Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
+				{
+					methodData.Copy();
+				}
+				else
+				{
+					methodData.Ignore("All abstract/virtual related methods are ignored");
+				}
+				return;
+			}
+
+
 			var methodBody = methodData.GetBodyNode();
 			methodData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
@@ -64,17 +81,19 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			// If a method is never invoked and there is no invocations inside the method body that can be async and there is no related methods we can ignore it 
-			if (!methodData.InvokedBy.Any() && methodData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && !methodData.RelatedMethods.Any())
+			// If a method is never invoked and there is no invocations inside the method body that can be async and there is no related methods we can ignore it.
+			// Methods with Unknown may not have InvokedBy populated so we cannot ignore them here
+			// Do not ignore methods that are inside a type with conversion NewType as ExternalRelatedMethods may not be populated
+			if (
+				!methodData.Dependencies.Any() && 
+				methodData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
+				methodData.Conversion == MethodConversion.Smart &&
+			    methodData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
+				!methodData.ExternalRelatedMethods.Any()
+			)
 			{
-				// If we have to create a new type we need to consider also the external related methods
-				if (methodData.TypeData.Conversion != TypeConversion.NewType || !methodData.ExternalRelatedMethods.Any())
-				{
-					methodData.Ignore("Method is never used and has no async invocations");
-					LogIgnoredReason(methodData);
-					return;
-				}
-
+				methodData.Ignore("Method is never used and has no async invocations");
+				LogIgnoredReason(methodData);
 			}
 		}
 
@@ -301,12 +320,22 @@ namespace AsyncGenerator.Analyzation.Internal
 				analyzer.Analyze(node, functionReferenceData, documentData.SemanticModel);
 			}
 
-			// Propagate CancellationTokenRequired to the method data only if the invocation can be async 
+			PropagateCancellationToken(functionReferenceData);
+		}
+
+		/// <summary>
+		/// Propagate CancellationTokenRequired to the method data only if the invocation can be async and the method does not have any external related methods (eg. external interface)
+		/// </summary>
+		private void PropagateCancellationToken(BodyFunctionReferenceData functionReferenceData)
+		{
 			if (functionReferenceData.CancellationTokenRequired && functionReferenceData.Conversion == ReferenceConversion.ToAsync)
 			{
 				// We need to set CancellationTokenRequired to true for the method that contains this invocation
-				var methodData = functionData.GetMethodData();
-				methodData.CancellationTokenRequired = true;
+				var methodData = functionReferenceData.FunctionData.GetMethodData();
+				if (!methodData.ExternalRelatedMethods.Any())
+				{
+					methodData.CancellationTokenRequired = true;
+				}
 			}
 		}
 
@@ -407,13 +436,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					return;
 				}
-				// Propagate CancellationTokenRequired to the method data only if the argument can be async 
-				if (result.CancellationTokenRequired && result.Conversion == ReferenceConversion.ToAsync)
-				{
-					// We need to set CancellationTokenRequired to true for the method that contains this invocation
-					var methodData = result.FunctionData.GetMethodData();
-					methodData.CancellationTokenRequired = true;
-				}
+				PropagateCancellationToken(result);
 
 				// Check if the method is passed as an argument to a candidate method
 				//var invokedByMethod = result.FunctionData.BodyMethodReferences

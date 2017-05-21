@@ -17,47 +17,25 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.NewTypes.Input
 {
-	public class InheritanceAsync
-	{
-		public virtual Task ReadAsync()
-		{
-			return Task.CompletedTask;
-			
-		}
-
-		public bool SyncMethod()
-		{
-			return true;
-		}
-	}
 
 	/// <summary>
-	/// Derives from <see cref="InheritanceAsync"/>
+	/// Derives from <see cref="Inheritance"/>
 	/// </summary>
-	public class DerivedAsync : InheritanceAsync
+	public class DerivedAsync : Inheritance
 	{
 		private Type _type = typeof(DerivedAsync);
 		private Type _baseType;
 
 		public DerivedAsync()
 		{
-			_baseType = typeof(InheritanceAsync);
+			_baseType = typeof(Inheritance);
 		}
 
-		public override Task ReadAsync()
+		public override void Read()
 		{
-			try
+			if (SyncMethod())
 			{
-				if (SyncMethod())
-				{
-					return SimpleFile.ReadAsync();
-				}
-
-				return Task.CompletedTask;
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<object>(ex);
+				SimpleFile.Read();
 			}
 		}
 

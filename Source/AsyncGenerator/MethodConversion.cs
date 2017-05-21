@@ -31,7 +31,8 @@ namespace AsyncGenerator
 		/// </summary>
 		ToAsync = 3,
 		/// <summary>
-		/// The method will be copied into the new type
+		/// The method will be copied into the new type, only type references may be modified. This option is only valid when the type conversion is set to <see cref="TypeConversion.NewType"/>
+		/// or <see cref="TypeConversion.Copy"/>. 
 		/// </summary>
 		Copy = 4
 	}

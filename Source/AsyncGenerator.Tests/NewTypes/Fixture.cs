@@ -12,12 +12,17 @@ namespace AsyncGenerator.Tests.NewTypes
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestNewTypeAfterTransformation()
+		public void TestSimpleAfterTransformation()
 		{
 			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(TestCase) ? TypeConversion.NewType : TypeConversion.Unknown)
-					.MethodConversion(symbol => MethodConversion.Smart)
+					.MethodConversion(symbol =>
+					{
+						return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "CustomAttribute")
+							? MethodConversion.Smart
+							: MethodConversion.Unknown;
+					})
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -70,6 +75,90 @@ namespace AsyncGenerator.Tests.NewTypes
 						var document = result.Documents[0];
 						Assert.Null(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(Inheritance)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestInheritanceIgnoreBaseAfterTransformation()
+		{
+			var config = Configure(nameof(Inheritance), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol =>
+					{
+						return symbol.Name == nameof(Inheritance) ? TypeConversion.Ignore : TypeConversion.NewType;
+					})
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("InheritanceIgnoredBase"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestInheritanceIgnoreBaseWithTokensAfterTransformation()
+		{
+			var config = Configure(nameof(Inheritance), p => p
+				.ConfigureAnalyzation(a => a
+					.CancellationTokens(true)
+					.TypeConversion(symbol =>
+					{
+						return symbol.Name == nameof(Inheritance) ? TypeConversion.Ignore : TypeConversion.NewType;
+					})
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("InheritanceIgnoredBaseWithTokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestMissingMembersAfterTransformation()
+		{
+			var config = Configure(nameof(MissingMembers), o => o
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureAnalyzation(a => a
+					.CancellationTokens(true)
+					.ScanForMissingAsyncMembers(true)
+					.TypeConversion(symbol =>
+					{
+						return symbol.Name == nameof(MissingMembers) ? TypeConversion.NewType : TypeConversion.Unknown;
+					})
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
 					})
 				)
 			);

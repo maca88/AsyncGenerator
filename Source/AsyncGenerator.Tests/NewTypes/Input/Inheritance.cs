@@ -13,6 +13,11 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 		{
 			
 		}
+
+		public bool SyncMethod()
+		{
+			return true;
+		}
 	}
 
 	/// <summary>
@@ -29,6 +34,14 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 		}
 
 		public override void Read()
+		{
+			if (SyncMethod())
+			{
+				SimpleFile.Read();
+			}
+		}
+
+		public void Read2()
 		{
 			SimpleFile.Read();
 		}

@@ -26,11 +26,29 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			_nestedClass = new NestedClass();
 		}
 
-		public class NestedClass
+		public class NestedClass : IDisposable
 		{
+			public bool Disposed { get; set; }
+
+			public NestedClass()
+			{
+				SimpleFile.Read();
+			}
+
 			public void Nop() { }
+
+			public Task ReadAsync()
+			{
+				return SimpleFile.ReadAsync();
+			}
+
+			public void Dispose()
+			{
+				Disposed = true;
+			}
 		}
 
+		[Custom]
 		public Task ReadAsync()
 		{
 			try
@@ -47,6 +65,16 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 		public void DoSomething()
 		{
 			_nestedClass.Nop();
+		}
+
+		public Task Read2Async()
+		{
+			return ReadAsync();
+		}
+
+		public Task Read3Async()
+		{
+			return _nestedClass.ReadAsync();
 		}
 
 	}

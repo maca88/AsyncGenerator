@@ -11,8 +11,6 @@ namespace AsyncGenerator.Analyzation
 	{
 		MethodDeclarationSyntax Node { get; }
 
-		bool IsAsync { get; }
-
 		/// <summary>
 		/// Methods that invokes this method
 		/// </summary>

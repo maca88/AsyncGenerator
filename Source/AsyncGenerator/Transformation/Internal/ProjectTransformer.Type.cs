@@ -79,16 +79,19 @@ namespace AsyncGenerator.Transformation.Internal
 						rootTypeNode = rootTypeNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 					}
 
-					// We have to replace all constructors as TypeReferences will never contain them
+					// We have to replace all constructors as TypeReferences will never contain them, but only for new types not for copied ones
 					// TODO: ctor must be registered like method
-					foreach (var ctorSpan in typeNode.Members.OfType<ConstructorDeclarationSyntax>().Select(o => o.Span))
+					if (typeResult.Conversion == TypeConversion.NewType)
 					{
-						var ctorNode = rootTypeNode.DescendantNodes()
-							.OfType<ConstructorDeclarationSyntax>()
-							.First(o => o.Span.Equals(ctorSpan));
-						var annotation = Guid.NewGuid().ToString();
-						transformResult.TransformedTokens.Add(annotation, Identifier(ctorNode.Identifier.ValueText + "Async").WithTriviaFrom(ctorNode.Identifier));
-						rootTypeNode = rootTypeNode.ReplaceToken(ctorNode.Identifier, ctorNode.Identifier.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
+						foreach (var ctorSpan in typeNode.Members.OfType<ConstructorDeclarationSyntax>().Select(o => o.Span))
+						{
+							var ctorNode = rootTypeNode.DescendantNodes()
+								.OfType<ConstructorDeclarationSyntax>()
+								.First(o => o.Span.Equals(ctorSpan));
+							var annotation = Guid.NewGuid().ToString();
+							transformResult.TransformedTokens.Add(annotation, Identifier(ctorNode.Identifier.ValueText + "Async").WithTriviaFrom(ctorNode.Identifier));
+							rootTypeNode = rootTypeNode.ReplaceToken(ctorNode.Identifier, ctorNode.Identifier.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
+						}
 					}
 				}
 

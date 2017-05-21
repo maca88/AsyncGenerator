@@ -250,6 +250,7 @@
     <Compile Include="NestedTypes\Input\TestCase.cs" />
     <Compile Include="NewTypes\Fixture.cs" />
     <Compile Include="NewTypes\Input\Inheritance.cs" />
+    <Compile Include="NewTypes\Input\MissingMembers.cs" />
     <Compile Include="NewTypes\Input\NonAsync.cs" />
     <Compile Include="NewTypes\Input\TestCase.cs" />
     <Compile Include="OmitAsync\Fixture.cs" />
@@ -466,6 +467,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\Inheritance.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\InheritanceIgnoredBase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\InheritanceIgnoredBaseWithTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

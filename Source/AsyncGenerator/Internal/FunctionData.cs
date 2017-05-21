@@ -16,9 +16,6 @@ namespace AsyncGenerator.Internal
 			Symbol = methodSymbol;
 		}
 
-		//TODO: remove if not needed
-		public bool IsAsync { get; set; }
-
 		public IMethodSymbol Symbol { get; }
 
 		public abstract TypeData TypeData { get; }
@@ -80,6 +77,10 @@ namespace AsyncGenerator.Internal
 		internal void Copy()
 		{
 			Conversion = MethodConversion.Copy;
+			foreach (var bodyReference in BodyMethodReferences)
+			{
+				bodyReference.Ignore("Method will be copied");
+			}
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
 				childFunction.Conversion = MethodConversion.Copy;
@@ -91,6 +92,10 @@ namespace AsyncGenerator.Internal
 			Conversion = MethodConversion.Ignore;
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
+			foreach (var bodyReference in BodyMethodReferences)
+			{
+				bodyReference.Ignore("Cascade ignored.");
+			}
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
 				childFunction.Ignore("Cascade ignored.");
