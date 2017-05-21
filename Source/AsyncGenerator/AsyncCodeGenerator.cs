@@ -25,38 +25,50 @@ namespace AsyncGenerator
 {
 	public class AsyncCodeGenerator
 	{
+		private static readonly ILog Logger = LogManager.GetLogger(typeof(AsyncCodeGenerator));
+
 		public async Task GenerateAsync(AsyncCodeConfiguration configuration)
 		{
 			if (configuration == null)
 			{
 				throw new ArgumentNullException(nameof(configuration));
 			}
+			Logger.Info("Generating async code started");
+
 			foreach (var config in configuration.SolutionConfigurations)
 			{
+				Logger.Info($"Configuring solution '{config.Path}' prior analyzation started");
 				var solutionData = await CreateSolutionData(config).ConfigureAwait(false);
+				Logger.Info($"Configuring solution '{config.Path}' prior analyzation completed");
+
 				foreach (var projectData in solutionData.GetProjects())
 				{
 					// Register internal plugins
 					RegisterInternalPlugins(projectData.Configuration);
-					
+
 					// Initialize plugins
+					Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' started");
 					foreach (var registeredPlugin in projectData.Configuration.RegisteredPlugins)
 					{
 						await registeredPlugin.Initialize(projectData.Project, projectData.Configuration).ConfigureAwait(false);
 					}
+					Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' completed");
 
 					// Setup parsing
 					SetupParsing(projectData);
 
 					// Analyze project
+					Logger.Info($"Analyzing project '{projectData.Project.Name}' started");
 					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
 					var analyzationResult = await AnalyzeProject(projectData).ConfigureAwait(false);
 					foreach (var action in analyzeConfig.AfterAnalyzation)
 					{
 						action(analyzationResult);
 					}
+					Logger.Info($"Analyzing project '{projectData.Project.Name}' completed");
 
 					// Transform documents
+					Logger.Info($"Transforming project '{projectData.Project.Name}' started");
 					var transformConfig = projectData.Configuration.TransformConfiguration;
 					var transformResult = TransformProject(analyzationResult, transformConfig);
 					foreach (var action in transformConfig.AfterTransformation)
@@ -64,11 +76,13 @@ namespace AsyncGenerator
 						action(transformResult);
 					}
 					projectData.Project = transformResult.Project; // updates also the solution
+					Logger.Info($"Transforming project '{projectData.Project.Name}' completed");
 
 					// Compile
 					var compileConfig = projectData.Configuration.CompileConfiguration;
 					if (compileConfig != null)
 					{
+						Logger.Info($"Compiling project '{projectData.Project.Name}' started");
 						var compilation = await projectData.Project.GetCompilationAsync();
 						var emit = compilation.Emit(compileConfig.OutputPath, compileConfig.SymbolsPath, compileConfig.XmlDocumentationPath);
 						if (!emit.Success)
@@ -79,13 +93,18 @@ namespace AsyncGenerator
 							throw new InvalidOperationException(
 								$"Generation for Project {transformResult.Project.Name} failed to generate a valid code. Errors:{Environment.NewLine}{messages}");
 						}
+						Logger.Info($"Compiling project '{projectData.Project.Name}' completed");
 					}
 				}
 				if (config.ApplyChanges)
 				{
+					Logger.Info($"Applying solution '{config.Path}' changes started");
 					solutionData.Workspace.TryApplyChanges(solutionData.Solution);
+					Logger.Info($"Applying solution '{config.Path}' changes completed");
 				}
 			}
+
+			Logger.Info("Generating async code completed");
 		}
 
 		private void SetupParsing(ProjectData projectData)

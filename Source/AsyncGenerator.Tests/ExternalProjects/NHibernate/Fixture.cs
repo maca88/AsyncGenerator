@@ -37,6 +37,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln");
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, s => s
+					.RunInParallel()
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)

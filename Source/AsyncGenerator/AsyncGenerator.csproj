@@ -191,6 +191,7 @@
     <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\IProjectConfiguration.cs" />
     <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
+    <Compile Include="Configuration\ISolutionConfiguration.cs" />
     <Compile Include="Extensions\ObjectExtensions.cs" />
     <Compile Include="Extensions\SpecialTypeExtensions.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensions.Async.cs" />

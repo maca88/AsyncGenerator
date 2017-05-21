@@ -7,12 +7,15 @@ namespace AsyncGenerator.Configuration.Internal
 {
 	internal class ProjectConfiguration : IFluentProjectConfiguration, IProjectConfiguration
 	{
-		public ProjectConfiguration(string name)
+		private readonly ISolutionConfiguration _solutionConfiguration;
+
+		public ProjectConfiguration(ISolutionConfiguration solutionConfiguration, string name)
 		{
+			_solutionConfiguration = solutionConfiguration;
 			Name = name;
 			ParseConfiguration = new ProjectParseConfiguration();
-			AnalyzeConfiguration = new ProjectAnalyzeConfiguration();
-			TransformConfiguration = new ProjectTransformConfiguration();
+			AnalyzeConfiguration = new ProjectAnalyzeConfiguration(this);
+			TransformConfiguration = new ProjectTransformConfiguration(this);
 			RegisteredPlugins = new List<IPlugin>();
 		}
 
@@ -27,6 +30,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public ProjectCompileConfiguration CompileConfiguration { get; private set; }
 
 		public List<IPlugin> RegisteredPlugins { get; }
+
+		public bool RunInParallel => _solutionConfiguration.RunInParallel;
 
 		#region IProjectConfiguration
 

@@ -12,6 +12,13 @@ namespace AsyncGenerator.Configuration.Internal
 {
 	internal class ProjectTransformConfiguration : IFluentProjectTransformConfiguration, IProjectTransformConfiguration
 	{
+		private readonly IProjectConfiguration _projectConfiguration;
+
+		public ProjectTransformConfiguration(IProjectConfiguration projectConfiguration)
+		{
+			_projectConfiguration = projectConfiguration;
+		}
+
 		public string AsyncFolder { get; private set; } = "Async";
 
 		public ExpressionSyntax ConfigureAwaitArgument { get; private set; }
@@ -21,6 +28,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public string AsyncLockFullTypeName { get; private set; }
 
 		public string AsyncLockMethodName { get; private set; }
+
+		public bool RunInParallel => _projectConfiguration.RunInParallel;
 
 		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
 

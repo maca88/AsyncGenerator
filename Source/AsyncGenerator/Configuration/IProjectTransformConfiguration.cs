@@ -16,5 +16,7 @@ namespace AsyncGenerator.Configuration
 		string AsyncLockFullTypeName { get; }
 
 		string AsyncLockMethodName { get; }
+
+		bool RunInParallel { get; }
 	}
 }
