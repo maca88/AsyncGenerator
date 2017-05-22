@@ -19,7 +19,7 @@ namespace AsyncGenerator.Internal
 
 		public override ReferenceConversion GetConversion()
 		{
-			return (ReferenceFunctionData?.Conversion == MethodConversion.ToAsync) || RelatedBodyFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync)
+			return (ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true) || RelatedBodyFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync)
 				? ReferenceConversion.ToAsync
 				: ReferenceConversion.Ignore;
 		}
@@ -28,7 +28,7 @@ namespace AsyncGenerator.Internal
 
 		public override string AsyncCounterpartName
 		{
-			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceFunctionData.Symbol.Name + "Async"
 				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartName;
 			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartName)} for {nameof(CrefFunctionReferenceData)} is not supported");
@@ -36,7 +36,7 @@ namespace AsyncGenerator.Internal
 
 		public override IMethodSymbol AsyncCounterpartSymbol
 		{
-			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceFunctionData.Symbol
 				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartSymbol;
 			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartSymbol)} for {nameof(CrefFunctionReferenceData)} is not supported");
@@ -44,7 +44,7 @@ namespace AsyncGenerator.Internal
 
 		public override FunctionData AsyncCounterpartFunction
 		{
-			get => ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceFunctionData
 				: null;
 			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartFunction)} for {nameof(CrefFunctionReferenceData)} is not supported");

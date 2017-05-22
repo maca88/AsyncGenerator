@@ -76,14 +76,17 @@ namespace AsyncGenerator.Internal
 
 		internal void Copy()
 		{
-			Conversion = MethodConversion.Copy;
+			// Copy can be mixed with Smart, ToAsync and Unknown
+			Conversion &= ~MethodConversion.Ignore;
+			Conversion |= MethodConversion.Copy;
+
 			foreach (var bodyReference in BodyMethodReferences)
 			{
 				bodyReference.Ignore("Method will be copied");
 			}
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
-				childFunction.Conversion = MethodConversion.Copy;
+				childFunction.Copy();
 			}
 		}
 
@@ -99,6 +102,22 @@ namespace AsyncGenerator.Internal
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
 				childFunction.Ignore("Cascade ignored.");
+			}
+		}
+
+		internal void ToAsync()
+		{
+			if (Conversion.HasFlag(MethodConversion.Smart))
+			{
+				Conversion &= ~MethodConversion.Smart;
+			}
+			if (Conversion.HasFlag(MethodConversion.Copy))
+			{
+				Conversion |= MethodConversion.ToAsync;
+			}
+			else
+			{
+				Conversion = MethodConversion.ToAsync;
 			}
 		}
 

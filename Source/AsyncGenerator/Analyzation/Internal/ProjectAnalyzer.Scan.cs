@@ -30,7 +30,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
 				foreach (var methodData in typeData.Methods.Values
-					.Where(o => o.Conversion == MethodConversion.ToAsync || o.Conversion == MethodConversion.Smart))
+					.Where(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart)))
 				{
 					await ScanMethodData(methodData).ConfigureAwait(false);
 					//foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
@@ -117,9 +117,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var bodyScanMethodDatas = new HashSet<MethodData>();
 			var referenceScanMethods = new HashSet<IMethodSymbol>();
 
-			if (_configuration.ScanMethodBody ||
-			    methodData.Conversion == MethodConversion.Smart ||
-			    methodData.Conversion == MethodConversion.ToAsync)
+			if (_configuration.ScanMethodBody || methodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 			{
 				bodyScanMethodDatas.Add(methodData);
 			}
@@ -151,9 +149,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					interfaceMethodData.RelatedMethods.TryAdd(implMethodData);
 					implMethodData.RelatedMethods.TryAdd(interfaceMethodData);
 
-					if (_configuration.ScanMethodBody ||
-						implMethodData.Conversion == MethodConversion.Smart ||
-						implMethodData.Conversion == MethodConversion.ToAsync)
+					if (_configuration.ScanMethodBody || implMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 					{
 						bodyScanMethodDatas.Add(implMethodData);
 					}
@@ -168,9 +164,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						interfaceMethodData.RelatedMethods.TryAdd(overrideMethodData);
 						implMethodData.RelatedMethods.TryAdd(overrideMethodData);
 						overrideMethodData.RelatedMethods.TryAdd(implMethodData);
-						if (_configuration.ScanMethodBody ||
-							overrideMethodData.Conversion == MethodConversion.Smart ||
-							overrideMethodData.Conversion == MethodConversion.ToAsync)
+						if (_configuration.ScanMethodBody || overrideMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 						{
 							bodyScanMethodDatas.Add(overrideMethodData);
 						}
@@ -206,9 +200,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 				}
 
-				if (baseMethodData != null && (_configuration.ScanMethodBody ||
-				                               baseMethodData.Conversion == MethodConversion.Smart ||
-				                               baseMethodData.Conversion == MethodConversion.ToAsync))
+				if (baseMethodData != null && (_configuration.ScanMethodBody || baseMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync)))
 				{
 					bodyScanMethodDatas.Add(baseMethodData);
 				}
@@ -224,9 +216,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						overrideMethodData.ExternalRelatedMethods.TryAdd(baseMethodSymbol);
 					}
-					if (!overrideMethod.IsAbstract && (_configuration.ScanMethodBody ||
-					                                   overrideMethodData.Conversion == MethodConversion.Smart ||
-					                                   overrideMethodData.Conversion == MethodConversion.ToAsync))
+					if (!overrideMethod.IsAbstract && (_configuration.ScanMethodBody || overrideMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync)))
 					{
 						bodyScanMethodDatas.Add(overrideMethodData);
 					}
@@ -282,8 +272,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void ScanForTypeMissingAsyncMethods(TypeData typeData)
 		{
 			var documentData = typeData.NamespaceData.DocumentData;
-			var members = typeData.Node
-				.DescendantNodes()
+			var members = typeData.Node.Members
 				.OfType<MethodDeclarationSyntax>()
 				.Select(o => new { Node = o, Symbol = documentData.SemanticModel.GetDeclaredSymbol(o) })
 				.ToLookup(o =>
@@ -309,7 +298,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, true, false));
 				var methodData = documentData.GetMethodData(nonAsyncMember.Node);
-				methodData.Conversion = MethodConversion.ToAsync;
+				methodData.ToAsync();
 				methodData.Missing = true;
 				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
 				if (asyncMember.Parameters.Length > nonAsyncMember.Symbol.Parameters.Length)
@@ -347,7 +336,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					var methodData = documentData.GetMethodData(nonAsyncMember.Node);
-					methodData.Conversion = MethodConversion.ToAsync;
+					methodData.ToAsync();
 					methodData.Missing = true;
 					// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
 					if (asyncMember.Parameters.Length > nonAsyncMember.Symbol.Parameters.Length)

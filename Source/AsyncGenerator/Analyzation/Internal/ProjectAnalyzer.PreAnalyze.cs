@@ -96,13 +96,14 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			var methodSymbol = methodData.Symbol;
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
+			// TODO: validate conversion
 			if (methodData.Conversion == MethodConversion.Ignore)
 			{
 				methodData.Ignore("Ignored by MethodConversion function", true);
 				return;
 			}
 
-			var forceAsync = methodData.Conversion == MethodConversion.ToAsync;
+			var forceAsync = methodData.Conversion.HasFlag(MethodConversion.ToAsync);
 			var newType = methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
 			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
 			void IgnoreOrCopy(string reason)
@@ -160,6 +161,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					else
 					{
 						methodData.ImplementedInterfaces.TryAdd(interfaceMember);
+					}
+					// For new types we need to copy all interface members
+					if (newType)
+					{
+						methodData.Conversion |= MethodConversion.Copy;
 					}
 					//var syntax = interfaceMember.DeclaringSyntaxReferences.FirstOrDefault();
 					//if (!CanProcessSyntaxReference(syntax))
@@ -251,6 +257,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					methodData.ImplementedInterfaces.TryAdd(interfaceMember);
 				}
+				// For new types we need to copy all interface member
+				if (newType)
+				{
+					methodData.Conversion |= MethodConversion.Copy;
+				}
 				//var syntax = interfaceMember.DeclaringSyntaxReferences.SingleOrDefault();
 				//if (!CanProcessSyntaxReference(syntax))
 				//{
@@ -308,13 +319,13 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeAnonymousFunction(AnonymousFunctionData functionData, SemanticModel semanticModel)
 		{
-			if (functionData.MethodData.Conversion == MethodConversion.Copy)
+			if (functionData.MethodData.Conversion.HasFlag(MethodConversion.Copy))
 			{
-				functionData.Conversion = MethodConversion.Copy;
+				functionData.Copy();
 				return;
 			}
 			var funcionSymbol = functionData.Symbol;
-			var forceAsync = functionData.MethodData.Conversion == MethodConversion.ToAsync;
+			var forceAsync = functionData.MethodData.Conversion.HasFlag(MethodConversion.ToAsync);
 			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog;
 			if (funcionSymbol.IsAsync)
 			{
@@ -358,9 +369,9 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeLocalFunction(LocalFunctionData functionData, SemanticModel semanticModel)
 		{
-			if (functionData.MethodData.Conversion == MethodConversion.Copy)
+			if (functionData.MethodData.Conversion.HasFlag(MethodConversion.Copy))
 			{
-				functionData.Conversion = MethodConversion.Copy;
+				functionData.Copy();
 				return;
 			}
 			//TODO

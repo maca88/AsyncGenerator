@@ -474,6 +474,9 @@
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\InheritanceIgnoredBaseWithTokens.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\MissingMembers.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

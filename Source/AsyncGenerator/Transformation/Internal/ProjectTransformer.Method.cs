@@ -31,26 +31,33 @@ namespace AsyncGenerator.Transformation.Internal
 			result.IndentTrivia = methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
 			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
+			if (methodResult.Conversion == MethodConversion.Ignore)
+			{
+				return result;
+			}
+
 			if (methodBodyNode == null)
 			{
-				if (methodResult.Conversion == MethodConversion.Copy)
+				if (methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
 				{
-					result.Transformed = methodResult.Node;
+					result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
+						.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+					if (methodResult.Conversion.HasFlag(MethodConversion.Copy))
+					{
+						result.AddMethod(methodResult.Node);
+					}
 					return result;
 				}
-				result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
-					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+				if (methodResult.Conversion.HasFlag(MethodConversion.Copy))
+				{
+					result.Transformed = methodResult.Node;
+				}
 				return result;
 			}
 			var startMethodSpan = methodResult.Node.Span.Start;
 			methodNode = methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 			startMethodSpan -= methodNode.SpanStart;
 
-			if (methodResult.Conversion == MethodConversion.Ignore)
-			{
-				return result;
-			}
-			
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
 			var typeReferencesAnnotations = new List<string>();
@@ -65,17 +72,22 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			// For copied methods we need just to replace type references
-			if (methodResult.Conversion == MethodConversion.Copy)
+			if (methodResult.Conversion.HasFlag(MethodConversion.Copy))
 			{
+				var copiedMethod = methodNode;
 				// Modify references
 				foreach (var refAnnotation in typeReferencesAnnotations)
 				{
-					var nameNode = methodNode.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
-					methodNode = methodNode
+					var nameNode = copiedMethod.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
+					copiedMethod = copiedMethod
 						.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 				}
-				result.Transformed = methodNode;
-				return result;
+				if (!methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
+				{
+					result.Transformed = copiedMethod;
+					return result;
+				}
+				result.AddMethod(copiedMethod.WithoutAnnotations(result.Annotation));
 			}
 
 			foreach (var childFunction in methodResult.ChildFunctions.Where(o => o.Conversion != MethodConversion.Ignore))

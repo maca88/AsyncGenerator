@@ -18,8 +18,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
-				foreach (var methodData in typeData.Methods.Values
-					.Where(o => o.Conversion != MethodConversion.Ignore))
+				foreach (var methodData in typeData.Methods.Values.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					AnalyzeMethodData(documentData, methodData);
 					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
@@ -34,7 +33,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
 			var baseMethods = methodData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
-			if (methodData.Conversion != MethodConversion.ToAsync && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
+			if (!methodData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
 			{
 				if (methodData.TypeData.GetSelfAndAncestorsTypeData()
 					.Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
@@ -76,7 +75,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
-			if (methodData.Conversion == MethodConversion.ToAsync)
+			if (methodData.Conversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return;
 			}
@@ -87,7 +86,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (
 				!methodData.Dependencies.Any() && 
 				methodData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
-				methodData.Conversion == MethodConversion.Smart &&
+				methodData.Conversion.HasFlag(MethodConversion.Smart) &&
 			    methodData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
 				!methodData.ExternalRelatedMethods.Any()
 			)
