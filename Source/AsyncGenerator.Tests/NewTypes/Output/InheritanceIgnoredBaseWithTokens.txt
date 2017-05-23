@@ -38,11 +38,20 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			{
 				SimpleFile.Read();
 			}
+			else
+			{
+				Read2();
+			}
 		}
 
 		public Task Read2Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return SimpleFile.ReadAsync(cancellationToken);
+		}
+
+		public void Read2()
+		{
+			SimpleFile.Read();
 		}
 	}
 }

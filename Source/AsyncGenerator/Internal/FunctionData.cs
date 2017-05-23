@@ -77,8 +77,14 @@ namespace AsyncGenerator.Internal
 		internal void Copy()
 		{
 			// Copy can be mixed with Smart, ToAsync and Unknown
-			Conversion &= ~MethodConversion.Ignore;
-			Conversion |= MethodConversion.Copy;
+			//Conversion &= ~MethodConversion.Ignore;
+			//Conversion &= ~MethodConversion.Unknown;
+			IgnoredReason = null;
+			if (this is MethodData methodData)
+			{
+				methodData.CancellationTokenRequired = false;
+			}
+			Conversion = MethodConversion.Copy;
 
 			foreach (var bodyReference in BodyMethodReferences)
 			{

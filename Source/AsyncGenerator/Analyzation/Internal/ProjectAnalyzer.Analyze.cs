@@ -31,6 +31,19 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void AnalyzeMethodData(DocumentData documentData, MethodData methodData)
 		{
+			if (methodData.Conversion == MethodConversion.Copy)
+			{
+				foreach (var bodyReference in methodData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
+				{
+					var invokedMethodData = bodyReference.ReferenceFunctionData;
+					if (invokedMethodData.Conversion != MethodConversion.Ignore)
+					{
+						invokedMethodData.Copy(); // TODO: do we need to do this recursively?
+					}
+				}
+				return; // We do not want to analyze method that will be only copied
+			}
+			
 			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
 			var baseMethods = methodData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
 			if (!methodData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
@@ -39,6 +52,16 @@ namespace AsyncGenerator.Analyzation.Internal
 					.Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
 				{
 					methodData.Copy();
+					// Check if there are any internal methods that are candidate to be async and are invoked inside this method
+					// If there are, then we need to copy them
+					foreach (var bodyReference in methodData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
+					{
+						var invokedMethodData = bodyReference.ReferenceFunctionData;
+						if (invokedMethodData.Conversion != MethodConversion.Ignore)
+						{
+							invokedMethodData.Conversion |= MethodConversion.Copy;
+						}
+					}
 				}
 				else
 				{

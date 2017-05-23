@@ -17,11 +17,12 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.NewTypes.Input
 {
-	public class TestCaseAsync
+	using System.Threading;
+	public class NestedClassesAsync
 	{
 		private readonly NestedClass _nestedClass;
 
-		public TestCaseAsync()
+		public NestedClassesAsync()
 		{
 			_nestedClass = new NestedClass();
 		}
@@ -37,24 +38,25 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public void Nop() { }
 
-			public Task ReadAsync()
+			public void Read()
 			{
-				return SimpleFile.ReadAsync();
+				SimpleFile.Read();
 			}
 
 			public void Dispose()
 			{
 				Disposed = true;
+				Read();
 			}
 		}
 
 		[Custom]
-		public Task ReadAsync()
+		public Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			try
 			{
 				DoSomething();
-				return SimpleFile.ReadAsync();
+				return SimpleFile.ReadAsync(cancellationToken);
 			}
 			catch (Exception ex)
 			{
@@ -67,14 +69,14 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			_nestedClass.Nop();
 		}
 
-		public Task Read2Async()
+		public Task Read2Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return ReadAsync();
+			return ReadAsync(cancellationToken);
 		}
 
-		public Task Read3Async()
+		public void Read3()
 		{
-			return _nestedClass.ReadAsync();
+			_nestedClass.Read();
 		}
 
 	}

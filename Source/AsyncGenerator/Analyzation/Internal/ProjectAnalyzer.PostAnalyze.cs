@@ -464,7 +464,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 				// A type can be ignored only if it has no async methods that will get converted
-				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion.HasFlag(MethodConversion.Ignore))))
+				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore || o.Conversion == MethodConversion.Copy)))
 				{
 					if (typeData.ParentTypeData?.Conversion == TypeConversion.NewType)
 					{

@@ -39,6 +39,10 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			{
 				SimpleFile.Read();
 			}
+			else
+			{
+				Read2();
+			}
 		}
 
 		public void Read2()

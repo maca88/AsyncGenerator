@@ -9,14 +9,14 @@ using AsyncGenerator.Tests.NewTypes.Input;
 namespace AsyncGenerator.Tests.NewTypes
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<TestCase>
+	public class Fixture : BaseFixture<NestedClasses>
 	{
 		[Test]
-		public void TestSimpleAfterTransformation()
+		public void TestNestedClassesAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			var config = Configure(nameof(NestedClasses), p => p
 				.ConfigureAnalyzation(a => a
-					.TypeConversion(symbol => symbol.Name == nameof(TestCase) ? TypeConversion.NewType : TypeConversion.Unknown)
+					.TypeConversion(symbol => symbol.Name == nameof(NestedClasses) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol =>
 					{
 						return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "CustomAttribute")
@@ -31,7 +31,36 @@ namespace AsyncGenerator.Tests.NewTypes
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.Null(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile(nameof(NestedClasses)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestNestedClassesWithTokensAfterTransformation()
+		{
+			var config = Configure(nameof(NestedClasses), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(NestedClasses) ? TypeConversion.NewType : TypeConversion.Unknown)
+					.CancellationTokens(true)
+					.MethodConversion(symbol =>
+					{
+						return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "CustomAttribute")
+							? MethodConversion.Smart
+							: MethodConversion.Unknown;
+					})
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("NestedClassesWithTokens"), document.Transformed.ToFullString());
 					})
 				)
 			);

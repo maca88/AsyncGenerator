@@ -236,6 +236,7 @@
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
+    <Compile Include="ExternalProjects\NHibernate\TransactionScopeRewriter.cs" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="Generics\Fixture.cs" />
@@ -252,7 +253,7 @@
     <Compile Include="NewTypes\Input\Inheritance.cs" />
     <Compile Include="NewTypes\Input\MissingMembers.cs" />
     <Compile Include="NewTypes\Input\NonAsync.cs" />
-    <Compile Include="NewTypes\Input\TestCase.cs" />
+    <Compile Include="NewTypes\Input\NestedClasses.cs" />
     <Compile Include="OmitAsync\Fixture.cs" />
     <Compile Include="OmitAsync\Input\TestCase.cs" />
     <Compile Include="OutsideMethodFunction\Fixture.cs" />
@@ -463,7 +464,7 @@
     <EmbeddedResource Include="AnonymousFunctions\Output\PreserveReturnTypeWithoutTokens.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="NewTypes\Output\TestCase.txt" />
+    <EmbeddedResource Include="NewTypes\Output\NestedClasses.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\Inheritance.txt" />
@@ -476,6 +477,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\MissingMembers.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\NestedClassesWithTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

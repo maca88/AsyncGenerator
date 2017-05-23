@@ -52,8 +52,10 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 				{
 					return SimpleFile.ReadAsync();
 				}
-
-				return Task.CompletedTask;
+				else
+				{
+					return Read2Async();
+				}
 			}
 			catch (Exception ex)
 			{
