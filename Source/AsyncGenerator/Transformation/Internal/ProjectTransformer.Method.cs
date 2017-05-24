@@ -17,12 +17,17 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private MethodTransformationResult TransformMethod(MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, 
-			INamespaceTransformationMetadata namespaceMetadata, MethodDeclarationSyntax customNode = null)
+		private MethodTransformationResult TransformMethod(MethodDeclarationSyntax methodNode, bool canCopy, MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, 
+			INamespaceTransformationMetadata namespaceMetadata)
 		{
 			//var result = new MethodTransformationResult(methodResult);
 			var methodResult = result.AnalyzationResult;
-			var methodNode = customNode ?? methodResult.Node;
+			var methodConversion = methodResult.Conversion;
+			if (!canCopy)
+			{
+				methodConversion &= ~MethodConversion.Copy;
+			}
+			//var methodNode = customNode ?? methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
 
 			// Calculate whitespace method trivias
@@ -31,20 +36,32 @@ namespace AsyncGenerator.Transformation.Internal
 			result.IndentTrivia = methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
 			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
+			if (methodConversion == MethodConversion.Ignore)
+			{
+				return result;
+			}
+
 			if (methodBodyNode == null)
 			{
-				result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
-					.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+				if (methodConversion.HasFlag(MethodConversion.ToAsync))
+				{
+					result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
+						.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+					if (methodConversion.HasFlag(MethodConversion.Copy))
+					{
+						result.AddMethod(methodResult.Node);
+					}
+					return result;
+				}
+				if (methodConversion.HasFlag(MethodConversion.Copy))
+				{
+					result.Transformed = methodResult.Node;
+				}
 				return result;
 			}
 			var startMethodSpan = methodResult.Node.Span.Start;
 			methodNode = methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
 			startMethodSpan -= methodNode.SpanStart;
-
-			if (methodResult.Conversion == MethodConversion.Ignore)
-			{
-				return result;
-			}
 
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
@@ -57,6 +74,25 @@ namespace AsyncGenerator.Transformation.Internal
 				var annotation = Guid.NewGuid().ToString();
 				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
 				typeReferencesAnnotations.Add(annotation);
+			}
+
+			// For copied methods we need just to replace type references
+			if (methodConversion.HasFlag(MethodConversion.Copy))
+			{
+				var copiedMethod = methodNode;
+				// Modify references
+				foreach (var refAnnotation in typeReferencesAnnotations)
+				{
+					var nameNode = copiedMethod.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
+					copiedMethod = copiedMethod
+						.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
+				}
+				if (!methodConversion.HasFlag(MethodConversion.ToAsync))
+				{
+					result.Transformed = copiedMethod;
+					return result;
+				}
+				result.AddMethod(copiedMethod.WithoutAnnotations(result.Annotation));
 			}
 
 			foreach (var childFunction in methodResult.ChildFunctions.Where(o => o.Conversion != MethodConversion.Ignore))
@@ -114,7 +150,8 @@ namespace AsyncGenerator.Transformation.Internal
 					.ReplaceNode(funcNode, transformFunction.Transformed);
 			}
 
-			foreach (var transfromReference in result.TransformedFunctionReferences)
+			// We have to order by OriginalStartSpan in order to have consistent formatting when adding awaits
+			foreach (var transfromReference in result.TransformedFunctionReferences.OrderByDescending(o => o.OriginalStartSpan))
 			{
 				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}

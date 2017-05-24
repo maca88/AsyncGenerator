@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Transformation.Internal
 {
@@ -20,7 +21,11 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<TransformationResult> TransformedNodes { get; } = new List<TransformationResult>();
 
+		public Dictionary<string, SyntaxToken> TransformedTokens { get; } = new Dictionary<string, SyntaxToken>();
+
 		public List<MethodTransformationResult> TransformedMethods { get; } = new List<MethodTransformationResult>();
+
+		public TypeTransformationResult Partial { get; set; }
 
 		public IImmutableSet<string> MemberNames { get; set; }
 
@@ -41,6 +46,18 @@ namespace AsyncGenerator.Transformation.Internal
 		public IMemberAnalyzationResult GetAnalyzationResult()
 		{
 			return AnalyzationResult;
+		}
+
+		public override IEnumerable<SyntaxNode> GetTransformedNodes()
+		{
+			if (Transformed != null)
+			{
+				yield return Transformed;
+			}
+			if (Partial != null)
+			{
+				yield return Partial.Transformed;
+			}
 		}
 	}
 }

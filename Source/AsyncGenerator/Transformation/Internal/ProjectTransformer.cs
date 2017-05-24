@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration.Internal;
-using AsyncGenerator.Extensions;
-using AsyncGenerator.Internal;
+using log4net;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
 
 namespace AsyncGenerator.Transformation.Internal
 {
 	internal partial class ProjectTransformer
 	{
+		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectTransformer));
 		private readonly ProjectTransformConfiguration _configuration;
 
 		public ProjectTransformer(ProjectTransformConfiguration configuration)
@@ -27,19 +24,46 @@ namespace AsyncGenerator.Transformation.Internal
 		public IProjectTransformationResult Transform(IProjectAnalyzationResult analyzationResult)
 		{
 			var result = new ProjectTransformationResult(analyzationResult.Project);
-			var project = analyzationResult.Project;
-			foreach (var document in analyzationResult.Documents)
+
+			void TransfromDocument(IDocumentAnalyzationResult document)
 			{
 				var docResult = TransformDocument(document);
 				result.Documents.Add(docResult);
 				if (docResult.Transformed == null)
 				{
-					continue;
+					return;
 				}
 				foreach (var transformer in _configuration.DocumentTransformers)
 				{
 					docResult.Transformed = transformer.Transform(docResult) ?? docResult.Transformed;
 				}
+			}
+
+			// Step 1: Transform all documents
+			Logger.Info("Generating documents started");
+			if (_configuration.RunInParallel)
+			{
+				Parallel.ForEach(analyzationResult.Documents, TransfromDocument);
+			}
+			else
+			{
+				foreach (var document in analyzationResult.Documents)
+				{
+					TransfromDocument(document);
+				}
+			}
+			Logger.Info("Generating documents completed");
+
+			// Step 2: Modify the project by adding newly generated documents and optionally update the existing ones
+			Logger.Info("Adding generated documents to the project started");
+			var project = analyzationResult.Project;
+			foreach (var docResult in result.Documents)
+			{
+				if (docResult.Transformed == null)
+				{
+					continue;
+				}
+				var document = docResult.AnalyzationResult;
 				if (docResult.OriginalModified != null)
 				{
 					project = project.GetDocument(document.Document.Id).WithSyntaxRoot(docResult.OriginalModified).Project;
@@ -48,6 +72,8 @@ namespace AsyncGenerator.Transformation.Internal
 				project = project.AddDocument(document.Document.Name, docResult.Transformed.GetText(Encoding.UTF8), folders, GetDocumentAsyncPath(document.Document)).Project;
 			}
 			result.Project = project;
+			Logger.Info("Adding generated documents to the project completed");
+			
 			return result;
 		}
 

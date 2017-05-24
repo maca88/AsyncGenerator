@@ -38,11 +38,11 @@ namespace AsyncGenerator.Analyzation.Internal
 		public async Task<IProjectAnalyzationResult> Analyze()
 		{
 			Setup();
-			var parallel = false;
+
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
 			Logger.Info("Parsing documents started");
 			DocumentData[] documentData;
-			if (parallel)
+			if (_configuration.RunInParallel)
 			{
 				documentData = await Task.WhenAll(_analyzeDocuments.Select(o => ProjectData.CreateDocumentData(o)))
 					.ConfigureAwait(false);
@@ -61,7 +61,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 2. Step - Each method in a document will be pre-analyzed and saved in a structural tree
 			Logger.Info("Pre-analyzing documents started");
-			if (parallel)
+			if (_configuration.RunInParallel)
 			{
 				Parallel.ForEach(documentData, PreAnalyzeDocumentData);
 			}
@@ -72,13 +72,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					PreAnalyzeDocumentData(item);
 				}
 			}
-
-			//await Task.WhenAll(documentData.AsParallel()..Select(PreAnalyzeDocumentData)).ConfigureAwait(false);
 			Logger.Info("Pre-analyzing documents completed");
 
 			// 3. Step - Find all references for each method and optionally scan its body for async counterparts
 			Logger.Info("Scanning references started");
-			if (parallel)
+			if (_configuration.RunInParallel)
 			{
 				await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
 			}
@@ -89,13 +87,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					await ScanDocumentData(item).ConfigureAwait(false);
 				}
 			}
-
-
 			Logger.Info("Scanning references completed");
 
 			// 4. Step - Analyze all references found in the previous step
 			Logger.Info("Analyzing documents started");
-			if (parallel)
+			if (_configuration.RunInParallel)
 			{
 				Parallel.ForEach(documentData, AnalyzeDocumentData);
 			}
@@ -106,7 +102,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					AnalyzeDocumentData(item);
 				}
 			}
-
 			Logger.Info("Analyzing documents completed");
 
 			// 5. Step - Calculate the final conversion for all method data

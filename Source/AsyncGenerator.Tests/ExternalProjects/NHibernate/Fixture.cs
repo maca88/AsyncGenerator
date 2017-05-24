@@ -37,6 +37,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln");
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, s => s
+					.RunInParallel()
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
@@ -68,6 +69,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.LocalFunctions(true)
 							.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
 						)
+						.RegisterPlugin<TransactionScopeRewriter>() // Rewrite Transaction scope in AdoNetWithDistributedTransactionFactory
 					)
 					.ConfigureProject("NHibernate.DomainModel", p => p
 						.ConfigureAnalyzation(a => a
@@ -75,34 +77,46 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.ScanMethodBody(true)
 						)
 					)
-					//.ConfigureProject("NHibernate.Test", p => p
-					//	.ConfigureAnalyzation(a => a
-					//		//.DocumentSelection(o =>
-					//		//	{
-					//		//		return o.FilePath.EndsWith("ConfigFixture.cs");
-					//		//	})
-					//		.MethodConversion(symbol =>
-					//			{
-					//				return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute")
-					//					? MethodConversion.Smart
-					//					: MethodConversion.Unknown;
-					//			})
-					//		.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
-					//		.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
-					//		.CancellationTokens(t => t
-					//			.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
-					//		.ScanMethodBody(true)
-					//		.TypeConversion(o =>
-					//			{
-					//				if (o.Name == "NorthwindDbCreator")
-					//				{
-					//					return TypeConversion.Ignore;
-					//				}
-					//				// TODO: new types
-					//				return TypeConversion.Unknown;
-					//			})
-					//	)
-					//)
+
+					.ConfigureProject("NHibernate.Test", p => p
+						.ConfigureAnalyzation(a => a
+							.MethodConversion(symbol =>
+								{
+									return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute")
+										? MethodConversion.Smart
+										: MethodConversion.Unknown;
+								})
+							.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
+							.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
+							.CancellationTokens(t => t
+								.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
+							.ScanMethodBody(true)
+							.TypeConversion(type =>
+								{
+									if (type.Name == "NorthwindDbCreator" || // Ignore for performance reasons
+										type.Name == "ObjectAssert" ||  // Has a TestFixture attribute but is not a test
+										type.Name == "LinqReadonlyTestsContext") // SetUpFixture
+									{
+										return TypeConversion.Ignore;
+									}
+									if (type.GetAttributes().Any(o => o.AttributeClass.Name == "TestFixtureAttribute"))
+									{
+										return TypeConversion.NewType;
+									}
+									var currentType = type;
+									while (currentType != null)
+									{
+										if (currentType.Name == "TestCase")
+										{
+											return TypeConversion.Ignore;
+										}
+										currentType = currentType.BaseType;
+									}
+									return TypeConversion.Unknown;
+								})
+						)
+						.RegisterPlugin<TransactionScopeRewriter>()
+					)
 					.ApplyChanges(true)
 				);
 			var generator = new AsyncCodeGenerator();

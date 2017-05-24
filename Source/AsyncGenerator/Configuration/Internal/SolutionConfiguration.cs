@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AsyncGenerator.Configuration.Internal
 {
-	internal class SolutionConfiguration : IFluentSolutionConfiguration
+	internal class SolutionConfiguration : IFluentSolutionConfiguration, ISolutionConfiguration
 	{
 		public SolutionConfiguration(string path)
 		{
@@ -15,6 +15,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public string Path { get; }
 
 		public bool ApplyChanges { get; private set; }
+
+		public bool RunInParallel { get; private set; }
 
 		#region IFluentSolutionConfiguration
 
@@ -28,7 +30,7 @@ namespace AsyncGenerator.Configuration.Internal
 			{
 				throw new ArgumentNullException(nameof(action));
 			}
-			var projectConfig = new ProjectConfiguration(projectName);
+			var projectConfig = new ProjectConfiguration(this, projectName);
 			ProjectConfigurations.Add(projectConfig);
 			action(projectConfig);
 			return this;
@@ -37,6 +39,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentSolutionConfiguration IFluentSolutionConfiguration.ApplyChanges(bool value)
 		{
 			ApplyChanges = value;
+			return this;
+		}
+
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.RunInParallel(bool value)
+		{
+			RunInParallel = value;
 			return this;
 		}
 

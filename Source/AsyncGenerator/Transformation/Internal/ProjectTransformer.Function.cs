@@ -81,7 +81,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTransformedFunctions().OrderByDescending(o => o.OriginalStartSpan))
 			{
-				foreach (var transfromReference in transformResult.TransformedFunctionReferences)
+				// We have to order by OriginalStartSpan in order to have consistent formatting when adding awaits
+				foreach (var transfromReference in transformResult.TransformedFunctionReferences.OrderByDescending(o => o.OriginalStartSpan))
 				{
 					rootFuncNode = TransformFunctionReference(rootFuncNode, rootFuncResult, transfromReference, namespaceMetadata);
 				}

@@ -75,7 +75,7 @@ namespace AsyncGenerator.Internal
 			{
 				return Conversion;
 			}
-			var conversion = ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+			var conversion = ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceConversion.ToAsync
 				: ReferenceConversion.Ignore;
 			if (conversion == ReferenceConversion.Ignore || FunctionArguments == null || !FunctionArguments.Any())
@@ -84,7 +84,7 @@ namespace AsyncGenerator.Internal
 			}
 			// If there is any function passed as an argument we have to check if they can all be async
 			if (!FunctionArguments.All(o => o.FunctionReference?.GetConversion() == ReferenceConversion.ToAsync ||
-			                                o.FunctionData?.Conversion == MethodConversion.ToAsync))
+			                                o.FunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true))
 			{
 				return ReferenceConversion.Ignore;
 			}

@@ -36,6 +36,27 @@ namespace AsyncGenerator.Internal
 
 		public TypeConversion Conversion { get; internal set; }
 
+		internal void Copy()
+		{
+			Conversion = TypeConversion.Copy;
+			foreach (var typeData in GetSelfAndDescendantsTypeData().Where(o => o.Conversion != TypeConversion.Ignore))
+			{
+				typeData.Conversion = TypeConversion.Copy;
+			}
+		}
+
+		public void Ignore(string reason)
+		{
+			IgnoredReason = reason;
+			Conversion = TypeConversion.Ignore;
+			foreach (var typeData in GetSelfAndDescendantsTypeData().Where(o => o.Conversion != TypeConversion.Ignore))
+			{
+				typeData.Ignore("Cascade ignored.");
+			}
+		}
+
+		public string IgnoredReason { get; private set; }
+
 		public bool IsPartial { get; set; }
 
 		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> Methods { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
@@ -58,6 +79,16 @@ namespace AsyncGenerator.Internal
 		//	}
 		//	yield return this;
 		//}
+
+		public IEnumerable<TypeData> GetSelfAndAncestorsTypeData()
+		{
+			var current = this;
+			while (current != null)
+			{
+				yield return current;
+				current = current.ParentTypeData;
+			}
+		}
 
 		public IEnumerable<TypeData> GetSelfAndDescendantsTypeData(Func<TypeData, bool> predicate = null)
 		{

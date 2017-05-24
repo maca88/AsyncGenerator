@@ -72,7 +72,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						Logger.Warn($"Ignored method {depFunctionData.Symbol} has a method invocation that can be async");
 						continue;
 					}
-					depFunctionData.Conversion = MethodConversion.ToAsync;
+					depFunctionData.ToAsync();
 
 					if (!currentMethodData.CancellationTokenRequired)
 					{
@@ -283,17 +283,19 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			switch (functionData.Conversion)
+			if (functionData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Ignore))
 			{
-				case MethodConversion.ToAsync:
-					return;
-				case MethodConversion.Ignore:
-					return;
+				return;
 			}
 
-			functionData.Conversion = functionData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync) 
-				? MethodConversion.ToAsync 
-				: MethodConversion.Ignore;
+			if (functionData.BodyMethodReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
+			{
+				functionData.ToAsync();
+			}
+			else
+			{
+				functionData.Ignore("Has no async invocations");
+			}
 		}
 
 		/// <summary>
@@ -313,7 +315,24 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData())
 				.SelectMany(o => o.Methods.Values.Where(m => m.ExplicitlyIgnored)))
 			{
-				// TODO: what to do if an abstract method is explictly ignored, should we implicitly ignore all overrides or just remove the override keyword?.
+				// If an abstract method is ignored we have to ignore also the overrides otherwise we may break the functionality and the code from compiling (eg. base.Call())
+				if (methodData.Symbol.IsAbstract || methodData.Symbol.IsVirtual)
+				{
+					foreach (var relatedMethodData in methodData.RelatedMethods.Where(i => i.RelatedMethods.All(r => r == methodData)))
+					{
+						if (relatedMethodData.TypeData.Conversion == TypeConversion.NewType ||
+						    relatedMethodData.TypeData.Conversion == TypeConversion.Copy)
+						{
+							relatedMethodData.Copy();
+						}
+						else
+						{
+							relatedMethodData.Ignore($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}");
+							WarnLogIgnoredReason(relatedMethodData);
+
+						}
+					}
+				}
 				// TODO: if an override implements an interface that is not ignored, we would need to remove the override method and not ignore it
 				if (!methodData.InterfaceMethod)
 				{
@@ -336,7 +355,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				//.Where(o => o.Conversion != TypeConversion.Ignore)
 				.ToList();
 			var toProcessMethodData = new HashSet<MethodData>(allTypeData
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)));
+				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart, MethodConversion.Unknown))));
 			//TODO: optimize steps for better performance
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
@@ -350,14 +369,14 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						break;
 					}
-					tokenMethodData.Conversion = MethodConversion.ToAsync;
+					tokenMethodData.ToAsync();
 					PostAnalyzeAsyncMethodData(tokenMethodData, toProcessMethodData);
 				}
 			}
 			
 			// 1. Step - Go through all async methods and set their dependencies to be also async
 			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
-			var asyncMethodDatas = toProcessMethodData.Where(o => o.Conversion == MethodConversion.ToAsync).ToList();
+			var asyncMethodDatas = toProcessMethodData.Where(o => o.Conversion.HasFlag(MethodConversion.ToAsync)).ToList();
 			foreach (var asyncMethodData in asyncMethodDatas)
 			{
 				if (toProcessMethodData.Count == 0)
@@ -372,25 +391,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			var remainingMethodData = toProcessMethodData.ToList();
 			foreach (var methodData in remainingMethodData)
 			{
-				// We have to calculate the conversion from bottom to top as a body reference may depend on a child function (passed by argument)
-				//foreach (var childFunction in methodData.GetDescendantsChildFunctions().OrderByDescending(o => o.GetBodyNode().SpanStart))
-				//{
-				//	// TODO: we have ignore when the parent invocation that have this method as an argument cannot be async
-				//}
-
-				//CalculateFunctionConversion(methodData);
-				//if (methodData.Conversion != MethodConversion.ToAsync)
-				//{
-				//	continue;
-				//}
-
-				//// Set all dependencies to be async for the newly discovered async method
-				//PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
-				//if (toProcessMethodData.Count == 0)
-				//{
-				//	break;
-				//}
-
 				if (methodData.BodyMethodReferences.Where(o => o.ArgumentOfFunctionInvocation == null).All(o => o.GetConversion() != ReferenceConversion.ToAsync))
 				{
 					continue;
@@ -400,7 +400,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
 					continue;
 				}
-				methodData.Conversion = MethodConversion.ToAsync;
+				methodData.ToAsync();
 				// Set all dependencies to be async for the newly discovered async method
 				PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
 				if (toProcessMethodData.Count == 0)
@@ -412,13 +412,30 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 3. Step - Mark all remaining method to be ignored
 			foreach (var methodData in toProcessMethodData)
 			{
-				methodData.Ignore("Method is never used.");
+				if (methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+				{
+					// For smart methods we will have filled dependencies so we can ignore it if is not used
+					if (methodData.Conversion.HasFlag(MethodConversion.Smart) && !methodData.Dependencies.Any())
+					{
+						methodData.Ignore("Method is never used.");
+					}
+					else
+					{
+						methodData.Conversion &= ~MethodConversion.Unknown;
+						methodData.Conversion &= ~MethodConversion.Smart;
+						methodData.Copy();
+					}
+				}
+				else
+				{
+					methodData.Ignore("Method is never used.");
+				}
 				LogIgnoredReason(methodData);
 			}
 
 
 			// We need to calculate the final conversion for the local/anonymous functions
-			foreach (var methodData in allTypeData.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore)))
+			foreach (var methodData in allTypeData.SelectMany(o => o.Methods.Values.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync))))
 			{
 				// We have to calculate the conversion from bottom to top as a body reference may depend on a child function (passed by argument)
 				foreach (var childFunction in methodData.GetSelfAndDescendantsFunctions().Where(o => o.GetBodyNode() != null).OrderByDescending(o => o.GetBodyNode().SpanStart))
@@ -431,7 +448,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					ValidateMethodCancellationToken(methodData);
 					foreach (var functionRefData in methodData.BodyMethodReferences
-						.Where(o => o.ReferenceFunctionData != null && o.ReferenceFunctionData.Conversion == MethodConversion.ToAsync &&
+						.Where(o => o.ReferenceFunctionData != null && o.ReferenceFunctionData.Conversion.HasFlag(MethodConversion.ToAsync) &&
 						            o.ReferenceFunctionData.GetMethodData().CancellationTokenRequired))
 					{
 						functionRefData.CancellationTokenRequired = true;
@@ -442,16 +459,23 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 4. Step - Calculate the final type conversion
 			foreach (var typeData in allTypeData)
 			{
-				if (typeData.Conversion != TypeConversion.Unknown)
+				if (typeData.Conversion == TypeConversion.Ignore)
 				{
 					continue;
 				}
 				// A type can be ignored only if it has no async methods that will get converted
-				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore)))
+				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore || o.Conversion == MethodConversion.Copy)))
 				{
-					typeData.Conversion = TypeConversion.Ignore;
+					if (typeData.ParentTypeData?.Conversion == TypeConversion.NewType)
+					{
+						typeData.Copy();
+					}
+					else
+					{
+						typeData.Ignore("Has no async methods");
+					}
 				}
-				else
+				else if(typeData.Conversion == TypeConversion.Unknown)
 				{
 					typeData.Conversion = TypeConversion.Partial;
 				}
@@ -477,7 +501,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 6. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
 			foreach (var functionData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion != MethodConversion.Ignore))
+				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync)))
 				.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
 			{
 				CalculateFinalFlags(functionData);
@@ -526,7 +550,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 					if (methodReference.LastInvocation && referenceFunctionData.Symbol.ReturnsVoid && (
 						    (methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||
-						    methodReference.ReferenceFunctionData?.Conversion == MethodConversion.ToAsync
+						    methodReference.ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 					    ))
 					{
 						continue;

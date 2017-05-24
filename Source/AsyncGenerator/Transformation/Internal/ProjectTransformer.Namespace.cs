@@ -98,15 +98,16 @@ namespace AsyncGenerator.Transformation.Internal
 						newNode = newNode.RemoveNodeKeepDirectives(transformType.Annotation, memberWhitespace);
 						continue;
 					}
-					if(transformType.AnalyzationResult.Conversion == TypeConversion.Partial)
-					{
-						var typeNode = newNode.GetAnnotatedNodes(transformType.Annotation)
-							.OfType<MemberDeclarationSyntax>()
-							.First();
-						newNode = newNode.ReplaceWithMembers(typeNode, transformType.GetTransformedNodes()
-							.OfType<MemberDeclarationSyntax>()
-							.ToImmutableList());
-					}
+					//if(transformType.AnalyzationResult.Conversion == TypeConversion.Partial || tra)
+					//{
+
+					//}
+					var typeNode = newNode.GetAnnotatedNodes(transformType.Annotation)
+						.OfType<MemberDeclarationSyntax>()
+						.First();
+					newNode = newNode.ReplaceWithMembers(typeNode, transformType.GetTransformedNodes()
+						.OfType<MemberDeclarationSyntax>()
+						.ToImmutableList());
 				}
 
 				// We need to remove all other members that are not namespaces or types

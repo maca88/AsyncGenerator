@@ -27,5 +27,7 @@ namespace AsyncGenerator.Configuration
 		/// Compilation configurations for the project
 		/// </summary>
 		IProjectCompileConfiguration CompileConfiguration { get; }
+
+		bool RunInParallel { get; }
 	}
 }

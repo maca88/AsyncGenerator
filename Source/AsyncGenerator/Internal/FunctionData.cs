@@ -16,9 +16,6 @@ namespace AsyncGenerator.Internal
 			Symbol = methodSymbol;
 		}
 
-		//TODO: remove if not needed
-		public bool IsAsync { get; set; }
-
 		public IMethodSymbol Symbol { get; }
 
 		public abstract TypeData TypeData { get; }
@@ -77,14 +74,56 @@ namespace AsyncGenerator.Internal
 			return ChildFunctions.Values.SelectMany(o => o.GetSelfAndDescendantsFunctionsRecursively(o, predicate));
 		}
 
+		internal void Copy()
+		{
+			// Copy can be mixed with Smart, ToAsync and Unknown
+			//Conversion &= ~MethodConversion.Ignore;
+			//Conversion &= ~MethodConversion.Unknown;
+			IgnoredReason = null;
+			if (this is MethodData methodData)
+			{
+				methodData.CancellationTokenRequired = false;
+			}
+			Conversion = MethodConversion.Copy;
+
+			foreach (var bodyReference in BodyMethodReferences)
+			{
+				bodyReference.Ignore("Method will be copied");
+			}
+			foreach (var childFunction in GetDescendantsChildFunctions())
+			{
+				childFunction.Copy();
+			}
+		}
+
 		internal void Ignore(string reason, bool explicitlyIgnored = false)
 		{
 			Conversion = MethodConversion.Ignore;
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
+			foreach (var bodyReference in BodyMethodReferences)
+			{
+				bodyReference.Ignore("Cascade ignored.");
+			}
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
 				childFunction.Ignore("Cascade ignored.");
+			}
+		}
+
+		internal void ToAsync()
+		{
+			if (Conversion.HasFlag(MethodConversion.Smart))
+			{
+				Conversion &= ~MethodConversion.Smart;
+			}
+			if (Conversion.HasFlag(MethodConversion.Copy))
+			{
+				Conversion |= MethodConversion.ToAsync;
+			}
+			else
+			{
+				Conversion = MethodConversion.ToAsync;
 			}
 		}
 

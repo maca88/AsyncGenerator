@@ -10,6 +10,13 @@ namespace AsyncGenerator.Configuration.Internal
 {
 	internal class ProjectAnalyzeConfiguration : IFluentProjectAnalyzeConfiguration, IProjectAnalyzeConfiguration
 	{
+		private readonly IProjectConfiguration _projectConfiguration;
+
+		public ProjectAnalyzeConfiguration(IProjectConfiguration projectConfiguration)
+		{
+			_projectConfiguration = projectConfiguration;
+		}
+
 		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
 
 		public Func<INamedTypeSymbol, TypeConversion> TypeConversionFunction { get; private set; } = m => TypeConversion.Unknown;
@@ -33,6 +40,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; private set; }
 
 		public bool UseCancellationTokens => CancellationTokens.Enabled;
+
+		public bool RunInParallel => _projectConfiguration.RunInParallel;
 
 		public Predicate<IMethodSymbol> CallForwarding { get; set; } = symbol => false;
 
