@@ -18,12 +18,30 @@ namespace AsyncGenerator.Transformation.Internal
 	{
 		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
+			var anyMissingMembers = rootTypeResult.Conversion != TypeConversion.Partial && rootTypeResult.GetSelfAndDescendantsTypes().Any(o => o.Methods.Any(m => m.Missing));
+			var result = TransformType(rootTypeResult, namespaceMetadata, false);
+			if (anyMissingMembers)
+			{
+				result.Partial = TransformType(rootTypeResult, namespaceMetadata, true);
+				var transformedNode = result.Partial.Transformed;
+				// We need to remove all directives
+				while (transformedNode.ContainsDirectives)
+				{
+					transformedNode = transformedNode.RemoveNode(transformedNode.GetFirstDirective(), SyntaxRemoveOptions.KeepNoTrivia);
+				}
+				result.Partial.Transformed = transformedNode;
+				result.OriginalModified = result.Partial.OriginalModified;
+			}
+			return result;
+		}
+
+		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult, INamespaceTransformationMetadata namespaceMetadata, bool onlyMissingMembers)
+		{
 			var rootTypeNode = rootTypeResult.Node;
 			var startRootTypeSpan = rootTypeNode.SpanStart;
 			var rootTransformResult = new RootTypeTransformationResult(rootTypeResult)
 			{
-				MemberNames = rootTypeResult.Symbol.MemberNames.ToImmutableHashSet(),
-
+				MemberNames = rootTypeResult.Symbol.MemberNames.ToImmutableHashSet()
 			};
 			// We do this here because we want that the root node has span start equal to 0
 			rootTypeNode = rootTypeNode.WithAdditionalAnnotations(new SyntaxAnnotation(rootTransformResult.Annotation));
@@ -119,7 +137,7 @@ namespace AsyncGenerator.Transformation.Internal
 				var typeResult = transformResult.AnalyzationResult;
 				
 				// Add partial keyword on the original node if not present
-				if (typeResult.Conversion == TypeConversion.Partial && !typeResult.IsPartial)
+				if ((typeResult.Conversion == TypeConversion.Partial || onlyMissingMembers) && !typeResult.IsPartial)
 				{
 					if (rootTransformResult.OriginalModified == null)
 					{
@@ -136,8 +154,24 @@ namespace AsyncGenerator.Transformation.Internal
 
 				var memberWhitespace = Whitespace(transformResult.LeadingWhitespaceTrivia.ToFullString() + transformResult.IndentTrivia.ToFullString());
 
+				if (typeResult.Conversion == TypeConversion.Partial || onlyMissingMembers)
+				{
+					// First we need to remove ignored method
+					var typeNode = rootTypeNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
+					// We need to remove the attributes as they cannot be defined in both partial classes
+					var newTypeNode = typeNode.AddPartial().WithoutAttributes();
+
+					// We need to remove all other members that are not methods or types
+					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => !(o is MethodDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
+					newTypeNode = TransformMethods(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
+
+					// Add the <content> instead of <summary> tag
+					newTypeNode = newTypeNode.WithXmlContentTrivia(transformResult.EndOfLineTrivia, transformResult.LeadingWhitespaceTrivia);
+					transformResult.Transformed = newTypeNode;
+					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
+				}
 				// If the root type has to be a new type then all nested types have to be new types
-				if (typeResult.Conversion == TypeConversion.NewType || typeResult.Conversion == TypeConversion.Copy)
+				else if (typeResult.Conversion == TypeConversion.NewType || typeResult.Conversion == TypeConversion.Copy)
 				{
 					var typeNode = rootTypeNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
 					var identifierToken = typeNode.ChildTokens().First(o => o.IsKind(SyntaxKind.IdentifierToken));
@@ -164,38 +198,21 @@ namespace AsyncGenerator.Transformation.Internal
 						newTypeNode = newTypeNode.ReplaceToken(newTypeNode.GetAnnotatedTokens(newToken.Key).First(), newToken.Value);
 					}
 
-					newTypeNode = TransformMethods(newTypeNode, transformResult, namespaceMetadata, memberWhitespace);
-					transformResult.Transformed = newTypeNode;
-					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
-				}
-				else if (typeResult.Conversion == TypeConversion.Partial)
-				{
-					// First we need to remove ignored method
-					var typeNode = rootTypeNode.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
-					// We need to remove the attributes as they cannot be defined in both partial classes
-					var newTypeNode = typeNode.AddPartial().WithoutAttributes();
-
-					// We need to remove all other members that are not methods or types
-					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => !(o is MethodDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
-					newTypeNode = TransformMethods(newTypeNode, transformResult, namespaceMetadata, memberWhitespace);
-
-					// Add the <content> instead of <summary> tag
-					newTypeNode = newTypeNode.WithXmlContentTrivia(transformResult.EndOfLineTrivia, transformResult.LeadingWhitespaceTrivia);
+					newTypeNode = TransformMethods(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, false);
 					transformResult.Transformed = newTypeNode;
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 				}
 			}
 
 			rootTransformResult.Transformed = rootTypeNode;
-
 			return rootTransformResult;
 		}
 
-		private TypeDeclarationSyntax TransformMethods(TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace)
+		private TypeDeclarationSyntax TransformMethods(TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
 		{
 			foreach (var methodTransform in transformResult.TransformedMethods.OrderByDescending(o => o.OriginalStartSpan))
 			{
-				if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore)
+				if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || (onlyMissingMembers && !methodTransform.AnalyzationResult.Missing))
 				{
 					// We need to add a whitespace trivia to keept directives as they will not have any leading whitespace
 					newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);
@@ -204,7 +221,7 @@ namespace AsyncGenerator.Transformation.Internal
 				var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
 					.OfType<MethodDeclarationSyntax>()
 					.First();
-				var transformedNode = TransformMethod(methodTransform, transformResult, namespaceMetadata, methodNode);
+				var transformedNode = TransformMethod(methodNode, !onlyMissingMembers, methodTransform, transformResult, namespaceMetadata);
 				if (transformedNode.Transformed != null)
 				{
 					foreach (var transformer in _configuration.MethodTransformers)

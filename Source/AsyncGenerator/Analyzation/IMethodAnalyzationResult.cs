@@ -56,5 +56,8 @@ namespace AsyncGenerator.Analyzation
 		/// When true, cancellation token guards will be inserted into the method
 		/// </summary>
 		bool AddCancellationTokenGuards { get; }
+
+		// TODO: find a better way
+		bool Missing { get; set; }
 	}
 }

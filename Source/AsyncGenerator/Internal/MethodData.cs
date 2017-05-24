@@ -139,7 +139,7 @@ namespace AsyncGenerator.Internal
 
 		internal bool Scanned { get; set; }
 
-		internal bool Missing { get; set; }
+		public bool Missing { get; set; }
 
 		#endregion
 

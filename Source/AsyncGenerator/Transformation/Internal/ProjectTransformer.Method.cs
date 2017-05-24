@@ -17,12 +17,17 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private MethodTransformationResult TransformMethod(MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, 
-			INamespaceTransformationMetadata namespaceMetadata, MethodDeclarationSyntax customNode = null)
+		private MethodTransformationResult TransformMethod(MethodDeclarationSyntax methodNode, bool canCopy, MethodTransformationResult result, ITypeTransformationMetadata typeMetadata, 
+			INamespaceTransformationMetadata namespaceMetadata)
 		{
 			//var result = new MethodTransformationResult(methodResult);
 			var methodResult = result.AnalyzationResult;
-			var methodNode = customNode ?? methodResult.Node;
+			var methodConversion = methodResult.Conversion;
+			if (!canCopy)
+			{
+				methodConversion &= ~MethodConversion.Copy;
+			}
+			//var methodNode = customNode ?? methodResult.Node;
 			var methodBodyNode = methodResult.GetBodyNode();
 
 			// Calculate whitespace method trivias
@@ -31,24 +36,24 @@ namespace AsyncGenerator.Transformation.Internal
 			result.IndentTrivia = methodNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
 			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
-			if (methodResult.Conversion == MethodConversion.Ignore)
+			if (methodConversion == MethodConversion.Ignore)
 			{
 				return result;
 			}
 
 			if (methodBodyNode == null)
 			{
-				if (methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
+				if (methodConversion.HasFlag(MethodConversion.ToAsync))
 				{
 					result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
 						.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
-					if (methodResult.Conversion.HasFlag(MethodConversion.Copy))
+					if (methodConversion.HasFlag(MethodConversion.Copy))
 					{
 						result.AddMethod(methodResult.Node);
 					}
 					return result;
 				}
-				if (methodResult.Conversion.HasFlag(MethodConversion.Copy))
+				if (methodConversion.HasFlag(MethodConversion.Copy))
 				{
 					result.Transformed = methodResult.Node;
 				}
@@ -72,7 +77,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			// For copied methods we need just to replace type references
-			if (methodResult.Conversion.HasFlag(MethodConversion.Copy))
+			if (methodConversion.HasFlag(MethodConversion.Copy))
 			{
 				var copiedMethod = methodNode;
 				// Modify references
@@ -82,7 +87,7 @@ namespace AsyncGenerator.Transformation.Internal
 					copiedMethod = copiedMethod
 						.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
 				}
-				if (!methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
+				if (!methodConversion.HasFlag(MethodConversion.ToAsync))
 				{
 					result.Transformed = copiedMethod;
 					return result;
@@ -145,7 +150,8 @@ namespace AsyncGenerator.Transformation.Internal
 					.ReplaceNode(funcNode, transformFunction.Transformed);
 			}
 
-			foreach (var transfromReference in result.TransformedFunctionReferences)
+			// We have to order by OriginalStartSpan in order to have consistent formatting when adding awaits
+			foreach (var transfromReference in result.TransformedFunctionReferences.OrderByDescending(o => o.OriginalStartSpan))
 			{
 				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}

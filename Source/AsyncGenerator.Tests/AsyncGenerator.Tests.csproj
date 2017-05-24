@@ -239,6 +239,8 @@
     <Compile Include="ExternalProjects\NHibernate\TransactionScopeRewriter.cs" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
+    <Compile Include="Formatting\Fixture.cs" />
+    <Compile Include="Formatting\Input\NestedAwaits.cs" />
     <Compile Include="Generics\Fixture.cs" />
     <Compile Include="Generics\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
@@ -480,6 +482,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\NestedClassesWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\MissingMembersOriginal.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Formatting\Output\NestedAwaits.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

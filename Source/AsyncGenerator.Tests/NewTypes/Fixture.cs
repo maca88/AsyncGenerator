@@ -186,7 +186,8 @@ namespace AsyncGenerator.Tests.NewTypes
 						AssertValidAnnotations(result);
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
-						Assert.Null(document.OriginalModified);
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("MissingMembersOriginal"), document.OriginalModified.ToFullString());
 						Assert.AreEqual(GetOutputFile(nameof(MissingMembers)), document.Transformed.ToFullString());
 					})
 				)
