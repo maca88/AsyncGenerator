@@ -197,6 +197,7 @@
     <Compile Include="Extensions\Internal\SpecialTypeExtensions.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.Async.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.Await.cs" />
+    <Compile Include="Extensions\SymbolExtensions.cs" />
     <Compile Include="Internal\AbstractData.cs" />
     <Compile Include="Internal\AbstractFunctionReferenceData.cs" />
     <Compile Include="Internal\AbstractReferenceData.cs" />

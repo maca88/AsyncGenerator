@@ -23,6 +23,11 @@ namespace AsyncGenerator.Transformation
 		CompilationUnitSyntax Transformed { get; }
 
 		/// <summary>
+		/// End of line trivia
+		/// </summary>
+		SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		/// <summary>
 		/// The document analyzation result
 		/// </summary>
 		IDocumentAnalyzationResult AnalyzationResult { get; }

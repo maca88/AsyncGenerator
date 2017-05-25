@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace AsyncGenerator.Extensions
+namespace AsyncGenerator.Extensions.Internal
 {
 	internal static class SymbolExtensions
 	{
@@ -119,7 +119,7 @@ namespace AsyncGenerator.Extensions
 		/// <param name="syncMethod"></param>
 		/// <param name="candidateAsyncMethod"></param>
 		/// <returns></returns>
-		private static bool IsAsyncCandidateForReturnType(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod)
+		internal static bool IsAsyncCandidateForReturnType(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod)
 		{
 			// Original definition is used for matching generic types
 			if (syncMethod.ReturnType.OriginalDefinition.Equals(candidateAsyncMethod.ReturnType.OriginalDefinition))
@@ -149,7 +149,7 @@ namespace AsyncGenerator.Extensions
 				{
 					return false;
 				}
-				if (!candidateReturnType.TypeArguments.First().Equals(syncMethod.ReturnType))
+				if (!candidateReturnType.TypeArguments.First().AreEqual(syncMethod.ReturnType))
 				{
 					// Check if the return type is a type parameter (generic argument) and if is equal as the candidate
 					var paramType = syncMethod.ReturnType as ITypeParameterSymbol;
@@ -160,132 +160,62 @@ namespace AsyncGenerator.Extensions
 		}
 
 		/// <summary>
-		/// Check if the candidate asynchronous method is an asynchronous counterpart of the synchronous method.
+		/// Checks if the given types are equal
 		/// </summary>
-		/// <param name="syncMethod">The synchronous method</param>
-		/// <param name="candidateAsyncMethod">The candidate asynchronous method</param>
-		/// <param name="equalParameters">When true, both methods must have the same parameters, except when <see cref="hasCancellationToken"/> is set to true</param>
-		/// <param name="hasCancellationToken">When true, the asynchronous method can contain one more parameter which must be of type <see cref="System.Threading.CancellationToken"/>
-		/// and has to be the last parameter</param>
-		/// <param name="ignoreReturnType">When true, the return type is not checked</param>
+		/// <param name="type"></param>
+		/// <param name="toCompare"></param>
+		/// <param name="canBeDerivedFromType"></param>
 		/// <returns></returns>
-		public static bool IsAsyncCounterpart(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod, bool equalParameters, bool hasCancellationToken, bool ignoreReturnType)
+		internal static bool AreEqual(this ITypeSymbol type, ITypeSymbol toCompare, ITypeSymbol canBeDerivedFromType = null)
 		{
-			// Check if the length of the parameters matches
-			if (syncMethod.Parameters.Length != candidateAsyncMethod.Parameters.Length)
+			if (type.Equals(toCompare))
 			{
-				// For symplicity, we suppose that the sync method does not have a cancellation token as a parameter
-				if (!hasCancellationToken || syncMethod.Parameters.Length + 1 != candidateAsyncMethod.Parameters.Length)
-				{
-					return false;
-				}
+				return true;
 			}
-			// Check if the generic arguments are the same
-			if (syncMethod.TypeParameters.Length  != candidateAsyncMethod.TypeParameters.Length)
+			var typeNamedType = type as INamedTypeSymbol;
+			var toCompareNamedType = toCompare as INamedTypeSymbol;
+			if (typeNamedType == null)
 			{
+				if (type is ITypeParameterSymbol retrivedParamType)
+				{
+					return retrivedParamType.AreEqual(toCompare);
+				}
 				return false;
-			}
-			if (syncMethod.TypeParameters.Length > 0)
-			{
-				for (var i = 0; i < syncMethod.TypeParameters.Length; i++)
-				{
-					var param = syncMethod.TypeParameters[i];
-					var candidateParam = candidateAsyncMethod.TypeParameters[i];
-					if (param.Variance != candidateParam.Variance ||
-					    param.TypeParameterKind != candidateParam.TypeParameterKind ||
-					    param.ConstraintTypes.Length != candidateParam.ConstraintTypes.Length)
-					{
-						return false;
-					}
-					if (param.ConstraintTypes.Where((t, j) => !t.Equals(candidateParam.ConstraintTypes[j])).Any())
-					{
-						return false;
-					}
-				}
 			}
 
-			// Check if the return type matches
-			if (!ignoreReturnType && !IsAsyncCandidateForReturnType(syncMethod, candidateAsyncMethod))
-			{
-				return false;
-			}
-			// Both methods can have the same return type only if we have at least one delegate argument that can be async
-			var result = !syncMethod.ReturnType.OriginalDefinition.Equals(candidateAsyncMethod.ReturnType.OriginalDefinition);
-			if (!result && equalParameters)
+			if (typeNamedType.TypeArguments.Length != toCompareNamedType?.TypeArguments.Length)
 			{
 				return false;
 			}
 
-			for (var i = 0; i < syncMethod.Parameters.Length; i++)
+			for (var i = 0; i < typeNamedType.TypeArguments.Length; i++)
 			{
-				var param = syncMethod.Parameters[i];
-				var candidateParam = candidateAsyncMethod.Parameters[i];
-				if (param.IsOptional != candidateParam.IsOptional || 
-					param.IsParams != candidateParam.IsParams || 
-					param.RefKind != candidateParam.RefKind)
+				var typeArgument = typeNamedType.TypeArguments[i];
+				if (!typeArgument.AreEqual(toCompareNamedType.TypeArguments[i]))
 				{
 					return false;
 				}
-				if (equalParameters)
-				{
-					if (param.Type.Equals(candidateParam.Type))
-					{
-						continue;
-					}
-					return false;
-				}
-				var typeSymbol = param.Type as INamedTypeSymbol;
-				if (typeSymbol == null)
-				{
-					if (param.Type.Equals(candidateParam.Type))
-					{
-						continue;
-					}
-					return false;
-				}
-				var origDelegate = typeSymbol.DelegateInvokeMethod;
-				if (origDelegate == null)
-				{
-					if (param.Type.Equals(candidateParam.Type))
-					{
-						continue;
-					}
-					return false;
-				}
-				// Candidate delegate argument must be equal or has to be an async candidate
-				var candidateTypeSymbol = candidateParam.Type as INamedTypeSymbol;
-				var candidateDelegate = candidateTypeSymbol?.DelegateInvokeMethod;
-				if (candidateDelegate == null)
-				{
-					return false;
-				}
-				if (origDelegate.Equals(candidateDelegate))
-				{
-					continue;
-				}
-				if (!origDelegate.IsAsyncCounterpart(candidateDelegate, false, hasCancellationToken, ignoreReturnType))
-				{
-					return false;
-				}
-				result = true;
 			}
-			if (syncMethod.Parameters.Length >= candidateAsyncMethod.Parameters.Length)
+			var equals = typeNamedType.OriginalDefinition.Equals(toCompareNamedType.OriginalDefinition);
+			if (!equals && canBeDerivedFromType != null)
 			{
-				return result;
+				equals = new []{ canBeDerivedFromType }.Union(canBeDerivedFromType.AllInterfaces).Any(o => toCompareNamedType.OriginalDefinition.Equals(o.OriginalDefinition));
 			}
-			return candidateAsyncMethod.Parameters.Last().Type.Name == nameof(CancellationToken) && result;
+			return equals;
 		}
 
 		/// <summary>
 		/// Searches for an async counterpart methods within containing and its bases types
 		/// </summary>
 		/// <param name="methodSymbol"></param>
+		/// <param name="invokedFromType"></param>
 		/// <param name="equalParameters"></param>
 		/// <param name="searchInheritedTypes"></param>
 		/// <param name="hasCancellationToken"></param>
 		/// <param name="ignoreReturnType"></param>
 		/// <returns></returns>
-		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, bool equalParameters, bool searchInheritedTypes, bool hasCancellationToken, bool ignoreReturnType)
+		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, ITypeSymbol invokedFromType, 
+			bool equalParameters, bool searchInheritedTypes, bool hasCancellationToken, bool ignoreReturnType)
 		{
 			var asyncName = methodSymbol.Name + "Async";
 			if (searchInheritedTypes)
@@ -293,16 +223,16 @@ namespace AsyncGenerator.Extensions
 				return methodSymbol.ContainingType.GetBaseTypesAndThis()
 					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
 					.OfType<IMethodSymbol>()
-					.Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters, hasCancellationToken, ignoreReturnType));
+					.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
 			} 
 			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
 							   .OfType<IMethodSymbol>()
-							   .Where(o => methodSymbol.IsAsyncCounterpart(o, equalParameters, hasCancellationToken, ignoreReturnType));
+							   .Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
 		}
 
 		// Determine if "type" inherits from "baseType", ignoring constructed types, optionally including interfaces,
 		// dealing only with original types.
-		public static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType, bool includeInterfaces)
+		internal static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType, bool includeInterfaces)
 		{
 			if (!includeInterfaces)
 			{
@@ -314,14 +244,14 @@ namespace AsyncGenerator.Extensions
 
 		// Determine if "type" inherits from "baseType", ignoring constructed types and interfaces, dealing
 		// only with original types.
-		public static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType)
+		internal static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType)
 		{
 			return type.GetBaseTypesAndThis().Any(t => t.Equals(baseType));
 		}
 
 		// Determine if "type" inherits from "baseType", ignoring constructed types, and dealing
 		// only with original types.
-		public static bool InheritsFromOrEqualsIgnoringConstruction(this ITypeSymbol type, ITypeSymbol baseType)
+		internal static bool InheritsFromOrEqualsIgnoringConstruction(this ITypeSymbol type, ITypeSymbol baseType)
 		{
 			var originalBaseType = baseType.OriginalDefinition;
 			return type.GetBaseTypesAndThis().Any(t => t.OriginalDefinition.Equals(originalBaseType));
@@ -343,17 +273,17 @@ namespace AsyncGenerator.Extensions
 			       typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
 		}
 
-		public static bool IsAccessor(this ISymbol symbol)
+		internal static bool IsAccessor(this ISymbol symbol)
 		{
 			return symbol.IsPropertyAccessor() || symbol.IsEventAccessor();
 		}
 
-		public static bool IsPropertyAccessor(this ISymbol symbol)
+		internal static bool IsPropertyAccessor(this ISymbol symbol)
 		{
 			return (symbol as IMethodSymbol)?.MethodKind.IsPropertyAccessor() == true;
 		}
 
-		public static bool IsEventAccessor(this ISymbol symbol)
+		internal static bool IsEventAccessor(this ISymbol symbol)
 		{
 			var method = symbol as IMethodSymbol;
 			return method != null &&
@@ -362,18 +292,18 @@ namespace AsyncGenerator.Extensions
 				 method.MethodKind == MethodKind.EventRemove);
 		}
 
-		public static bool IsNullable(this ITypeSymbol symbol)
+		internal static bool IsNullable(this ITypeSymbol symbol)
 		{
 			return symbol?.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
 		}
 
-		public static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol, bool insideCref = false, bool onlyName = false)
+		internal static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol, bool insideCref = false, bool onlyName = false)
 		{
 			var predefinedType = symbol.SpecialType.ToPredefinedType();
 			if (predefinedType != null)
 			{
 				return symbol.IsNullable()
-					? (TypeSyntax)NullableType(predefinedType)
+					? (TypeSyntax)SyntaxFactory.NullableType(predefinedType)
 					: predefinedType;
 			}
 			return SyntaxNodeExtensions.ConstructNameSyntax(symbol.ToString(), insideCref: insideCref, onlyName: onlyName);

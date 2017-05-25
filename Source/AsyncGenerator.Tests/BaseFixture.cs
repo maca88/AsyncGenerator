@@ -17,10 +17,14 @@ namespace AsyncGenerator.Tests
 {
 	public abstract class BaseFixture
 	{
-		protected BaseFixture()
+		protected BaseFixture(string folderPath = null)
 		{
 			XmlConfigurator.Configure();
+			var ns = GetType().Namespace ?? "";
+			InputFolderPath = folderPath ?? $"{string.Join("/", ns.Split('.').Skip(2))}/Input";
 		}
+
+		public string InputFolderPath { get; }
 
 		public string GetBaseDirectory()
 		{
@@ -33,21 +37,10 @@ namespace AsyncGenerator.Tests
 			}
 			return baseDirectory;
 		}
-	}
-
-	public abstract class BaseFixture<T> : BaseFixture
-	{
-		protected BaseFixture(string folderPath = null)
-		{
-			var ns = GetType().Namespace ?? "";
-			InputFolderPath = folderPath ?? $"{string.Join("/", ns.Split('.').Skip(2))}/Input";
-		}
-
-		public string InputFolderPath { get; }
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-			
+
 			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.sln");
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
@@ -55,7 +48,7 @@ namespace AsyncGenerator.Tests
 					{
 						p.ConfigureAnalyzation(a => a
 							.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath)
-							);
+						);
 						action?.Invoke(p);
 					})
 
@@ -129,26 +122,6 @@ namespace AsyncGenerator.Tests
 			return GetMethodName((LambdaExpression)expression);
 		}
 
-		public string GetMethodName(Expression<Action<T>> expression)
-		{
-			return GetMethodName((LambdaExpression)expression);
-		}
-
-		public string GetMethodName(Expression<Func<T, object>> expression)
-		{
-			return GetMethodName((LambdaExpression)expression);
-		}
-
-		public string GetMethodName(Expression<Func<T, Action>> expression)
-		{
-			return GetMethodName((LambdaExpression)expression);
-		}
-
-		public string GetMethodName(Expression<Func<T, Delegate>> expression)
-		{
-			return GetMethodName((LambdaExpression)expression);
-		}
-
 		public string GetMethodName<TType>(Expression<Action<TType>> expression)
 		{
 			return GetMethodName((LambdaExpression)expression);
@@ -169,7 +142,7 @@ namespace AsyncGenerator.Tests
 			return GetMethodName((LambdaExpression)expression);
 		}
 
-		private string GetMethodName(LambdaExpression expression)
+		protected string GetMethodName(LambdaExpression expression)
 		{
 			var methodCallExpression = expression.Body as MethodCallExpression;
 			if (methodCallExpression != null)
@@ -190,6 +163,32 @@ namespace AsyncGenerator.Tests
 			var methodInfo = (MethodInfo)constantExpression.Value;
 			return methodInfo.Name;
 		}
+	}
 
+	public abstract class BaseFixture<T> : BaseFixture
+	{
+		protected BaseFixture(string folderPath = null) : base(folderPath)
+		{
+		}
+
+		public string GetMethodName(Expression<Action<T>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName(Expression<Func<T, object>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName(Expression<Func<T, Action>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
+
+		public string GetMethodName(Expression<Func<T, Delegate>> expression)
+		{
+			return GetMethodName((LambdaExpression)expression);
+		}
 	}
 }

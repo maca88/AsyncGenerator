@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -296,7 +297,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					Logger.Debug($"Sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 					continue;
 				}
-				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, true, false));
+				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false));
 				var methodData = documentData.GetMethodData(nonAsyncMember.Node);
 				methodData.ToAsync();
 				methodData.Missing = true;
@@ -329,7 +330,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
-					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(asyncMember, true, true, false));
+					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false));
 					if (nonAsyncMember == null)
 					{
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
@@ -411,6 +412,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Try to find the real node where the cref is located
 					var crefReferenceNameNode = crefTypeData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
 					var crefReferenceSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(crefReferenceNameNode).Symbol;
+					if (crefReferenceSymbol == null)
+					{
+						continue;
+					}
 					var crefReferenceMethodData = ProjectData.GetMethodData(crefReferenceSymbol);
 					var crefReferenceData = new CrefFunctionReferenceData(refLocation, crefReferenceNameNode, crefReferenceSymbol, crefReferenceMethodData);
 

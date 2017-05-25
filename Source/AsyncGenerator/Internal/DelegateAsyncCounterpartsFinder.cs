@@ -13,16 +13,16 @@ namespace AsyncGenerator.Internal
 {
 	internal class DelegateAsyncCounterpartsFinder : AbstractPlugin, IAsyncCounterpartsFinder
 	{
-		private readonly Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> _func;
+		private readonly Func<IMethodSymbol, ITypeSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> _func;
 
-		public DelegateAsyncCounterpartsFinder(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func)
+		public DelegateAsyncCounterpartsFinder(Func<IMethodSymbol, ITypeSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func)
 		{
 			_func = func;
 		}
 
-		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, AsyncCounterpartsSearchOptions options)
+		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
 		{
-			return _func(syncMethodSymbol, options);
+			return _func(syncMethodSymbol, invokedFromType, options);
 		}
 	}
 }

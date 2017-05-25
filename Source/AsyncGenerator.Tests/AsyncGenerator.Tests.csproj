@@ -224,10 +224,16 @@
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
     <Compile Include="AnonymousFunctions\Input\TestCase.cs" />
+    <Compile Include="AsyncMethodFinder\Fixture.cs" />
+    <Compile Include="AsyncMethodFinder\Input\CustomLinqExtensions.cs" />
+    <Compile Include="AsyncMethodFinder\LinqAsyncCounterpartsFinder.cs" />
+    <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
+    <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CallForwarding\Fixture.cs" />
     <Compile Include="CallForwarding\Input\TestCase.cs" />
     <Compile Include="CancellationTokens\Fixture.cs" />
+    <Compile Include="CancellationTokens\Input\DefaultParameter.cs" />
     <Compile Include="CancellationTokens\Input\TestCase.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="Cref\Fixture.cs" />
@@ -236,6 +242,7 @@
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
+    <Compile Include="ExternalProjects\NHibernate\LinqAsyncCounterpartsFinder.cs" />
     <Compile Include="ExternalProjects\NHibernate\TransactionScopeRewriter.cs" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
@@ -488,6 +495,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Formatting\Output\NestedAwaits.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CancellationTokens\Output\DefaultParameter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CancellationTokens\Output\DefaultParameterNoToken.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

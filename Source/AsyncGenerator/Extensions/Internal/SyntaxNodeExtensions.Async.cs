@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace AsyncGenerator.Extensions
+namespace AsyncGenerator.Extensions.Internal
 {
 	static partial class SyntaxNodeExtensions
 	{
@@ -89,14 +83,14 @@ namespace AsyncGenerator.Extensions
 		private static SyntaxNode ConvertMethodToAsync(MethodDeclarationSyntax methodNode)
 		{
 			return methodNode
-				.AddModifiers(Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)))
+				.AddModifiers(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)))
 				.WithAdditionalAnnotations(Formatter.Annotation);
 		}
 
 		private static SyntaxNode ConvertParenthesizedLambdaToAsync(ParenthesizedLambdaExpressionSyntax parenthesizedLambda)
 		{
-			return ParenthesizedLambdaExpression(
-					Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)),
+			return SyntaxFactory.ParenthesizedLambdaExpression(
+					SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
 					parenthesizedLambda.ParameterList,
 					parenthesizedLambda.ArrowToken,
 					parenthesizedLambda.Body)
@@ -106,8 +100,8 @@ namespace AsyncGenerator.Extensions
 
 		private static SyntaxNode ConvertSimpleLambdaToAsync(SimpleLambdaExpressionSyntax simpleLambda)
 		{
-			return SimpleLambdaExpression(
-					Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)),
+			return SyntaxFactory.SimpleLambdaExpression(
+					SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
 					simpleLambda.Parameter,
 					simpleLambda.ArrowToken,
 					simpleLambda.Body)
@@ -117,8 +111,8 @@ namespace AsyncGenerator.Extensions
 
 		private static SyntaxNode ConvertAnonymousMethodToAsync(AnonymousMethodExpressionSyntax anonymousMethod)
 		{
-			return AnonymousMethodExpression(
-					Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)),
+			return SyntaxFactory.AnonymousMethodExpression(
+					SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
 					anonymousMethod.DelegateKeyword,
 					anonymousMethod.ParameterList,
 					anonymousMethod.Block)
@@ -129,7 +123,7 @@ namespace AsyncGenerator.Extensions
 		private static SyntaxNode ConvertLocalFunctionToAsync(LocalFunctionStatementSyntax localFunction)
 		{
 			return localFunction
-				.AddModifiers(Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)))
+				.AddModifiers(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)))
 				.WithAdditionalAnnotations(Formatter.Annotation);
 		}
 	}

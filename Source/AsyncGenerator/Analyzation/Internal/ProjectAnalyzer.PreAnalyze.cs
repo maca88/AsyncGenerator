@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -149,7 +150,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 							.OfType<IMethodSymbol>()
 							.Where(o => o.Name == methodSymbol.Name + "Async")
-							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
+							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
 
 						if (asyncConterPart == null)
 						{
@@ -187,7 +188,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					var asyncConterPart = overridenMethod.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
 						.Where(o => o.Name == methodSymbol.Name + "Async" && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
-						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
+						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
 					if (asyncConterPart == null)
 					{
 						IgnoreOrCopy($"Overrides an external method {overridenMethod} that has not an async counterpart");
@@ -245,7 +246,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
 						.Where(o => o.Name == methodSymbol.Name + "Async")
-						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(o, true, false, false));
+						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
 					if (asyncConterPart == null)
 					{
 						IgnoreOrCopy($"Implements an external interface {interfaceMember} that has not an async counterpart");

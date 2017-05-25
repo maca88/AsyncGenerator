@@ -34,7 +34,7 @@ namespace AsyncGenerator.Configuration
 		/// <summary>
 		/// Append a function that will try to find an async counterpart for the given method
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration FindAsyncCounterparts(Func<IMethodSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func);
+		IFluentProjectAnalyzeConfiguration FindAsyncCounterparts(Func<IMethodSymbol, ITypeSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func);
 
 		/// <summary>
 		/// Append a predicate that will check if the given statement is a precondition

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Plugins;
 using AsyncGenerator.Plugins.Internal;
 using Microsoft.CodeAnalysis;
@@ -14,9 +15,9 @@ namespace AsyncGenerator.Internal
 {
 	internal class DefaultAsyncCounterpartsFinder : AbstractPlugin, IAsyncCounterpartsFinder
 	{
-		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, AsyncCounterpartsSearchOptions options)
+		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
 		{
-			return syncMethodSymbol.GetAsyncCounterparts(options.HasFlag(EqualParameters), options.HasFlag(SearchInheritTypes), 
+			return syncMethodSymbol.GetAsyncCounterparts(invokedFromType, options.HasFlag(EqualParameters), options.HasFlag(SearchInheritTypes), 
 				options.HasFlag(HasCancellationToken), options.HasFlag(IgnoreReturnType));
 		}
 	}

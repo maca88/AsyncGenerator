@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -282,8 +283,16 @@ namespace AsyncGenerator.Analyzation.Internal
 					functionReferenceData.SynchronouslyAwaited = true;
 				}
 			}
-
-			FindAndSetAsyncCounterparts(functionReferenceData);
+			ITypeSymbol typeSymbol = null;
+			if (node.Expression is SimpleNameSyntax)
+			{
+				typeSymbol = functionData.Symbol.ContainingType;
+			}
+			else if (node.Expression is MemberAccessExpressionSyntax memberAccessExpression)
+			{
+				typeSymbol = documentData.SemanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+			}
+			FindAndSetAsyncCounterparts(functionReferenceData, typeSymbol);
 
 			for (var i = 0; i < node.ArgumentList.Arguments.Count; i++)
 			{
@@ -491,9 +500,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private bool FindAndSetAsyncCounterparts(BodyFunctionReferenceData functionReferenceData)
+		private bool FindAndSetAsyncCounterparts(BodyFunctionReferenceData functionReferenceData, ITypeSymbol invokedFromType = null)
 		{
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
+			methodSymbol = methodSymbol.ReducedFrom ?? methodSymbol; // System.Linq extensions
 
 			var searchOptions = AsyncCounterpartsSearchOptions.Default;
 			var useTokens = _configuration.UseCancellationTokens | _configuration.ScanForMissingAsyncMembers != null;
@@ -501,7 +511,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
-			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions));
+			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition, invokedFromType, searchOptions));
 			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
 				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))

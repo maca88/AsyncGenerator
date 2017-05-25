@@ -15,7 +15,7 @@ namespace AsyncGenerator.Tests.CancellationTokens
 		[Test]
 		public void TestCancellationTokensCustomGenerationAfterTransformation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
@@ -48,7 +48,7 @@ namespace AsyncGenerator.Tests.CancellationTokens
 		[Test]
 		public void TestCancellationTokensGuardsCustomGenerationAfterTransformation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
@@ -72,6 +72,65 @@ namespace AsyncGenerator.Tests.CancellationTokens
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile("GuardsCustomTokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestDefaultParameterAfterTransformation()
+		{
+			var config = Configure(nameof(DefaultParameter), p => p
+				.ConfigureAnalyzation(a => a
+					.ScanMethodBody(true)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.MethodGeneration(symbolInfo =>
+						{
+							return MethodCancellationToken.Parameter;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(DefaultParameter)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestDefaultParameterNoTokenAfterTransformation()
+		{
+			var config = Configure(nameof(DefaultParameter), p => p
+				.ConfigureAnalyzation(a => a
+					.ScanMethodBody(true)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.RequiresCancellationToken(o => false)
+						.MethodGeneration(symbolInfo =>
+						{
+							return MethodCancellationToken.Parameter;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("DefaultParameterNoToken"), document.Transformed.ToFullString());
 					})
 				)
 			);

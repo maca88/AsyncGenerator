@@ -56,6 +56,17 @@ namespace AsyncGenerator.TestCases
 			return Task.FromResult<T>(default(T));
 		}
 
+
+		public static bool FastWrite(string content = "")
+		{
+			return true;
+		}
+
+		public static Task<bool> FastWriteAsync(string content = "", CancellationToken cancellationToken = default (CancellationToken))
+		{
+			return Task.FromResult(true);
+		}
+
 		public static void Clear()
 		{
 			

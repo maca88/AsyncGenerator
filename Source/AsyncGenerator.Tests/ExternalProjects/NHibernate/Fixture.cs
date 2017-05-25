@@ -69,7 +69,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.LocalFunctions(true)
 							.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
 						)
-						.RegisterPlugin<TransactionScopeRewriter>() // Rewrite Transaction scope in AdoNetWithDistributedTransactionFactory
+						.RegisterPlugin<TransactionScopeRewriter>() // Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory
 					)
 					.ConfigureProject("NHibernate.DomainModel", p => p
 						.ConfigureAnalyzation(a => a
@@ -77,7 +77,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.ScanMethodBody(true)
 						)
 					)
-
 					.ConfigureProject("NHibernate.Test", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(symbol =>
@@ -91,9 +90,19 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.CancellationTokens(t => t
 								.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
 							.ScanMethodBody(true)
+							.DocumentSelection(doc =>
+							{
+								return
+									// AsQueryable method is called on a retrieved list from db and the result is used elsewhere in code
+									!doc.FilePath.EndsWith(@"Linq\MathTests.cs")
+									// It looks like that GC.Collect works differently with async.
+									// if "await Task.Yield();" is added after DoLinqInSeparateSessionAsync then the test runs successfully (TODO: discover why)
+									&& !doc.FilePath.EndsWith(@"Linq\ExpressionSessionLeakTest.cs")
+									;
+							})
 							.TypeConversion(type =>
 								{
-									if (type.Name == "NorthwindDbCreator" || // Ignore for performance reasons
+									if (type.Name == "NorthwindDbCreator" || // Ignored for performance reasons
 										type.Name == "ObjectAssert" ||  // Has a TestFixture attribute but is not a test
 										type.Name == "LinqReadonlyTestsContext") // SetUpFixture
 									{
@@ -116,6 +125,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 								})
 						)
 						.RegisterPlugin<TransactionScopeRewriter>()
+						.RegisterPlugin<LinqAsyncCounterpartsFinder>()
 					)
 					.ApplyChanges(true)
 				);

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Plugins;
 using AsyncGenerator.Plugins.Internal;
 using Microsoft.CodeAnalysis;

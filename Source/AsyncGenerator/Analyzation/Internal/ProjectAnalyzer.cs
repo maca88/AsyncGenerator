@@ -1,7 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
@@ -25,7 +27,9 @@ namespace AsyncGenerator.Analyzation.Internal
 		private IImmutableSet<Project> _analyzeProjects;
 		private ProjectAnalyzeConfiguration _configuration;
 		private Solution _solution;
-		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> _methodAsyncConterparts = 
+		private readonly ConcurrentDictionary<ITypeSymbol, ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>> _methodByTypeAsyncConterparts = 
+			new ConcurrentDictionary<ITypeSymbol, ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>>();
+		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> _methodAsyncConterparts =
 			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>();
 
 		public ProjectAnalyzer(ProjectData projectData)
@@ -121,16 +125,32 @@ namespace AsyncGenerator.Analyzation.Internal
 			return _analyzeDocuments.Contains(doc);
 		}
 
+		private IEnumerable<IMethodSymbol> GetAsyncCounterparts(IMethodSymbol methodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options, bool onlyNew = false)
+		{
+			if (invokedFromType == null)
+			{
+				return GetAsyncCounterparts(methodSymbol, options, onlyNew);
+			}
+			var typeDict = _methodByTypeAsyncConterparts.GetOrAdd(invokedFromType.OriginalDefinition, new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>());
+			return GetAsyncCounterparts(typeDict, methodSymbol, invokedFromType.OriginalDefinition, options, onlyNew);
+		}
+
 		private IEnumerable<IMethodSymbol> GetAsyncCounterparts(IMethodSymbol methodSymbol, AsyncCounterpartsSearchOptions options, bool onlyNew = false)
 		{
-			var dict = _methodAsyncConterparts.GetOrAdd(methodSymbol, new ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>());
+			return GetAsyncCounterparts(_methodAsyncConterparts, methodSymbol, null, options, onlyNew);
+		}
+
+		private IEnumerable<IMethodSymbol> GetAsyncCounterparts(ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> asyncCounterparts, 
+			IMethodSymbol methodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options, bool onlyNew = false)
+		{
+			var dict = asyncCounterparts.GetOrAdd(methodSymbol, new ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>());
 			HashSet<IMethodSymbol> asyncMethodSymbols;
 			if (dict.TryGetValue(options, out asyncMethodSymbols))
 			{
 				return onlyNew ? Enumerable.Empty<IMethodSymbol>() : asyncMethodSymbols;
 			}
 			asyncMethodSymbols = new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartsFinders
-				.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, options)));
+				.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, invokedFromType, options)));
 			return dict.AddOrUpdate(
 				options,
 				asyncMethodSymbols,
@@ -162,25 +182,37 @@ namespace AsyncGenerator.Analyzation.Internal
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 
-			foreach (var invocation in methodDataBody.DescendantNodes()
-										   .OfType<InvocationExpressionSyntax>())
+			foreach (var invocation in methodDataBody.DescendantNodes().OfType<InvocationExpressionSyntax>())
 			{
 				var methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
 				if (methodSymbol == null)
 				{
 					continue;
 				}
+				// TODO: lets consumer choose if he wants to have the method async
+
 				methodSymbol = methodSymbol.OriginalDefinition;
 				if (result.Contains(methodSymbol))
 				{
 					continue;
 				}
+
+				ITypeSymbol typeSymbol = null;
+				if (invocation.Expression is SimpleNameSyntax)
+				{
+					typeSymbol = methodData.Symbol.ContainingType;
+				}
+				else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
+				{
+					typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+				}
+
 				// Add method only if new
-				if (GetAsyncCounterparts(methodSymbol, searchOptions, true).Any())
+				if (GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions, true).Any())
 				{
 					result.Add(methodSymbol);
 				}
-				if (!GetAsyncCounterparts(methodSymbol, searchOptions).Any())
+				if (!GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions).Any())
 				{
 					continue;
 				}

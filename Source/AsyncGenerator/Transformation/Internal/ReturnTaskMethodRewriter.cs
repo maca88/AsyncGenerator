@@ -5,10 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtensions;
 
 namespace AsyncGenerator.Transformation.Internal
 {
@@ -212,7 +214,7 @@ namespace AsyncGenerator.Transformation.Internal
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
 						_namespaceMetadata.TaskConflict 
-							? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
+							? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
 							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
 						GenericName(
 								Identifier("FromResult"))
@@ -234,7 +236,7 @@ namespace AsyncGenerator.Transformation.Internal
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
 						_namespaceMetadata.TaskConflict
-							? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
+							? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
 							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
 						GenericName(
 								Identifier("FromException"))
@@ -279,7 +281,7 @@ namespace AsyncGenerator.Transformation.Internal
 				MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
 					_namespaceMetadata.TaskConflict
-						? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
+						? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
 						: IdentifierName(nameof(Task)),
 					IdentifierName("CompletedTask")),
 				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
@@ -322,7 +324,7 @@ namespace AsyncGenerator.Transformation.Internal
 							CatchDeclaration(
 								_namespaceMetadata.UsingSystem
 									? IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space)))
-									: Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Exception", Space)
+									: SyntaxNodeExtensions.ConstructNameSyntax("System.Exception", Space)
 								)
 								.WithIdentifier(Identifier("ex"))
 								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_transformResult.EndOfLineTrivia)))
@@ -353,7 +355,7 @@ namespace AsyncGenerator.Transformation.Internal
 										MemberAccessExpression(
 											SyntaxKind.SimpleMemberAccessExpression,
 											_namespaceMetadata.TaskConflict
-												? Extensions.SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
+												? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
 												: IdentifierName(nameof(Task)),
 											GenericName(
 													Identifier("FromException"))

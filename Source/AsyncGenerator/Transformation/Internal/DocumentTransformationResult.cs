@@ -19,6 +19,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public IDocumentAnalyzationResult AnalyzationResult { get; }
 
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
 		public List<RootNamespaceTransformationResult> TransformedNamespaces { get; } = new List<RootNamespaceTransformationResult>();
 
 		public List<RootTypeTransformationResult> TransformedTypes { get; } = new List<RootTypeTransformationResult>();

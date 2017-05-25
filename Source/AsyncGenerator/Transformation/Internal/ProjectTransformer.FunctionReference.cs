@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -94,8 +95,7 @@ namespace AsyncGenerator.Transformation.Internal
 						.ReplaceNode(nameNode, newNameNode)
 						.WrapInsideFunction(bodyFuncReferenceResult.AsyncDelegateArgument, returnTypeMismatch,
 							namespaceMetadata.TaskConflict,
-							invocation => invocation.AddCancellationTokenArgumentIf(cancellationTokenParamName,
-								bodyFuncReferenceResult.CancellationTokenRequired));
+							invocation => invocation.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
 
 					node = node
 						.ReplaceNode(argumentNode.Expression, newArgumentExpression);
@@ -124,7 +124,7 @@ namespace AsyncGenerator.Transformation.Internal
 					{
 						node = node.ReplaceNode(invokeNode, invokeNode
 							.ReplaceNode(nameNode, newNameNode)
-							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired));
+							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
 					}
 					else
 					{
@@ -139,7 +139,7 @@ namespace AsyncGenerator.Transformation.Internal
 					{
 						newStatement = statement.ReplaceNode(invokeNode, invokeNode
 							.ReplaceNode(nameNode, newNameNode)
-							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired));
+							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
 					}
 					else
 					{
@@ -162,7 +162,7 @@ namespace AsyncGenerator.Transformation.Internal
 				node = node
 					.ReplaceNode(invokeNode, invokeNode
 						.ReplaceNode(nameNode, newNameNode)
-						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult.CancellationTokenRequired)
+						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
 						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
 					);
 				invokeNode = node.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();

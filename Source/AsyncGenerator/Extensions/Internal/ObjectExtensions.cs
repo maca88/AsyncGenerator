@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AsyncGenerator.Extensions
+namespace AsyncGenerator.Extensions.Internal
 {
 	internal static class ObjectExtensions
 	{

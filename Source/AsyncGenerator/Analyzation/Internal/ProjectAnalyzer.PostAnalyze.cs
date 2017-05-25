@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AsyncGenerator.Extensions;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -220,25 +221,38 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void CalculateFinalFunctionConversion(FunctionData functionData, ICollection<MethodData> asyncMethodDatas)
 		{
+
 			// Before checking the conversion of method references we have to calculate the conversion of invocations that have one or more methods passed as an argument as the current calculated conversion may be wrong
 			// (eg. one of the arguments may be ignored in the post-analyze step)
 			foreach (var bodyRefData in functionData.BodyMethodReferences.Values.Where(o => o.FunctionArguments != null))
 			{
-				var nonAsyncArgs = bodyRefData.FunctionArguments.Where(o =>
-						(o.FunctionData != null && o.FunctionData.Conversion == MethodConversion.Ignore) ||
-						(o.FunctionReference != null && o.FunctionReference.GetConversion() == ReferenceConversion.Ignore))
-					.ToList();
-				if (nonAsyncArgs.Any())
-				{
-					bodyRefData.Ignore($"Arguments at indexes '{string.Join(", ", nonAsyncArgs.Select(o => o.Index))}' cannot be converted to async");
-					continue;
-				}
 				var asyncCounterpart = bodyRefData.AsyncCounterpartSymbol;
 				if (asyncCounterpart == null)
 				{
 					// TODO: define
 					throw new InvalidOperationException($"AsyncCounterpartSymbol is null {bodyRefData.ReferenceNode}");
 				}
+
+				var nonAsyncArgs = bodyRefData.FunctionArguments.Where(o =>
+						(o.FunctionData != null && o.FunctionData.Conversion == MethodConversion.Ignore) ||
+						(o.FunctionReference != null && o.FunctionReference.GetConversion() == ReferenceConversion.Ignore))
+					.Select(o => o.Index)
+					.ToList();
+				if (nonAsyncArgs.Any())
+				{
+					// Check if any of the arguments needs to be async in order to have the invocation async
+					var paramOffset = asyncCounterpart.IsExtensionMethod ? 1 : 0;
+					if (asyncCounterpart.Parameters
+						.Where((symbol, i) => nonAsyncArgs.Contains(i + paramOffset))
+						.Select(o => o.Type)
+						.OfType<INamedTypeSymbol>()
+						.Any(o => o.DelegateInvokeMethod != null))
+					{
+						bodyRefData.Ignore($"Arguments at indexes '{string.Join(", ", nonAsyncArgs)}' cannot be converted to async");
+						continue;
+					}
+				}
+				
 				// Check if we need to wrap the argument into an anonymous function. We can skip anonymous functions passed as argument as they will never have an additinal parameter
 				// TODO: maybe this should be moved elsewhere
 				foreach (var funArgument in bodyRefData.FunctionArguments.Where(o => o.FunctionReference != null))
