@@ -19,6 +19,8 @@ namespace AsyncGenerator.Configuration.Internal
 			_projectConfiguration = projectConfiguration;
 		}
 
+		public bool Enabled { get; private set; } = true;
+
 		public string AsyncFolder { get; private set; } = "Async";
 
 		public ExpressionSyntax ConfigureAwaitArgument { get; private set; }
@@ -38,6 +40,12 @@ namespace AsyncGenerator.Configuration.Internal
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
 
 		#region IFluentProjectTransformConfiguration
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.Disable()
+		{
+			Enabled = false;
+			return this;
+		}
 
 		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.AsyncFolder(string folderName)
 		{

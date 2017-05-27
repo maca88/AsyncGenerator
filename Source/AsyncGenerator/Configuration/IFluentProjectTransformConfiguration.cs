@@ -13,6 +13,11 @@ namespace AsyncGenerator.Configuration
 	public interface IFluentProjectTransformConfiguration
 	{
 		/// <summary>
+		/// Disable the transformation process.
+		/// </summary>
+		IFluentProjectTransformConfiguration Disable();
+
+		/// <summary>
 		/// Set the name of the folder where all newly generated files will be stored
 		/// </summary>
 		IFluentProjectTransformConfiguration AsyncFolder(string folderName);

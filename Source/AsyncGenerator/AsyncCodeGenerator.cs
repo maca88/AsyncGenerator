@@ -68,16 +68,19 @@ namespace AsyncGenerator
 					Logger.Info($"Analyzing project '{projectData.Project.Name}' completed");
 
 					// Transform documents
-					Logger.Info($"Transforming project '{projectData.Project.Name}' started");
 					var transformConfig = projectData.Configuration.TransformConfiguration;
-					var transformResult = TransformProject(analyzationResult, transformConfig);
-					foreach (var action in transformConfig.AfterTransformation)
+					if (transformConfig.Enabled)
 					{
-						action(transformResult);
+						Logger.Info($"Transforming project '{projectData.Project.Name}' started");
+						var transformResult = TransformProject(analyzationResult, transformConfig);
+						foreach (var action in transformConfig.AfterTransformation)
+						{
+							action(transformResult);
+						}
+						projectData.Project = transformResult.Project; // updates also the solution
+						Logger.Info($"Transforming project '{projectData.Project.Name}' completed");
 					}
-					projectData.Project = transformResult.Project; // updates also the solution
-					Logger.Info($"Transforming project '{projectData.Project.Name}' completed");
-
+					
 					// Compile
 					var compileConfig = projectData.Configuration.CompileConfiguration;
 					if (compileConfig != null)
@@ -91,7 +94,7 @@ namespace AsyncGenerator
 								Environment.NewLine,
 								emit.Diagnostics.Where(o => o.Severity == DiagnosticSeverity.Error).Select(o => o.GetMessage()));
 							throw new InvalidOperationException(
-								$"Generation for Project {transformResult.Project.Name} failed to generate a valid code. Errors:{Environment.NewLine}{messages}");
+								$"Generation for Project {projectData.Project.Name} failed to generate a valid code. Errors:{Environment.NewLine}{messages}");
 						}
 						Logger.Info($"Compiling project '{projectData.Project.Name}' completed");
 					}
@@ -124,7 +127,7 @@ namespace AsyncGenerator
 				currentProcessorSymbolNames.Add(name);
 			}
 			var newParseOptions = new CSharpParseOptions(
-				parseConfig.LanguageVersion ?? parseOptions.SpecifiedLanguageVersion,
+				parseConfig.LanguageVersion ?? parseOptions.LanguageVersion,
 				parseOptions.DocumentationMode,
 				parseOptions.Kind,
 				currentProcessorSymbolNames);
