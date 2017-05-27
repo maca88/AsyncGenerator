@@ -159,35 +159,37 @@ namespace AsyncGenerator.Internal
 		//	return currentTypeData;
 		//}
 
-		public TypeData GetTypeData(TypeDeclarationSyntax typeNode, bool create = false)
-		{
-			var typeSymbol = DocumentData.SemanticModel.GetDeclaredSymbol(typeNode);
-			return GetTypeData(typeNode, typeSymbol, create);
-		}
+		//public TypeData GetTypeData(TypeDeclarationSyntax typeNode, bool create = false)
+		//{
+		//	var typeSymbol = DocumentData.SemanticModel.GetDeclaredSymbol(typeNode);
+		//	return GetTypeData(typeNode, typeSymbol, create);
+		//}
 
-		public TypeData GetTypeData(TypeDeclarationSyntax node, INamedTypeSymbol symbol, bool create = false)
+		public TypeData GetTypeData(TypeDeclarationSyntax node, SemanticModel semanticModel, bool create = false)
 		{
 			TypeData typeData;
 			if (Types.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
+			var symbol = semanticModel.GetDeclaredSymbol(node);
 			return !create ? null : Types.GetOrAdd(node, syntax => new TypeData(this, symbol, node));
 		}
 
-		public NamespaceData GetNestedNamespaceData(NamespaceDeclarationSyntax node, bool create = false)
-		{
-			var symbol = DocumentData.SemanticModel.GetDeclaredSymbol(node);
-			return GetNestedNamespaceData(node, symbol, create);
-		}
+		//public NamespaceData GetNestedNamespaceData(NamespaceDeclarationSyntax node, bool create = false)
+		//{
+		//	var symbol = DocumentData.SemanticModel.GetDeclaredSymbol(node);
+		//	return GetNestedNamespaceData(node, symbol, create);
+		//}
 
-		public NamespaceData GetNestedNamespaceData(NamespaceDeclarationSyntax node, INamespaceSymbol symbol, bool create = false)
+		public NamespaceData GetNestedNamespaceData(NamespaceDeclarationSyntax node, SemanticModel semanticModel, bool create = false)
 		{
 			NamespaceData typeData;
 			if (NestedNamespaces.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
+			var symbol = semanticModel.GetDeclaredSymbol(node);
 			return !create ? null : NestedNamespaces.GetOrAdd(node, syntax => new NamespaceData(DocumentData, symbol, node, this));
 		}
 

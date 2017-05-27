@@ -151,10 +151,9 @@ namespace AsyncGenerator.Internal
 							}
 							throw new InvalidOperationException($"Anonymous function {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
 						}
-						var symbol = SemanticModel.GetSymbolInfo(n).Symbol as IMethodSymbol;
 						functionData = functionData != null 
-							? functionData.GetChildFunction(n, symbol, create)
-							: methodData.GetChildFunction(n, symbol, create);
+							? functionData.GetChildFunction(n, SemanticModel, create)
+							: methodData.GetChildFunction(n, SemanticModel, create);
 						if (functionData == null)
 						{
 							return null;
@@ -166,8 +165,7 @@ namespace AsyncGenerator.Internal
 							throw new InvalidOperationException($"Method {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
 						}
 						var methodNode = (MethodDeclarationSyntax) n;
-						var methodSymbol = SemanticModel.GetDeclaredSymbol(methodNode);
-						methodData = typeData.GetMethodData(methodNode, methodSymbol, create);
+						methodData = typeData.GetMethodData(methodNode, SemanticModel, create);
 						if (methodData == null)
 						{
 							return null;
@@ -181,10 +179,11 @@ namespace AsyncGenerator.Internal
 							namespaceData = GlobalNamespaceData;
 						}
 						var typeNode = (TypeDeclarationSyntax)n;
-						var typeSymbol = SemanticModel.GetDeclaredSymbol(typeNode);
+						// TODO: optimize - symbol is not required if the data exist
+						
 						typeData = typeData != null 
-							? typeData.GetNestedTypeData(typeNode, typeSymbol, create) 
-							: namespaceData.GetTypeData(typeNode, typeSymbol, create);
+							? typeData.GetNestedTypeData(typeNode, SemanticModel, create) 
+							: namespaceData.GetTypeData(typeNode, SemanticModel, create);
 						if (typeData == null)
 						{
 							return null;
@@ -192,10 +191,9 @@ namespace AsyncGenerator.Internal
 						break;
 					case SyntaxKind.NamespaceDeclaration:
 						var namespaceNode = (NamespaceDeclarationSyntax)n;
-						var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
 						namespaceData = namespaceData != null 
-							? namespaceData.GetNestedNamespaceData(namespaceNode, namespaceSymbol, create)
-							: GetNamespaceData(namespaceNode, namespaceSymbol, create);
+							? namespaceData.GetNestedNamespaceData(namespaceNode, SemanticModel, create)
+							: GetNamespaceData(namespaceNode, create);
 						if (namespaceData == null)
 						{
 							return null;
@@ -322,13 +320,14 @@ namespace AsyncGenerator.Internal
 
 		#endregion
 
-		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, INamespaceSymbol namespaceSymbol, bool create)
+		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, bool create)
 		{
 			NamespaceData namespaceData;
 			if (Namespaces.TryGetValue(namespaceNode, out namespaceData))
 			{
 				return namespaceData;
 			}
+			var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
 			return !create ? null : Namespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
 		}
 

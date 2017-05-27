@@ -41,7 +41,7 @@ namespace AsyncGenerator.Internal
 
 		public abstract MethodData GetMethodData();
 
-		public ChildFunctionData GetChildFunction(SyntaxNode node, IMethodSymbol symbol, bool create = false)
+		public ChildFunctionData GetChildFunction(SyntaxNode node, SemanticModel semanticModel, bool create = false)
 		{
 			if (ChildFunctions.TryGetValue(node, out var typeData))
 			{
@@ -51,6 +51,7 @@ namespace AsyncGenerator.Internal
 			{
 				return null;
 			}
+			var symbol = semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
 			var anonymousFunc = node as AnonymousFunctionExpressionSyntax;
 			if (anonymousFunc != null)
 			{

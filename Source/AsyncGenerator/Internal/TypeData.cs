@@ -6,6 +6,7 @@ using System.Linq;
 using AsyncGenerator.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace AsyncGenerator.Internal
 {
@@ -119,23 +120,25 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public TypeData GetNestedTypeData(TypeDeclarationSyntax node, INamedTypeSymbol symbol, bool create = false)
+		public TypeData GetNestedTypeData(TypeDeclarationSyntax node, SemanticModel semanticModel, bool create = false)
 		{
 			TypeData typeData;
 			if (NestedTypes.TryGetValue(node, out typeData))
 			{
 				return typeData;
 			}
+			var symbol = semanticModel.GetDeclaredSymbol(node);
 			return !create ? null : NestedTypes.GetOrAdd(node, syntax => new TypeData(NamespaceData, symbol, node, this));
 		}
 
-		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, IMethodSymbol methodSymbol, bool create = false)
+		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, SemanticModel semanticModel, bool create = false)
 		{
 			MethodData methodData;
 			if (Methods.TryGetValue(methodNode, out methodData))
 			{
 				return methodData;
 			}
+			var methodSymbol = semanticModel.GetDeclaredSymbol(methodNode);
 			return !create ? null : Methods.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
 		}
 
