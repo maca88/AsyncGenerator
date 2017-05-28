@@ -37,17 +37,24 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodSymbol = result.AnalyzationResult.Symbol;
 			var fieldName = GetLockFieldName(methodSymbol, typeMetadata);
 			var node = result.Transformed;
-			var newBody = Block(SingletonList(
-				UsingStatement(node.Body)
-					.WithExpression(
-						AwaitExpression(
-							InvocationExpression(
-								MemberAccessExpression(
-									SyntaxKind.SimpleMemberAccessExpression,
-									IdentifierName(fieldName),
-									IdentifierName(_configuration.AsyncLockMethodName)))))));
-			node = node.WithBody(result.AnalyzationResult.Node
-				.NormalizeMethodBody(newBody, result.IndentTrivia, result.EndOfLineTrivia));
+			var expression = AwaitExpression(
+				Token(TriviaList(), SyntaxKind.AwaitKeyword, TriviaList(Space)),
+				InvocationExpression(
+					MemberAccessExpression(
+						SyntaxKind.SimpleMemberAccessExpression,
+						IdentifierName(fieldName),
+						IdentifierName(_configuration.AsyncLockMethodName))));
+			var newBody = UsingStatement(
+							Token(TriviaList(result.LeadingWhitespaceTrivia), SyntaxKind.UsingKeyword, TriviaList(Space)),
+							Token(TriviaList(), SyntaxKind.OpenParenToken, TriviaList()),
+							null,
+							expression,
+							Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(result.EndOfLineTrivia)),
+							node.Body)
+							.AppendIndent(result.IndentTrivia.ToFullString())
+				;
+			node = node.WithBody(node.Body
+				.WithStatements(SingletonList<StatementSyntax>(newBody)));
 
 			// Remove the Synchronized option from the MethodImpl attribute
 			var methodImplAttr = node.AttributeLists.SelectMany(o => o.Attributes).First(o => o.Name.ToString() == "MethodImpl");

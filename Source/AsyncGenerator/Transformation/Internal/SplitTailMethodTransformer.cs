@@ -68,13 +68,9 @@ namespace AsyncGenerator.Transformation.Internal
 					.WithParameterList(ParameterList()
 						.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(transformResult.EndOfLineTrivia))))
 					.AddAsync()
-					.WithLeadingTrivia(transformResult.BodyLeadingWhitespaceTrivia)
-					.WithBody(tailMethodBody
-					);
-				tailFunction = methodResult.Node.NormalizeMethodBody(Block(SingletonList(tailFunction)), transformResult.IndentTrivia, transformResult.EndOfLineTrivia)
-					.Statements
-					.OfType<LocalFunctionStatementSyntax>()
-					.First();
+					.WithLeadingTrivia(transformResult.LeadingWhitespaceTrivia)
+					.WithBody(tailMethodBody)
+					.AppendIndent(transformResult.IndentTrivia.ToFullString());
 				bodyStatements = bodyStatements.Add(tailFunction);
 				// We do not need any parameter for the local function as we already have the parameters from the parent method
 				tailCallParameterList = ParameterList();

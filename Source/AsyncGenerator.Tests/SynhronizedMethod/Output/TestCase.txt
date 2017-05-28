@@ -33,7 +33,6 @@ namespace AsyncGenerator.Tests.SynhronizedMethod.Input
 			}
 		}
 
-
 		[MethodImpl(MethodImplOptions.NoOptimization)]
 		public async Task NoOptimizationSynhronizedAsync()
 		{
@@ -43,7 +42,6 @@ namespace AsyncGenerator.Tests.SynhronizedMethod.Input
 			}
 		}
 
-
 		[MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining | MethodImplOptions.PreserveSig)]
 		public async Task NoOptimizationNoInliningSynhronizedAsync()
 		{
@@ -52,7 +50,6 @@ namespace AsyncGenerator.Tests.SynhronizedMethod.Input
 				await (SimpleFile.ReadAsync());
 			}
 		}
-
 
 		[MethodImpl(MethodImplOptions.NoOptimization), ReadOnly(false)]
 		public static async Task ReadonlySynhronizedAsync()

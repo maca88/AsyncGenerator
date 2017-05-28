@@ -53,10 +53,8 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 					{
 						continue;
 					}
-
 					break;
 				}
-
 				await (SimpleFile.ReadAsync());
 				return "";
 			}

@@ -223,7 +223,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Node.ReturnType)))))
+											: _methodResult.Node.ReturnType.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -245,7 +245,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Node.ReturnType)))))
+											: _methodResult.Node.ReturnType.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -303,23 +303,32 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			block = _methodResult.Symbol.ReturnsVoid
-				? AddReturnStatement(block.AddStatements(ExpressionStatement(invocation)))
-				: block.AddStatements(ReturnStatement(WrapInTaskFromResult(invocation)));
+				? AddReturnStatement(block.AddStatements(ExpressionStatement(
+					invocation.WithLeadingTrivia(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia)),
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))))
+				: block.AddStatements(ReturnStatement(
+					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					WrapInTaskFromResult(invocation),
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))));
 			return WrapInsideTryCatch(block);
 		}
 
 		private BlockSyntax WrapInsideTryCatch(BlockSyntax node)
 		{
-			//var innerBodyTrivia = Whitespace(_transformResult.BodyLeadingWhitespaceTrivia.ToFullString() + _transformResult.IndentTrivia.ToFullString());
+			var indent = _transformResult.IndentTrivia.ToFullString();
+			var innerBodyTrivia = Whitespace(_transformResult.BodyLeadingWhitespaceTrivia.ToFullString());
+			var bodyLeadTrivia = TriviaList(_transformResult.LeadingWhitespaceTrivia);
+			var eolTrivia = TriviaList(_transformResult.EndOfLineTrivia);
+
 			var tryStatement = TryStatement()
-				.WithTryKeyword(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.TryKeyword, TriviaList(_transformResult.EndOfLineTrivia)))
+				.WithTryKeyword(Token(bodyLeadTrivia, SyntaxKind.TryKeyword, eolTrivia))
 				.WithBlock(Block(node.Statements.Skip(_methodResult.Preconditions.Count))
-					.WithOpenBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
-					.WithCloseBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
+					.WithOpenBraceToken(Token(bodyLeadTrivia, SyntaxKind.OpenBraceToken, eolTrivia))
+					.WithCloseBraceToken(Token(bodyLeadTrivia, SyntaxKind.CloseBraceToken, eolTrivia))
 				)
 				.WithCatches(SingletonList(
 					CatchClause()
-						.WithCatchKeyword(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CatchKeyword, TriviaList(Space)))
+						.WithCatchKeyword(Token(bodyLeadTrivia, SyntaxKind.CatchKeyword, TriviaList(Space)))
 						.WithDeclaration(
 							CatchDeclaration(
 								_namespaceMetadata.UsingSystem
@@ -327,16 +336,11 @@ namespace AsyncGenerator.Transformation.Internal
 									: SyntaxNodeExtensions.ConstructNameSyntax("System.Exception", Space)
 								)
 								.WithIdentifier(Identifier("ex"))
-								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_transformResult.EndOfLineTrivia)))
+								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, eolTrivia))
 						)
-						.WithBlock(GetCatchBlock(/*innerBodyTrivia*/))
+						.WithBlock(GetCatchBlock(innerBodyTrivia))
 				));
-			// To indent the wrapped statement we will use the NormalizeWhitespace method as the indentation process is too complex to handle manually
-			// For using the NormalizeWhitespace we need to place the wrapped body in the original document node to get the right indentation
-			tryStatement = _methodResult.Node.NormalizeMethodBody(_methodResult.Node.Body
-				.WithStatements(SingletonList<StatementSyntax>(tryStatement)), _transformResult.IndentTrivia, _transformResult.EndOfLineTrivia)
-				.Statements.OfType<TryStatementSyntax>()
-				.First();
+			tryStatement = tryStatement.AppendIndent(indent);
 			var newStatements = node.Statements.Take(_methodResult.Preconditions.Count).ToList();
 			newStatements.Add(tryStatement);
 
@@ -345,7 +349,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithCloseBraceToken(node.CloseBraceToken);
 		}
 
-		private BlockSyntax GetCatchBlock(/*SyntaxTrivia innerBodyTrivia*/)
+		private BlockSyntax GetCatchBlock(SyntaxTrivia innerBodyTrivia)
 		{
 			return Block(
 					SingletonList<StatementSyntax>(
@@ -364,17 +368,17 @@ namespace AsyncGenerator.Transformation.Internal
 														SingletonSeparatedList(
 															_methodResult.Symbol.ReturnsVoid
 																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-																: _methodResult.Node.ReturnType)))))
+																: _methodResult.Node.ReturnType.WithoutTrivia())))))
 									.WithArgumentList(
 										ArgumentList(
 											SingletonSeparatedList(
 												Argument(
 													IdentifierName("ex"))))))
-							.WithReturnKeyword(Token(TriviaList(/*innerBodyTrivia*/), SyntaxKind.ReturnKeyword, TriviaList(Space)))
+							.WithReturnKeyword(Token(TriviaList(innerBodyTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)))
 							.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))
 					))
-				.WithOpenBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
-				.WithCloseBraceToken(Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_transformResult.EndOfLineTrivia)));
+				.WithOpenBraceToken(Token(TriviaList(_transformResult.LeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(_transformResult.EndOfLineTrivia)))
+				.WithCloseBraceToken(Token(TriviaList(_transformResult.LeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(_transformResult.EndOfLineTrivia)));
 		}
 	}
 }

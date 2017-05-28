@@ -163,7 +163,6 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 					cancellationToken.ThrowIfCancellationRequested();
 					await (SimpleFile.WriteAsync(content));
 				}
-
 				cancellationToken.ThrowIfCancellationRequested();
 				return await (SimpleFile.WriteAsync(content));
 			}
@@ -183,7 +182,6 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 				{
 					return SimpleFile.ReadAsync(cancellationToken);
 				}
-
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)

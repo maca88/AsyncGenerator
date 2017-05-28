@@ -54,7 +54,6 @@ namespace AsyncGenerator.Tests.Yields.Input
 				{
 					return Task.FromResult<IEnumerable<long>>(yields);
 				}
-
 				yields.Add(1);
 				yields.Add(2);
 				return Task.FromResult<IEnumerable<long>>(yields);

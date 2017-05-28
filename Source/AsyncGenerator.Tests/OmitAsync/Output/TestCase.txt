@@ -60,7 +60,6 @@ namespace AsyncGenerator.Tests.OmitAsync.Input
 				{
 					return SimpleFile.ReadAsync();
 				}
-
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)
@@ -75,11 +74,10 @@ namespace AsyncGenerator.Tests.OmitAsync.Input
 			{
 				{
 					{
-						if (path == "")
+						if(path == "")
 							return SimpleFile.ReadAsync();
 					}
 				}
-
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)
@@ -97,7 +95,6 @@ namespace AsyncGenerator.Tests.OmitAsync.Input
 					{
 						return SimpleFile.WriteAsync(null);
 					}
-
 					return content == "" ? SimpleFile.WriteAsync(content) : Task.FromResult<bool>(false);
 				}
 			}

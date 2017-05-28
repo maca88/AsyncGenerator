@@ -127,7 +127,7 @@ namespace AsyncGenerator
 				currentProcessorSymbolNames.Add(name);
 			}
 			var newParseOptions = new CSharpParseOptions(
-				parseConfig.LanguageVersion ?? parseOptions.LanguageVersion,
+				parseConfig.LanguageVersion ?? parseOptions.SpecifiedLanguageVersion,
 				parseOptions.DocumentationMode,
 				parseOptions.Kind,
 				currentProcessorSymbolNames);

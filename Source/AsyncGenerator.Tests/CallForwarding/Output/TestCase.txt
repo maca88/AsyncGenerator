@@ -40,7 +40,6 @@ namespace AsyncGenerator.Tests.CallForwarding.Input
 				{
 					Console.WriteLine("Hello!");
 				}
-
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)

@@ -38,7 +38,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		{
 			if (!transformationResult.AnalyzationResult.GetAllTypes()
 				.SelectMany(o => o.GetSelfAndDescendantsTypes())
-				.Any(o => o.Methods.Any(m => m.MethodReferences.Any(r => _linqMethods.Contains(r.AsyncCounterpartSymbol)))))
+				.Any(o => o.Methods.Any(m => m.MethodReferences.Any(r => _linqMethods.Contains(r.AsyncCounterpartSymbol)))) ||
+				transformationResult.Transformed.Usings.Any(o => o.Name.ToString() == "NHibernate.Linq"))
 			{
 				return null;
 			}

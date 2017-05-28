@@ -34,9 +34,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 				{
 					Console.WriteLine();
 					return SimpleFile.ReadAsync(cancellationToken);
-				}
-
-				);
+				});
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)
@@ -52,9 +50,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 				Assert.DoesNotThrowAsync(() =>
 				{
 					return SimpleFile.ReadAsync(cancellationToken);
-				}
-
-				);
+				});
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)
@@ -71,9 +67,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 				list.Add(new RunFunction(() =>
 				{
 					SimpleFile.Read();
-				}
-
-				));
+				}));
 				return SimpleFile.ReadAsync(cancellationToken);
 			}
 			catch (Exception ex)

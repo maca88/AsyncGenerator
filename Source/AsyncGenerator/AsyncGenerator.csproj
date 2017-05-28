@@ -288,6 +288,7 @@
     <Compile Include="Transformation\Internal\SplitTailMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\TransformationResult.cs" />
     <Compile Include="Transformation\Internal\TypeTransformationResult.cs" />
+    <Compile Include="Transformation\Internal\IndentRewriter.cs" />
     <Compile Include="Transformation\Internal\YieldRewriter.cs" />
     <Compile Include="Transformation\IProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />

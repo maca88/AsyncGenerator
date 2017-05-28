@@ -36,7 +36,7 @@ namespace AsyncGenerator.Tests.Preconditions.Input
 			async Task<int> InternalDivideAsync()
 			{
 				await (SimpleFile.ReadAsync(cancellationToken));
-				return a / b;
+				return a/b;
 			}
 			return InternalDivideAsync();
 		}

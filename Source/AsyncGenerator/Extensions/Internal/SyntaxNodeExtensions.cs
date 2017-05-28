@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -520,24 +521,10 @@ namespace AsyncGenerator.Extensions.Internal
 			return node.GetLeadingTrivia().Where(o => o.IsDirective);
 		}
 
-		/// <summary>
-		/// Normalize body by using the NormalizeWhitespace method using the original method that belongs to a <see cref="CompilationUnitSyntax"/>
-		/// </summary>
-		/// <param name="originalNode"></param>
-		/// <param name="body"></param>
-		/// <param name="indentTrivia"></param>
-		/// <param name="endOfLineTrivia"></param>
-		/// <returns></returns>
-		internal static BlockSyntax NormalizeMethodBody(this MethodDeclarationSyntax originalNode, BlockSyntax body, SyntaxTrivia indentTrivia, SyntaxTrivia endOfLineTrivia)
+		internal static T AppendIndent<T>(this T node, string indent) where T : SyntaxNode
 		{
-			var annotation = Guid.NewGuid().ToString();
-			var docNode = originalNode.Ancestors().OfType<CompilationUnitSyntax>().First();
-			docNode = docNode
-				.ReplaceNode(originalNode, originalNode
-					.WithBody(body)
-					.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)))
-				.NormalizeWhitespace(indentTrivia.ToFullString(), endOfLineTrivia.ToString());
-			return docNode.GetAnnotatedNodes(annotation).OfType<MethodDeclarationSyntax>().First().Body;
+			var indentRewriter = new IndentRewriter(indent);
+			return (T)indentRewriter.Visit(node);
 		}
 
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, IBodyFunctionReferenceAnalyzationResult functionReference)
