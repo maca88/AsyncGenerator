@@ -229,6 +229,7 @@
     <Compile Include="CallForwarding\Input\TestCase.cs" />
     <Compile Include="CancellationTokens\Fixture.cs" />
     <Compile Include="CancellationTokens\Input\DefaultParameter.cs" />
+    <Compile Include="CancellationTokens\Input\Params.cs" />
     <Compile Include="CancellationTokens\Input\TestCase.cs" />
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="Cref\Fixture.cs" />
@@ -496,6 +497,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CancellationTokens\Output\DefaultParameterNoToken.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CancellationTokens\Output\Params.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

@@ -38,6 +38,13 @@ namespace AsyncGenerator.Analyzation.Internal
 						_configuration.CancellationTokens.RequiresCancellationToken(currentMethodData.Symbol) ??
 						currentMethodData.CancellationTokenRequired;
 				}
+				// TODO: support params
+				if (currentMethodData.Symbol.Parameters.LastOrDefault()?.IsParams == true)
+				{
+					currentMethodData.CancellationTokenRequired = false;
+					Logger.Warn($"Cancellation token parameter will not be added for method {currentMethodData.Symbol} because the last parameter" +
+								$" is declared as a parameter array which is currently not supported");
+				}
 				if (currentMethodData.CancellationTokenRequired)
 				{
 					if (!currentMethodData.Missing)

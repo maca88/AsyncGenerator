@@ -137,5 +137,34 @@ namespace AsyncGenerator.Tests.CancellationTokens
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestParamsAfterTransformation()
+		{
+			var config = Configure(nameof(Params), p => p
+				.ConfigureAnalyzation(a => a
+					.ScanMethodBody(true)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.MethodGeneration(symbolInfo =>
+						{
+							return MethodCancellationToken.Parameter;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(Params)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
 	}
 }
