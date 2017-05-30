@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AsyncGenerator.Analyzation;
@@ -22,14 +21,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
-		private readonly HashSet<string> _publicTypes = new HashSet<string>
-		{
-			"ISession",
-			"IQuery",
-			"IQueryOver",
-			"ICriteria"
-		};
-
 		[Explicit]
 		[Test]
 		public void TestAfterTransformation()
@@ -46,8 +37,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 								.Guards(true)
 								.MethodGeneration(symbolInfo =>
 								{
-									if (_publicTypes.Contains(symbolInfo.Symbol.ContainingType.Name) || // For public types generate default parameter
-										symbolInfo.ImplementedInterfaces.Any(o => _publicTypes.Contains(o.ContainingType.Name))) // The rule for public types shall be passed to implementors
+									if (IsPubliclyExposedType(symbolInfo.Symbol.ContainingType) || // For public types generate default parameter
+										symbolInfo.ImplementedInterfaces.Any(o => IsPubliclyExposedType(o.ContainingType))) // The rule for public types shall be passed to implementors
 									{
 										return MethodCancellationToken.DefaultParameter;
 									}
@@ -131,6 +122,19 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		static bool IsPubliclyExposedType(ISymbol type)
+		{
+			var ns = type.ContainingNamespace?.ToString();
+			if (ns == "NHibernate")
+				return true;
+
+			var typeName = type.ToString();
+			return
+				typeName == "NHibernate.Tool.hbm2ddl.SchemaUpdate" ||
+				typeName == "NHibernate.Tool.hbm2ddl.SchemaValidator" ||
+				typeName == "NHibernate.Tool.hbm2ddl.SchemaExport";
 		}
 
 		private MethodConversion GetMethodConversion(IMethodSymbol symbol)
