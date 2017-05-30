@@ -40,10 +40,6 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 				yield break;
 			}
 			var asyncName = symbol.Name + "Async";
-			if (!_linqMethodsLookup.Contains(asyncName))
-			{
-				yield break;
-			}
 			foreach (var asyncCandidate in _linqMethodsLookup[asyncName])
 			{
 				if (symbol.IsAsyncCounterpart(invokedFromType, asyncCandidate, true, true, false))
