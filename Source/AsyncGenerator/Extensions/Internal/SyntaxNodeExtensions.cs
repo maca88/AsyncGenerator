@@ -529,7 +529,7 @@ namespace AsyncGenerator.Extensions.Internal
 
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, IBodyFunctionReferenceAnalyzationResult functionReference)
 		{
-			if (!functionReference.CancellationTokenRequired)
+			if (!functionReference.PassCancellationToken)
 			{
 				return node;
 			}

@@ -71,7 +71,7 @@ namespace AsyncGenerator.Transformation.Internal
 						typeResult.GetSelfAndDescendantsTypes()
 							.SelectMany(o => o.Methods)
 							.SelectMany(o => o.GetSelfAndDescendantsFunctions())
-							.Any(o => o.MethodReferences.Any(r => r.CancellationTokenRequired));
+							.Any(o => o.MethodReferences.Any(r => r.PassCancellationToken));
 				}
 			}
 

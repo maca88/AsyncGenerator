@@ -9,5 +9,13 @@ namespace AsyncGenerator.Extensions.Internal
 		{
 			return enums.Any(e.HasFlag);
 		}
+
+		public static bool HasOptionalCancellationToken(this MethodCancellationToken e)
+		{
+			return e.HasAnyFlag(
+				MethodCancellationToken.DefaultParameter,
+				MethodCancellationToken.NoParameterForward,
+				MethodCancellationToken.SealedNoParameterForward);
+		}
 	}
 }

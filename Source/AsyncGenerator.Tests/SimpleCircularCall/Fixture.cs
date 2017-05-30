@@ -115,20 +115,20 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 
 				var method = methods[readFile];
 				Assert.AreEqual(1, method.MethodReferences.Count);
-				Assert.IsTrue(method.MethodReferences[0].CancellationTokenRequired);
+				Assert.IsTrue(method.MethodReferences[0].PassCancellationToken);
 				Assert.IsTrue(method.CancellationTokenRequired);
 
 				method = methods[method2];
 				Assert.AreEqual(2, method.MethodReferences.Count);
 				foreach (var reference in method.MethodReferences)
 				{
-					Assert.IsTrue(reference.CancellationTokenRequired);
+					Assert.IsTrue(reference.PassCancellationToken);
 				}
 				Assert.IsTrue(method.CancellationTokenRequired);
 
 				method = methods[method1];
 				Assert.AreEqual(1, method.MethodReferences.Count);
-				Assert.IsTrue(method.MethodReferences[0].CancellationTokenRequired);
+				Assert.IsTrue(method.MethodReferences[0].PassCancellationToken);
 				Assert.IsTrue(method.CancellationTokenRequired);
 			}
 

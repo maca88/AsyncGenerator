@@ -65,7 +65,7 @@ namespace AsyncGenerator.Transformation.Internal
 					{
 						continue;
 					}
-					if (bodyFunctionReference.GetConversion() != ReferenceConversion.ToAsync || bodyFunctionReference.CancellationTokenRequired)
+					if (bodyFunctionReference.GetConversion() != ReferenceConversion.ToAsync || bodyFunctionReference.PassCancellationToken)
 					{
 						continue;
 					}

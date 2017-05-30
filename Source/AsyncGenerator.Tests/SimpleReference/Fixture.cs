@@ -132,7 +132,7 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.CancellationTokenRequired);
+				Assert.IsTrue(methodReference.PassCancellationToken);
 				Assert.IsNull(methodReference.ReferenceFunction);
 				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
 				Assert.AreEqual(2, methodReference.ReferenceAsyncSymbols.Count);
@@ -144,14 +144,14 @@ namespace AsyncGenerator.Tests.SimpleReference
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.CancellationTokenRequired);
+				Assert.IsTrue(methodReference.PassCancellationToken);
 
 				methodReference = methods[callCallReadFile].MethodReferences[0];
 				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.CancellationTokenRequired);
+				Assert.IsTrue(methodReference.PassCancellationToken);
 			}
 
 			var methodConversions = new Func<IMethodSymbol, MethodConversion>[] {

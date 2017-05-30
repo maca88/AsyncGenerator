@@ -19,7 +19,7 @@ namespace AsyncGenerator.Analyzation
 
 		bool AwaitInvocation { get; }
 
-		bool CancellationTokenRequired { get; }
+		bool PassCancellationToken { get; }
 
 		ExpressionSyntax ConfigureAwaitParameter { get; }
 

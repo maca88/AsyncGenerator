@@ -11,6 +11,7 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 	{
 		public void Read(string test = "Test")
 		{
+			Read3();
 			SimpleFile.Read();
 		}
 
@@ -22,6 +23,11 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 		public bool Write()
 		{
 			return SimpleFile.FastWrite();
+		}
+
+		public void Read3()
+		{
+			SimpleFile.Read();
 		}
 	}
 }

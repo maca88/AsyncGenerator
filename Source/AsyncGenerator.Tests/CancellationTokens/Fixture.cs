@@ -116,9 +116,13 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.RequiresCancellationToken(o => false)
+						.RequiresCancellationToken(o => o.Name == "Read3")
 						.MethodGeneration(symbolInfo =>
 						{
+							if (symbolInfo.Symbol.Name == "Read3")
+							{
+								return MethodCancellationToken.DefaultParameter;
+							}
 							return MethodCancellationToken.Parameter;
 						}))
 				)

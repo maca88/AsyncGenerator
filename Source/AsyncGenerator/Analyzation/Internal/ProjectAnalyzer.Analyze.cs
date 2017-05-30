@@ -359,7 +359,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// </summary>
 		private void PropagateCancellationToken(BodyFunctionReferenceData functionReferenceData)
 		{
-			if (functionReferenceData.CancellationTokenRequired && functionReferenceData.Conversion == ReferenceConversion.ToAsync)
+			if (functionReferenceData.PassCancellationToken && functionReferenceData.Conversion == ReferenceConversion.ToAsync)
 			{
 				// We need to set CancellationTokenRequired to true for the method that contains this invocation
 				var methodData = functionReferenceData.FunctionData.GetMethodData();
@@ -526,9 +526,10 @@ namespace AsyncGenerator.Analyzation.Internal
 						.SingleOrDefault(o => o.Parameters.Length > methodSymbol.Parameters.Length); // TODO: select the right one if we have more than one
 					if (tokenOverload != null)
 					{
-						functionReferenceData.CancellationTokenRequired = true;
+						functionReferenceData.PassCancellationToken = true;
 						functionReferenceData.AsyncCounterpartSymbol = tokenOverload;
 						functionReferenceData.AsyncCounterpartName = tokenOverload.Name;
+						functionReferenceData.CancellationTokenParameter = tokenOverload.Parameters.Last(); // TODO: support different parameter positions
 					}
 				}
 				if (functionReferenceData.AsyncCounterpartSymbol == null)

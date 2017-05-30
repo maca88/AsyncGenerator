@@ -464,15 +464,27 @@ namespace AsyncGenerator.Analyzation.Internal
 					CalculateFinalFunctionConversion(childFunction, asyncMethodDatas);
 				}
 
-				// Update CancellationTokenRequired for all body function references that requires a cancellation token
+				// Update PassCancellationToken for all body function references that requires a cancellation token
 				if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
 				{
 					ValidateMethodCancellationToken(methodData);
-					foreach (var functionRefData in methodData.BodyMethodReferences
-						.Where(o => o.ReferenceFunctionData != null && o.ReferenceFunctionData.Conversion.HasFlag(MethodConversion.ToAsync) &&
-						            o.ReferenceFunctionData.GetMethodData().CancellationTokenRequired))
+
+					foreach (var functionRefData in methodData.GetSelfAndDescendantsFunctions()
+						.SelectMany(o => o.BodyMethodReferences.Where(r => r.GetConversion() == ReferenceConversion.ToAsync)))
 					{
-						functionRefData.CancellationTokenRequired = true;
+						if (functionRefData.ReferenceFunctionData != null)
+						{
+							var refMethodData = functionRefData.ReferenceFunctionData.GetMethodData();
+							functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;
+							if (!methodData.CancellationTokenRequired && refMethodData.MethodCancellationToken.GetValueOrDefault().HasOptionalCancellationToken())
+							{
+								functionRefData.PassCancellationToken = false; // Do not pass CancellationToken.None if the parameter is optional
+							}
+						}
+						else if (!methodData.CancellationTokenRequired && functionRefData.CancellationTokenParameter?.IsOptional == true)
+						{
+							functionRefData.PassCancellationToken = false; // Do not pass CancellationToken.None if the parameter is optional
+						}
 					}
 				}
 			}

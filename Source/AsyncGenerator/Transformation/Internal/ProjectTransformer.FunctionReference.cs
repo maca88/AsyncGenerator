@@ -109,7 +109,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			InvocationExpressionSyntax invokeNode = null;
-			if (bodyFuncReferenceResult.CancellationTokenRequired || bodyFuncReferenceResult.AwaitInvocation)
+			if (bodyFuncReferenceResult.PassCancellationToken || bodyFuncReferenceResult.AwaitInvocation)
 			{
 				invokeNode = nameNode.Ancestors().OfType<InvocationExpressionSyntax>().First();
 			}
