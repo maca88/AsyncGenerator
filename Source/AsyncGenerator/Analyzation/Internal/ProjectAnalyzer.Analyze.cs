@@ -529,7 +529,6 @@ namespace AsyncGenerator.Analyzation.Internal
 						functionReferenceData.PassCancellationToken = true;
 						functionReferenceData.AsyncCounterpartSymbol = tokenOverload;
 						functionReferenceData.AsyncCounterpartName = tokenOverload.Name;
-						functionReferenceData.CancellationTokenParameter = tokenOverload.Parameters.Last(); // TODO: support different parameter positions
 					}
 				}
 				if (functionReferenceData.AsyncCounterpartSymbol == null)

@@ -26,7 +26,7 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 		public async Task ReadAsync(string test = "Test")
 		{
 			await (Read3Async());
-			await (SimpleFile.ReadAsync(CancellationToken.None));
+			await (SimpleFile.ReadAsync());
 		}
 
 		public Task Read2Async()

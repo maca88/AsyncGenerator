@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
@@ -91,6 +92,32 @@ namespace AsyncGenerator.Internal
 				return ReferenceConversion.Ignore;
 			}
 			return ReferenceConversion.ToAsync;
+		}
+
+		public bool? CanSkipCancellationTokenArgument()
+		{
+			if (ReferenceFunctionData != null)
+			{
+				var refMethodData = ReferenceFunctionData.GetMethodData();
+					return refMethodData.MethodCancellationToken.GetValueOrDefault().HasOptionalCancellationToken();
+			}
+
+			if (ReferenceAsyncSymbols == null || !ReferenceAsyncSymbols.Any())
+			{
+				return null;
+			}
+			foreach (var referenceAsyncSymbol in ReferenceAsyncSymbols)
+			{
+				if (referenceAsyncSymbol.Parameters.Length == ReferenceSymbol.Parameters.Length)
+				{
+					return true;
+				}
+				if (referenceAsyncSymbol.Parameters.Length > ReferenceSymbol.Parameters.Length && referenceAsyncSymbol.Parameters.Last().IsOptional)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		#region IFunctionReferenceAnalyzationResult

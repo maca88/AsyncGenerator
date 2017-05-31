@@ -17,7 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.CancellationTokens.Input
 {
-	using System.Threading;
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
@@ -25,7 +24,7 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 	{
 		public Task ReadAsync(params string[] param)
 		{
-			return SimpleFile.ReadAsync(CancellationToken.None);
+			return SimpleFile.ReadAsync();
 		}
 	}
 }

@@ -476,12 +476,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						{
 							var refMethodData = functionRefData.ReferenceFunctionData.GetMethodData();
 							functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;
-							if (!methodData.CancellationTokenRequired && refMethodData.MethodCancellationToken.GetValueOrDefault().HasOptionalCancellationToken())
-							{
-								functionRefData.PassCancellationToken = false; // Do not pass CancellationToken.None if the parameter is optional
-							}
 						}
-						else if (!methodData.CancellationTokenRequired && functionRefData.CancellationTokenParameter?.IsOptional == true)
+						if (!methodData.CancellationTokenRequired && functionRefData.CanSkipCancellationTokenArgument() == true)
 						{
 							functionRefData.PassCancellationToken = false; // Do not pass CancellationToken.None if the parameter is optional
 						}
