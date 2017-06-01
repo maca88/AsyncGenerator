@@ -61,7 +61,7 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 		public Task MethodAsync()
 		{
-			return SimpleFile.ReadAsync(CancellationToken.None);
+			return SimpleFile.ReadAsync();
 		}
 
 		public void Method()
@@ -129,7 +129,7 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 		public Task MethodAsync()
 		{
-			return SimpleFile.ReadAsync(CancellationToken.None);
+			return SimpleFile.ReadAsync();
 		}
 
 		public Task<bool> Method2Async(CancellationToken cancellationToken)
