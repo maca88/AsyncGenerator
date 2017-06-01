@@ -35,26 +35,12 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 		public Task<bool> Method2Async(CancellationToken cancellationToken)
 		{
-			try
-			{
-				return Task.FromResult<bool>(true);
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<bool>(ex);
-			}
+			return Task.FromResult<bool>(true);
 		}
 
 		public Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			try
-			{
-				return Task.FromResult<bool>(true);
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<bool>(ex);
-			}
+			return Task.FromResult<bool>(true);
 		}
 	}
 }

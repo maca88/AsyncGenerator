@@ -44,5 +44,25 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 		{
 			return "";
 		}
+
+		public string SimpleReturnString()
+		{
+			return "";
+		}
+
+		public string SimpleReturnDefaultOfString()
+		{
+			return default(string);
+		}
+
+		public decimal SimpleReturnDecimal()
+		{
+			return 25m;
+		}
+
+		public decimal ReturnDecimalConstructor()
+		{
+			return new decimal(25);
+		}
 	}
 }

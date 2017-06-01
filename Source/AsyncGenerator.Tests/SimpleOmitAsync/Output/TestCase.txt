@@ -67,5 +67,32 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 			await (SimpleFile.ReadAsync());
 			return "";
 		}
+
+		public Task<string> SimpleReturnStringAsync()
+		{
+			return Task.FromResult<string>("");
+		}
+
+		public Task<string> SimpleReturnDefaultOfStringAsync()
+		{
+			return Task.FromResult<string>(default(string));
+		}
+
+		public Task<decimal> SimpleReturnDecimalAsync()
+		{
+			return Task.FromResult<decimal>(25m);
+		}
+
+		public Task<decimal> ReturnDecimalConstructorAsync()
+		{
+			try
+			{
+				return Task.FromResult<decimal>(new decimal(25));
+			}
+			catch (System.Exception ex)
+			{
+				return Task.FromException<decimal>(ex);
+			}
+		}
 	}
 }

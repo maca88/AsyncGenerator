@@ -43,14 +43,7 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
 			{
-				try
-				{
-					return Task.FromResult<bool>(false);
-				}
-				catch (Exception ex)
-				{
-					return Task.FromException<bool>(ex);
-				}
+				return Task.FromResult<bool>(false);
 			}
 
 			public bool Method3()
@@ -116,14 +109,7 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
 			{
-				try
-				{
-					return Task.FromResult<bool>(false);
-				}
-				catch (Exception ex)
-				{
-					return Task.FromException<bool>(ex);
-				}
+				return Task.FromResult<bool>(false);
 			}
 		}
 
