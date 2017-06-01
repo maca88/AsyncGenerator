@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using AsyncGenerator.Analyzation;
@@ -72,9 +73,15 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(symbol =>
 								{
-									return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute")
-										? MethodConversion.Smart
-										: MethodConversion.Unknown;
+									if (symbol.GetAttributes().Any(o => o.AttributeClass.Name == "IgnoreAttribute"))
+									{
+										return MethodConversion.Ignore;
+									}
+									if (symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
+									{
+										return MethodConversion.Smart;
+									}
+									return MethodConversion.Unknown;
 								})
 							.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
 							.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
@@ -96,6 +103,10 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 									if (type.Name == "NorthwindDbCreator" || // Ignored for performance reasons
 										type.Name == "ObjectAssert" ||  // Has a TestFixture attribute but is not a test
 										type.Name == "LinqReadonlyTestsContext") // SetUpFixture
+									{
+										return TypeConversion.Ignore;
+									}
+									if (type.GetAttributes().Any(o => o.AttributeClass.Name == "IgnoreAttribute"))
 									{
 										return TypeConversion.Ignore;
 									}
