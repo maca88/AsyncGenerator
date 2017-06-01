@@ -43,14 +43,7 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
 			{
-				try
-				{
-					return Task.FromResult<bool>(false);
-				}
-				catch (Exception ex)
-				{
-					return Task.FromException<bool>(ex);
-				}
+				return Task.FromResult<bool>(false);
 			}
 
 			public bool Method3()
@@ -61,7 +54,7 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 		public Task MethodAsync()
 		{
-			return SimpleFile.ReadAsync(CancellationToken.None);
+			return SimpleFile.ReadAsync();
 		}
 
 		public void Method()
@@ -116,20 +109,13 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
 			{
-				try
-				{
-					return Task.FromResult<bool>(false);
-				}
-				catch (Exception ex)
-				{
-					return Task.FromException<bool>(ex);
-				}
+				return Task.FromResult<bool>(false);
 			}
 		}
 
 		public Task MethodAsync()
 		{
-			return SimpleFile.ReadAsync(CancellationToken.None);
+			return SimpleFile.ReadAsync();
 		}
 
 		public Task<bool> Method2Async(CancellationToken cancellationToken)

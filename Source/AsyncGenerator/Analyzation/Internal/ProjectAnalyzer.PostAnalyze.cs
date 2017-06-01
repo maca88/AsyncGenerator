@@ -123,7 +123,17 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			var lastStatement = statements[0];
-			var invocationExps = lastStatement?.DescendantNodes(o => !o.IsFunction()).OfType<InvocationExpressionSyntax>().ToList();
+			var exprs = lastStatement?
+				.DescendantNodes(o => !(o.IsFunction() || o.IsKind(SyntaxKind.DefaultExpression)))
+				.OfType<ExpressionSyntax>()
+				.ToList();
+			if (exprs?.Count == 1)
+			{
+				var expr = exprs[0];
+				if (expr is LiteralExpressionSyntax || expr is DefaultExpressionSyntax)
+					return;
+			}
+			var invocationExps = exprs?.OfType<InvocationExpressionSyntax>().ToList();
 			if (invocationExps?.Count != 1)
 			{
 				functionData.WrapInTryCatch = true;

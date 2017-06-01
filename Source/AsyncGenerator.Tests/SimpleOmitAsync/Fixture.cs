@@ -25,6 +25,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var syncReadFile = GetMethodName(o => o.SyncReadFile());
 			var write = GetMethodName(() => SimpleFile.Write(null));
 			var read = GetMethodName(() => SimpleFile.Read());
+			var returnString = GetMethodName(o => o.SimpleReturnString());
+			var returnDefaultString = GetMethodName(o => o.SimpleReturnDefaultOfString());
+			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
+			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
 			var generator = new AsyncCodeGenerator();
 
@@ -33,7 +37,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.AreEqual(1, result.Documents.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
 				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(9, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
+				Assert.AreEqual(13, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
 				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				IBodyFunctionReferenceAnalyzationResult methodReference;
@@ -130,14 +134,41 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
 				Assert.IsTrue(methodReference.LastInvocation);
+
+				method = methods[returnString];
+				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+				Assert.IsTrue(method.OmitAsync);
+				Assert.IsFalse(method.WrapInTryCatch);
+				Assert.IsFalse(method.SplitTail);
+				Assert.AreEqual(0, method.MethodReferences.Count);
+
+				method = methods[returnDefaultString];
+				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+				Assert.IsTrue(method.OmitAsync);
+				Assert.IsFalse(method.WrapInTryCatch);
+				Assert.IsFalse(method.SplitTail);
+				Assert.AreEqual(0, method.MethodReferences.Count);
+
+				method = methods[returnDecimal];
+				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+				Assert.IsTrue(method.OmitAsync);
+				Assert.IsFalse(method.WrapInTryCatch);
+				Assert.IsFalse(method.SplitTail);
+				Assert.AreEqual(0, method.MethodReferences.Count);
+
+				method = methods[returnDecimalConstructor];
+				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+				Assert.IsTrue(method.OmitAsync);
+				Assert.IsTrue(method.WrapInTryCatch);
+				Assert.IsFalse(method.SplitTail);
+				Assert.AreEqual(0, method.MethodReferences.Count);
 			}
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol =>
-					{
-						return symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart;
-					})
+					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
+						? MethodConversion.ToAsync
+						: MethodConversion.Smart)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 				);
@@ -148,10 +179,16 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 		public void TestAfterTransformation()
 		{
 			var syncReturn = GetMethodName(o => o.SyncReturn());
+			var returnString = GetMethodName(o => o.SimpleReturnString());
+			var returnDefaultString = GetMethodName(o => o.SimpleReturnDefaultOfString());
+			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
+			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
+					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
+						? MethodConversion.ToAsync
+						: MethodConversion.Smart)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -171,10 +208,16 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 		public void TestConfigureAwaitAfterTransformation()
 		{
 			var syncReturn = GetMethodName(o => o.SyncReturn());
+			var returnString = GetMethodName(o => o.SimpleReturnString());
+			var returnDefaultString = GetMethodName(o => o.SimpleReturnDefaultOfString());
+			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
+			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
+					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
+						? MethodConversion.ToAsync
+						: MethodConversion.Smart)
 				)
 				.ConfigureTransformation(t => t
 					.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
@@ -195,10 +238,16 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 		public void TestUseCancellationTokenOverloadAfterTransformation()
 		{
 			var syncReturn = GetMethodName(o => o.SyncReturn());
+			var returnString = GetMethodName(o => o.SimpleReturnString());
+			var returnDefaultString = GetMethodName(o => o.SimpleReturnDefaultOfString());
+			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
+			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => symbol.Name == syncReturn ? MethodConversion.ToAsync : MethodConversion.Smart)
+					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
+						? MethodConversion.ToAsync
+						: MethodConversion.Smart)
 					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
