@@ -585,6 +585,13 @@ namespace AsyncGenerator.Analyzation.Internal
 						canSkipAwaits = false;
 						break;
 					}
+					// We cannot skip await keyword if the result of the invocation is assigned to something
+					if (methodReference.LastInvocation && methodReference.ReferenceNode.Parent is AssignmentExpressionSyntax)
+					{
+						canSkipAwaits = false;
+						break;
+					}
+
 					var referenceFunctionData = methodReference.FunctionData;
 
 					if (methodReference.LastInvocation && referenceFunctionData.Symbol.ReturnsVoid && (

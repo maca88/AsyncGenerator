@@ -128,6 +128,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						)
 						.RegisterPlugin<TransactionScopeRewriter>()
 						.RegisterPlugin<LinqAsyncCounterpartsFinder>()
+						.RegisterPlugin<NUnitAsyncCountepartFinder>()
 					)
 					.ApplyChanges(true)
 				);

@@ -33,5 +33,29 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestNUnitAssertThatAfterTransformation()
+		{
+			var config = Configure(nameof(NUnitAssertThat), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(o => true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(NUnitAssertThat)), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin<NUnitAsyncCountepartFinder>()
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
+		}
 	}
 }
