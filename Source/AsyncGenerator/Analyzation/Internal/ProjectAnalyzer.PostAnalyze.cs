@@ -592,6 +592,16 @@ namespace AsyncGenerator.Analyzation.Internal
 						break;
 					}
 
+					// We must await the invocation before returning when located inside a using or try statement
+					// TODO: Support for lock statement
+					if (methodReference.UseAsReturnValue && methodReference.ReferenceNode.Ancestors()
+						    .TakeWhile(o => o != functionData.GetNode())
+						    .Any(o => o.IsKind(SyntaxKind.UsingStatement) || o.IsKind(SyntaxKind.TryStatement)))
+					{
+						canSkipAwaits = false;
+						break;
+					}
+
 					var referenceFunctionData = methodReference.FunctionData;
 
 					if (methodReference.LastInvocation && referenceFunctionData.Symbol.ReturnsVoid && (
