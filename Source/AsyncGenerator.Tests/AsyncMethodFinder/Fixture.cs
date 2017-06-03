@@ -80,5 +80,28 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestGenericParameterAfterTransformation()
+		{
+			var config = Configure(nameof(GenericParameter), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(GenericParameter)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
+		}
 	}
 }

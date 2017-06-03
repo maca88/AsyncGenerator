@@ -106,7 +106,7 @@ namespace AsyncGenerator.Extensions
 				var typeSymbol = param.Type as INamedTypeSymbol;
 				if (typeSymbol == null)
 				{
-					if (param.Type.Equals(candidateParam.Type))
+					if (param.Type.AreEqual(candidateParam.Type))
 					{
 						continue;
 					}

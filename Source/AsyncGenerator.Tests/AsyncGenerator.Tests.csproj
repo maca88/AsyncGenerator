@@ -221,6 +221,7 @@
     <Compile Include="AnonymousFunctions\Input\TestCase.cs" />
     <Compile Include="AsyncMethodFinder\Fixture.cs" />
     <Compile Include="AsyncMethodFinder\Input\CustomLinqExtensions.cs" />
+    <Compile Include="AsyncMethodFinder\Input\GenericParameter.cs" />
     <Compile Include="AsyncMethodFinder\Input\IgnoreSomeAsyncMethods.cs" />
     <Compile Include="AsyncMethodFinder\Input\NUnitAssertThat.cs" />
     <Compile Include="AsyncMethodFinder\LinqAsyncCounterpartsFinder.cs" />
@@ -514,6 +515,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="OmitAsync\Output\UsingAndTryPreserveAwait.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncMethodFinder\Output\GenericParameter.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

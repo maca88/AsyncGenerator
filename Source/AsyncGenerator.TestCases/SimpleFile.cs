@@ -56,6 +56,15 @@ namespace AsyncGenerator.TestCases
 			return Task.FromResult<T>(default(T));
 		}
 
+		public static void Write<T>(T obj, string content)
+		{
+		}
+
+		public static Task WriteAsync<T>(T obj, string content, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			return Task.CompletedTask;
+		}
+
 
 		public static bool FastWrite(string content = "")
 		{
