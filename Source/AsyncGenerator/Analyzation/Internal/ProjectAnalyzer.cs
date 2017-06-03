@@ -189,8 +189,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					continue;
 				}
-				// TODO: lets consumer choose if he wants to have the method async
-
+				
 				methodSymbol = methodSymbol.OriginalDefinition;
 				if (result.Contains(methodSymbol))
 				{
@@ -205,6 +204,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
 				{
 					typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+				}
+
+				if (!_configuration.SearchForAsyncCounterparts(methodSymbol))
+				{
+					continue;
 				}
 
 				// Add method only if new

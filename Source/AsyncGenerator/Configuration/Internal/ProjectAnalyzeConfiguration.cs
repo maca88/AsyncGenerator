@@ -25,6 +25,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Predicate<IMethodSymbol> PreserveReturnType { get; private set; } = m => false;
 
+		public Predicate<IMethodSymbol> SearchForAsyncCounterparts { get; private set; } = m => true;
+
 		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>();
 
 		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>();
@@ -123,6 +125,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PreserveReturnType(Predicate<IMethodSymbol> predicate)
 		{
 			PreserveReturnType = predicate ?? throw new ArgumentNullException(nameof(predicate));
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.SearchForAsyncCounterparts(Predicate<IMethodSymbol> predicate)
+		{
+			SearchForAsyncCounterparts = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 

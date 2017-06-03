@@ -83,6 +83,13 @@ namespace AsyncGenerator.Configuration
 		IFluentProjectAnalyzeConfiguration PreserveReturnType(Predicate<IMethodSymbol> predicate);
 
 		/// <summary>
+		/// Set the predicate that will decide whether to search async counterparts for the given method. 
+		/// Use this option when an external method is not wanted to be async.
+		/// <para>Default true is choosen for all methods.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration SearchForAsyncCounterparts(Predicate<IMethodSymbol> predicate);
+
+		/// <summary>
 		/// Enable or disable scanning for missing async counterparts.
 		/// <para>Default is set to false.</para>
 		/// </summary>

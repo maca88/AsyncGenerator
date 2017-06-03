@@ -33,6 +33,17 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
+							.SearchForAsyncCounterparts(symbol =>
+								{
+									switch (symbol.Name)
+									{
+										case "GetFieldValue":
+										case "IsDBNull":
+										case "WriteLine":
+											return false;
+									}
+									return true;
+								})
 							.CallForwarding(true)
 							.CancellationTokens(t => t
 								.Guards(true)

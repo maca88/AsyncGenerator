@@ -221,6 +221,7 @@
     <Compile Include="AnonymousFunctions\Input\TestCase.cs" />
     <Compile Include="AsyncMethodFinder\Fixture.cs" />
     <Compile Include="AsyncMethodFinder\Input\CustomLinqExtensions.cs" />
+    <Compile Include="AsyncMethodFinder\Input\IgnoreSomeAsyncMethods.cs" />
     <Compile Include="AsyncMethodFinder\Input\NUnitAssertThat.cs" />
     <Compile Include="AsyncMethodFinder\LinqAsyncCounterpartsFinder.cs" />
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
@@ -506,6 +507,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AsyncMethodFinder\Output\NUnitAssertThat.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncMethodFinder\Output\IgnoreSomeAsyncMethods.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
