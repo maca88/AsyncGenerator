@@ -297,6 +297,12 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						return MethodConversion.ToAsync;
 					}
 					break;
+				case "NullableType":
+					if (symbol.Name == "NullSafeGet")
+					{
+						return MethodConversion.Ignore;
+					}
+					break;
 				default:
 					if (IsEventListener(symbol.ContainingType))
 					{
