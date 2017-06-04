@@ -16,5 +16,13 @@ namespace AsyncGenerator.TestCases
 		{
 			return Task.CompletedTask;
 		}
+
+		public static void RunWithParameter(Action<object> action)
+		{
+		}
+
+		public static void RunWithParameter(Func<object, Task> func)
+		{
+		}
 	}
 }

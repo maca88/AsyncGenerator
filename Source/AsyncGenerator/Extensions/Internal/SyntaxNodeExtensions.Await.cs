@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Extensions.Internal
 {
@@ -14,19 +15,25 @@ namespace AsyncGenerator.Extensions.Internal
 			var awaitNode = ConvertToAwaitExpression(expression);
 			if (configureAwaitArgument != null)
 			{
-				awaitNode = SyntaxFactory.InvocationExpression(
-						SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, awaitNode, SyntaxFactory.IdentifierName("ConfigureAwait")))
+				awaitNode = InvocationExpression(
+						MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, awaitNode, IdentifierName("ConfigureAwait")))
 					.WithArgumentList(
-						SyntaxFactory.ArgumentList(
-							SyntaxFactory.SingletonSeparatedList(
-								SyntaxFactory.Argument(configureAwaitArgument))
+						ArgumentList(
+							SingletonSeparatedList(
+								Argument(configureAwaitArgument))
 						));
 			}
 
 			var nextToken = (expression.Parent).ChildNodesAndTokens().FirstOrDefault(o => o.SpanStart >= expression.Span.End); // token can be in a new line
 			if (nextToken.IsKind(SyntaxKind.DotToken) || nextToken.IsKind(SyntaxKind.BracketedArgumentList))
 			{
-				awaitNode = SyntaxFactory.ParenthesizedExpression(awaitNode);
+				var lastToken = awaitNode.GetLastToken();
+				awaitNode = ParenthesizedExpression(awaitNode
+						.ReplaceToken(lastToken, lastToken.WithTrailingTrivia())
+						.WithoutLeadingTrivia())
+					.WithLeadingTrivia(awaitNode.GetLeadingTrivia())
+					.WithTrailingTrivia(awaitNode.GetLastToken().TrailingTrivia)
+					;
 			}
 
 			return awaitNode;
@@ -36,15 +43,15 @@ namespace AsyncGenerator.Extensions.Internal
 		{
 			if (includeElasticTrivia)
 			{
-				return SyntaxFactory.ParenthesizedExpression(expression.WithoutTrivia())
+				return ParenthesizedExpression(expression.WithoutTrivia())
 					.WithTriviaFrom(expression)
 					.WithAdditionalAnnotations(Simplifier.Annotation);
 			}
-			return SyntaxFactory.ParenthesizedExpression
+			return ParenthesizedExpression
 				(
-					SyntaxFactory.Token(SyntaxTriviaList.Empty, SyntaxKind.OpenParenToken, SyntaxTriviaList.Empty),
+					Token(SyntaxTriviaList.Empty, SyntaxKind.OpenParenToken, SyntaxTriviaList.Empty),
 					expression.WithoutTrivia(),
-					SyntaxFactory.Token(SyntaxTriviaList.Empty, SyntaxKind.CloseParenToken, SyntaxTriviaList.Empty)
+					Token(SyntaxTriviaList.Empty, SyntaxKind.CloseParenToken, SyntaxTriviaList.Empty)
 				)
 				.WithTriviaFrom(expression)
 				.WithAdditionalAnnotations(Simplifier.Annotation);
@@ -58,13 +65,13 @@ namespace AsyncGenerator.Extensions.Internal
 				var span = expWithTrailing.GetLocation().GetLineSpan().Span;
 				if (span.Start.Line == span.End.Line && !expWithTrailing.DescendantTrivia().Any(trivia => trivia.IsKind(SyntaxKind.SingleLineCommentTrivia)))
 				{
-					return SyntaxFactory.AwaitExpression(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AwaitKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)), SyntaxFactory.ParenthesizedExpression(expWithTrailing))
+					return AwaitExpression(Token(TriviaList(), SyntaxKind.AwaitKeyword, TriviaList(Space)), ParenthesizedExpression(expWithTrailing))
 						.WithLeadingTrivia(expression.GetLeadingTrivia())
 						.WithAdditionalAnnotations(Formatter.Annotation);
 				}
 			}
 
-			return SyntaxFactory.AwaitExpression(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AwaitKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)), expression.WithoutTrivia().Parenthesize())
+			return AwaitExpression(Token(TriviaList(), SyntaxKind.AwaitKeyword, TriviaList(Space)), expression.WithoutTrivia().Parenthesize())
 				.WithTriviaFrom(expression)
 				.WithAdditionalAnnotations(Simplifier.Annotation, Formatter.Annotation);
 		}

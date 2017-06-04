@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Extensions.Internal
 {
@@ -82,16 +83,23 @@ namespace AsyncGenerator.Extensions.Internal
 
 		private static SyntaxNode ConvertMethodToAsync(MethodDeclarationSyntax methodNode)
 		{
+			var token = methodNode.GetFirstToken();
+			var leadingTrivia = TriviaList();
+			if (methodNode.ReturnType.GetFirstToken() == token)
+			{
+				methodNode = methodNode.ReplaceToken(token, token.WithLeadingTrivia(leadingTrivia));
+				leadingTrivia = token.LeadingTrivia;
+			}
 			return methodNode
-				.AddModifiers(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)))
+				.AddModifiers(Token(leadingTrivia, SyntaxKind.AsyncKeyword, TriviaList(Space)))
 				.WithAdditionalAnnotations(Formatter.Annotation);
 		}
 
 		private static SyntaxNode ConvertParenthesizedLambdaToAsync(ParenthesizedLambdaExpressionSyntax parenthesizedLambda)
 		{
-			return SyntaxFactory.ParenthesizedLambdaExpression(
-					SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
-					parenthesizedLambda.ParameterList,
+			return ParenthesizedLambdaExpression(
+					Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)),
+					parenthesizedLambda.ParameterList.WithoutLeadingTrivia(),
 					parenthesizedLambda.ArrowToken,
 					parenthesizedLambda.Body)
 				.WithTriviaFrom(parenthesizedLambda)
@@ -100,9 +108,9 @@ namespace AsyncGenerator.Extensions.Internal
 
 		private static SyntaxNode ConvertSimpleLambdaToAsync(SimpleLambdaExpressionSyntax simpleLambda)
 		{
-			return SyntaxFactory.SimpleLambdaExpression(
-					SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
-					simpleLambda.Parameter,
+			return SimpleLambdaExpression(
+					Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)),
+					simpleLambda.Parameter.WithoutLeadingTrivia(),
 					simpleLambda.ArrowToken,
 					simpleLambda.Body)
 				.WithTriviaFrom(simpleLambda)
@@ -111,9 +119,9 @@ namespace AsyncGenerator.Extensions.Internal
 
 		private static SyntaxNode ConvertAnonymousMethodToAsync(AnonymousMethodExpressionSyntax anonymousMethod)
 		{
-			return SyntaxFactory.AnonymousMethodExpression(
-					SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
-					anonymousMethod.DelegateKeyword,
+			return AnonymousMethodExpression(
+					Token(TriviaList(), SyntaxKind.AsyncKeyword, TriviaList(Space)),
+					anonymousMethod.DelegateKeyword.WithLeadingTrivia(TriviaList()),
 					anonymousMethod.ParameterList,
 					anonymousMethod.Block)
 				.WithTriviaFrom(anonymousMethod)
@@ -122,8 +130,10 @@ namespace AsyncGenerator.Extensions.Internal
 
 		private static SyntaxNode ConvertLocalFunctionToAsync(LocalFunctionStatementSyntax localFunction)
 		{
+			var token = localFunction.GetFirstToken();
 			return localFunction
-				.AddModifiers(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.AsyncKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)))
+				.ReplaceToken(token, token.WithLeadingTrivia(TriviaList()))
+				.AddModifiers(Token(token.LeadingTrivia, SyntaxKind.AsyncKeyword, TriviaList(Space)))
 				.WithAdditionalAnnotations(Formatter.Annotation);
 		}
 	}

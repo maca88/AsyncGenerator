@@ -14,9 +14,9 @@ namespace AsyncGenerator.Tests.Formatting
 	{
 		[Test]
 		[Repeat(5)]
-		public void TestNestedAwaitsAfterTransformation()
+		public void TestAwaitAfterTransformation()
 		{
-			var config = Configure(nameof(NestedAwaits), p => p
+			var config = Configure(nameof(Await), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -27,12 +27,35 @@ namespace AsyncGenerator.Tests.Formatting
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(NestedAwaits)), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile(nameof(Await)), document.Transformed.ToFullString());
 					})
 				)
 			);
 			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestAsyncAfterTransformation()
+		{
+			var config = Configure(nameof(Async), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(symbol => true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(Async)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 	}
 }

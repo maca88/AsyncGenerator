@@ -51,15 +51,16 @@ namespace AsyncGenerator.Internal
 			{
 				return null;
 			}
-			var symbol = semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-			var anonymousFunc = node as AnonymousFunctionExpressionSyntax;
-			if (anonymousFunc != null)
+			
+			if (node is AnonymousFunctionExpressionSyntax anonymousFunc)
 			{
+				var symbol = semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
 				return ChildFunctions.GetOrAdd(node, syntax => new AnonymousFunctionData(GetMethodData(), symbol, anonymousFunc, this));
 			}
-			var localFunc = node as LocalFunctionStatementSyntax;
-			if (localFunc != null)
+
+			if (node is LocalFunctionStatementSyntax localFunc)
 			{
+				var symbol = semanticModel.GetDeclaredSymbol(node) as IMethodSymbol;
 				return ChildFunctions.GetOrAdd(node, syntax => new LocalFunctionData(GetMethodData(), symbol, localFunc, this));
 			}
 			throw new InvalidOperationException($"Cannot get a ChildFunctionData from syntax node {node}");

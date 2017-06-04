@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
+using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.Formatting.Input
 {
-	public class NestedAwaits
+	public class Await
 	{
 		public class Reader
 		{
@@ -23,6 +24,14 @@ namespace AsyncGenerator.Tests.Formatting.Input
 		{
 			var reader = new Reader();
 			reader.Read().Read();
+
+			var str = SimpleFile
+				.Write("")
+				.ToString();
+
+			Assert.IsTrue(
+				SimpleFile
+					.Write("").Equals(true));
 		}
 	}
 }

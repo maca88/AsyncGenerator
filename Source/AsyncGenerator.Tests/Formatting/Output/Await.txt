@@ -14,13 +14,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
+using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.Formatting.Input
 {
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class NestedAwaits
+	public partial class Await
 	{
 		/// <content>
 		/// Contains generated async methods
@@ -39,6 +40,14 @@ namespace AsyncGenerator.Tests.Formatting.Input
 		{
 			var reader = new Reader();
 			await ((await (reader.ReadAsync())).ReadAsync());
+
+			var str = (await (SimpleFile
+				.WriteAsync("")))
+				.ToString();
+
+			Assert.IsTrue(
+				(await (SimpleFile
+					.WriteAsync(""))).Equals(true));
 		}
 	}
 }
