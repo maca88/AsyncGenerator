@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 

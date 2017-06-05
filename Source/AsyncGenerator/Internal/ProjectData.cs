@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration.Internal;
+using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 

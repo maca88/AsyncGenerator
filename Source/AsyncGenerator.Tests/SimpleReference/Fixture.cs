@@ -2,6 +2,8 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.TestCases;
 using AsyncGenerator.Tests.SimpleReference.Input;
 using AsyncGenerator.Transformation;

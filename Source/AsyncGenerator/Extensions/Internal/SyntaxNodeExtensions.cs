@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;

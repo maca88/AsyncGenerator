@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Plugins;
 using AsyncGenerator.Plugins.Internal;
 using Microsoft.CodeAnalysis;

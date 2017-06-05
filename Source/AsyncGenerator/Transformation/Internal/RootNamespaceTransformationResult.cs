@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Analyzation;
 
 namespace AsyncGenerator.Transformation.Internal
 {

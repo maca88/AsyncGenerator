@@ -7,6 +7,8 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Internal;
 using log4net;
 using Microsoft.CodeAnalysis;

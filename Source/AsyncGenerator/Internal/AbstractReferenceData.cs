@@ -1,4 +1,5 @@
 ﻿using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;

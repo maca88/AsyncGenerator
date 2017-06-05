@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Plugins;
 using AsyncGenerator.Transformation;
 using AsyncGenerator.Transformation.Internal;

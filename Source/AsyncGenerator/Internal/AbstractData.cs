@@ -1,4 +1,5 @@
 ﻿using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Internal

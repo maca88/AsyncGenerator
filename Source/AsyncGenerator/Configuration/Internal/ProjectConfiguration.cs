@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using AsyncGenerator.Plugins;
-using Microsoft.CodeAnalysis;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 
 namespace AsyncGenerator.Configuration.Internal
 {

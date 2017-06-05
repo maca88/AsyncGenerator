@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Plugins;
 using Microsoft.CodeAnalysis;

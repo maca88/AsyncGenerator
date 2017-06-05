@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

@@ -315,6 +315,10 @@
     <EmbeddedResource Include="TaskConflict\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj">
+      <Project>{7f45bdb9-6b8d-421f-9f91-d92aab8f0f24}</Project>
+      <Name>AsyncGenerator.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj">
       <Project>{a183d706-0dbb-4f6b-92a5-6359660255d7}</Project>
       <Name>AsyncGenerator.TestCases</Name>

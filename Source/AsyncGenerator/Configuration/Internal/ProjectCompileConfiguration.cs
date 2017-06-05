@@ -1,4 +1,5 @@
 ﻿using System;
+using AsyncGenerator.Core.Configuration;
 
 namespace AsyncGenerator.Configuration.Internal
 {

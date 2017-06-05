@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Plugins;
 using AsyncGenerator.Plugins.Internal;
 using Microsoft.CodeAnalysis;
-using static AsyncGenerator.Analyzation.AsyncCounterpartsSearchOptions;
+using static AsyncGenerator.Core.AsyncCounterpartsSearchOptions;
 
 namespace AsyncGenerator.Internal
 {

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using NUnit.Framework;
 using AsyncGenerator.Tests.PreconditionOmitAsync.Input;
 
