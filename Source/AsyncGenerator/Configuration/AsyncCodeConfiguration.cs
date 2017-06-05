@@ -37,9 +37,26 @@ namespace AsyncGenerator.Configuration
 			{
 				throw new FileNotFoundException($"Solution not found. Path:'{solutionFilePath}'");
 			}
-			var solutionConfig = new SolutionConfiguration(solutionFilePath);
-			SolutionConfigurations.Add(solutionConfig);
+			var solutionConfig = SolutionConfigurations.FirstOrDefault(o => o.Path == solutionFilePath);
+			if (solutionConfig == null)
+			{
+				solutionConfig = new SolutionConfiguration(solutionFilePath);
+				SolutionConfigurations.Add(solutionConfig);
+			}
 			action(solutionConfig);
+			return this;
+		}
+
+		public AsyncCodeConfiguration ConfigureSolutionFromFile<T>(string filePath) where T : class, ISolutionFileConfigurator, new()
+		{
+			return ConfigureSolutionFromFile(filePath, new T());
+		}
+
+		private AsyncCodeConfiguration ConfigureSolutionFromFile(string filePath, ISolutionFileConfigurator fileConfigurator)
+		{
+			fileConfigurator.Parse(filePath);
+			var solutionFilePath = fileConfigurator.GetSolutionPath();
+			ConfigureSolution(solutionFilePath, fileConfigurator.Configure);
 			return this;
 		}
 	}

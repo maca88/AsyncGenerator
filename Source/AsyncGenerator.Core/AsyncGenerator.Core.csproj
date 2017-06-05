@@ -165,6 +165,7 @@
     <Compile Include="Configuration\IProjectConfiguration.cs" />
     <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\ISolutionConfiguration.cs" />
+    <Compile Include="Configuration\ISolutionFileConfigurator.cs" />
     <Compile Include="MethodCancellationToken.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="NamespaceConversion.cs" />
@@ -191,7 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Configuration\Configuration.xsd">
+    <None Include="Configuration\ConfigurationShema.xsd">
       <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
@@ -199,6 +200,9 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Configuration\Internal\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
