@@ -10,6 +10,6 @@
 
 		string AsyncLockMethodName { get; }
 
-		bool RunInParallel { get; }
+		bool ConcurrentRun { get; }
 	}
 }

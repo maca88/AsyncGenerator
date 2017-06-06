@@ -2,7 +2,7 @@
 {
 	public interface ISolutionConfiguration
 	{
-		bool RunInParallel { get; }
+		bool ConcurrentRun { get; }
 
 		bool ApplyChanges { get; }
 	}

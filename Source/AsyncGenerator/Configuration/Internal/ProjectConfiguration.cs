@@ -31,7 +31,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<IPlugin> RegisteredPlugins { get; }
 
-		public bool RunInParallel => _solutionConfiguration.RunInParallel;
+		public bool ConcurrentRun => _solutionConfiguration.ConcurrentRun;
 
 		#region IProjectConfiguration
 

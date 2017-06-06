@@ -8,10 +8,10 @@ namespace AsyncGenerator.Core.Configuration
 {
 	public interface ISolutionFileConfigurator
 	{
-		void Parse(string filePath);
+		object Parse(string filePath);
 
-		string GetSolutionPath();
+		string GetSolutionPath(object configuration);
 
-		void Configure(IFluentSolutionConfiguration solutionConfiguration);
+		void Configure(object configuration, IFluentSolutionConfiguration solutionConfiguration);
 	}
 }

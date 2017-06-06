@@ -34,7 +34,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public string AsyncLockMethodName { get; private set; }
 
-		public bool RunInParallel => _projectConfiguration.RunInParallel;
+		public bool ConcurrentRun => _projectConfiguration.ConcurrentRun;
 
 		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
 

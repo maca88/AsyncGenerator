@@ -22,6 +22,6 @@
 		/// </summary>
 		IProjectCompileConfiguration CompileConfiguration { get; }
 
-		bool RunInParallel { get; }
+		bool ConcurrentRun { get; }
 	}
 }

@@ -159,6 +159,8 @@
     <Compile Include="Configuration\IFluentProjectParseConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />
+    <Compile Include="Configuration\Internal\FileConfiguration.cs" />
+    <Compile Include="Configuration\Internal\FileConfigurator.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\IProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
@@ -166,6 +168,7 @@
     <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\ISolutionConfiguration.cs" />
     <Compile Include="Configuration\ISolutionFileConfigurator.cs" />
+    <Compile Include="Configuration\XmlFileConfigurator.cs" />
     <Compile Include="MethodCancellationToken.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="NamespaceConversion.cs" />
@@ -201,8 +204,6 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Configuration\Internal\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

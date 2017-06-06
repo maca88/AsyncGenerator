@@ -54,9 +54,9 @@ namespace AsyncGenerator.Configuration
 
 		private AsyncCodeConfiguration ConfigureSolutionFromFile(string filePath, ISolutionFileConfigurator fileConfigurator)
 		{
-			fileConfigurator.Parse(filePath);
-			var solutionFilePath = fileConfigurator.GetSolutionPath();
-			ConfigureSolution(solutionFilePath, fileConfigurator.Configure);
+			var config = fileConfigurator.Parse(filePath);
+			var solutionFilePath = fileConfigurator.GetSolutionPath(config);
+			ConfigureSolution(solutionFilePath, o => fileConfigurator.Configure(config, o));
 			return this;
 		}
 	}

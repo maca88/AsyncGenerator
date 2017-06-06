@@ -47,7 +47,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool UseCancellationTokens => CancellationTokens.Enabled;
 
-		public bool RunInParallel => _projectConfiguration.RunInParallel;
+		public bool ConcurrentRun => _projectConfiguration.ConcurrentRun;
 
 		public Predicate<IMethodSymbol> CallForwarding { get; set; } = symbol => false;
 

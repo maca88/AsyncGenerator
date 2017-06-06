@@ -43,7 +43,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			// Step 1: Transform all documents
 			Logger.Info("Generating documents started");
-			if (_configuration.RunInParallel)
+			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(analyzationResult.Documents, TransfromDocument);
 			}

@@ -13,6 +13,6 @@ namespace AsyncGenerator.Core.Configuration
 
 		IProjectCancellationTokenConfiguration CancellationTokens { get; }
 
-		bool RunInParallel { get; }
+		bool ConcurrentRun { get; }
 	}
 }

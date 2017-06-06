@@ -31,9 +31,18 @@
   <xs:complexType name="MemberFilter">
     <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="hasAttribute" type="xs:string" />
+    <xs:attribute name="hasAttributeName" type="xs:string" />
     <xs:attribute name="containingNamespace" type="xs:string" />
     <xs:attribute name="containingType" type="xs:string" />
+    <xs:attribute name="containingTypeName" type="xs:string" />
     <xs:attribute name="rule" type="xs:string" />
+  </xs:complexType>
+  
+  <xs:complexType name="DocumentFilter">
+    <xs:attribute name="filePath" type="xs:string" />
+    <xs:attribute name="filePathEndsWith" type="xs:string" />
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="select" type="xs:boolean" use="required" />
   </xs:complexType>
 
   <xs:complexType name="MethodFilter">
@@ -130,11 +139,18 @@
 
   <xs:complexType name="CancellationTokens">
     <xs:all>
-      <xs:element name="Guards" type="xs:boolean" />
+      <xs:element name="Guards" type="xs:boolean" nillable="true" minOccurs="0" />
       <xs:element name="MethodParameters" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="MethodParameter" type="MethodCancellationTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="Method" type="MethodCancellationTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="RequiresCancellationToken" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodRequiresTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -143,36 +159,43 @@
   
   <xs:complexType name="Analyzation">
     <xs:all>
-      <xs:element name="MethodConversions" minOccurs="0">
+      <xs:element name="MethodConversion" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="MethodConversion" type="MethodConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="Method" type="MethodConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
-      <xs:element name="TypeConversions" minOccurs="0">
+      <xs:element name="PreserveReturnType" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="TypeConversion" type="TypeConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="Method" type="MethodConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="TypeConversion" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="DocumentSelection" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Document" type="DocumentFilter" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
       <xs:element name="SearchForAsyncCounterparts" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="SearchForAsyncCounterpart" type="MethodSearchFilter" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="Method" type="MethodSearchFilter" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
       <xs:element name="CallForwarding" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="CancellationTokens" type="CancellationTokens" minOccurs="0" />
-      <xs:element name="RequiresCancellationTokens" minOccurs="0">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element name="RequiresCancellationToken" type="MethodRequiresTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
       <xs:element name="ScanMethodBody" type="xs:boolean" nillable="true" minOccurs="0"/>
     </xs:all>
   </xs:complexType>
@@ -195,6 +218,7 @@
 
   <xs:complexType name="Project">
       <xs:all>
+        <xs:element name="Name" type="xs:string"/>
         <xs:element name="Analyzation" type="Analyzation"/>
         <xs:element name="Transformation" type="Transformation"/>
       </xs:all>
@@ -203,6 +227,8 @@
   <xs:complexType name="Solution">
     <xs:all>
       <xs:element name="FilePath" type="xs:string"/>
+      <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
       <xs:element name="Projects">
         <xs:complexType>
           <xs:sequence>
@@ -217,8 +243,6 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element name="Solution" type="Solution" />
-        <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
-        <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
         <xs:element name="MethodRules" minOccurs="0">
           <xs:complexType>
             <xs:sequence>
