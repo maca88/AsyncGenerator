@@ -9,6 +9,7 @@ using AsyncGenerator.Plugins;
 using AsyncGenerator.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration.Internal
@@ -59,6 +60,19 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ConfigureAwaitArgument(ExpressionSyntax value)
 		{
 			ConfigureAwaitArgument = value;
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ConfigureAwaitArgument(bool? value)
+		{
+			if (value == null)
+			{
+				ConfigureAwaitArgument = null;
+				return this;
+			}
+			ConfigureAwaitArgument = value.Value
+				? SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+				: SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression);
 			return this;
 		}
 

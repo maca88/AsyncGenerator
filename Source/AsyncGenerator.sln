@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.TestCases", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Core", "AsyncGenerator.Core\AsyncGenerator.Core.csproj", "{7F45BDB9-6B8D-421F-9F91-D92AAB8F0F24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Yaml", "AsyncGenerator.Yaml\AsyncGenerator.Yaml.csproj", "{33B6A1EF-50A4-4DE3-929C-5E179E240B48}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{7F45BDB9-6B8D-421F-9F91-D92AAB8F0F24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F45BDB9-6B8D-421F-9F91-D92AAB8F0F24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F45BDB9-6B8D-421F-9F91-D92AAB8F0F24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33B6A1EF-50A4-4DE3-929C-5E179E240B48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33B6A1EF-50A4-4DE3-929C-5E179E240B48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33B6A1EF-50A4-4DE3-929C-5E179E240B48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33B6A1EF-50A4-4DE3-929C-5E179E240B48}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

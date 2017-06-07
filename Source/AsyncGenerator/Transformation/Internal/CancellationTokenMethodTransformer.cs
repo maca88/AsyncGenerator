@@ -44,7 +44,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodNode = transformResult.Transformed;
 			methodNode = methodNode
 				.AddCancellationTokenParameter(cancellationTokenParamName,
-					generationOptions.HasFlag(MethodCancellationToken.DefaultParameter),
+					generationOptions.HasFlag(MethodCancellationToken.Optional),
 					transformResult.LeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia);
 
@@ -106,8 +106,8 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			// Add an additional overload if specified
-			if (!generationOptions.HasFlag(MethodCancellationToken.NoParameterForward) &&
-				!generationOptions.HasFlag(MethodCancellationToken.SealedNoParameterForward))
+			if (!generationOptions.HasFlag(MethodCancellationToken.ForwardNone) &&
+				!generationOptions.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
 				return MethodTransformerResult.Update(methodNode);
 			}
@@ -153,7 +153,7 @@ namespace AsyncGenerator.Transformation.Internal
 								.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia)))
 						)
 					));
-			if (generationOptions.HasFlag(MethodCancellationToken.SealedNoParameterForward))
+			if (generationOptions.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
 				if (methodResult.Symbol.IsVirtual)
 				{

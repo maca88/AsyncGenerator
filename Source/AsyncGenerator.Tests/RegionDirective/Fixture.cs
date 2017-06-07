@@ -41,7 +41,7 @@ namespace AsyncGenerator.Tests.RegionDirective
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbol => MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward))
+						.ParameterGeneration(symbol => MethodCancellationToken.Required | MethodCancellationToken.SealedForwardNone))
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>

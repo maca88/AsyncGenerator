@@ -26,6 +26,12 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectTransformConfiguration ConfigureAwaitArgument(ExpressionSyntax node);
 
 		/// <summary>
+		/// Set the value that will be used as an argument to the method <see cref="Task.ConfigureAwait"/>, if null the invocation is not generated.
+		/// Default is null.
+		/// </summary>
+		IFluentProjectTransformConfiguration ConfigureAwaitArgument(bool? value);
+
+		/// <summary>
 		/// Enable or disable the generation of local functions instead of private methods (eg. method tail split).
 		/// Default is false.
 		/// </summary>

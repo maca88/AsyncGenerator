@@ -35,6 +35,7 @@
     <xs:attribute name="containingNamespace" type="xs:string" />
     <xs:attribute name="containingType" type="xs:string" />
     <xs:attribute name="containingTypeName" type="xs:string" />
+    <xs:attribute name="containingAssemblyName" type="xs:string" />
     <xs:attribute name="rule" type="xs:string" />
   </xs:complexType>
   
@@ -55,6 +56,9 @@
   <xs:complexType name="TypeFilter">
     <xs:complexContent>
       <xs:extension base="MemberFilter">
+        <xs:attribute name="anyInterfaceRule" type="xs:string" />
+        <xs:attribute name="anyBaseTypeRule" type="xs:string" />
+        
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -75,10 +79,26 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="TypeScanMissingAsyncMembersFilter">
+    <xs:complexContent>
+      <xs:extension base="TypeFilter">
+        <xs:attribute name="scan" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
   <xs:complexType name="MethodRequiresTokenFilter">
     <xs:complexContent>
       <xs:extension base="MethodFilter">
         <xs:attribute name="tokenRequired" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodPreserveReturnTypeFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="preserve" type="xs:boolean" use="required" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -140,7 +160,7 @@
   <xs:complexType name="CancellationTokens">
     <xs:all>
       <xs:element name="Guards" type="xs:boolean" nillable="true" minOccurs="0" />
-      <xs:element name="MethodParameters" minOccurs="0">
+      <xs:element name="MethodParameter" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
             <xs:element name="Method" type="MethodCancellationTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
@@ -169,7 +189,7 @@
       <xs:element name="PreserveReturnType" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="Method" type="MethodConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+            <xs:element name="Method" type="MethodPreserveReturnTypeFilter" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -197,6 +217,13 @@
       <xs:element name="CallForwarding" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="CancellationTokens" type="CancellationTokens" minOccurs="0" />
       <xs:element name="ScanMethodBody" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="ScanForMissingAsyncMembers" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeScanMissingAsyncMembersFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
     </xs:all>
   </xs:complexType>
   <xs:complexType name="Transformation">
@@ -219,8 +246,20 @@
   <xs:complexType name="Project">
       <xs:all>
         <xs:element name="Name" type="xs:string"/>
-        <xs:element name="Analyzation" type="Analyzation"/>
-        <xs:element name="Transformation" type="Transformation"/>
+        <xs:element name="Analyzation" type="Analyzation" minOccurs="0"/>
+        <xs:element name="Transformation" type="Transformation" minOccurs="0"/>
+        <xs:element name="RegisterPlugin" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Plugin" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:attribute name="fullTypeName" type="xs:string" use="required" />
+                  <xs:attribute name="assemblyName" type="xs:string" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
       </xs:all>
   </xs:complexType>
 

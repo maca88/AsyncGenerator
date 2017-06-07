@@ -1,32 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using AsyncGenerator.Core.Configuration.Internal;
+using AsyncGenerator.Core.Configuration;
 
-namespace AsyncGenerator.Core.Configuration
+namespace AsyncGenerator.Core.FileConfiguration
 {
 	public class XmlFileConfigurator : ISolutionFileConfigurator
 	{
-		public object Parse(string filePath)
+		public AsyncGenerator Parse(string content)
 		{
-			var xmlContent = File.ReadAllText(filePath);
-			return Deserialize<Internal.AsyncGenerator>(xmlContent);
+			return Deserialize<AsyncGenerator>(content);
 		}
 
-		public string GetSolutionPath(object configuration)
+		public string GetSolutionPath(AsyncGenerator configuration)
 		{
-			return ((Internal.AsyncGenerator)configuration).Solution.FilePath;
+			return configuration.Solution.FilePath;
 		}
 
-		public void Configure(object configuration, IFluentSolutionConfiguration solutionConfiguration)
+		public void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration)
 		{
-			var configurator = new FileConfigurator();
-			configurator.Configure((Internal.AsyncGenerator)configuration, solutionConfiguration);
+			FileConfigurator.Configure(configuration, solutionConfiguration);
 		}
 
 		private static T Deserialize<T>(string xmlString, Encoding encoding = null)

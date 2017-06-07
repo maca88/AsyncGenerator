@@ -308,8 +308,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.CancellationTokenRequired = true;
 					// We suppose that the cancellation token is the last parameter
 					methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
-						? MethodCancellationToken.DefaultParameter
-						: MethodCancellationToken.Parameter;
+						? MethodCancellationToken.Optional
+						: MethodCancellationToken.Required;
 				}
 			}
 
@@ -346,8 +346,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.CancellationTokenRequired = true;
 						// We suppose that the cancellation token is the last parameter
 						methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
-							? MethodCancellationToken.DefaultParameter
-							: MethodCancellationToken.Parameter;
+							? MethodCancellationToken.Optional
+							: MethodCancellationToken.Required;
 					}
 				}
 				baseType = baseType.BaseType;

@@ -173,47 +173,47 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			var methodGeneration = methodData.MethodCancellationToken.GetValueOrDefault();
 
-			if (!methodGeneration.HasFlag(MethodCancellationToken.DefaultParameter) &&
-			    !methodGeneration.HasFlag(MethodCancellationToken.Parameter))
+			if (!methodGeneration.HasFlag(MethodCancellationToken.Optional) &&
+			    !methodGeneration.HasFlag(MethodCancellationToken.Required))
 			{
-				methodGeneration |= MethodCancellationToken.DefaultParameter;
+				methodGeneration |= MethodCancellationToken.Optional;
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 				            "The method must have atleast Parameter or DefaultParameter option set. " +
 				            "DefaultParameter option will be added.");
 			}
-			else if (methodGeneration.HasFlag(MethodCancellationToken.DefaultParameter) &&
-					 methodGeneration.HasFlag(MethodCancellationToken.Parameter))
+			else if (methodGeneration.HasFlag(MethodCancellationToken.Optional) &&
+					 methodGeneration.HasFlag(MethodCancellationToken.Required))
 			{
-				methodGeneration &= ~MethodCancellationToken.Parameter;
+				methodGeneration &= ~MethodCancellationToken.Required;
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 				            "The method cannot have Parameter and DefaultParameter options set at once. " +
 				            "Parameter option will be removed.");
 			}
-			if (methodGeneration.HasFlag(MethodCancellationToken.NoParameterForward) &&
-			    methodGeneration.HasFlag(MethodCancellationToken.SealedNoParameterForward))
+			if (methodGeneration.HasFlag(MethodCancellationToken.ForwardNone) &&
+			    methodGeneration.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
-				methodGeneration &= ~MethodCancellationToken.NoParameterForward;
+				methodGeneration &= ~MethodCancellationToken.ForwardNone;
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 				            "The method cannot have NoParameterForward and SealedNoParameterForward options set at once. " +
 				            "NoParameterForward option will be removed.");
 			}
-			if (methodGeneration.HasFlag(MethodCancellationToken.DefaultParameter) &&
+			if (methodGeneration.HasFlag(MethodCancellationToken.Optional) &&
 			    (
-					methodGeneration.HasFlag(MethodCancellationToken.NoParameterForward) ||
-					methodGeneration.HasFlag(MethodCancellationToken.SealedNoParameterForward)
+					methodGeneration.HasFlag(MethodCancellationToken.ForwardNone) ||
+					methodGeneration.HasFlag(MethodCancellationToken.SealedForwardNone)
 				)
 			)
 			{
-				methodGeneration = MethodCancellationToken.DefaultParameter;
+				methodGeneration = MethodCancellationToken.Optional;
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 				            "The DefaultParameter option cannot be combined with NoParameterForward or SealedNoParameterForward option. " +
 				            "NoParameterForward and SealedNoParameterForward options will be removed.");
 			}
 
 			// Explicit implementor can have only Parameter combined with NoParameterForward or SealedNoParameterForward
-			if (methodData.Symbol.ExplicitInterfaceImplementations.Any() && !methodGeneration.HasFlag(MethodCancellationToken.Parameter))
+			if (methodData.Symbol.ExplicitInterfaceImplementations.Any() && !methodGeneration.HasFlag(MethodCancellationToken.Required))
 			{
-				methodData.MethodCancellationToken = MethodCancellationToken.Parameter;
+				methodData.MethodCancellationToken = MethodCancellationToken.Required;
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 				            "Explicit implementor can have only Parameter option combined with NoParameterForward or SealedNoParameterForward option. " +
 				            $"The MethodGeneration will be set to '{methodData.MethodCancellationToken}'");
@@ -221,14 +221,14 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// Interface method can have only Parameter or DefaultParameter
-			if (methodData.InterfaceMethod && methodGeneration.HasFlag(MethodCancellationToken.Parameter) &&
+			if (methodData.InterfaceMethod && methodGeneration.HasFlag(MethodCancellationToken.Required) &&
 				(
-					methodGeneration.HasFlag(MethodCancellationToken.NoParameterForward) ||
-					methodGeneration.HasFlag(MethodCancellationToken.SealedNoParameterForward)
+					methodGeneration.HasFlag(MethodCancellationToken.ForwardNone) ||
+					methodGeneration.HasFlag(MethodCancellationToken.SealedForwardNone)
 				)
 			)
 			{
-				methodData.MethodCancellationToken = MethodCancellationToken.Parameter;
+				methodData.MethodCancellationToken = MethodCancellationToken.Required;
 				Logger.Warn($"Invalid MethodGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
 							"Interface method can have NoParameterForward or SealedNoParameterForward option. " +
 				            $"The MethodGeneration will be set to '{methodData.MethodCancellationToken}'");

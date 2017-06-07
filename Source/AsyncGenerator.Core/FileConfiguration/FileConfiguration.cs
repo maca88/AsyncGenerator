@@ -4,14 +4,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Xml.Serialization;
 
-namespace AsyncGenerator.Core.Configuration.Internal
+namespace AsyncGenerator.Core.FileConfiguration
 {
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot(Namespace = "https://github.com/maca88/AsyncGenerator", IsNullable = false)]
-	internal class AsyncGenerator
+	public class AsyncGenerator
 	{
 		[XmlElement("Solution")]
 		public Solution Solution { get; set; }
@@ -33,7 +33,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Solution")]
-	internal class Solution
+	public class Solution
 	{
 		[XmlElement("FilePath")]
 		public string FilePath { get; set; }
@@ -55,7 +55,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Project")]
-	internal class Project
+	public class Project
 	{
 		[XmlElement("Name")]
 		public string Name { get; set; }
@@ -63,11 +63,14 @@ namespace AsyncGenerator.Core.Configuration.Internal
 		public Analyzation Analyzation { get; set; }
 		[XmlElement("Transformation")]
 		public Transformation Transformation { get; set; }
+		[XmlArrayItem("Plugin", IsNullable = false)]
+		public List<ProjectPlugin> RegisterPlugin { get; set; }
 
 		public Project()
 		{
 			Transformation = new Transformation();
 			Analyzation = new Analyzation();
+			RegisterPlugin = new List<ProjectPlugin>();
 		}
 	}
 
@@ -76,12 +79,12 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Analyzation")]
-	internal class Analyzation
+	public class Analyzation
 	{
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodConversionFilter> MethodConversion { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
-		public List<MethodConversionFilter> PreserveReturnType { get; set; }
+		public List<MethodPreserveReturnTypeFilter> PreserveReturnType { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
 		public List<TypeConversionFilter> TypeConversion { get; set; }
 		[XmlArrayItem("Document", IsNullable = false)]
@@ -94,6 +97,8 @@ namespace AsyncGenerator.Core.Configuration.Internal
 		public CancellationTokens CancellationTokens { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? ScanMethodBody { get; set; }
+		[XmlArrayItem("Type", IsNullable = false)]
+		public List<TypeScanMissingAsyncMembersFilter> ScanForMissingAsyncMembers { get; set; }
 
 		public Analyzation()
 		{
@@ -101,8 +106,9 @@ namespace AsyncGenerator.Core.Configuration.Internal
 			SearchForAsyncCounterparts = new List<MethodSearchFilter>();
 			DocumentSelection = new List<DocumentFilter>();
 			TypeConversion = new List<TypeConversionFilter>();
-			PreserveReturnType = new List<MethodConversionFilter>();
+			PreserveReturnType = new List<MethodPreserveReturnTypeFilter>();
 			MethodConversion = new List<MethodConversionFilter>();
+			ScanForMissingAsyncMembers = new List<TypeScanMissingAsyncMembersFilter>();
 		}
 	}
 
@@ -111,7 +117,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodConversionFilter")]
-	internal class MethodConversionFilter : MethodFilter
+	public class MethodConversionFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "conversion")]
 		public MethodConversion Conversion { get; set; }
@@ -128,6 +134,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 		ToAsync
 	}
 
+	[XmlInclude(typeof(MethodPreserveReturnTypeFilter))]
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodRequiresTokenFilter))]
 	[XmlInclude(typeof(MethodSearchFilter))]
@@ -137,11 +144,13 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodFilter")]
-	internal class MethodFilter : MemberFilter
+	public class MethodFilter : MemberFilter
 	{
 	}
 
+	[XmlInclude(typeof(MethodPreserveReturnTypeFilter))]
 	[XmlInclude(typeof(TypeFilter))]
+	[XmlInclude(typeof(TypeScanMissingAsyncMembersFilter))]
 	[XmlInclude(typeof(TypeConversionFilter))]
 	[XmlInclude(typeof(MethodFilter))]
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
@@ -153,7 +162,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MemberFilter")]
-	internal class MemberFilter
+	public class MemberFilter
 	{
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
@@ -167,6 +176,8 @@ namespace AsyncGenerator.Core.Configuration.Internal
 		public string ContainingType { get; set; }
 		[XmlAttribute(AttributeName = "containingTypeName")]
 		public string ContainingTypeName { get; set; }
+		[XmlAttribute(AttributeName = "containingAssemblyName")]
+		public string ContainingAssemblyName { get; set; }
 		[XmlAttribute(AttributeName = "rule")]
 		public string Rule { get; set; }
 	}
@@ -178,7 +189,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Rule")]
-	internal class Rule
+	public class Rule
 	{
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
@@ -189,7 +200,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeRule")]
-	internal class TypeRule : Rule
+	public class TypeRule : Rule
 	{
 		[XmlArrayItem("Filter", IsNullable = false)]
 		public List<TypeFilter> Filters { get; set; }
@@ -199,15 +210,19 @@ namespace AsyncGenerator.Core.Configuration.Internal
 			Filters = new List<TypeFilter>();
 		}
 	}
-
+	[XmlInclude(typeof(TypeScanMissingAsyncMembersFilter))]
 	[XmlInclude(typeof(TypeConversionFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeFilter")]
-	internal class TypeFilter : MemberFilter
+	public class TypeFilter : MemberFilter
 	{
+		[XmlAttribute(AttributeName = "anyInterfaceRule")]
+		public string AnyInterfaceRule { get; set; }
+		[XmlAttribute(AttributeName = "anyBaseTypeRule")]
+		public string AnyBaseTypeRule { get; set; }
 	}
 
 	[Serializable]
@@ -215,10 +230,21 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeConversionFilter")]
-	internal class TypeConversionFilter : TypeFilter
+	public class TypeConversionFilter : TypeFilter
 	{
 		[XmlAttribute(AttributeName = "conversion")]
 		public TypeConversion Conversion { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("TypeScanMissingAsyncMembersFilter")]
+	public class TypeScanMissingAsyncMembersFilter : TypeFilter
+	{
+		[XmlAttribute(AttributeName = "scan")]
+		public bool Scan { get; set; }
 	}
 
 	[Serializable]
@@ -237,7 +263,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodRule")]
-	internal class MethodRule : Rule
+	public class MethodRule : Rule
 	{
 		[XmlArrayItem("Filter", IsNullable = false)]
 		public List<MethodFilter> Filters { get; set; }
@@ -253,7 +279,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Transformation")]
-	internal class Transformation
+	public class Transformation
 	{
 		[XmlElement(IsNullable = true)]
 		public bool? Disable { get; set; }
@@ -277,7 +303,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TransformationAsyncLock")]
-	internal class TransformationAsyncLock
+	public class TransformationAsyncLock
 	{
 		[XmlElement("FullTypeName")]
 		public string FullTypeName { get; set; }
@@ -290,18 +316,18 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("CancellationTokens")]
-	internal class CancellationTokens
+	public class CancellationTokens
 	{
 		[XmlElement("Guards", IsNullable = true)]
 		public bool? Guards { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
-		public List<MethodCancellationTokenFilter> MethodParameters { get; set; }
+		public List<MethodCancellationTokenFilter> MethodParameter { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodRequiresTokenFilter> RequiresCancellationToken { get; set; }
 
 		public CancellationTokens()
 		{
-			MethodParameters = new List<MethodCancellationTokenFilter>();
+			MethodParameter = new List<MethodCancellationTokenFilter>();
 			RequiresCancellationToken = new List<MethodRequiresTokenFilter>();
 		}
 	}
@@ -311,12 +337,23 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodCancellationTokenFilter")]
-	internal class MethodCancellationTokenFilter : MethodFilter
+	public class MethodCancellationTokenFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "anyInterfaceRule")]
 		public string AnyInterfaceRule { get; set; }
 		[XmlAttribute(AttributeName = "parameter")]
 		public MethodCancellationToken Parameter { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("MethodPreserveReturnTypeFilter")]
+	public class MethodPreserveReturnTypeFilter : MethodFilter
+	{
+		[XmlAttribute(AttributeName = "preserve")]
+		public bool Preserve { get; set; }
 	}
 
 	[Serializable]
@@ -335,7 +372,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("DocumentFilter")]
-	internal class DocumentFilter
+	public class DocumentFilter
 	{
 		[XmlAttribute(AttributeName = "filePath")]
 		public string FilePath { get; set; }
@@ -352,7 +389,7 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodRequiresTokenFilter")]
-	internal class MethodRequiresTokenFilter : MethodFilter
+	public class MethodRequiresTokenFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "tokenRequired")]
 		public bool TokenRequired { get; set; }
@@ -363,9 +400,22 @@ namespace AsyncGenerator.Core.Configuration.Internal
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodSearchFilter")]
-	internal class MethodSearchFilter : MethodFilter
+	public class MethodSearchFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "search")]
 		public bool Search { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategoryAttribute("code")]
+	[XmlTypeAttribute(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRootAttribute("ProjectPlugin")]
+	public class ProjectPlugin
+	{
+		[XmlAttribute(AttributeName = "fullTypeName")]
+		public string FullTypeName { get; set; }
+		[XmlAttribute(AttributeName = "assemblyName")]
+		public string AssemblyName { get; set; }
 	}
 }
