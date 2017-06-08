@@ -1,71 +1,102 @@
 ﻿solution:
-  filePath: ..\..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln
+  filePath: ..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln
   concurrentRun: true
   applyChanges: true
   projects:
   - name: NHibernate
     analyzation:
       methodConversion:
-      - hasAttributeName: ObsoleteAttribute
-      - name: PostProcessInsert
+      - conversion: Ignore
+        hasAttributeName: ObsoleteAttribute
+      - conversion: Ignore
+        name: PostProcessInsert
         containingTypeName: HqlSqlWalker
-      - name: Intercept
+      - conversion: Ignore
+        name: Intercept
         containingTypeName: IInterceptor
-      - name: Intercept
+      - conversion: Ignore
+        name: Intercept
         containingTypeName: IFieldInterceptor
-      - name: InitializeOrGetAssociation
+      - conversion: Ignore
+        name: InitializeOrGetAssociation
         containingTypeName: AbstractFieldInterceptor
-      - name: InitializeLazyProperty
+      - conversion: Ignore
+        name: InitializeLazyProperty
         containingTypeName: ILazyPropertyInitializer
-      - name: InitializeLazyPropertiesFromDatastore
+      - conversion: Ignore
+        name: InitializeLazyPropertiesFromDatastore
         containingTypeName: AbstractEntityPersister
-      - name: InitializeLazyPropertiesFromCache
+      - conversion: Ignore
+        name: InitializeLazyPropertiesFromCache
         containingTypeName: AbstractEntityPersister
-      - name: Invoke
+      - conversion: Ignore
+        name: Invoke
         containingTypeName: BasicLazyInitializer
-      - name: SetReadOnly
+      - conversion: Ignore
+        name: SetReadOnly
         containingTypeName: StatefulPersistenceContext
-      - name: Unproxy
+      - conversion: Ignore
+        name: Unproxy
         containingTypeName: StatefulPersistenceContext
-      - name: Contains
+      - conversion: Ignore
+        name: Contains
         containingTypeName: CollectionType
-      - name: GuessClass
+      - conversion: Ignore
+        name: GuessClass
         containingTypeName: NHibernateProxyHelper
-      - name: IsPropertyInitialized
+      - conversion: Ignore
+        name: IsPropertyInitialized
         containingTypeName: NHibernateUtil
-      - name: BestGuessEntityName
+      - conversion: Ignore
+        name: BestGuessEntityName
         containingTypeName: ISession
-      - name: Contains
+      - conversion: Ignore
+        name: Contains
         containingTypeName: ISession
-      - name: BestGuessEntityName
+      - conversion: Ignore
+        name: BestGuessEntityName
         containingTypeName: ISessionImplementor
-      - name: Contains
+      - conversion: Ignore
+        name: Contains
         containingTypeName: ISessionImplementor
-      - name: GetUnsavedVersionValue
+      - conversion: Ignore
+        name: GetUnsavedVersionValue
         containingTypeName: UnsavedValueFactory
-      - name: ReadSize
+      - conversion: Ignore
+        name: ReadSize
         containingTypeName: AbstractPersistentCollection
-      - name: ReadIndexExistence
+      - conversion: Ignore
+        name: ReadIndexExistence
         containingTypeName: AbstractPersistentCollection
-      - name: ReadElementExistence
+      - conversion: Ignore
+        name: ReadElementExistence
         containingTypeName: AbstractPersistentCollection
-      - name: ReadElementByIndex
+      - conversion: Ignore
+        name: ReadElementByIndex
         containingTypeName: AbstractPersistentCollection
-      - name: Read
+      - conversion: Ignore
+        name: Read
         containingTypeName: AbstractPersistentCollection
-      - name: Write
+      - conversion: Ignore
+        name: Write
         containingTypeName: AbstractPersistentCollection
-      - name: GetSize
+      - conversion: Ignore
+        name: GetSize
         containingTypeName: ICollectionPersister
-      - name: IndexExists
+      - conversion: Ignore
+        name: IndexExists
         containingTypeName: ICollectionPersister
-      - name: ElementExists
+      - conversion: Ignore
+        name: ElementExists
         containingTypeName: ICollectionPersister
-      - name: GetElementByIndex
+      - conversion: Ignore
+        name: GetElementByIndex
         containingTypeName: ICollectionPersister
-      - name: Exists
+      - conversion: Ignore
+        name: Exists
         containingTypeName: ICollectionPersister
-      - name: Exists
+      - conversion: Ignore
+        name: Exists
         containingTypeName: AbstractCollectionPersister
       - conversion: ToAsync
         name: ExecuteReader
@@ -75,9 +106,6 @@
         containingTypeName: IBatcher
       - conversion: ToAsync
         rule: EventListener
-      preserveReturnType: []
-      typeConversion: []
-      documentSelection: []
       searchForAsyncCounterparts:
       - name: GetFieldValue
       - name: IsDBNull
@@ -87,77 +115,69 @@
         guards: true
         methodParameter:
         - anyInterfaceRule: PubliclyExposedType
-        - rule: PubliclyExposedType
+          parameter: Optional
+        - parameter: Optional
+          rule: PubliclyExposedType
         - parameter: Required
         requiresCancellationToken:
         - tokenRequired: true
           rule: EventListener
       scanMethodBody: true
-      scanForMissingAsyncMembers: []
     transformation:
       configureAwaitArgument: false
       localFunctions: true
       asyncLock:
-        fullTypeName: NHibernate.Util.AsyncLock
+        type: NHibernate.Util.AsyncLock
         methodName: LockAsync
     registerPlugin:
-    - fullTypeName: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
+    - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
       assemblyName: AsyncGenerator.Tests
   - name: NHibernate.DomainModel
     analyzation:
-      methodConversion: []
-      preserveReturnType: []
-      typeConversion: []
-      documentSelection: []
-      searchForAsyncCounterparts: []
-      cancellationTokens:
-        methodParameter: []
-        requiresCancellationToken: []
       scanMethodBody: true
       scanForMissingAsyncMembers:
       - scan: true
-    transformation:
-      asyncLock: {}
-    registerPlugin: []
   - name: NHibernate.Test
     analyzation:
       methodConversion:
-      - hasAttributeName: IgnoreAttribute
+      - conversion: Ignore
+        hasAttributeName: IgnoreAttribute
       - conversion: Smart
         hasAttributeName: TestAttribute
       preserveReturnType:
       - preserve: true
         hasAttributeName: TestAttribute
       typeConversion:
-      - name: NorthwindDbCreator
-      - name: ObjectAssert
-      - name: LinqReadonlyTestsContext
-      - hasAttributeName: IgnoreAttribute
+      - conversion: Ignore
+        name: NorthwindDbCreator
+      - conversion: Ignore
+        name: ObjectAssert
+      - conversion: Ignore
+        name: LinqReadonlyTestsContext
+      - conversion: Ignore
+        hasAttributeName: IgnoreAttribute
       - conversion: NewType
         hasAttributeName: TestFixtureAttribute
-      - rule: IsTestCase
-      - anyBaseTypeRule: IsTestCase
+      - conversion: Ignore
+        rule: IsTestCase
+      - conversion: Ignore
+        anyBaseTypeRule: IsTestCase
       documentSelection:
       - filePathEndsWith: Linq\MathTests.cs
       - filePathEndsWith: Linq\ExpressionSessionLeakTest.cs
-      searchForAsyncCounterparts: []
       cancellationTokens:
-        methodParameter: []
         requiresCancellationToken:
         - hasAttributeName: TestAttribute
       scanMethodBody: true
       scanForMissingAsyncMembers:
       - scan: true
         anyInterfaceRule: NHibernateAssembly
-    transformation:
-      asyncLock: {}
     registerPlugin:
-    - fullTypeName: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
+    - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
       assemblyName: AsyncGenerator.Tests
-    - fullTypeName: AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder
+    - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder
       assemblyName: AsyncGenerator.Tests
-    - fullTypeName: AsyncGenerator.Tests.ExternalProjects.NHibernate.NUnitAsyncCountepartFinder
-      assemblyName: AsyncGenerator.Tests
+    - type: NUnitAsyncCountepartFinder
 methodRules:
 - filters:
   - containingTypeName: IAutoFlushEventListener
@@ -191,3 +211,33 @@ typeRules:
 - filters:
   - name: TestCase
   name: IsTestCase
+cSharpScript: | 
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using AsyncGenerator.Core;
+    using AsyncGenerator.Core.Configuration;
+    using AsyncGenerator.Core.Plugins;
+    using Microsoft.CodeAnalysis;
+
+    public class NUnitAsyncCountepartFinder : IAsyncCounterpartsFinder
+    {
+        public Task Initialize(Project project, IProjectConfiguration configuration)
+        {
+            return Task.CompletedTask;
+        }
+
+        public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
+        {
+            if (syncMethodSymbol.Name != "That" || syncMethodSymbol.ContainingType.Name != "Assert" ||syncMethodSymbol.ContainingType.ContainingNamespace.ToString() != "NUnit.Framework")
+            {
+                yield break;
+            }
+
+            var firstParamType = syncMethodSymbol.Parameters.First().Type;
+            if (firstParamType.Name == "ActualValueDelegate" || firstParamType.Name == "TestDelegate")
+            {
+                yield return syncMethodSymbol;
+            }
+        }
+    }

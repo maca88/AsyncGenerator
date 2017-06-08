@@ -234,10 +234,8 @@
       <xs:element name="LocalFunctions" type="xs:boolean" nillable="true" minOccurs="0" />
       <xs:element name="AsyncLock" minOccurs="0">
         <xs:complexType>
-          <xs:all>
-            <xs:element name="FullTypeName" type="xs:string" />
-            <xs:element name="MethodName" type="xs:string"/>
-          </xs:all>
+          <xs:attribute name="type" type="xs:string" use="required" />
+          <xs:attribute name="methodName" type="xs:string" use="required" />
         </xs:complexType>
       </xs:element>
     </xs:all>
@@ -245,7 +243,6 @@
 
   <xs:complexType name="Project">
       <xs:all>
-        <xs:element name="Name" type="xs:string"/>
         <xs:element name="Analyzation" type="Analyzation" minOccurs="0"/>
         <xs:element name="Transformation" type="Transformation" minOccurs="0"/>
         <xs:element name="RegisterPlugin" minOccurs="0">
@@ -253,7 +250,7 @@
             <xs:sequence>
               <xs:element name="Plugin" maxOccurs="unbounded" minOccurs="0">
                 <xs:complexType>
-                  <xs:attribute name="fullTypeName" type="xs:string" use="required" />
+                  <xs:attribute name="type" type="xs:string" use="required" />
                   <xs:attribute name="assemblyName" type="xs:string" />
                 </xs:complexType>
               </xs:element>
@@ -261,11 +258,11 @@
           </xs:complexType>
         </xs:element>
       </xs:all>
+    <xs:attribute name="name" type="xs:string" use="required" />
   </xs:complexType>
 
   <xs:complexType name="Solution">
     <xs:all>
-      <xs:element name="FilePath" type="xs:string"/>
       <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
       <xs:element name="Projects">
@@ -276,11 +273,12 @@
         </xs:complexType>
       </xs:element>
     </xs:all>
+    <xs:attribute name="filePath" type="xs:string" use="required" />
   </xs:complexType>
 
   <xs:element name="AsyncGenerator">
     <xs:complexType>
-      <xs:sequence>
+      <xs:all>
         <xs:element name="Solution" type="Solution" />
         <xs:element name="MethodRules" minOccurs="0">
           <xs:complexType>
@@ -296,7 +294,8 @@
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-      </xs:sequence>
+        <xs:element name="CSharpScript" type="xs:string" nillable="true" minOccurs="0" />
+      </xs:all>
     </xs:complexType>
   </xs:element>
 

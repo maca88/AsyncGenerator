@@ -11,9 +11,16 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.FileConfiguration
 {
-	public static class FileConfigurator
+	public abstract class FileConfigurator : ISolutionFileConfigurator
 	{
-		public static void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration)
+		public abstract AsyncGenerator Parse(string content);
+
+		public string GetSolutionPath(AsyncGenerator configuration)
+		{
+			return configuration.Solution.FilePath;
+		}
+
+		public virtual void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration, Func<string, Assembly> codeCompiler)
 		{
 			if (configuration.Solution.ApplyChanges.HasValue)
 			{
@@ -24,14 +31,20 @@ namespace AsyncGenerator.Core.FileConfiguration
 				solutionConfiguration.ConcurrentRun(configuration.Solution.ConcurrentRun.Value);
 			}
 
+			Assembly assembly = null;
+			if (!string.IsNullOrEmpty(configuration.CSharpScript))
+			{
+				assembly = codeCompiler(configuration.CSharpScript);
+			}
+
 			// Configure projects
 			foreach (var projectConfig in configuration.Solution.Projects)
 			{
-				solutionConfiguration.ConfigureProject(projectConfig.Name, o => Configure(configuration, projectConfig, o));
+				solutionConfiguration.ConfigureProject(projectConfig.Name, o => Configure(configuration, projectConfig, o, assembly));
 			}
 		}
 
-		private static void Configure(AsyncGenerator globalConfig, Project config, IFluentProjectConfiguration fluentConfig)
+		private static void Configure(AsyncGenerator globalConfig, Project config, IFluentProjectConfiguration fluentConfig, Assembly dynamicAssembly)
 		{
 			fluentConfig.ConfigureAnalyzation(o => Configure(globalConfig,config.Analyzation, o));
 			fluentConfig.ConfigureTransformation(o => Configure(config.Transformation, o));
@@ -51,19 +64,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					throw new DllNotFoundException($"Assembly with name {plugin.AssemblyName} was not found.");
 				}
-				var assembly = string.IsNullOrEmpty(plugin.AssemblyName)
-					? Assembly.GetExecutingAssembly()
-					: assemblies[plugin.AssemblyName];
+				if (string.IsNullOrEmpty(plugin.AssemblyName) && dynamicAssembly == null)
+				{
+					throw new InvalidOperationException($"Assembly name must be provided for type {plugin.Type}.");
+				}
 
-				var type = assembly.GetExportedTypes().FirstOrDefault(o => o.FullName == plugin.FullTypeName);
+				var type = string.IsNullOrEmpty(plugin.AssemblyName)
+					? dynamicAssembly.GetExportedTypes().FirstOrDefault(o => o.Name == plugin.Type)
+					: assemblies[plugin.AssemblyName].GetExportedTypes().FirstOrDefault(o => o.FullName == plugin.Type);
 				if (type == null)
 				{
-					throw new InvalidOperationException($"Type {plugin.FullTypeName} was not found inside assembly {plugin.AssemblyName}. Hint: Make sure that the type is public.");
+					throw new InvalidOperationException($"Type {plugin.Type} was not found inside assembly {plugin.AssemblyName}. Hint: Make sure that the type is public.");
 				}
 				var pluginInstance = Activator.CreateInstance(type) as IPlugin;
 				if (pluginInstance == null)
 				{
-					throw new InvalidOperationException($"Type {plugin.FullTypeName} from assembly {plugin.AssemblyName} does not implement IPlugin interaface");
+					throw new InvalidOperationException($"Type {plugin.Type} from assembly {plugin.AssemblyName} does not implement IPlugin interaface");
 				}
 				fluentConfig.RegisterPlugin(pluginInstance);
 			}
@@ -141,13 +157,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.Disable();
 			}
-			if (!string.IsNullOrEmpty(config.AsyncLock.FullTypeName))
+			if (!string.IsNullOrEmpty(config.AsyncLock.Type))
 			{
-				fluentConfig.AsyncLock(config.AsyncLock.FullTypeName, config.AsyncLock.MethodName);
+				fluentConfig.AsyncLock(config.AsyncLock.Type, config.AsyncLock.MethodName);
 			}
 		}
 
-		private static Func<IMethodSymbolInfo, Core.MethodCancellationToken> CreateMethodConversionFunction(AsyncGenerator globalConfig, IList<MethodCancellationTokenFilter> filters)
+		private static Func<IMethodSymbolInfo, MethodCancellationToken> CreateMethodConversionFunction(AsyncGenerator globalConfig, IList<MethodCancellationTokenFilter> filters)
 		{
 			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
@@ -160,14 +176,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 					}
 					if (CanApply(symbol.Symbol, filter, rules))
 					{
-						return Convert(filter.Parameter);
+						return filter.Parameter;
 					}
 				}
-				return Core.MethodCancellationToken.Optional;
+				return MethodCancellationToken.Optional;
 			};
 		}
 
-		private static Func<INamedTypeSymbol, Core.TypeConversion> CreateTypeConversionFunction(AsyncGenerator globalConfig, IList<TypeConversionFilter> filters)
+		private static Func<INamedTypeSymbol, TypeConversion> CreateTypeConversionFunction(AsyncGenerator globalConfig, IList<TypeConversionFilter> filters)
 		{
 			var rules = globalConfig.TypeRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
@@ -176,10 +192,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					if (CanApply(symbol, filter, rules))
 					{
-						return Convert(filter.Conversion);
+						return filter.Conversion;
 					}
 				}
-				return Core.TypeConversion.Unknown;
+				return TypeConversion.Unknown;
 			};
 		}
 
@@ -247,7 +263,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			};
 		}
 
-		private static Predicate<IMethodSymbol> CreateMethodPredicate(AsyncGenerator globalConfig, IList<MethodConversionFilter> filters, bool defaultValue)
+		private static Func<IMethodSymbol, MethodConversion> CreateMethodConversionFunction(AsyncGenerator globalConfig, IList<MethodConversionFilter> filters)
 		{
 			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
@@ -256,72 +272,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					if (CanApply(symbol, filter, rules))
 					{
-						return true;
+						return filter.Conversion;
 					}
 				}
-				return defaultValue;
+				return MethodConversion.Unknown; // Default value
 			};
-		}
-
-		private static Func<IMethodSymbol, Core.MethodConversion> CreateMethodConversionFunction(AsyncGenerator globalConfig, IList<MethodConversionFilter> filters)
-		{
-			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
-			return symbol =>
-			{
-				foreach (var filter in filters)
-				{
-					if (CanApply(symbol, filter, rules))
-					{
-						return Convert(filter.Conversion);
-					}
-				}
-				return Core.MethodConversion.Unknown; // Default value
-			};
-		}
-
-		private static Core.MethodConversion Convert(MethodConversion conversion)
-		{
-			switch (conversion)
-			{
-				case MethodConversion.Ignore:
-					return Core.MethodConversion.Ignore;
-				case MethodConversion.ToAsync:
-					return Core.MethodConversion.ToAsync;
-				case MethodConversion.Smart:
-					return Core.MethodConversion.Smart;
-				default:
-					return Core.MethodConversion.Unknown;
-			}
-		}
-
-		private static Core.TypeConversion Convert(TypeConversion conversion)
-		{
-			switch (conversion)
-			{
-				case TypeConversion.Ignore:
-					return Core.TypeConversion.Ignore;
-				case TypeConversion.NewType:
-					return Core.TypeConversion.NewType;
-				case TypeConversion.Partial:
-					return Core.TypeConversion.Partial;
-				default:
-					return Core.TypeConversion.Unknown;
-			}
-		}
-
-		private static Core.MethodCancellationToken Convert(MethodCancellationToken conversion)
-		{
-			switch (conversion)
-			{
-				case MethodCancellationToken.ForwardNone:
-					return Core.MethodCancellationToken.ForwardNone;
-				case MethodCancellationToken.Required:
-					return Core.MethodCancellationToken.Required;
-				case MethodCancellationToken.SealedForwardNone:
-					return Core.MethodCancellationToken.SealedForwardNone;
-				default:
-					return Core.MethodCancellationToken.Optional;
-			}
 		}
 
 		private static bool CanApply(IMethodSymbol symbol, MethodFilter filter, Dictionary<string, List<MethodFilter>> rules)

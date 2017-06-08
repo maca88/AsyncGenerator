@@ -1,28 +1,39 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Xml;
+using System.Xml.Schema;
 using System.Xml.Serialization;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.FileConfiguration.Internal;
 
 namespace AsyncGenerator.Core.FileConfiguration
 {
-	public class XmlFileConfigurator : ISolutionFileConfigurator
+	public class XmlFileConfigurator : FileConfigurator
 	{
-		public AsyncGenerator Parse(string content)
+		private readonly XmlValidator _xmlValidator;
+
+		public XmlFileConfigurator()
 		{
+			_xmlValidator = new XmlValidator();
+			_xmlValidator.LoadEmbeddedSchemas(typeof(XmlFileConfigurator).Assembly, "AsyncGenerator.Core.FileConfiguration");
+		}
+
+		public override AsyncGenerator Parse(string content)
+		{
+			Validate(content);
 			return Deserialize<AsyncGenerator>(content);
 		}
 
-		public string GetSolutionPath(AsyncGenerator configuration)
+		private void Validate(string content)
 		{
-			return configuration.Solution.FilePath;
-		}
-
-		public void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration)
-		{
-			FileConfigurator.Configure(configuration, solutionConfiguration);
+			var result = _xmlValidator.Validate(content);
+			if (!result.IsValid)
+			{
+				throw new XmlSchemaValidationException(result.ToString());
+			}
 		}
 
 		private static T Deserialize<T>(string xmlString, Encoding encoding = null)

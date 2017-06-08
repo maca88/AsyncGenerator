@@ -11,6 +11,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot(Namespace = "https://github.com/maca88/AsyncGenerator", IsNullable = false)]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class AsyncGenerator
 	{
 		[XmlElement("Solution")]
@@ -19,6 +20,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public List<MethodRule> MethodRules { get; set; }
 		[XmlArrayItem(IsNullable = false)]
 		public List<TypeRule> TypeRules { get; set; }
+		[XmlElement("CSharpScript", IsNullable = true)]
+		public string CSharpScript { get; set; }
 
 		public AsyncGenerator()
 		{
@@ -33,9 +36,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Solution")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Solution
 	{
-		[XmlElement("FilePath")]
+		[XmlAttribute(AttributeName = "filePath")]
 		public string FilePath { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? ConcurrentRun { get; set; }
@@ -55,9 +59,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Project")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Project
 	{
-		[XmlElement("Name")]
+		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
 		[XmlElement("Analyzation")]
 		public Analyzation Analyzation { get; set; }
@@ -79,6 +84,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Analyzation")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Analyzation
 	{
 		[XmlArrayItem("Method", IsNullable = false)]
@@ -117,21 +123,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodConversionFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodConversionFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "conversion")]
 		public MethodConversion Conversion { get; set; }
-	}
-
-	[Serializable]
-	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("MethodConversion")]
-	public enum MethodConversion
-	{
-		Ignore,
-		Unknown,
-		Smart,
-		ToAsync
 	}
 
 	[XmlInclude(typeof(MethodPreserveReturnTypeFilter))]
@@ -144,6 +140,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodFilter : MemberFilter
 	{
 	}
@@ -162,6 +159,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MemberFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MemberFilter
 	{
 		[XmlAttribute(AttributeName = "name")]
@@ -189,6 +187,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Rule")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Rule
 	{
 		[XmlAttribute(AttributeName = "name")]
@@ -200,6 +199,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeRule")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class TypeRule : Rule
 	{
 		[XmlArrayItem("Filter", IsNullable = false)]
@@ -217,6 +217,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class TypeFilter : MemberFilter
 	{
 		[XmlAttribute(AttributeName = "anyInterfaceRule")]
@@ -230,6 +231,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeConversionFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class TypeConversionFilter : TypeFilter
 	{
 		[XmlAttribute(AttributeName = "conversion")]
@@ -241,6 +243,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TypeScanMissingAsyncMembersFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class TypeScanMissingAsyncMembersFilter : TypeFilter
 	{
 		[XmlAttribute(AttributeName = "scan")]
@@ -248,21 +251,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 	}
 
 	[Serializable]
-	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("TypeConversion")]
-	public enum TypeConversion
-	{
-		Ignore,
-		Unknown,
-		Partial,
-		NewType
-	}
-
-	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodRule")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodRule : Rule
 	{
 		[XmlArrayItem("Filter", IsNullable = false)]
@@ -279,6 +272,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Transformation")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Transformation
 	{
 		[XmlElement(IsNullable = true)]
@@ -303,11 +297,12 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("TransformationAsyncLock")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class TransformationAsyncLock
 	{
-		[XmlElement("FullTypeName")]
-		public string FullTypeName { get; set; }
-		[XmlElement("MethodName")]
+		[XmlAttribute("type")]
+		public string Type { get; set; }
+		[XmlAttribute("methodName")]
 		public string MethodName { get; set; }
 	}
 
@@ -316,6 +311,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("CancellationTokens")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class CancellationTokens
 	{
 		[XmlElement("Guards", IsNullable = true)]
@@ -337,6 +333,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodCancellationTokenFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodCancellationTokenFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "anyInterfaceRule")]
@@ -350,6 +347,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodPreserveReturnTypeFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodPreserveReturnTypeFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "preserve")]
@@ -357,21 +355,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 	}
 
 	[Serializable]
-	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("MethodCancellationToken")]
-	public enum MethodCancellationToken
-	{
-		Optional,
-		Required,
-		ForwardNone,
-		SealedForwardNone,
-	}
-
-	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("DocumentFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class DocumentFilter
 	{
 		[XmlAttribute(AttributeName = "filePath")]
@@ -389,6 +377,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodRequiresTokenFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodRequiresTokenFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "tokenRequired")]
@@ -400,6 +389,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodSearchFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodSearchFilter : MethodFilter
 	{
 		[XmlAttribute(AttributeName = "search")]
@@ -408,13 +398,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 	[Serializable]
 	[DebuggerStepThrough]
-	[DesignerCategoryAttribute("code")]
-	[XmlTypeAttribute(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRootAttribute("ProjectPlugin")]
+	[DesignerCategory("code")]
+	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("ProjectPlugin")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class ProjectPlugin
 	{
-		[XmlAttribute(AttributeName = "fullTypeName")]
-		public string FullTypeName { get; set; }
+		[XmlAttribute(AttributeName = "type")]
+		public string Type { get; set; }
 		[XmlAttribute(AttributeName = "assemblyName")]
 		public string AssemblyName { get; set; }
 	}

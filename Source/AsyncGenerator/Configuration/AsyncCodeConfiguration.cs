@@ -6,6 +6,7 @@ using System.Reflection;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.FileConfiguration;
+using AsyncGenerator.Internal;
 
 namespace AsyncGenerator.Configuration
 {
@@ -61,12 +62,12 @@ namespace AsyncGenerator.Configuration
 				throw new ArgumentNullException(nameof(filePath));
 			}
 
-			filePath = Path.GetFullPath(GetExecutingDirectory() + filePath);
+			filePath = Path.GetFullPath(Path.Combine(GetExecutingDirectory(), filePath));
 			if (!File.Exists(filePath))
 			{
 				throw new FileNotFoundException($"Configuration file not found. Path:'{filePath}'");
 			}
-			return ConfigureSolutionFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath));
+			return ConfigureSolutionFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath) + @"\");
 		}
 
 		private AsyncCodeConfiguration ConfigureSolutionFromStream(Stream stream, ISolutionFileConfigurator fileConfigurator, string basePath = null)
@@ -88,8 +89,8 @@ namespace AsyncGenerator.Configuration
 			}
 			var solutionFilePath = fileConfigurator.GetSolutionPath(configuration);
 
-			solutionFilePath = Path.GetFullPath(basePath + solutionFilePath);
-			ConfigureSolution(solutionFilePath, o => fileConfigurator.Configure(configuration, o));
+			solutionFilePath = Path.GetFullPath(Path.Combine(basePath, solutionFilePath));
+			ConfigureSolution(solutionFilePath, o => fileConfigurator.Configure(configuration, o, SourceCodeCompiler.Compile));
 			return this;
 		}
 
@@ -98,7 +99,12 @@ namespace AsyncGenerator.Configuration
 			var codeBase = Assembly.GetExecutingAssembly().CodeBase;
 			var uri = new UriBuilder(codeBase);
 			var assemblyPath = Uri.UnescapeDataString(uri.Path);
-			return Path.GetDirectoryName(assemblyPath);
+			var dir = Path.GetDirectoryName(assemblyPath);
+			if (!dir.EndsWith(@"\"))
+			{
+				dir += @"\";
+			}
+			return dir;
 		}
 	}
 }

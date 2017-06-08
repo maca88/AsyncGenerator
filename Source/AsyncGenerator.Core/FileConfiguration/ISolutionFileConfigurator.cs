@@ -1,4 +1,6 @@
-﻿using AsyncGenerator.Core.Configuration;
+﻿using System;
+using System.Reflection;
+using AsyncGenerator.Core.Configuration;
 
 namespace AsyncGenerator.Core.FileConfiguration
 {
@@ -8,6 +10,6 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		string GetSolutionPath(AsyncGenerator configuration);
 
-		void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration);
+		void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration, Func<string, Assembly> codeCompiler);
 	}
 }

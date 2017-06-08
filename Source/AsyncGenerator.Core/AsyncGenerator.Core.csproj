@@ -167,6 +167,8 @@
     <Compile Include="Configuration\IProjectConfiguration.cs" />
     <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\ISolutionConfiguration.cs" />
+    <Compile Include="FileConfiguration\Internal\XmlValidationResult.cs" />
+    <Compile Include="FileConfiguration\Internal\XmlValidator.cs" />
     <Compile Include="FileConfiguration\ISolutionFileConfigurator.cs" />
     <Compile Include="FileConfiguration\XmlFileConfigurator.cs" />
     <Compile Include="MethodCancellationToken.cs" />
@@ -195,9 +197,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="FileConfiguration\ConfigurationShema.xsd">
+    <EmbeddedResource Include="FileConfiguration\ConfigurationShema.xsd">
       <SubType>Designer</SubType>
-    </None>
+    </EmbeddedResource>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

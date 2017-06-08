@@ -1,25 +1,17 @@
-﻿using AsyncGenerator.Core.Configuration;
+﻿using System;
+using System.Reflection;
+using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.FileConfiguration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace AsyncGenerator.Yaml
 {
-	public class YamlFileConfigurator : ISolutionFileConfigurator
+	public class YamlFileConfigurator : FileConfigurator
 	{
-		public Core.FileConfiguration.AsyncGenerator Parse(string content)
+		public override Core.FileConfiguration.AsyncGenerator Parse(string content)
 		{
 			return Deserialize<Core.FileConfiguration.AsyncGenerator>(content);
-		}
-
-		public string GetSolutionPath(Core.FileConfiguration.AsyncGenerator configuration)
-		{
-			return configuration.Solution.FilePath;
-		}
-
-		public void Configure(Core.FileConfiguration.AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration)
-		{
-			FileConfigurator.Configure(configuration, solutionConfiguration);
 		}
 
 		private static T Deserialize<T>(string content)

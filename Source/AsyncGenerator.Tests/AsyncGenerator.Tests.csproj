@@ -309,6 +309,7 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
+    <EmbeddedResource Include="ExternalProjects\NHibernate\Configuration.yaml" />
     <None Include="FileComments\TestCase.cs.xmldoc" />
     <None Include="FileComments\Input\TestCase.cs.xmldoc" />
     <None Include="packages.config" />
@@ -322,6 +323,10 @@
     <ProjectReference Include="..\AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj">
       <Project>{a183d706-0dbb-4f6b-92a5-6359660255d7}</Project>
       <Name>AsyncGenerator.TestCases</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AsyncGenerator.Yaml\AsyncGenerator.Yaml.csproj">
+      <Project>{33b6a1ef-50a4-4de3-929c-5e179e240b48}</Project>
+      <Name>AsyncGenerator.Yaml</Name>
     </ProjectReference>
     <ProjectReference Include="..\AsyncGenerator\AsyncGenerator.csproj">
       <Project>{9d321ea8-54ae-4741-86a8-12198551ad67}</Project>

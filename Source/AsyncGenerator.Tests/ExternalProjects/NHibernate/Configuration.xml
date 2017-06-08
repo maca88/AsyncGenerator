@@ -1,10 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <AsyncGenerator xmlns="https://github.com/maca88/AsyncGenerator">
-  <Solution>
-    <FilePath>..\..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln</FilePath>
+  <Solution filePath="..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln">
     <Projects>
-      <Project>
-        <Name>NHibernate</Name>
+      <Project name="NHibernate">
         <Analyzation>
           <MethodConversion>
             <Method conversion="Ignore" hasAttributeName="ObsoleteAttribute" />
@@ -82,20 +80,16 @@
           <ScanMethodBody>true</ScanMethodBody>
         </Analyzation>
         <Transformation>
-          <AsyncLock>
-            <MethodName>LockAsync</MethodName>
-            <FullTypeName>NHibernate.Util.AsyncLock</FullTypeName>
-          </AsyncLock>
+          <AsyncLock type="NHibernate.Util.AsyncLock" methodName="LockAsync" />
           <LocalFunctions>true</LocalFunctions>
           <ConfigureAwaitArgument>false</ConfigureAwaitArgument>
         </Transformation>
         <RegisterPlugin>
-          <Plugin fullTypeName="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" /> <!--Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory-->
+          <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" /> <!--Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory-->
         </RegisterPlugin>
       </Project>
 
-      <Project>
-        <Name>NHibernate.DomainModel</Name>
+      <Project name="NHibernate.DomainModel">
         <Analyzation>
           <ScanMethodBody>true</ScanMethodBody>
           <ScanForMissingAsyncMembers>
@@ -104,8 +98,7 @@
         </Analyzation>
       </Project>
 
-      <Project>
-        <Name>NHibernate.Test</Name>
+      <Project name="NHibernate.Test">
         <Analyzation>
           <MethodConversion>
             <Method conversion="Ignore" hasAttributeName="IgnoreAttribute" />
@@ -143,9 +136,9 @@
           </TypeConversion>
         </Analyzation>
         <RegisterPlugin>
-          <Plugin fullTypeName="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" />
-          <Plugin fullTypeName="AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder" assemblyName="AsyncGenerator.Tests" />
-          <Plugin fullTypeName="AsyncGenerator.Tests.ExternalProjects.NHibernate.NUnitAsyncCountepartFinder" assemblyName="AsyncGenerator.Tests" />
+          <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" />
+          <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder" assemblyName="AsyncGenerator.Tests" />
+          <Plugin type="NUnitAsyncCountepartFinder" />
         </RegisterPlugin>
       </Project>
     </Projects>
@@ -195,4 +188,37 @@
       </Filters>
     </TypeRule>
   </TypeRules>
+  <CSharpScript>
+    <![CDATA[
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
+using Microsoft.CodeAnalysis;
+
+public class NUnitAsyncCountepartFinder : IAsyncCounterpartsFinder
+{
+	public Task Initialize(Project project, IProjectConfiguration configuration)
+	{
+		return Task.CompletedTask;
+	}
+
+	public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
+	{
+		if (syncMethodSymbol.Name != "That" || syncMethodSymbol.ContainingType.Name != "Assert" ||syncMethodSymbol.ContainingType.ContainingNamespace.ToString() != "NUnit.Framework")
+		{
+			yield break;
+		}
+
+		var firstParamType = syncMethodSymbol.Parameters.First().Type;
+		if (firstParamType.Name == "ActualValueDelegate" || firstParamType.Name == "TestDelegate")
+		{
+			yield return syncMethodSymbol;
+		}
+	}
+}
+]]>
+  </CSharpScript>
 </AsyncGenerator>
