@@ -1,15 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.FileConfiguration;
 using AsyncGenerator.Core.FileConfiguration.Internal;
 
-namespace AsyncGenerator.Core.FileConfiguration
+namespace AsyncGenerator.Core.Configuration
 {
 	public class XmlFileConfigurator : FileConfigurator
 	{
@@ -21,10 +20,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			_xmlValidator.LoadEmbeddedSchemas(typeof(XmlFileConfigurator).Assembly, "AsyncGenerator.Core.FileConfiguration");
 		}
 
-		public override AsyncGenerator Parse(string content)
+		public override FileConfiguration.AsyncGenerator Parse(string content)
 		{
 			Validate(content);
-			return Deserialize<AsyncGenerator>(content);
+			return Deserialize<FileConfiguration.AsyncGenerator>(content);
 		}
 
 		private void Validate(string content)

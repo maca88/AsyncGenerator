@@ -169,8 +169,8 @@
     <Compile Include="Configuration\ISolutionConfiguration.cs" />
     <Compile Include="FileConfiguration\Internal\XmlValidationResult.cs" />
     <Compile Include="FileConfiguration\Internal\XmlValidator.cs" />
-    <Compile Include="FileConfiguration\ISolutionFileConfigurator.cs" />
-    <Compile Include="FileConfiguration\XmlFileConfigurator.cs" />
+    <Compile Include="Configuration\ISolutionFileConfigurator.cs" />
+    <Compile Include="Configuration\XmlFileConfigurator.cs" />
     <Compile Include="MethodCancellationToken.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="NamespaceConversion.cs" />
@@ -206,6 +206,5 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

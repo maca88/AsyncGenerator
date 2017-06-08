@@ -1,11 +1,8 @@
-﻿using System;
-using System.Reflection;
-using AsyncGenerator.Core.Configuration;
-using AsyncGenerator.Core.FileConfiguration;
+﻿using AsyncGenerator.Core.FileConfiguration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace AsyncGenerator.Yaml
+namespace AsyncGenerator.Configuration.Yaml
 {
 	public class YamlFileConfigurator : FileConfigurator
 	{

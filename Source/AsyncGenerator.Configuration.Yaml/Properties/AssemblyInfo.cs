@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("AsyncGenerator.Yaml")]
+[assembly: AssemblyTitle("AsyncGenerator.Configuration.Yaml")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("AsyncGenerator.Yaml")]
+[assembly: AssemblyProduct("AsyncGenerator.Configuration.Yaml")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("33b6a1ef-50a4-4de3-929c-5e179e240b48")]
+[assembly: Guid("c130cf5a-6543-4396-99c3-e223ff3c5eee")]
 
 // Version information for an assembly consists of the following four values:
 //
