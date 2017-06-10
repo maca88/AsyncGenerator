@@ -16,12 +16,13 @@ namespace AsyncGenerator.Extensions.Internal
 			if (configureAwaitArgument != null)
 			{
 				awaitNode = InvocationExpression(
-						MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, awaitNode, IdentifierName("ConfigureAwait")))
+						MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, awaitNode.WithTrailingTrivia(), IdentifierName("ConfigureAwait")))
 					.WithArgumentList(
 						ArgumentList(
 							SingletonSeparatedList(
 								Argument(configureAwaitArgument))
-						));
+						))
+						.WithTrailingTrivia(awaitNode.GetTrailingTrivia());
 			}
 
 			var nextToken = (expression.Parent).ChildNodesAndTokens().FirstOrDefault(o => o.SpanStart >= expression.Span.End); // token can be in a new line

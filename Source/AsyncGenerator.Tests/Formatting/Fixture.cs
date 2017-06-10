@@ -58,5 +58,29 @@ namespace AsyncGenerator.Tests.Formatting
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestConfigureAwaitAfterTransformation()
+		{
+			var config = Configure(nameof(ConfigureAwait), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(symbol => true)
+				)
+				.ConfigureTransformation(t => t
+					.ConfigureAwaitArgument(false)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ConfigureAwait)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
+		}
 	}
 }
