@@ -102,7 +102,10 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						.ConfigureTransformation(t => t
 							.AsyncLock("NHibernate.Util.AsyncLock", "LockAsync")
 							.LocalFunctions(true)
-							.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
+							.ConfigureAwaitArgument(false)
+							.DocumentationComments(d => d
+								.AddOrReplaceMethodSummary(GetMethodSummary)
+							)
 						)
 						.RegisterPlugin<TransactionScopeRewriter>() // Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory
 					)
@@ -177,6 +180,24 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		static string GetMethodSummary(IMethodSymbol symbol)
+		{
+			switch (symbol.ContainingType.Name)
+			{
+				case "AdoTransaction":
+					if (symbol.Name == "Commit")
+					{
+						return @"
+/// Commits the <see cref=""ITransaction""/> by flushing asynchronously the <see cref=""ISession""/>
+/// then committing synchronously the <see cref=""DbTransaction""/>.
+";
+					}
+					break;
+
+			}
+			return null;
 		}
 
 		static bool IsPubliclyExposedType(ISymbol type)

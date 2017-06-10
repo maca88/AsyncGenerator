@@ -46,8 +46,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		private static void Configure(AsyncGenerator globalConfig, Project config, IFluentProjectConfiguration fluentConfig, Assembly dynamicAssembly)
 		{
-			fluentConfig.ConfigureAnalyzation(o => Configure(globalConfig,config.Analyzation, o));
-			fluentConfig.ConfigureTransformation(o => Configure(config.Transformation, o));
+			fluentConfig.ConfigureAnalyzation(o => Configure(globalConfig, config.Analyzation, o));
+			fluentConfig.ConfigureTransformation(o => Configure(globalConfig, config.Transformation, o));
 
 			if (!config.RegisterPlugin.Any())
 			{
@@ -101,9 +101,9 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			fluentConfig.CancellationTokens(o => Configure(globalConfig, config.CancellationTokens, o));
 
-			if (config.DocumentSelection.Any())
+			if (config.IgnoreDocuments.Any())
 			{
-				fluentConfig.DocumentSelection(CreateDocumentSelectionPredicate(config.DocumentSelection));
+				fluentConfig.DocumentSelection(CreateDocumentPredicate(config.IgnoreDocuments, false));
 			}
 			if (config.MethodConversion.Any())
 			{
@@ -111,11 +111,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.PreserveReturnType.Any())
 			{
-				fluentConfig.PreserveReturnType(CreateMethodPredicate(globalConfig, config.PreserveReturnType));
+				fluentConfig.PreserveReturnType(CreateMethodPredicate(globalConfig, config.PreserveReturnType, true));
 			}
-			if (config.SearchForAsyncCounterparts.Any())
+			if (config.IgnoreSearchForAsyncCounterparts.Any())
 			{
-				fluentConfig.SearchForAsyncCounterparts(CreateMethodPredicate(globalConfig, config.SearchForAsyncCounterparts, true));
+				fluentConfig.SearchForAsyncCounterparts(CreateMethodPredicate(globalConfig, config.IgnoreSearchForAsyncCounterparts, false));
 			}
 			if (config.TypeConversion.Any())
 			{
@@ -131,15 +131,16 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.MethodParameter.Any())
 			{
-				fluentConfig.ParameterGeneration(CreateMethodConversionFunction(globalConfig, config.MethodParameter));
+				fluentConfig.ParameterGeneration(CreateParameterGenerationFunction(globalConfig, config.MethodParameter));
 			}
-			if (config.RequiresCancellationToken.Any())
+			if (config.WithoutCancellationToken.Any() || config.RequiresCancellationToken.Any())
 			{
-				fluentConfig.RequiresCancellationToken(CreateMethodPredicate(globalConfig, config.RequiresCancellationToken));
+				fluentConfig.RequiresCancellationToken(CreateMethodNullablePredicate(globalConfig, 
+					config.WithoutCancellationToken, config.RequiresCancellationToken));
 			}
 		}
 
-		private static void Configure(Transformation config, IFluentProjectTransformConfiguration fluentConfig)
+		private static void Configure(AsyncGenerator globalConfig, Transformation config, IFluentProjectTransformConfiguration fluentConfig)
 		{
 			if (config.LocalFunctions.HasValue)
 			{
@@ -161,9 +162,47 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.AsyncLock(config.AsyncLock.Type, config.AsyncLock.MethodName);
 			}
+			fluentConfig.DocumentationComments(o => Configure(globalConfig, config. DocumentationComments, o));
 		}
 
-		private static Func<IMethodSymbolInfo, MethodCancellationToken> CreateMethodConversionFunction(AsyncGenerator globalConfig, IList<MethodCancellationTokenFilter> filters)
+		private static void Configure(AsyncGenerator globalConfig, DocumentationComments config, IFluentProjectDocumentationCommentConfiguration fluentConfig)
+		{
+			if (config.AddOrReplaceMethodRemarks.Any())
+			{
+				fluentConfig.AddOrReplaceMethodRemarks(CreateMethodContentFunction(globalConfig, config.AddOrReplaceMethodRemarks));
+			}
+			if (config.RemoveMethodRemarks.Any())
+			{
+				fluentConfig.RemoveMethodRemarks(CreateMethodPredicate(globalConfig, config.RemoveMethodRemarks, true));
+			}
+
+			if (config.AddOrReplaceMethodSummary.Any())
+			{
+				fluentConfig.AddOrReplaceMethodSummary(CreateMethodContentFunction(globalConfig, config.AddOrReplaceMethodSummary));
+			}
+			if (config.RemoveMethodSummary.Any())
+			{
+				fluentConfig.RemoveMethodSummary(CreateMethodPredicate(globalConfig, config.RemoveMethodSummary, true));
+			}
+		}
+
+		private static Func<IMethodSymbol, string> CreateMethodContentFunction(AsyncGenerator globalConfig, List<MethodContentFilter> filters)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.Content;
+					}
+				}
+				return null;
+			};
+		}
+
+		private static Func<IMethodSymbolInfo, MethodCancellationToken> CreateParameterGenerationFunction(AsyncGenerator globalConfig, IList<MethodCancellationTokenFilter> filters)
 		{
 			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
@@ -199,23 +238,31 @@ namespace AsyncGenerator.Core.FileConfiguration
 			};
 		}
 
-		private static Func<IMethodSymbol, bool?> CreateMethodPredicate(AsyncGenerator globalConfig, IList<MethodRequiresTokenFilter> filters)
+		private static Func<IMethodSymbol, bool?> CreateMethodNullablePredicate(AsyncGenerator globalConfig, 
+			IList<MethodFilter> falseFilters, IList<MethodFilter> trueFilters)
 		{
 			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
 			{
-				foreach (var filter in filters)
+				foreach (var filter in falseFilters)
 				{
 					if (CanApply(symbol, filter, rules))
 					{
-						return filter.TokenRequired;
+						return false;
+					}
+				}
+				foreach (var filter in trueFilters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return true;
 					}
 				}
 				return null;
 			};
 		}
 
-		private static Predicate<INamedTypeSymbol> CreateTypePredicate(AsyncGenerator globalConfig, IList<TypeScanMissingAsyncMembersFilter> filters)
+		private static Predicate<INamedTypeSymbol> CreateTypePredicate(AsyncGenerator globalConfig, IList<TypeFilter> filters)
 		{
 			var rules = globalConfig.TypeRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
@@ -224,14 +271,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					if (CanApply(symbol, filter, rules))
 					{
-						return filter.Scan;
+						return true;
 					}
 				}
 				return false;
 			};
 		}
 
-		private static Predicate<IMethodSymbol> CreateMethodPredicate(AsyncGenerator globalConfig, IList<MethodPreserveReturnTypeFilter> filters)
+		private static Predicate<IMethodSymbol> CreateMethodPredicate(AsyncGenerator globalConfig, IList<MethodFilter> filters, bool validValue)
 		{
 			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
 			return symbol =>
@@ -240,26 +287,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					if (CanApply(symbol, filter, rules))
 					{
-						return filter.Preserve;
+						return validValue;
 					}
 				}
-				return false;
-			};
-		}
-
-		private static Predicate<IMethodSymbol> CreateMethodPredicate(AsyncGenerator globalConfig, IList<MethodSearchFilter> filters, bool defaultValue)
-		{
-			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
-			return symbol =>
-			{
-				foreach (var filter in filters)
-				{
-					if (CanApply(symbol, filter, rules))
-					{
-						return filter.Search;
-					}
-				}
-				return defaultValue;
+				return !validValue;
 			};
 		}
 
@@ -279,8 +310,37 @@ namespace AsyncGenerator.Core.FileConfiguration
 			};
 		}
 
+		private static Predicate<Document> CreateDocumentPredicate(IList<DocumentFilter> filters, bool validValue)
+		{
+			return document =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(document, filter))
+					{
+						return validValue;
+					}
+				}
+				return !validValue;
+			};
+		}
+
+		internal static IEnumerable<ITypeSymbol> GetBaseTypes(ITypeSymbol type)
+		{
+			var current = type.BaseType;
+			while (current != null)
+			{
+				yield return current;
+				current = current.BaseType;
+			}
+		}
+
 		private static bool CanApply(IMethodSymbol symbol, MethodFilter filter, Dictionary<string, List<MethodFilter>> rules)
 		{
+			if (filter.All)
+			{
+				return true;
+			}
 			if (!CanApply(symbol, filter))
 			{
 				return false;
@@ -294,6 +354,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		private static bool CanApply(ITypeSymbol symbol, TypeFilter filter, IReadOnlyDictionary<string, List<TypeFilter>> rules)
 		{
+			if (filter.All)
+			{
+				return true;
+			}
 			if (!CanApply(symbol, filter))
 			{
 				return false;
@@ -311,16 +375,6 @@ namespace AsyncGenerator.Core.FileConfiguration
 				return false;
 			}
 			return true;
-		}
-
-		internal static IEnumerable<ITypeSymbol> GetBaseTypes(ITypeSymbol type)
-		{
-			var current = type.BaseType;
-			while (current != null)
-			{
-				yield return current;
-				current = current.BaseType;
-			}
 		}
 
 		private static bool CanApply(ISymbol symbol, MemberFilter filter)
@@ -356,30 +410,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 			return true;
 		}
 
-		private static Predicate<Document> CreateDocumentSelectionPredicate(IList<DocumentFilter> filters)
+		private static bool CanApply(Document document, DocumentFilter filter)
 		{
-			return document =>
+			if (!string.IsNullOrEmpty(filter.Name) && filter.Name != document.Name)
 			{
-				foreach (var filter in filters)
-				{
-					if (!string.IsNullOrEmpty(filter.Name) && filter.Name != document.Name)
-					{
-						continue;
-					}
-					if (!string.IsNullOrEmpty(filter.FilePath) && filter.FilePath != document.FilePath)
-					{
-						continue;
-					}
-					if (!string.IsNullOrEmpty(filter.FilePathEndsWith) && !document.FilePath.EndsWith(filter.FilePathEndsWith))
-					{
-						continue;
-					}
-					return filter.Select;
-				}
-				return true; // Default value
-			};
+				return false;
+			}
+			if (!string.IsNullOrEmpty(filter.FilePath) && filter.FilePath != document.FilePath)
+			{
+				return false;
+			}
+			if (!string.IsNullOrEmpty(filter.FilePathEndsWith) && !document.FilePath.EndsWith(filter.FilePathEndsWith))
+			{
+				return false;
+			}
+			return true;
 		}
-
-		
 	}
 }
