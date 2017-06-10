@@ -189,7 +189,7 @@ namespace AsyncGenerator.Extensions.Internal
 
 		internal static SyntaxTrivia GetLeadingWhitespace(this SyntaxNode node)
 		{
-			return node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
+			return node.GetLeadingTrivia().LastOrDefault(o => o.IsKind(SyntaxKind.WhitespaceTrivia));
 		}
 
 		internal static SyntaxTrivia GetEndOfLine(this SyntaxNode node)

@@ -224,6 +224,7 @@
     <Compile Include="Formatting\Input\Async.cs" />
     <Compile Include="Formatting\Input\Await.cs" />
     <Compile Include="Formatting\Input\ConfigureAwait.cs" />
+    <Compile Include="Formatting\Input\Indentation.cs" />
     <Compile Include="Generics\Fixture.cs" />
     <Compile Include="Generics\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
@@ -537,6 +538,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Formatting\Output\ConfigureAwait.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Formatting\Output\Indentation.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
