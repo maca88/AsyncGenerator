@@ -21,6 +21,7 @@ namespace AsyncGenerator.Configuration.Internal
 		public ProjectTransformConfiguration(IProjectConfiguration projectConfiguration)
 		{
 			_projectConfiguration = projectConfiguration;
+			DocumentationComments = new ProjectDocumentationCommentConfiguration();
 		}
 
 		public bool Enabled { get; private set; } = true;
@@ -37,11 +38,19 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ConcurrentRun => _projectConfiguration.ConcurrentRun;
 
+		public ProjectDocumentationCommentConfiguration DocumentationComments { get; }
+
 		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
 
 		public List<IDocumentTransformer> DocumentTransformers { get; } = new List<IDocumentTransformer>();
 
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
+
+		#region IFluentProjectTransformConfiguration
+
+		IProjectDocumentationCommentConfiguration IProjectTransformConfiguration.DocumentationComments => DocumentationComments;
+
+		#endregion
 
 		#region IFluentProjectTransformConfiguration
 
@@ -86,6 +95,16 @@ namespace AsyncGenerator.Configuration.Internal
 		{
 			AsyncLockFullTypeName = fullTypeName ?? throw new ArgumentNullException(nameof(fullTypeName));
 			AsyncLockMethodName = methodName ?? throw new ArgumentNullException(nameof(methodName));
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.DocumentationComments(Action<IFluentProjectDocumentationCommentConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			action(DocumentationComments);
 			return this;
 		}
 

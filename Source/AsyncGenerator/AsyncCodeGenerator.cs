@@ -198,12 +198,13 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new DefaultPreconditionChecker());
 
 			// Document transformers
-			configuration.RegisterPlugin(new IncludeFilePathTransformer());
+			configuration.RegisterPlugin(new IncludeFilePathTransformer()); // TODO: remove - make it optional
 
 			// Method transformers
 			configuration.RegisterPlugin(new AsyncLockMethodTransformer());
 			configuration.RegisterPlugin(new CancellationTokenMethodTransformer());
 			configuration.RegisterPlugin(new SplitTailMethodTransformer());
+			configuration.RegisterPlugin(new DocumentationCommentMethodTransformer());
 		}
 	}
 }
