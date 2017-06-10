@@ -63,9 +63,10 @@ namespace AsyncGenerator.Transformation.Internal
 			// TODO: handle name collisions
 			var tailIdentifier = Identifier("Internal" + methodNode.Identifier.Value); // The transformed method has already the Async postfix
 			MethodDeclarationSyntax tailMethod = null;
+			LocalFunctionStatementSyntax tailFunction = null;
 			if (_configuration.LocalFunctions)
 			{
-				var tailFunction = LocalFunctionStatement(
+				tailFunction = LocalFunctionStatement(
 						methodNode.ReturnType.WithoutLeadingTrivia(),
 						tailIdentifier)
 					.WithParameterList(ParameterList()
@@ -74,7 +75,6 @@ namespace AsyncGenerator.Transformation.Internal
 					.WithLeadingTrivia(transformResult.LeadingWhitespaceTrivia)
 					.WithBody(tailMethodBody)
 					.AppendIndent(transformResult.IndentTrivia.ToFullString());
-				bodyStatements = bodyStatements.Add(tailFunction);
 				// We do not need any parameter for the local function as we already have the parameters from the parent method
 				tailCallParameterList = ParameterList();
 			}
@@ -102,7 +102,11 @@ namespace AsyncGenerator.Transformation.Internal
 				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia))
 			);
 			bodyStatements = bodyStatements.Add(tailCall);
-
+			// Append local function at the end for easier reading
+			if (tailFunction != null)
+			{
+				bodyStatements = bodyStatements.Add(tailFunction);
+			}
 			methodNode = methodNode.WithBody(methodNode.Body
 				.WithStatements(bodyStatements));
 			

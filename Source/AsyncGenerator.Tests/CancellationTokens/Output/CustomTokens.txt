@@ -136,6 +136,7 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 			{
 				throw new ArgumentNullException(nameof(content));
 			}
+			return InternalWriteAsync();
 			async Task<bool> InternalWriteAsync()
 			{
 				await (SimpleFile.ReadAsync(cancellationToken));
@@ -145,7 +146,6 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 				}
 				return await (SimpleFile.WriteAsync(content));
 			}
-			return InternalWriteAsync();
 		}
 
 		public override Task MultiReadAsync(CancellationToken cancellationToken)

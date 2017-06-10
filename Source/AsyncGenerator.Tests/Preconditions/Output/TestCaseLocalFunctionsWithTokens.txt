@@ -33,12 +33,12 @@ namespace AsyncGenerator.Tests.Preconditions.Input
 		public Task<int> DivideAsync(int a, int b, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (b == 0) throw new InvalidOperationException();
+			return InternalDivideAsync();
 			async Task<int> InternalDivideAsync()
 			{
 				await (SimpleFile.ReadAsync(cancellationToken));
 				return a/b;
 			}
-			return InternalDivideAsync();
 		}
 
 		public async Task<int> DivideShortAsync(short a, short b, CancellationToken cancellationToken = default(CancellationToken))

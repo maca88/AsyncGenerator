@@ -32,12 +32,12 @@ namespace AsyncGenerator.Tests.Preconditions.Input
 		public Task<int> DivideAsync(int a, int b)
 		{
 			if (b == 0) throw new InvalidOperationException();
+			return InternalDivideAsync();
 			async Task<int> InternalDivideAsync()
 			{
 				await (SimpleFile.ReadAsync());
 				return a/b;
 			}
-			return InternalDivideAsync();
 		}
 
 		public async Task<int> DivideShortAsync(short a, short b)
