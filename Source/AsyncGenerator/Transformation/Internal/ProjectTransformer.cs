@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration.Internal;
+using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Transformation;
 using log4net;
 using Microsoft.CodeAnalysis;
 
@@ -41,7 +43,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			// Step 1: Transform all documents
 			Logger.Info("Generating documents started");
-			if (_configuration.RunInParallel)
+			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(analyzationResult.Documents, TransfromDocument);
 			}

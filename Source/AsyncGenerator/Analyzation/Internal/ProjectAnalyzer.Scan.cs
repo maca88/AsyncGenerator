@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using AsyncGenerator.Core;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
@@ -307,8 +308,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.CancellationTokenRequired = true;
 					// We suppose that the cancellation token is the last parameter
 					methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
-						? MethodCancellationToken.DefaultParameter
-						: MethodCancellationToken.Parameter;
+						? MethodCancellationToken.Optional
+						: MethodCancellationToken.Required;
 				}
 			}
 
@@ -345,8 +346,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.CancellationTokenRequired = true;
 						// We suppose that the cancellation token is the last parameter
 						methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
-							? MethodCancellationToken.DefaultParameter
-							: MethodCancellationToken.Parameter;
+							? MethodCancellationToken.Optional
+							: MethodCancellationToken.Required;
 					}
 				}
 				baseType = baseType.BaseType;

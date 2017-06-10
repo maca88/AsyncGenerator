@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;

@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Plugins;
 using AsyncGenerator.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Configuration.Internal
@@ -31,7 +35,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public string AsyncLockMethodName { get; private set; }
 
-		public bool RunInParallel => _projectConfiguration.RunInParallel;
+		public bool ConcurrentRun => _projectConfiguration.ConcurrentRun;
 
 		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
 
@@ -56,6 +60,19 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ConfigureAwaitArgument(ExpressionSyntax value)
 		{
 			ConfigureAwaitArgument = value;
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.ConfigureAwaitArgument(bool? value)
+		{
+			if (value == null)
+			{
+				ConfigureAwaitArgument = null;
+				return this;
+			}
+			ConfigureAwaitArgument = value.Value
+				? SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+				: SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression);
 			return this;
 		}
 

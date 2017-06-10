@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Configuration;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Configuration.Internal
@@ -16,8 +19,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Func<IMethodSymbolInfo, MethodCancellationToken> MethodGeneration { get; private set; } =
 			symbolInfo => symbolInfo.Symbol.ExplicitInterfaceImplementations.Any()
-				? MethodCancellationToken.Parameter
-				: MethodCancellationToken.DefaultParameter;
+				? MethodCancellationToken.Required
+				: MethodCancellationToken.Optional;
 
 		public Func<IMethodSymbol, bool?> RequiresCancellationToken { get; private set; } = symbol => null;
 
@@ -27,7 +30,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.MethodGeneration(Func<IMethodSymbolInfo, MethodCancellationToken> func)
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.ParameterGeneration(Func<IMethodSymbolInfo, MethodCancellationToken> func)
 		{
 			MethodGeneration = func ?? throw new ArgumentNullException(nameof(func));
 			return this;

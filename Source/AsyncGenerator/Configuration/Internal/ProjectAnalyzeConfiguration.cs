@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Plugins;
 using Microsoft.CodeAnalysis;
@@ -43,7 +47,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool UseCancellationTokens => CancellationTokens.Enabled;
 
-		public bool RunInParallel => _projectConfiguration.RunInParallel;
+		public bool ConcurrentRun => _projectConfiguration.ConcurrentRun;
 
 		public Predicate<IMethodSymbol> CallForwarding { get; set; } = symbol => false;
 

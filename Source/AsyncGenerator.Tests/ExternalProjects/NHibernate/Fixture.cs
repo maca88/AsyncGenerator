@@ -2,12 +2,18 @@
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Configuration.Yaml;
+using AsyncGenerator.Core.Configuration;
+using log4net.Config;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
+using MethodCancellationToken = AsyncGenerator.Core.MethodCancellationToken;
+using MethodConversion = AsyncGenerator.Core.MethodConversion;
+using TypeConversion = AsyncGenerator.Core.TypeConversion;
 
 namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 {
@@ -24,12 +30,38 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 	{
 		[Explicit]
 		[Test]
+		public void TestXmlConfigurationAfterTransformation()
+		{
+			var asm = Assembly.GetExecutingAssembly();
+			var resource = $"{GetType().Namespace}.Configuration.xml";
+			var stream = asm.GetManifestResourceStream(resource);
+			var config = AsyncCodeConfiguration.Create()
+				.ConfigureSolutionFromStream<XmlFileConfigurator>(stream);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Explicit]
+		[Test]
+		public void TestYamlConfigurationAfterTransformation()
+		{
+			var asm = Assembly.GetExecutingAssembly();
+			var resource = $"{GetType().Namespace}.Configuration.yaml";
+			var stream = asm.GetManifestResourceStream(resource);
+			var config = AsyncCodeConfiguration.Create()
+				.ConfigureSolutionFromStream<YamlFileConfigurator>(stream);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Explicit]
+		[Test]
 		public void TestAfterTransformation()
 		{
 			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln");
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, s => s
-					.RunInParallel()
+					.ConcurrentRun()
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
@@ -47,14 +79,14 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							.CallForwarding(true)
 							.CancellationTokens(t => t
 								.Guards(true)
-								.MethodGeneration(symbolInfo =>
+								.ParameterGeneration(symbolInfo =>
 								{
 									if (IsPubliclyExposedType(symbolInfo.Symbol.ContainingType) || // For public types generate default parameter
 										symbolInfo.ImplementedInterfaces.Any(o => IsPubliclyExposedType(o.ContainingType))) // The rule for public types shall be passed to implementors
 									{
-										return MethodCancellationToken.DefaultParameter;
+										return MethodCancellationToken.Optional;
 									}
-									return MethodCancellationToken.Parameter;
+									return MethodCancellationToken.Required;
 								})
 								.RequiresCancellationToken(symbol =>
 								{

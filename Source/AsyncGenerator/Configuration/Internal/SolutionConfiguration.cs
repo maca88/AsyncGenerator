@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AsyncGenerator.Core.Configuration;
 
 namespace AsyncGenerator.Configuration.Internal
 {
@@ -16,7 +17,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ApplyChanges { get; private set; }
 
-		public bool RunInParallel { get; private set; }
+		public bool ConcurrentRun { get; private set; }
 
 		#region IFluentSolutionConfiguration
 
@@ -42,9 +43,9 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentSolutionConfiguration IFluentSolutionConfiguration.RunInParallel(bool value)
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.ConcurrentRun(bool value)
 		{
-			RunInParallel = value;
+			ConcurrentRun = value;
 			return this;
 		}
 

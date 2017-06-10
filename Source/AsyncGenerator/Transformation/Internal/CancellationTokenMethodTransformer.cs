@@ -5,6 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Plugins;
@@ -39,7 +44,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodNode = transformResult.Transformed;
 			methodNode = methodNode
 				.AddCancellationTokenParameter(cancellationTokenParamName,
-					generationOptions.HasFlag(MethodCancellationToken.DefaultParameter),
+					generationOptions.HasFlag(MethodCancellationToken.Optional),
 					transformResult.LeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia);
 
@@ -101,8 +106,8 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			// Add an additional overload if specified
-			if (!generationOptions.HasFlag(MethodCancellationToken.NoParameterForward) &&
-				!generationOptions.HasFlag(MethodCancellationToken.SealedNoParameterForward))
+			if (!generationOptions.HasFlag(MethodCancellationToken.ForwardNone) &&
+				!generationOptions.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
 				return MethodTransformerResult.Update(methodNode);
 			}
@@ -148,7 +153,7 @@ namespace AsyncGenerator.Transformation.Internal
 								.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia)))
 						)
 					));
-			if (generationOptions.HasFlag(MethodCancellationToken.SealedNoParameterForward))
+			if (generationOptions.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
 				if (methodResult.Symbol.IsVirtual)
 				{

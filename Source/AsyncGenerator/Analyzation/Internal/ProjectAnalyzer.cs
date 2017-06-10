@@ -7,6 +7,8 @@ using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Internal;
 using log4net;
 using Microsoft.CodeAnalysis;
@@ -46,7 +48,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
 			Logger.Info("Parsing documents started");
 			DocumentData[] documentData;
-			if (_configuration.RunInParallel)
+			if (_configuration.ConcurrentRun)
 			{
 				documentData = await Task.WhenAll(_analyzeDocuments.Select(o => ProjectData.CreateDocumentData(o)))
 					.ConfigureAwait(false);
@@ -65,7 +67,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 2. Step - Each method in a document will be pre-analyzed and saved in a structural tree
 			Logger.Info("Pre-analyzing documents started");
-			if (_configuration.RunInParallel)
+			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(documentData, PreAnalyzeDocumentData);
 			}
@@ -80,7 +82,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 3. Step - Find all references for each method and optionally scan its body for async counterparts
 			Logger.Info("Scanning references started");
-			if (_configuration.RunInParallel)
+			if (_configuration.ConcurrentRun)
 			{
 				await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
 			}
@@ -95,7 +97,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 4. Step - Analyze all references found in the previous step
 			Logger.Info("Analyzing documents started");
-			if (_configuration.RunInParallel)
+			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(documentData, AnalyzeDocumentData);
 			}

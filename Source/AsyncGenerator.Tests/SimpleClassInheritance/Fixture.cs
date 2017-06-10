@@ -2,6 +2,8 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Tests.SimpleClassInheritance.Input;
 using AsyncGenerator.Tests.TestCases;
 using Microsoft.CodeAnalysis;
@@ -98,13 +100,13 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbolInfo =>
+						.ParameterGeneration(symbolInfo =>
 						{
 							if (symbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || symbolInfo.Symbol.OverriddenMethod != null)
 							{
-								return MethodCancellationToken.Parameter;
+								return MethodCancellationToken.Required;
 							}
-							return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
+							return MethodCancellationToken.Required | MethodCancellationToken.SealedForwardNone;
 						}))
 				)
 				.ConfigureTransformation(t => t

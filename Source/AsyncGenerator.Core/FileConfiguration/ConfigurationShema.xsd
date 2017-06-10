@@ -1,0 +1,302 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="https://github.com/maca88/AsyncGenerator" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="https://github.com/maca88/AsyncGenerator" elementFormDefault="qualified">
+
+  <xs:simpleType name="MethodConversion">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Ignore"/>
+      <xs:enumeration value="Unknown"/>
+      <xs:enumeration value="Smart"/>
+      <xs:enumeration value="ToAsync"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="TypeConversion">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Ignore"/>
+      <xs:enumeration value="Unknown"/>
+      <xs:enumeration value="Partial"/>
+      <xs:enumeration value="NewType"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MethodCancellationToken">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Optional"/>
+      <xs:enumeration value="Required"/>
+      <xs:enumeration value="ForwardNone"/>
+      <xs:enumeration value="SealedForwardNone"/>
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:complexType name="MemberFilter">
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="hasAttribute" type="xs:string" />
+    <xs:attribute name="hasAttributeName" type="xs:string" />
+    <xs:attribute name="containingNamespace" type="xs:string" />
+    <xs:attribute name="containingType" type="xs:string" />
+    <xs:attribute name="containingTypeName" type="xs:string" />
+    <xs:attribute name="containingAssemblyName" type="xs:string" />
+    <xs:attribute name="rule" type="xs:string" />
+  </xs:complexType>
+  
+  <xs:complexType name="DocumentFilter">
+    <xs:attribute name="filePath" type="xs:string" />
+    <xs:attribute name="filePathEndsWith" type="xs:string" />
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="select" type="xs:boolean" use="required" />
+  </xs:complexType>
+
+  <xs:complexType name="MethodFilter">
+    <xs:complexContent>
+      <xs:extension base="MemberFilter">
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TypeFilter">
+    <xs:complexContent>
+      <xs:extension base="MemberFilter">
+        <xs:attribute name="anyInterfaceRule" type="xs:string" />
+        <xs:attribute name="anyBaseTypeRule" type="xs:string" />
+        
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodConversionFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="conversion" type="MethodConversion" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodSearchFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="search" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TypeScanMissingAsyncMembersFilter">
+    <xs:complexContent>
+      <xs:extension base="TypeFilter">
+        <xs:attribute name="scan" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodRequiresTokenFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="tokenRequired" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodPreserveReturnTypeFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="preserve" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodCancellationTokenFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="anyInterfaceRule" type="xs:string" />
+        <xs:attribute name="parameter" type="MethodCancellationToken" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+
+  <xs:complexType name="TypeConversionFilter">
+    <xs:complexContent>
+      <xs:extension base="TypeFilter">
+        <xs:attribute name="conversion" type="TypeConversion" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="Rule">
+    <xs:attribute name="name" type="xs:string" />
+  </xs:complexType>
+
+  <xs:complexType name="MethodRule">
+    <xs:complexContent>
+      <xs:extension base="Rule">
+        <xs:sequence>
+          <xs:element name="Filters">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Filter" type="MethodFilter" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TypeRule">
+    <xs:complexContent>
+      <xs:extension base="Rule">
+        <xs:sequence>
+          <xs:element name="Filters">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="Filter" type="TypeFilter" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="CancellationTokens">
+    <xs:all>
+      <xs:element name="Guards" type="xs:boolean" nillable="true" minOccurs="0" />
+      <xs:element name="MethodParameter" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodCancellationTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="RequiresCancellationToken" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodRequiresTokenFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  
+  <xs:complexType name="Analyzation">
+    <xs:all>
+      <xs:element name="MethodConversion" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="PreserveReturnType" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodPreserveReturnTypeFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="TypeConversion" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeConversionFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="DocumentSelection" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Document" type="DocumentFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="SearchForAsyncCounterparts" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodSearchFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="CallForwarding" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="CancellationTokens" type="CancellationTokens" minOccurs="0" />
+      <xs:element name="ScanMethodBody" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="ScanForMissingAsyncMembers" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeScanMissingAsyncMembersFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <xs:complexType name="Transformation">
+    <xs:all>
+      <xs:element name="Disable" type="xs:boolean" nillable="true" minOccurs="0" />
+      <xs:element name="AsyncFolder" type="xs:string" minOccurs="0" />
+      <xs:element name="ConfigureAwaitArgument" type="xs:boolean"  nillable="true" minOccurs="0" />
+      <xs:element name="LocalFunctions" type="xs:boolean" nillable="true" minOccurs="0" />
+      <xs:element name="AsyncLock" minOccurs="0">
+        <xs:complexType>
+          <xs:attribute name="type" type="xs:string" use="required" />
+          <xs:attribute name="methodName" type="xs:string" use="required" />
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="Project">
+      <xs:all>
+        <xs:element name="Analyzation" type="Analyzation" minOccurs="0"/>
+        <xs:element name="Transformation" type="Transformation" minOccurs="0"/>
+        <xs:element name="RegisterPlugin" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Plugin" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:attribute name="type" type="xs:string" use="required" />
+                  <xs:attribute name="assemblyName" type="xs:string" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:all>
+    <xs:attribute name="name" type="xs:string" use="required" />
+  </xs:complexType>
+
+  <xs:complexType name="Solution">
+    <xs:all>
+      <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
+      <xs:element name="Projects">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Project" type="Project" maxOccurs="unbounded" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+    <xs:attribute name="filePath" type="xs:string" use="required" />
+  </xs:complexType>
+
+  <xs:element name="AsyncGenerator">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="Solution" type="Solution" />
+        <xs:element name="MethodRules" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="MethodRule" type="MethodRule" maxOccurs="unbounded" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="TypeRules" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="TypeRule" type="TypeRule" maxOccurs="unbounded" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="CSharpScript" type="xs:string" nillable="true" minOccurs="0" />
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

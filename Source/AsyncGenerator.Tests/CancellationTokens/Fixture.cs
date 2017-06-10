@@ -2,6 +2,7 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -20,13 +21,13 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbolInfo =>
+						.ParameterGeneration(symbolInfo =>
 						{
 							if (symbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || symbolInfo.Symbol.OverriddenMethod != null)
 							{
-								return MethodCancellationToken.Parameter;
+								return MethodCancellationToken.Required;
 							}
-							return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
+							return MethodCancellationToken.Required | MethodCancellationToken.SealedForwardNone;
 						}))
 				)
 				.ConfigureTransformation(t => t
@@ -54,13 +55,13 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
 					.CancellationTokens(t => t
 						.Guards(true)
-						.MethodGeneration(symbolInfo =>
+						.ParameterGeneration(symbolInfo =>
 						{
 							if (symbolInfo.Symbol.ContainingType.TypeKind == TypeKind.Interface || symbolInfo.Symbol.OverriddenMethod != null)
 							{
-								return MethodCancellationToken.Parameter;
+								return MethodCancellationToken.Required;
 							}
-							return MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward;
+							return MethodCancellationToken.Required | MethodCancellationToken.SealedForwardNone;
 						}))
 				)
 				.ConfigureTransformation(t => t
@@ -87,9 +88,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbolInfo =>
+						.ParameterGeneration(symbolInfo =>
 						{
-							return MethodCancellationToken.Parameter;
+							return MethodCancellationToken.Required;
 						}))
 				)
 				.ConfigureTransformation(t => t
@@ -117,13 +118,13 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
 						.RequiresCancellationToken(o => o.Name == "Read3")
-						.MethodGeneration(symbolInfo =>
+						.ParameterGeneration(symbolInfo =>
 						{
 							if (symbolInfo.Symbol.Name == "Read3")
 							{
-								return MethodCancellationToken.DefaultParameter;
+								return MethodCancellationToken.Optional;
 							}
-							return MethodCancellationToken.Parameter;
+							return MethodCancellationToken.Required;
 						}))
 				)
 				.ConfigureTransformation(t => t
@@ -150,9 +151,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbolInfo =>
+						.ParameterGeneration(symbolInfo =>
 						{
-							return MethodCancellationToken.Parameter;
+							return MethodCancellationToken.Required;
 						}))
 				)
 				.ConfigureTransformation(t => t

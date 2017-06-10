@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using AsyncGenerator.Plugins;
-using Microsoft.CodeAnalysis;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 
 namespace AsyncGenerator.Configuration.Internal
 {
@@ -31,7 +31,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<IPlugin> RegisteredPlugins { get; }
 
-		public bool RunInParallel => _solutionConfiguration.RunInParallel;
+		public bool ConcurrentRun => _solutionConfiguration.ConcurrentRun;
 
 		#region IProjectConfiguration
 

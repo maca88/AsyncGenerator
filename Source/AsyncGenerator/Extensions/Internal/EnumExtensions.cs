@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AsyncGenerator.Core;
 
 namespace AsyncGenerator.Extensions.Internal
 {
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Extensions.Internal
 		public static bool HasOptionalCancellationToken(this MethodCancellationToken e)
 		{
 			return e.HasAnyFlag(
-				MethodCancellationToken.DefaultParameter,
-				MethodCancellationToken.NoParameterForward,
-				MethodCancellationToken.SealedNoParameterForward);
+				MethodCancellationToken.Optional,
+				MethodCancellationToken.ForwardNone,
+				MethodCancellationToken.SealedForwardNone);
 		}
 	}
 }

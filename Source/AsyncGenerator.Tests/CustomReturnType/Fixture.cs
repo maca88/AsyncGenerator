@@ -2,6 +2,8 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.CustomReturnType
@@ -66,7 +68,7 @@ namespace AsyncGenerator.Tests.CustomReturnType
 			var config = Configure(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(t => t
-						.MethodGeneration(symbol => MethodCancellationToken.Parameter | MethodCancellationToken.NoParameterForward))
+						.ParameterGeneration(symbol => MethodCancellationToken.Required | MethodCancellationToken.ForwardNone))
 					.MethodConversion(symbol =>
 					{
 						return symbol.Name == getData ? MethodConversion.ToAsync : MethodConversion.Unknown;

@@ -33,11 +33,9 @@
   <ItemGroup>
     <Reference Include="Esent.Interop, Version=1.9.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\ManagedEsent.1.9.4\lib\net40\Esent.Interop.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.2.1.0\lib\netstandard1.3\Microsoft.CodeAnalysis.dll</HintPath>
@@ -45,12 +43,17 @@
     <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.2.1.0\lib\netstandard1.3\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Scripting, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.Scripting.2.1.0\lib\netstandard1.3\Microsoft.CodeAnalysis.CSharp.Scripting.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.Workspaces.2.1.0\lib\netstandard1.3\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Elfie, Version=0.10.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Elfie.0.10.6\lib\net46\Microsoft.CodeAnalysis.Elfie.dll</HintPath>
-      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Scripting, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Scripting.Common.2.1.0\lib\netstandard1.3\Microsoft.CodeAnalysis.Scripting.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Workspaces, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.2.1.0\lib\net46\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
@@ -60,12 +63,10 @@
     </Reference>
     <Reference Include="Microsoft.Web.XmlTransform, Version=2.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.AppContext.4.3.0\lib\net46\System.AppContext.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Collections.Immutable, Version=1.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Collections.Immutable.1.3.1\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
@@ -74,81 +75,62 @@
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Composition.AttributedModel, Version=1.0.30.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Composition.Convention, Version=1.0.30.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.Convention.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Composition.Hosting, Version=1.0.30.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.Hosting.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Composition.Runtime, Version=1.0.30.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.Runtime.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Composition.TypedParts, Version=1.0.30.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Console, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Console.4.3.0\lib\net46\System.Console.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Diagnostics.FileVersionInfo, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.FileVersionInfo.4.3.0\lib\net46\System.Diagnostics.FileVersionInfo.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Diagnostics.StackTrace, Version=4.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Diagnostics.StackTrace.4.3.0\lib\net46\System.Diagnostics.StackTrace.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.Compression.4.3.0\lib\net46\System.IO.Compression.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.FileSystem, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.FileSystem.4.3.0\lib\net46\System.IO.FileSystem.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.IO.FileSystem.Primitives, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IO.FileSystem.Primitives.4.3.0\lib\net46\System.IO.FileSystem.Primitives.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Numerics" />
     <Reference Include="System.Reflection.Metadata, Version=1.4.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Reflection.Metadata.1.4.2\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Security.Cryptography.Algorithms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net46\System.Security.Cryptography.Algorithms.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net46\System.Security.Cryptography.X509Certificates.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Text.Encoding.CodePages, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Text.Encoding.CodePages.4.3.0\lib\net46\System.Text.Encoding.CodePages.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Threading.Thread, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Threading.Thread.4.3.0\lib\net46\System.Threading.Thread.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.ValueTuple, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -158,35 +140,20 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.ReaderWriter, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Xml.ReaderWriter.4.3.0\lib\net46\System.Xml.ReaderWriter.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.XmlDocument, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Xml.XmlDocument.4.3.0\lib\net46\System.Xml.XmlDocument.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.XPath, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Xml.XPath.4.3.0\lib\net46\System.Xml.XPath.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.XPath.XDocument, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Xml.XPath.XDocument.4.3.0\lib\net46\System.Xml.XPath.XDocument.dll</HintPath>
-      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Analyzation\IAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IMethodSymbolInfo.cs" />
-    <Compile Include="Configuration\IFluentProjectCancellationTokenConfiguration.cs" />
-    <Compile Include="Configuration\IFluentProjectParseConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectParseConfiguration.cs" />
-    <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />
-    <Compile Include="Configuration\IProjectCancellationTokenConfiguration.cs" />
-    <Compile Include="Configuration\IProjectCompileConfiguration.cs" />
-    <Compile Include="Configuration\IProjectConfiguration.cs" />
-    <Compile Include="Configuration\IProjectTransformConfiguration.cs" />
-    <Compile Include="Configuration\ISolutionConfiguration.cs" />
     <Compile Include="Extensions\Internal\EnumExtensions.cs" />
     <Compile Include="Extensions\Internal\ObjectExtensions.cs" />
     <Compile Include="Extensions\Internal\SpecialTypeExtensions.cs" />
@@ -196,13 +163,6 @@
     <Compile Include="Internal\AbstractData.cs" />
     <Compile Include="Internal\AbstractFunctionReferenceData.cs" />
     <Compile Include="Internal\AbstractReferenceData.cs" />
-    <Compile Include="Analyzation\AsyncCounterpartsSearchOptions.cs" />
-    <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
-    <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IReferenceAnalyzationResult.cs" />
-    <Compile Include="Analyzation\ITypeReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.Analyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PostAnalyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PreAnalyze.cs" />
@@ -210,19 +170,9 @@
     <Compile Include="Internal\ChildFunctionData.cs" />
     <Compile Include="Internal\FunctionArgumentData.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
-    <Compile Include="MethodCancellationToken.cs" />
-    <Compile Include="NamespaceConversion.cs" />
-    <Compile Include="Plugins\IDocumentTransformer.cs" />
-    <Compile Include="Plugins\IMethodTransformer.cs" />
-    <Compile Include="ReferenceConversion.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />
     <Compile Include="Configuration\AsyncCodeConfiguration.cs" />
-    <Compile Include="Configuration\IFluentProjectAnalyzeConfiguration.cs" />
-    <Compile Include="Configuration\IFluentProjectCompileConfiguration.cs" />
-    <Compile Include="Configuration\IFluentProjectConfiguration.cs" />
-    <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
-    <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectAnalyzeConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectConfiguration.cs" />
@@ -233,40 +183,24 @@
     <Compile Include="Extensions\AnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\Internal\MethodKindExtensions.cs" />
     <Compile Include="Extensions\Internal\SymbolExtensions.cs" />
-    <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
-    <Compile Include="Analyzation\INamespaceAnalyzationResult.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.cs" />
     <Compile Include="Internal\FunctionData.cs" />
     <Compile Include="Internal\AsyncLock.cs" />
     <Compile Include="Internal\AsyncSemaphore.cs" />
     <Compile Include="Internal\ConcurrentSet.cs" />
-    <Compile Include="Analyzation\IProjectAnalyzationResult.cs" />
-    <Compile Include="Analyzation\ITypeAnalyzationResult.cs" />
     <Compile Include="Internal\DefaultPreconditionChecker.cs" />
     <Compile Include="Internal\DefaultAsyncCounterpartsFinder.cs" />
     <Compile Include="Internal\DelegateAsyncCounterpartsFinder.cs" />
     <Compile Include="Internal\DelegatePreconditionChecker.cs" />
-    <Compile Include="MethodConversion.cs" />
     <Compile Include="Internal\MethodData.cs" />
     <Compile Include="Internal\BodyFunctionReferenceData.cs" />
     <Compile Include="Internal\NamespaceData.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.cs" />
+    <Compile Include="Internal\SourceCodeCompiler.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
-    <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
-    <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
-    <Compile Include="Plugins\IPlugin.cs" />
-    <Compile Include="Plugins\IPreconditionChecker.cs" />
     <Compile Include="Internal\ProjectData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internal\SolutionData.cs" />
-    <Compile Include="Transformation\IDocumentTransformationResult.cs" />
-    <Compile Include="Transformation\IFunctionReferenceTransformationResult.cs" />
-    <Compile Include="Transformation\IMemberTransformationResult.cs" />
-    <Compile Include="Transformation\IMethodTransformationResult.cs" />
-    <Compile Include="Transformation\INamespaceTransformationMetadata.cs" />
-    <Compile Include="Transformation\INamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
     <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\CancellationTokenMethodTransformer.cs" />
@@ -290,26 +224,24 @@
     <Compile Include="Transformation\Internal\TypeTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IndentRewriter.cs" />
     <Compile Include="Transformation\Internal\YieldRewriter.cs" />
-    <Compile Include="Transformation\IProjectTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
-    <Compile Include="Transformation\ITransformationResult.cs" />
-    <Compile Include="Transformation\ITypeTransformationMetadata.cs" />
-    <Compile Include="Transformation\ITypeTransformationResult.cs" />
-    <Compile Include="TypeConversion.cs" />
     <Compile Include="Internal\TypeData.cs" />
     <Compile Include="Internal\TypeReferenceData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj">
+      <Project>{7f45bdb9-6b8d-421f-9f91-d92aab8f0f24}</Project>
+      <Name>AsyncGenerator.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

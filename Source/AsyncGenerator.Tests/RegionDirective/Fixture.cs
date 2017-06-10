@@ -2,6 +2,7 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -40,7 +41,7 @@ namespace AsyncGenerator.Tests.RegionDirective
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
-						.MethodGeneration(symbol => MethodCancellationToken.Parameter | MethodCancellationToken.SealedNoParameterForward))
+						.ParameterGeneration(symbol => MethodCancellationToken.Required | MethodCancellationToken.SealedForwardNone))
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
