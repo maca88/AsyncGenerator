@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Reflection;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Configuration;
-using log4net.Config;
+using AsyncGenerator.Core.Plugins;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
-using MethodCancellationToken = AsyncGenerator.Core.MethodCancellationToken;
-using MethodConversion = AsyncGenerator.Core.MethodConversion;
-using TypeConversion = AsyncGenerator.Core.TypeConversion;
 
 namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 {
@@ -107,6 +101,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 								.AddOrReplaceMethodSummary(GetMethodSummary)
 							)
 						)
+						.RegisterPlugin<EmptyRegionRemover>()
 						.RegisterPlugin<TransactionScopeRewriter>() // Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory
 					)
 					.ConfigureProject("NHibernate.DomainModel", p => p

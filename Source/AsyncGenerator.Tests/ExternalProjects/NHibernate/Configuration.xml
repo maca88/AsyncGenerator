@@ -98,6 +98,7 @@
         </Transformation>
         <RegisterPlugin>
           <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" /> <!--Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory-->
+          <Plugin type="AsyncGenerator.Core.Plugins.EmptyRegionRemover" assemblyName="AsyncGenerator.Core" />
         </RegisterPlugin>
       </Project>
 

@@ -212,7 +212,6 @@
     <Compile Include="DocumentationComments\RemarksFixture.cs" />
     <Compile Include="DocumentationComments\Input\Remarks.cs" />
     <Compile Include="DocumentationComments\Input\Summary.cs" />
-    <Compile Include="DocumentationComments\Output\Class1.cs" />
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
@@ -245,6 +244,8 @@
     <Compile Include="OutsideMethodFunction\Fixture.cs" />
     <Compile Include="OutsideMethodFunction\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
+    <Compile Include="Plugins\Fixture.cs" />
+    <Compile Include="Plugins\Input\EmptyRegions.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
     <Compile Include="Preconditions\Fixture.cs" />
     <Compile Include="IfDirective\Fixture.cs" />
@@ -526,6 +527,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="DocumentationComments\Output\SummaryComplex.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="RegionDirective\Output\EmptyRegionRemover.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Plugins\Output\EmptyRegions.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

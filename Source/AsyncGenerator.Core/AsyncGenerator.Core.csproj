@@ -176,6 +176,7 @@
     <Compile Include="MethodCancellationToken.cs" />
     <Compile Include="MethodConversion.cs" />
     <Compile Include="NamespaceConversion.cs" />
+    <Compile Include="Plugins\EmptyRegionRemover.cs" />
     <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
     <Compile Include="Plugins\IDocumentTransformer.cs" />
     <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />

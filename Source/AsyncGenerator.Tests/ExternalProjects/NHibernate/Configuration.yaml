@@ -138,6 +138,8 @@
     registerPlugin:
     - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
       assemblyName: AsyncGenerator.Tests
+    - type: AsyncGenerator.Core.Plugins.EmptyRegionRemover
+      assemblyName: AsyncGenerator.Core
   - name: NHibernate.DomainModel
     analyzation:
       scanMethodBody: true

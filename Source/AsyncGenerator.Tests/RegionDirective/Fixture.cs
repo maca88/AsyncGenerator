@@ -3,6 +3,7 @@ using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
+using AsyncGenerator.Core.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -29,6 +30,29 @@ namespace AsyncGenerator.Tests.RegionDirective
 						Assert.AreEqual(GetOutputFile("TestCase"), document.Transformed.ToFullString());
 					})
 				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestEmptyRegionRemoverAfterTransformation()
+		{
+			var config = Configure(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("EmptyRegionRemover"), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin<EmptyRegionRemover>()
 			);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
