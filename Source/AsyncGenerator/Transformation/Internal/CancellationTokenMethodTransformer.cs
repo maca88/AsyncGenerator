@@ -48,9 +48,8 @@ namespace AsyncGenerator.Transformation.Internal
 					transformResult.LeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia);
 
-			// TODO: Guards
 			var methodBody = methodNode.Body;
-			if (_configuration.Guards && methodBody != null)
+			if (_configuration.Guards && methodBody != null && !methodResult.Faulted)
 			{
 				var startGuard = methodResult.OmitAsync
 					? GetSyncGuard(methodResult, cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
@@ -62,7 +61,7 @@ namespace AsyncGenerator.Transformation.Internal
 					methodBody.WithStatements(
 						methodBody.Statements.Insert(methodResult.Preconditions.Count, startGuard))
 					);
-				// We need to get all statements have at least one async invocation without a cancellation token argument, to prepend an extra guard
+				// We need to get all statements that have at least one async invocation without a cancellation token argument, to prepend an extra guard
 				var statements = new Dictionary<int, string>();
 				foreach (var functionReference in transformResult.TransformedFunctionReferences)
 				{
