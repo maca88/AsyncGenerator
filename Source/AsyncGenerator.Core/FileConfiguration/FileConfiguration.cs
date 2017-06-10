@@ -90,13 +90,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodConversionFilter> MethodConversion { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
-		public List<MethodPreserveReturnTypeFilter> PreserveReturnType { get; set; }
+		public List<MethodFilter> PreserveReturnType { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
 		public List<TypeConversionFilter> TypeConversion { get; set; }
 		[XmlArrayItem("Document", IsNullable = false)]
-		public List<DocumentFilter> DocumentSelection { get; set; }
+		public List<DocumentFilter> IgnoreDocuments { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
-		public List<MethodSearchFilter> SearchForAsyncCounterparts { get; set; }
+		public List<MethodFilter> IgnoreSearchForAsyncCounterparts { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? CallForwarding { get; set; }
 		[XmlElement("CancellationTokens")]
@@ -104,17 +104,17 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlElement(IsNullable = true)]
 		public bool? ScanMethodBody { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
-		public List<TypeScanMissingAsyncMembersFilter> ScanForMissingAsyncMembers { get; set; }
+		public List<TypeFilter> ScanForMissingAsyncMembers { get; set; }
 
 		public Analyzation()
 		{
 			CancellationTokens = new CancellationTokens();
-			SearchForAsyncCounterparts = new List<MethodSearchFilter>();
-			DocumentSelection = new List<DocumentFilter>();
+			IgnoreSearchForAsyncCounterparts = new List<MethodFilter>();
+			IgnoreDocuments = new List<DocumentFilter>();
 			TypeConversion = new List<TypeConversionFilter>();
-			PreserveReturnType = new List<MethodPreserveReturnTypeFilter>();
+			PreserveReturnType = new List<MethodFilter>();
 			MethodConversion = new List<MethodConversionFilter>();
-			ScanForMissingAsyncMembers = new List<TypeScanMissingAsyncMembersFilter>();
+			ScanForMissingAsyncMembers = new List<TypeFilter>();
 		}
 	}
 
@@ -130,10 +130,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public MethodConversion Conversion { get; set; }
 	}
 
-	[XmlInclude(typeof(MethodPreserveReturnTypeFilter))]
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
-	[XmlInclude(typeof(MethodRequiresTokenFilter))]
-	[XmlInclude(typeof(MethodSearchFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
@@ -145,14 +142,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 	{
 	}
 
-	[XmlInclude(typeof(MethodPreserveReturnTypeFilter))]
 	[XmlInclude(typeof(TypeFilter))]
 	[XmlInclude(typeof(TypeScanMissingAsyncMembersFilter))]
 	[XmlInclude(typeof(TypeConversionFilter))]
 	[XmlInclude(typeof(MethodFilter))]
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
-	[XmlInclude(typeof(MethodRequiresTokenFilter))]
-	[XmlInclude(typeof(MethodSearchFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
@@ -162,6 +156,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MemberFilter
 	{
+		[XmlAttribute(AttributeName = "all")]
+		public bool All { get; set; }
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
 		[XmlAttribute(AttributeName = "hasAttribute")]
@@ -285,10 +281,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public bool? LocalFunctions { get; set; }
 		[XmlElement("AsyncLock")]
 		public TransformationAsyncLock AsyncLock { get; set; }
+		[XmlElement("DocumentationComments")]
+		public DocumentationComments DocumentationComments { get; set; }
 
 		public Transformation()
 		{
 			AsyncLock = new TransformationAsyncLock();
+			DocumentationComments = new DocumentationComments();
 		}
 	}
 
@@ -319,12 +318,42 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodCancellationTokenFilter> MethodParameter { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
-		public List<MethodRequiresTokenFilter> RequiresCancellationToken { get; set; }
+		public List<MethodFilter> WithoutCancellationToken { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodFilter> RequiresCancellationToken { get; set; }
 
 		public CancellationTokens()
 		{
 			MethodParameter = new List<MethodCancellationTokenFilter>();
-			RequiresCancellationToken = new List<MethodRequiresTokenFilter>();
+			WithoutCancellationToken = new List<MethodFilter>();
+			RequiresCancellationToken = new List<MethodFilter>();
+		}
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("DocumentationComments")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class DocumentationComments
+	{
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodContentFilter> AddOrReplaceMethodSummary { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodFilter> RemoveMethodSummary { get; set; }
+
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodContentFilter> AddOrReplaceMethodRemarks { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodFilter> RemoveMethodRemarks { get; set; }
+
+		public DocumentationComments()
+		{
+			AddOrReplaceMethodSummary = new List<MethodContentFilter>();
+			RemoveMethodSummary = new List<MethodFilter>();
+			AddOrReplaceMethodRemarks = new List<MethodContentFilter>();
+			RemoveMethodRemarks = new List<MethodFilter>();
 		}
 	}
 
@@ -346,12 +375,12 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("MethodPreserveReturnTypeFilter")]
+	[XmlRoot("MethodContentFilter")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public class MethodPreserveReturnTypeFilter : MethodFilter
+	public class MethodContentFilter : MethodFilter
 	{
-		[XmlAttribute(AttributeName = "preserve")]
-		public bool Preserve { get; set; }
+		[XmlElement("Content")]
+		public string Content { get; set; }
 	}
 
 	[Serializable]
@@ -368,32 +397,6 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string FilePathEndsWith { get; set; }
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
-		[XmlAttribute(AttributeName = "select")]
-		public bool Select { get; set; }
-	}
-
-	[Serializable]
-	[DebuggerStepThrough]
-	[DesignerCategory("code")]
-	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("MethodRequiresTokenFilter")]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public class MethodRequiresTokenFilter : MethodFilter
-	{
-		[XmlAttribute(AttributeName = "tokenRequired")]
-		public bool TokenRequired { get; set; }
-	}
-
-	[Serializable]
-	[DebuggerStepThrough]
-	[DesignerCategory("code")]
-	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("MethodSearchFilter")]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public class MethodSearchFilter : MethodFilter
-	{
-		[XmlAttribute(AttributeName = "search")]
-		public bool Search { get; set; }
 	}
 
 	[Serializable]

@@ -153,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
+    <Compile Include="Configuration\Internal\ProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectParseConfiguration.cs" />
     <Compile Include="Extensions\Internal\EnumExtensions.cs" />
     <Compile Include="Extensions\Internal\ObjectExtensions.cs" />
@@ -204,6 +205,7 @@
     <Compile Include="Transformation\Internal\AnnotatedNode.cs" />
     <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\CancellationTokenMethodTransformer.cs" />
+    <Compile Include="Transformation\Internal\DocumentationCommentMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
     <Compile Include="Transformation\Internal\FunctionReferenceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />

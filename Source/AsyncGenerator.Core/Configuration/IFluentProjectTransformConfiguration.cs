@@ -42,7 +42,6 @@ namespace AsyncGenerator.Core.Configuration
 		/// </summary>
 		/// <param name="fullTypeName">The full type name of the async lock</param>
 		/// <param name="methodName">The method name that triggers the lock</param>
-		/// <returns></returns>
 		IFluentProjectTransformConfiguration AsyncLock(string fullTypeName, string methodName);
 
 		/// <summary>
@@ -51,6 +50,12 @@ namespace AsyncGenerator.Core.Configuration
 		/// <param name="action">The action to call</param>
 		/// <returns></returns>
 		IFluentProjectTransformConfiguration AfterTransformation(Action<IProjectTransformationResult> action);
+
+		/// <summary>
+		/// Add a callback to configure the documentation comments generation
+		/// </summary>
+		IFluentProjectTransformConfiguration DocumentationComments(Action<IFluentProjectDocumentationCommentConfiguration> action);
+
 
 
 	}

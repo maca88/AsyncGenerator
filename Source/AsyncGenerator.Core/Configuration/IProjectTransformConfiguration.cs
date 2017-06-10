@@ -11,5 +11,7 @@
 		string AsyncLockMethodName { get; }
 
 		bool ConcurrentRun { get; }
+
+		IProjectDocumentationCommentConfiguration DocumentationComments { get; }
 	}
 }

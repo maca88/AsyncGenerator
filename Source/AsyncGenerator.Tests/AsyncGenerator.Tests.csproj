@@ -208,6 +208,11 @@
     <Compile Include="Cref\Fixture.cs" />
     <Compile Include="Cref\Input\TestCase.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
+    <Compile Include="DocumentationComments\SummaryFixture.cs" />
+    <Compile Include="DocumentationComments\RemarksFixture.cs" />
+    <Compile Include="DocumentationComments\Input\Remarks.cs" />
+    <Compile Include="DocumentationComments\Input\Summary.cs" />
+    <Compile Include="DocumentationComments\Output\Class1.cs" />
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
@@ -503,6 +508,24 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\Remarks.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\RemarksComplex.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\RemarksRemove.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\Summary.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\SummaryRemove.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\SummaryComplex.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

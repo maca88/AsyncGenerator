@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
@@ -11,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using SyntaxTrivia = Microsoft.CodeAnalysis.SyntaxTrivia;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Extensions.Internal
 {
@@ -59,13 +59,13 @@ namespace AsyncGenerator.Extensions.Internal
 			if (interfaceDeclaration != null)
 			{
 				return interfaceDeclaration
-					.WithAttributeLists(SyntaxFactory.List<AttributeListSyntax>());
+					.WithAttributeLists(List<AttributeListSyntax>());
 			}
 			var classDeclaration = typeDeclaration as ClassDeclarationSyntax;
 			if (classDeclaration != null)
 			{
 				return classDeclaration
-					.WithAttributeLists(SyntaxFactory.List<AttributeListSyntax>());
+					.WithAttributeLists(List<AttributeListSyntax>());
 			}
 			return typeDeclaration;
 		}
@@ -75,13 +75,13 @@ namespace AsyncGenerator.Extensions.Internal
 			var interfaceDeclaration = typeDeclaration as InterfaceDeclarationSyntax;
 			if (interfaceDeclaration != null && !typeDeclaration.Modifiers.Any(o => o.IsKind(SyntaxKind.PartialKeyword)))
 			{
-				var token = SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? SyntaxFactory.TriviaList(SyntaxFactory.Space) : SyntaxFactory.TriviaList());
+				var token = Token(TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? TriviaList(Space) : TriviaList());
 				return interfaceDeclaration.AddModifiers(token);
 			}
 			var classDeclaration = typeDeclaration as ClassDeclarationSyntax;
 			if (classDeclaration != null && !classDeclaration.Modifiers.Any(o => o.IsKind(SyntaxKind.PartialKeyword)))
 			{
-				var token = SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? SyntaxFactory.TriviaList(SyntaxFactory.Space) : SyntaxFactory.TriviaList());
+				var token = Token(TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? TriviaList(Space) : TriviaList());
 				return classDeclaration.AddModifiers(token);
 			}
 			return typeDeclaration.WithLeadingTrivia(typeDeclaration.GetLeadingTrivia()); // Modify the node for consistency so that the Parent node will be always null
@@ -108,9 +108,9 @@ namespace AsyncGenerator.Extensions.Internal
 			SyntaxTriviaList leadingTrivia, SyntaxTrivia endOfLineTrivia)
 		{
 			return namespaceDeclaration.AddUsings(
-				SyntaxFactory.UsingDirective(ConstructNameSyntax(fullName))
-					.WithUsingKeyword(SyntaxFactory.Token(leadingTrivia, SyntaxKind.UsingKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)))
-					.WithSemicolonToken(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.SemicolonToken, SyntaxFactory.TriviaList(endOfLineTrivia)))
+				UsingDirective(ConstructNameSyntax(fullName))
+					.WithUsingKeyword(Token(leadingTrivia, SyntaxKind.UsingKeyword, TriviaList(Space)))
+					.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(endOfLineTrivia)))
 					);
 		}
 
@@ -174,16 +174,16 @@ namespace AsyncGenerator.Extensions.Internal
 		{
 			if (typeNode.ChildTokens().Any(o => o.IsKind(SyntaxKind.VoidKeyword)))
 			{
-				var taskNode = SyntaxFactory.IdentifierName(nameof(Task)).WithTriviaFrom(typeNode);
+				var taskNode = IdentifierName(nameof(Task)).WithTriviaFrom(typeNode);
 				return withFullName
-					? SyntaxFactory.QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), taskNode)
+					? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), taskNode)
 					: (TypeSyntax)taskNode;
 			}
-			var genericTaskNode = SyntaxFactory.GenericName(nameof(Task))
+			var genericTaskNode = GenericName(nameof(Task))
 				.WithTriviaFrom(typeNode)
 				.AddTypeArgumentListArguments(typeNode.WithoutTrivia());
 			return withFullName
-				? SyntaxFactory.QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), genericTaskNode)
+				? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), genericTaskNode)
 				: (TypeSyntax) genericTaskNode;
 		}
 
@@ -214,7 +214,7 @@ namespace AsyncGenerator.Extensions.Internal
 				return default(SyntaxTrivia);
 			}
 
-			return SyntaxFactory.Whitespace(nodeIndent.Substring(parentIndent.Length));
+			return Whitespace(nodeIndent.Substring(parentIndent.Length));
 		}
 
 		internal static SyntaxNode PrependCloseBraceLeadingTrivia(this SyntaxNode node, SyntaxTriviaList leadingTrivia)
@@ -243,8 +243,8 @@ namespace AsyncGenerator.Extensions.Internal
 			var expressionStatement = statement as ExpressionStatementSyntax;
 			if (expressionStatement != null)
 			{
-				return SyntaxFactory.ReturnStatement(
-					SyntaxFactory.Token(expressionStatement.GetLeadingTrivia(), SyntaxKind.ReturnKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
+				return ReturnStatement(
+					Token(expressionStatement.GetLeadingTrivia(), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 					expressionStatement.Expression.WithoutLeadingTrivia(),
 					expressionStatement.SemicolonToken);
 			}
@@ -536,16 +536,16 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 
 			ExpressionSyntax argExpression = argumentName != null 
-				? SyntaxFactory.IdentifierName(argumentName) 
+				? IdentifierName(argumentName) 
 				: ConstructNameSyntax("CancellationToken.None");
 
 			var invokedMethod = functionReference.ReferenceSymbol;
 			// We have to add a name colon when one of the previous argument has it or if the method invoked has a default parameter that is not passed
 			var colonRequired = node.ArgumentList.Arguments.Any(o => o.NameColon != null) || (node.ArgumentList.Arguments.Count < invokedMethod.Parameters.Length);
-			var argument = SyntaxFactory.Argument(argExpression);
+			var argument = Argument(argExpression);
 			if (colonRequired)
 			{
-				argument = argument.WithNameColon(SyntaxFactory.NameColon("cancellationToken")); // TODO: dynamic
+				argument = argument.WithNameColon(NameColon("cancellationToken")); // TODO: dynamic
 			}
 
 			if (!node.ArgumentList.Arguments.Any())
@@ -554,11 +554,11 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 			
 			// We need to add an extra space after the comma
-			var argumentList = SyntaxFactory.SeparatedList<ArgumentSyntax>(
+			var argumentList = SeparatedList<ArgumentSyntax>(
 				node.ArgumentList.Arguments.GetWithSeparators()
 					.Concat(new SyntaxNodeOrToken[]
 					{
-						SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
+						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
 						argument
 					})
 			);
@@ -568,86 +568,86 @@ namespace AsyncGenerator.Extensions.Internal
 		internal static InvocationExpressionSyntax ForwardCall(this MethodDeclarationSyntax methodNode, IMethodSymbol symbol, string identifier, params ArgumentSyntax[] additionalArgs)
 		{
 			var name = methodNode.TypeParameterList != null
-				? SyntaxFactory.GenericName(identifier)
+				? GenericName(identifier)
 					.WithTypeArgumentList(
-						SyntaxFactory.TypeArgumentList(
-							SyntaxFactory.SeparatedList<TypeSyntax>(
-								methodNode.TypeParameterList.Parameters.Select(o => SyntaxFactory.IdentifierName(o.Identifier.ValueText))
+						TypeArgumentList(
+							SeparatedList<TypeSyntax>(
+								methodNode.TypeParameterList.Parameters.Select(o => IdentifierName(o.Identifier.ValueText))
 							)))
-				: (SimpleNameSyntax)SyntaxFactory.IdentifierName(identifier);
+				: (SimpleNameSyntax)IdentifierName(identifier);
 			MemberAccessExpressionSyntax accessExpression = null;
 			if (symbol.MethodKind == MethodKind.ExplicitInterfaceImplementation)
 			{
 				// Explicit implementations needs an explicit cast (ie. ((Type)this).SyncMethod() )
-				accessExpression = SyntaxFactory.MemberAccessExpression(
+				accessExpression = MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
-					SyntaxFactory.ParenthesizedExpression(
-						SyntaxFactory.CastExpression(
-							SyntaxFactory.IdentifierName(symbol.ExplicitInterfaceImplementations.Single().ContainingType.Name),
-							SyntaxFactory.ThisExpression())),
+					ParenthesizedExpression(
+						CastExpression(
+							IdentifierName(symbol.ExplicitInterfaceImplementations.Single().ContainingType.Name),
+							ThisExpression())),
 					name);
 			}
-			var comma = SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space));
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			var arguments = methodNode.ParameterList.Parameters
-				.Select(o => SyntaxFactory.Argument(SyntaxFactory.IdentifierName(o.Identifier.Text)))
+				.Select(o => Argument(IdentifierName(o.Identifier.Text)))
 				.Union(additionalArgs)
 				.SelectMany((o, i) => i == 0
 					? new SyntaxNodeOrToken[] {o}
 					: new SyntaxNodeOrToken[] {comma, o});
 
-			return SyntaxFactory.InvocationExpression(accessExpression ?? (ExpressionSyntax)name)
+			return InvocationExpression(accessExpression ?? (ExpressionSyntax)name)
 				.WithArgumentList(
-					SyntaxFactory.ArgumentList(
-						SyntaxFactory.SeparatedList<ArgumentSyntax>(arguments)));
+					ArgumentList(
+						SeparatedList<ArgumentSyntax>(arguments)));
 		}
 
 		private static ReturnStatementSyntax GetReturnTaskCompleted(bool useQualifiedName)
 		{
-			return SyntaxFactory.ReturnStatement(
-				SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.ReturnKeyword, SyntaxFactory.TriviaList(SyntaxFactory.Space)),
-				SyntaxFactory.MemberAccessExpression(
+			return ReturnStatement(
+				Token(TriviaList(), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
 					useQualifiedName
 						? ConstructNameSyntax("System.Threading.Tasks.Task")
-						: SyntaxFactory.IdentifierName(nameof(Task)),
-					SyntaxFactory.IdentifierName("CompletedTask")),
-				SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.SemicolonToken, SyntaxFactory.TriviaList())
+						: IdentifierName(nameof(Task)),
+					IdentifierName("CompletedTask")),
+				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList())
 			);
 		}
 
 		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(this ExpressionSyntax expression, IMethodSymbol delegateSymbol,
 			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc)
 		{
-			var comma = SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space));
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			var parameters = delegateSymbol.Parameters
-				.Select(o => SyntaxFactory.Parameter(SyntaxFactory.Identifier(o.Name)))
+				.Select(o => Parameter(Identifier(o.Name)))
 				.SelectMany((o, i) => i == 0
 					? new SyntaxNodeOrToken[] { o }
 					: new SyntaxNodeOrToken[] { comma, o });
 			var arguments = delegateSymbol.Parameters
-				.Select(o => SyntaxFactory.Argument(SyntaxFactory.IdentifierName(o.Name)))
+				.Select(o => Argument(IdentifierName(o.Name)))
 				.SelectMany((o, i) => i == 0
 					? new SyntaxNodeOrToken[] { o }
 					: new SyntaxNodeOrToken[] { comma, o });
-			var invocation = SyntaxFactory.InvocationExpression(expression)
-				.WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList<ArgumentSyntax>(arguments)));
+			var invocation = InvocationExpression(expression)
+				.WithArgumentList(ArgumentList(SeparatedList<ArgumentSyntax>(arguments)));
 			invocation = invocationModifierFunc(invocation);
 			CSharpSyntaxNode body = invocation;
 			if (returnTypeMismatch)
 			{
 				// TODO: non void return type
-				body = SyntaxFactory.Block()
+				body = Block()
 					.WithStatements(new SyntaxList<StatementSyntax>().AddRange(new StatementSyntax[]
 					{
-						SyntaxFactory.ExpressionStatement(invocation),
+						ExpressionStatement(invocation),
 						GetReturnTaskCompleted(taskConflict)
 					}));
 			}
 
-			var lambda = SyntaxFactory.ParenthesizedLambdaExpression(body)
-				.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>(parameters))
-					.WithCloseParenToken(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CloseParenToken, SyntaxFactory.TriviaList(SyntaxFactory.Space))))
-				.WithArrowToken(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.EqualsGreaterThanToken, SyntaxFactory.TriviaList(SyntaxFactory.Space)));
+			var lambda = ParenthesizedLambdaExpression(body)
+				.WithParameterList(ParameterList(SeparatedList<ParameterSyntax>(parameters))
+					.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(Space))))
+				.WithArrowToken(Token(TriviaList(), SyntaxKind.EqualsGreaterThanToken, TriviaList(Space)));
 
 			return lambda;
 		}
@@ -659,39 +659,39 @@ namespace AsyncGenerator.Extensions.Internal
 			SyntaxTrivia endOfLine)
 		{
 			var totalParameters = node.ParameterList.Parameters.Count;
-			var parameter = SyntaxFactory.Parameter(
-					SyntaxFactory.Identifier(
-						SyntaxFactory.TriviaList(),
+			var parameter = Parameter(
+					Identifier(
+						TriviaList(),
 						parameterName,
-						defaultParameter ? SyntaxFactory.TriviaList(SyntaxFactory.Space) : SyntaxFactory.TriviaList()))
+						defaultParameter ? TriviaList(Space) : TriviaList()))
 				.WithType(
-					SyntaxFactory.IdentifierName(
-						SyntaxFactory.Identifier(
-							SyntaxFactory.TriviaList(),
+					IdentifierName(
+						Identifier(
+							TriviaList(),
 							nameof(CancellationToken),
-							SyntaxFactory.TriviaList(SyntaxFactory.Space))));
+							TriviaList(Space))));
 			if (defaultParameter)
 			{
 				parameter = parameter
 					.WithDefault(
-						SyntaxFactory.EqualsValueClause(
-								SyntaxFactory.DefaultExpression(
-									SyntaxFactory.IdentifierName(nameof(CancellationToken))))
+						EqualsValueClause(
+								DefaultExpression(
+									IdentifierName(nameof(CancellationToken))))
 							.WithEqualsToken(
-								SyntaxFactory.Token(
-									SyntaxFactory.TriviaList(),
+								Token(
+									TriviaList(),
 									SyntaxKind.EqualsToken,
-									SyntaxFactory.TriviaList(
-										SyntaxFactory.Space))));
+									TriviaList(
+										Space))));
 			}
 
-			var comma = SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space));
+			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			var parameters = node.ParameterList.Parameters
 				.Union(new []{ parameter })
 				.SelectMany((o, i) => i == 0
 					? new SyntaxNodeOrToken[] { o }
 					: new SyntaxNodeOrToken[] { comma, o });
-			node = node.WithParameterList(node.ParameterList.WithParameters(SyntaxFactory.SeparatedList<ParameterSyntax>(parameters)));
+			node = node.WithParameterList(node.ParameterList.WithParameters(SeparatedList<ParameterSyntax>(parameters)));
 			
 			var commentTrivia = node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));
 			var commentNode = (DocumentationCommentTriviaSyntax)commentTrivia.GetStructure();
@@ -726,19 +726,19 @@ namespace AsyncGenerator.Extensions.Internal
 				}
 				index = commentNode.Content.IndexOf(summaryNode);
 			}
-			var xmlText = SyntaxFactory.XmlText()
+			var xmlText = XmlText()
 				.WithTextTokens(
-					SyntaxFactory.TokenList(
-						SyntaxFactory.XmlTextNewLine(
-							SyntaxFactory.TriviaList(),
+					TokenList(
+						XmlTextNewLine(
+							TriviaList(),
 							eol,
 							eol,
-							SyntaxFactory.TriviaList()), SyntaxFactory.XmlTextLiteral(
-							SyntaxFactory.TriviaList(
-								SyntaxFactory.DocumentationCommentExterior($"{leadingSpace}///")),
+							TriviaList()), XmlTextLiteral(
+							TriviaList(
+								DocumentationCommentExterior($"{leadingSpace}///")),
 							" ",
 							" ",
-							SyntaxFactory.TriviaList())));
+							TriviaList())));
 			var newCommentNode = commentNode
 				.WithContent(
 					commentNode.Content
@@ -756,100 +756,100 @@ namespace AsyncGenerator.Extensions.Internal
 
 		private static XmlElementSyntax CreateParameter(string identifierName, string description)
 		{
-			var identifier = SyntaxFactory.Identifier(identifierName);
+			var identifier = Identifier(identifierName);
 
-			var attribute = SyntaxFactory.XmlNameAttribute(
-				SyntaxFactory.XmlName(SyntaxFactory.Identifier(SyntaxFactory.TriviaList(SyntaxFactory.Space), "name", SyntaxFactory.TriviaList())),
-				SyntaxFactory.Token(SyntaxKind.DoubleQuoteToken),
-				SyntaxFactory.IdentifierName(identifier),
-				SyntaxFactory.Token(SyntaxKind.DoubleQuoteToken));
+			var attribute = XmlNameAttribute(
+				XmlName(Identifier(TriviaList(Space), "name", TriviaList())),
+				Token(SyntaxKind.DoubleQuoteToken),
+				IdentifierName(identifier),
+				Token(SyntaxKind.DoubleQuoteToken));
 
-			var startTag = SyntaxFactory.XmlElementStartTag(SyntaxFactory.XmlName("param"))
+			var startTag = XmlElementStartTag(XmlName("param"))
 				.WithAttributes(new SyntaxList<XmlAttributeSyntax>().Add(attribute));
 
-			var endTag = SyntaxFactory.XmlElementEndTag(SyntaxFactory.XmlName("param"));
+			var endTag = XmlElementEndTag(XmlName("param"));
 
-			var content = SyntaxFactory.SingletonList<XmlNodeSyntax>(
-				SyntaxFactory.XmlText()
+			var content = SingletonList<XmlNodeSyntax>(
+				XmlText()
 					.WithTextTokens(
-						SyntaxFactory.TokenList(
-							SyntaxFactory.XmlTextLiteral(
-								SyntaxFactory.TriviaList(),
+						TokenList(
+							XmlTextLiteral(
+								TriviaList(),
 								description,
 								description,
-								SyntaxFactory.TriviaList()))));
-			return SyntaxFactory.XmlElement(startTag, content, endTag);
+								TriviaList()))));
+			return XmlElement(startTag, content, endTag);
 		}
 
 		internal static InvocationExpressionSyntax AddArgument(this InvocationExpressionSyntax node, string argumentName)
 		{
-			return node.AddArgumentListArguments(SyntaxFactory.Argument(SyntaxFactory.IdentifierName(argumentName)));
+			return node.AddArgumentListArguments(Argument(IdentifierName(argumentName)));
 		}
 
 		internal static SyntaxTriviaList AddAutoGeneratedTrivia(SyntaxTrivia endOfLineTrivia)
 		{
 			var triviaList = new []
 			{
-				SyntaxFactory.Comment("//------------------------------------------------------------------------------"),
+				Comment("//------------------------------------------------------------------------------"),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("// <auto-generated>"),
+				Comment("// <auto-generated>"),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("//     This code was generated by AsyncGenerator."),
+				Comment("//     This code was generated by AsyncGenerator."),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("//"),
+				Comment("//"),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("//     Changes to this file may cause incorrect behavior and will be lost if"),
+				Comment("//     Changes to this file may cause incorrect behavior and will be lost if"),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("//     the code is regenerated."),
+				Comment("//     the code is regenerated."),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("// </auto-generated>"),
+				Comment("// </auto-generated>"),
 				endOfLineTrivia,
-				SyntaxFactory.Comment("//------------------------------------------------------------------------------"),
+				Comment("//------------------------------------------------------------------------------"),
 				endOfLineTrivia,
 				endOfLineTrivia,
 				endOfLineTrivia
 			};
 
-			return SyntaxFactory.TriviaList(triviaList);
+			return TriviaList(triviaList);
 		}
 
 		internal static TypeDeclarationSyntax WithXmlContentTrivia(this TypeDeclarationSyntax node, SyntaxTrivia endOfLineTrivia, SyntaxTrivia leadingSyntaxTrivia)
 		{
 			var endOfLine = endOfLineTrivia.ToFullString();
 			var leadingSpace = leadingSyntaxTrivia.ToFullString();
-			var comment = SyntaxFactory.DocumentationCommentTrivia(
+			var comment = DocumentationCommentTrivia(
 				SyntaxKind.SingleLineDocumentationCommentTrivia,
-				SyntaxFactory.List(
+				List(
 					new XmlNodeSyntax[]
 					{
-						SyntaxFactory.XmlText()
+						XmlText()
 							.WithTextTokens(
-								SyntaxFactory.TokenList(SyntaxFactory.XmlTextLiteral(SyntaxFactory.TriviaList(SyntaxFactory.DocumentationCommentExterior("///")), " ", " ", SyntaxFactory.TriviaList()))),
-						SyntaxFactory.XmlExampleElement(
-								SyntaxFactory.SingletonList<XmlNodeSyntax>(
-									SyntaxFactory.XmlText()
+								TokenList(XmlTextLiteral(TriviaList(DocumentationCommentExterior("///")), " ", " ", TriviaList()))),
+						XmlExampleElement(
+								SingletonList<XmlNodeSyntax>(
+									XmlText()
 										.WithTextTokens(
-											SyntaxFactory.TokenList(
-												SyntaxFactory.XmlTextNewLine(SyntaxFactory.TriviaList(), endOfLine, endOfLine, SyntaxFactory.TriviaList()),
-												SyntaxFactory.XmlTextLiteral(
-													SyntaxFactory.TriviaList(SyntaxFactory.DocumentationCommentExterior($"{leadingSpace}///")),
+											TokenList(
+												XmlTextNewLine(TriviaList(), endOfLine, endOfLine, TriviaList()),
+												XmlTextLiteral(
+													TriviaList(DocumentationCommentExterior($"{leadingSpace}///")),
 													" Contains generated async methods",
 													" Contains generated async methods",
-													SyntaxFactory.TriviaList()),
-												SyntaxFactory.XmlTextNewLine(
-													SyntaxFactory.TriviaList(),
+													TriviaList()),
+												XmlTextNewLine(
+													TriviaList(),
 													endOfLine,
 													endOfLine,
-													SyntaxFactory.TriviaList()),
-												SyntaxFactory.XmlTextLiteral(
-													SyntaxFactory.TriviaList(SyntaxFactory.DocumentationCommentExterior($"{leadingSpace}///")),
+													TriviaList()),
+												XmlTextLiteral(
+													TriviaList(DocumentationCommentExterior($"{leadingSpace}///")),
 													" ",
 													" ",
-													SyntaxFactory.TriviaList())))))
-							.WithStartTag(SyntaxFactory.XmlElementStartTag(SyntaxFactory.XmlName(SyntaxFactory.Identifier("content"))))
-							.WithEndTag(SyntaxFactory.XmlElementEndTag(SyntaxFactory.XmlName(SyntaxFactory.Identifier("content")))),
-						SyntaxFactory.XmlText()
-							.WithTextTokens(SyntaxFactory.TokenList(SyntaxFactory.XmlTextNewLine(SyntaxFactory.TriviaList(), endOfLine, endOfLine, SyntaxFactory.TriviaList())))
+													TriviaList())))))
+							.WithStartTag(XmlElementStartTag(XmlName(Identifier("content"))))
+							.WithEndTag(XmlElementEndTag(XmlName(Identifier("content")))),
+						XmlText()
+							.WithTextTokens(TokenList(XmlTextNewLine(TriviaList(), endOfLine, endOfLine, TriviaList())))
 					}));
 
 			// We have to preserve directives, so we need to modify the existing leading trivia
@@ -862,7 +862,7 @@ namespace AsyncGenerator.Extensions.Internal
 			{
 				// We have to replace the last comment with ours and remove other if they exist
 				var indexes = trivias.Select(o => leadingTrivia.IndexOf(o)).OrderByDescending(o => o).ToList();
-				leadingTrivia = leadingTrivia.Replace(leadingTrivia.ElementAt(indexes[0]), SyntaxFactory.Trivia(comment));
+				leadingTrivia = leadingTrivia.Replace(leadingTrivia.ElementAt(indexes[0]), Trivia(comment));
 				foreach (var index in indexes.Skip(1))
 				{
 					leadingTrivia = leadingTrivia.RemoveAt(index);
@@ -870,8 +870,8 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 			else
 			{
-				leadingTrivia = leadingTrivia.AddRange(SyntaxFactory.TriviaList(
-					SyntaxFactory.Trivia(comment),
+				leadingTrivia = leadingTrivia.AddRange(TriviaList(
+					Trivia(comment),
 					leadingSyntaxTrivia
 				));
 			}
@@ -881,10 +881,10 @@ namespace AsyncGenerator.Extensions.Internal
 		internal static InvocationExpressionSyntax Invoke(this IdentifierNameSyntax identifier, ParameterListSyntax parameterList)
 		{
 			var callArguments = parameterList.Parameters
-				.Select(o => SyntaxFactory.Argument(SyntaxFactory.IdentifierName(o.Identifier)))
+				.Select(o => Argument(IdentifierName(o.Identifier)))
 				.ToList();
 			var argumentList = new List<SyntaxNodeOrToken>();
-			var argSeparator = SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space));
+			var argSeparator = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			for (var i = 0; i < callArguments.Count; i++)
 			{
 				argumentList.Add(callArguments[i].WithoutTrivia());
@@ -893,7 +893,7 @@ namespace AsyncGenerator.Extensions.Internal
 					argumentList.Add(argSeparator);
 				}
 			}
-			return SyntaxFactory.InvocationExpression(identifier, SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList<ArgumentSyntax>(argumentList)));
+			return InvocationExpression(identifier, ArgumentList(SeparatedList<ArgumentSyntax>(argumentList)));
 		}
 
 		internal static NameSyntax ConstructNameSyntax(string name, SyntaxTrivia? trailingTrivia = null, bool insideCref = false, bool onlyName = false)
@@ -905,19 +905,19 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 
 			var trailingTriviaList = names.Count <= 2 && trailingTrivia.HasValue
-				? SyntaxFactory.TriviaList(trailingTrivia.Value)
-				: SyntaxFactory.TriviaList();
+				? TriviaList(trailingTrivia.Value)
+				: TriviaList();
 			if (names.Count < 2)
 			{
-				return GetSimpleName(name, SyntaxFactory.TriviaList(), trailingTriviaList, insideCref);
+				return GetSimpleName(name, TriviaList(), trailingTriviaList, insideCref);
 			}
-			var result = SyntaxFactory.QualifiedName(SyntaxFactory.IdentifierName(names[0]), GetSimpleName(names[1], SyntaxFactory.TriviaList(), trailingTriviaList, insideCref));
+			var result = QualifiedName(IdentifierName(names[0]), GetSimpleName(names[1], TriviaList(), trailingTriviaList, insideCref));
 			for (var i = 2; i < names.Count; i++)
 			{
 				trailingTriviaList = i + 1 == names.Count && trailingTrivia.HasValue
-					? SyntaxFactory.TriviaList(trailingTrivia.Value)
-					: SyntaxFactory.TriviaList();
-				result = SyntaxFactory.QualifiedName(result, GetSimpleName(names[i], SyntaxFactory.TriviaList(), trailingTriviaList, insideCref));
+					? TriviaList(trailingTrivia.Value)
+					: TriviaList();
+				result = QualifiedName(result, GetSimpleName(names[i], TriviaList(), trailingTriviaList, insideCref));
 			}
 			return result;
 		}
@@ -927,7 +927,7 @@ namespace AsyncGenerator.Extensions.Internal
 		{
 			if (!name.Contains("<"))
 			{
-				return SyntaxFactory.IdentifierName(SyntaxFactory.Identifier(leadingTrivia ?? SyntaxFactory.TriviaList(), name, trailingTrivia ?? SyntaxFactory.TriviaList()));
+				return IdentifierName(Identifier(leadingTrivia ?? TriviaList(), name, trailingTrivia ?? TriviaList()));
 			}
 			var start = name.IndexOf('<');
 			var type = name.Substring(0, start);
@@ -938,16 +938,16 @@ namespace AsyncGenerator.Extensions.Internal
 				argList.Add(GetSimpleName(argument));
 			}
 			var list = argList.Count == 1
-				? SyntaxFactory.SingletonSeparatedList(argList[0])
-				: SyntaxFactory.SeparatedList(argList);
-			var typeArgList = SyntaxFactory.TypeArgumentList(list);
+				? SingletonSeparatedList(argList[0])
+				: SeparatedList(argList);
+			var typeArgList = TypeArgumentList(list);
 			if (insideCref)
 			{
 				typeArgList = typeArgList
-					.WithLessThanToken(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.LessThanToken, "{", "{", SyntaxFactory.TriviaList()))
-					.WithGreaterThanToken(SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.GreaterThanToken, "}", "}", SyntaxFactory.TriviaList()));
+					.WithLessThanToken(Token(TriviaList(), SyntaxKind.LessThanToken, "{", "{", TriviaList()))
+					.WithGreaterThanToken(Token(TriviaList(), SyntaxKind.GreaterThanToken, "}", "}", TriviaList()));
 			}
-			return SyntaxFactory.GenericName(type)
+			return GenericName(type)
 				.WithTypeArgumentList(typeArgList);
 		}
 

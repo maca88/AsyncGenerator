@@ -156,9 +156,11 @@
     <Compile Include="Configuration\IFluentProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectParseConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />
+    <Compile Include="Configuration\IProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="FileConfiguration\FileConfiguration.cs" />
     <Compile Include="FileConfiguration\FileConfigurator.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />

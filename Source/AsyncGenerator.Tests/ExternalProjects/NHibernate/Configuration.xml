@@ -60,11 +60,11 @@
 
             <Method conversion="ToAsync" rule="EventListener" />
           </MethodConversion>
-          <SearchForAsyncCounterparts>
-            <Method search="false" name="GetFieldValue" />
-            <Method search="false" name="IsDBNull" />
-            <Method search="false" name="WriteLine" />
-          </SearchForAsyncCounterparts>
+          <IgnoreSearchForAsyncCounterparts>
+            <Method name="GetFieldValue" />
+            <Method name="IsDBNull" />
+            <Method name="WriteLine" />
+          </IgnoreSearchForAsyncCounterparts>
           <CallForwarding>true</CallForwarding>
           <CancellationTokens>
             <Guards>true</Guards>
@@ -74,7 +74,7 @@
               <Method parameter="Required" />
             </MethodParameter>
             <RequiresCancellationToken>
-              <Method tokenRequired="true" rule="EventListener" />
+              <Method rule="EventListener" />
             </RequiresCancellationToken>
           </CancellationTokens>
           <ScanMethodBody>true</ScanMethodBody>
@@ -83,6 +83,18 @@
           <AsyncLock type="NHibernate.Util.AsyncLock" methodName="LockAsync" />
           <LocalFunctions>true</LocalFunctions>
           <ConfigureAwaitArgument>false</ConfigureAwaitArgument>
+          <DocumentationComments>
+            <AddOrReplaceMethodSummary>
+              <Method name="Commit" containingTypeName="AdoTransaction">
+                <Content>
+                  <![CDATA[
+                  /// Commits the <see cref="ITransaction"/> by flushing asynchronously the <see cref="ISession"/>
+                  /// then committing synchronously the <see cref="DbTransaction"/>.
+                  ]]>
+                </Content>
+              </Method>
+            </AddOrReplaceMethodSummary>
+          </DocumentationComments>
         </Transformation>
         <RegisterPlugin>
           <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" /> <!--Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory-->
@@ -93,7 +105,7 @@
         <Analyzation>
           <ScanMethodBody>true</ScanMethodBody>
           <ScanForMissingAsyncMembers>
-            <Type scan="true"></Type>
+            <Type all="true" /> <!--All types-->
           </ScanForMissingAsyncMembers>
         </Analyzation>
       </Project>
@@ -105,21 +117,21 @@
             <Method conversion="Smart" hasAttributeName="TestAttribute" />
           </MethodConversion>
           <PreserveReturnType>
-            <Method preserve="true" hasAttributeName="TestAttribute" />
+            <Method hasAttributeName="TestAttribute" />
           </PreserveReturnType>
           <ScanForMissingAsyncMembers>
-            <Type scan="true" anyInterfaceRule="NHibernateAssembly" />
+            <Type anyInterfaceRule="NHibernateAssembly" />
           </ScanForMissingAsyncMembers>
           <CancellationTokens>
-            <RequiresCancellationToken>
-              <Method tokenRequired="false" hasAttributeName="TestAttribute" />
-            </RequiresCancellationToken>
+            <WithoutCancellationToken>
+              <Method hasAttributeName="TestAttribute" />
+            </WithoutCancellationToken>
           </CancellationTokens>
           <ScanMethodBody>true</ScanMethodBody>
-          <DocumentSelection>
-            <Document select="false" filePathEndsWith="Linq\MathTests.cs" />
-            <Document select="false" filePathEndsWith="Linq\ExpressionSessionLeakTest.cs" />
-          </DocumentSelection>
+          <IgnoreDocuments>
+            <Document filePathEndsWith="Linq\MathTests.cs" />
+            <Document filePathEndsWith="Linq\ExpressionSessionLeakTest.cs" />
+          </IgnoreDocuments>
           <TypeConversion>
             <Type conversion="Ignore" name="NorthwindDbCreator" />
             <!--Ignored for performance reasons-->

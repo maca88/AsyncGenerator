@@ -106,7 +106,7 @@
         containingTypeName: IBatcher
       - conversion: ToAsync
         rule: EventListener
-      searchForAsyncCounterparts:
+      ignoreSearchForAsyncCounterparts:
       - name: GetFieldValue
       - name: IsDBNull
       - name: WriteLine
@@ -120,8 +120,7 @@
           rule: PubliclyExposedType
         - parameter: Required
         requiresCancellationToken:
-        - tokenRequired: true
-          rule: EventListener
+        - rule: EventListener
       scanMethodBody: true
     transformation:
       configureAwaitArgument: false
@@ -129,6 +128,13 @@
       asyncLock:
         type: NHibernate.Util.AsyncLock
         methodName: LockAsync
+      documentationComments:
+        addOrReplaceMethodSummary:
+          - name: Commit
+            containingTypeName: AdoTransaction
+            content: |
+                /// Commits the <see cref="ITransaction"/> by flushing asynchronously the <see cref="ISession"/>
+                /// then committing synchronously the <see cref="DbTransaction"/>.
     registerPlugin:
     - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
       assemblyName: AsyncGenerator.Tests
@@ -136,7 +142,7 @@
     analyzation:
       scanMethodBody: true
       scanForMissingAsyncMembers:
-      - scan: true
+      - all: true
   - name: NHibernate.Test
     analyzation:
       methodConversion:
@@ -145,8 +151,7 @@
       - conversion: Smart
         hasAttributeName: TestAttribute
       preserveReturnType:
-      - preserve: true
-        hasAttributeName: TestAttribute
+      - hasAttributeName: TestAttribute
       typeConversion:
       - conversion: Ignore
         name: NorthwindDbCreator
@@ -162,16 +167,15 @@
         rule: IsTestCase
       - conversion: Ignore
         anyBaseTypeRule: IsTestCase
-      documentSelection:
+      ignoreDocuments:
       - filePathEndsWith: Linq\MathTests.cs
       - filePathEndsWith: Linq\ExpressionSessionLeakTest.cs
       cancellationTokens:
-        requiresCancellationToken:
+        withoutCancellationToken:
         - hasAttributeName: TestAttribute
       scanMethodBody: true
       scanForMissingAsyncMembers:
-      - scan: true
-        anyInterfaceRule: NHibernateAssembly
+      - anyInterfaceRule: NHibernateAssembly
     registerPlugin:
     - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
       assemblyName: AsyncGenerator.Tests
