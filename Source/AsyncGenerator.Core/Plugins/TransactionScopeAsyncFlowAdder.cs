@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using AsyncGenerator.Configuration;
 using AsyncGenerator.Core.Configuration;
-using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
-using AsyncGenerator.Plugins;
-using AsyncGenerator.Transformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
+namespace AsyncGenerator.Core.Plugins
 {
-	public class TransactionScopeRewriter : CSharpSyntaxRewriter, IMethodTransformer
+	/// <summary>
+	/// Adds TransactionScopeAsyncFlowOption option for TransactionScope
+	/// </summary>
+	public class TransactionScopeAsyncFlowAdder : CSharpSyntaxRewriter, IMethodTransformer
 	{
 		public Task Initialize(Project project, IProjectConfiguration configuration)
 		{
@@ -40,14 +35,17 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 				//TODO: what to do for TransactionScopeAsyncFlowOption.Suppress?
 				return node; // argument is already there
 			}
+			var argument = SyntaxFactory.Argument(
+				SyntaxFactory.MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					SyntaxFactory.IdentifierName("TransactionScopeAsyncFlowOption"),
+					SyntaxFactory.IdentifierName("Enabled")));
+			var arguments = node.ArgumentList.Arguments.GetWithSeparators()
+				.Union(node.ArgumentList.Arguments.Count > 0
+					? new SyntaxNodeOrToken[] { SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space)), argument }
+					: new SyntaxNodeOrToken[] { argument });
 			return node.WithArgumentList(
-				node.ArgumentList.WithArguments(
-					node.ArgumentList.Arguments.Add(
-						Argument(
-							MemberAccessExpression(
-								SyntaxKind.SimpleMemberAccessExpression,
-								IdentifierName("TransactionScopeAsyncFlowOption"),
-								IdentifierName("Enabled"))))));
+				node.ArgumentList.WithArguments(SyntaxFactory.SeparatedList<ArgumentSyntax>(arguments)));
 		}
 	}
 }

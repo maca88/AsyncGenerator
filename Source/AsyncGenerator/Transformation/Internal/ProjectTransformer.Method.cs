@@ -138,6 +138,8 @@ namespace AsyncGenerator.Transformation.Internal
 					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.TaskReturnedAnnotation)));
 				}
 			}
+			// Before modifying, fixup method body formatting in order to prevent weird formatting when adding additinal code
+			methodNode = FixupBodyFormatting(methodNode, result);
 
 			// Modify references
 			foreach (var refAnnotation in typeReferencesAnnotations)
@@ -185,6 +187,50 @@ namespace AsyncGenerator.Transformation.Internal
 			result.Transformed = methodNode;
 
 			return result;
+		}
+
+		private MethodDeclarationSyntax FixupBodyFormatting(MethodDeclarationSyntax methodNode, MethodTransformationResult result)
+		{
+			if (methodNode.Body == null)
+			{
+				return methodNode;
+			}
+			var eol = result.EndOfLineTrivia.ToFullString();
+			// Add end of line for the close paren token if missing
+			if (!methodNode.ConstraintClauses.Any() && !methodNode.ParameterList.CloseParenToken.TrailingTrivia.ToFullString().Contains(eol))
+			{
+				methodNode = methodNode.ReplaceToken(methodNode.ParameterList.CloseParenToken,
+					methodNode.ParameterList.CloseParenToken.WithTrailingTrivia(result.EndOfLineTrivia));
+				methodNode = methodNode.ReplaceToken(methodNode.Body.OpenBraceToken,
+					methodNode.Body.OpenBraceToken.WithLeadingTrivia(result.LeadingWhitespaceTrivia));
+			}
+			else if (methodNode.ConstraintClauses.Any() && !methodNode.ConstraintClauses.Last().GetTrailingTrivia().ToFullString().Contains(eol))
+			{
+				var lastConstraint = methodNode.ConstraintClauses.Last();
+				methodNode = methodNode.ReplaceNode(lastConstraint, lastConstraint.WithTrailingTrivia(result.EndOfLineTrivia));
+				methodNode = methodNode.ReplaceToken(methodNode.Body.OpenBraceToken,
+					methodNode.Body.OpenBraceToken.WithLeadingTrivia(result.LeadingWhitespaceTrivia));
+			}
+			var methodBody = methodNode.Body;
+			var getLineSpan = methodBody.GetLocation().GetLineSpan().Span;
+			// Add end of line tokens for open brace and statements when the whole block is written in one line (eg. { DoSomething(); })
+			if (getLineSpan.End.Line == getLineSpan.Start.Line)
+			{
+				methodBody = methodBody.ReplaceToken(methodBody.OpenBraceToken,
+					methodBody.OpenBraceToken.WithTrailingTrivia(result.EndOfLineTrivia));
+				// We have to fix also the statements leading trivia
+				for (var i = 0; i < methodBody.Statements.Count; i++)
+				{
+					var statement = methodBody.Statements[i];
+					methodBody = methodBody.ReplaceNode(statement, statement
+						.WithLeadingTrivia(result.BodyLeadingWhitespaceTrivia)
+						.WithTrailingTrivia(TriviaList(result.EndOfLineTrivia)));
+				}
+				methodBody = methodBody.ReplaceToken(methodBody.CloseBraceToken,
+					methodBody.CloseBraceToken.WithLeadingTrivia(TriviaList(result.LeadingWhitespaceTrivia)));
+				methodNode = methodNode.WithBody(methodBody);
+			}
+			return methodNode;
 		}
 	}
 }

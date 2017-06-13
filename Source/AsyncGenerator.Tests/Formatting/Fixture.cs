@@ -108,5 +108,57 @@ namespace AsyncGenerator.Tests.Formatting
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestMethodBodyBracesAfterTransformation()
+		{
+			var config = Configure(nameof(MethodBodyBraces), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.ToAsync)
+					.CallForwarding(true)
+					.CancellationTokens(t => t
+						.Guards(true)
+						.RequiresCancellationToken(s => true)
+					)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(MethodBodyBraces)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestMultilineParametersAfterTransformation()
+		{
+			var config = Configure(nameof(MultilineParameters), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.Guards(true)
+					)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(MultilineParameters)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
+		}
 	}
 }

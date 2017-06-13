@@ -136,8 +136,8 @@
                 /// Commits the <see cref="ITransaction"/> by flushing asynchronously the <see cref="ISession"/>
                 /// then committing synchronously the <see cref="DbTransaction"/>.
     registerPlugin:
-    - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
-      assemblyName: AsyncGenerator.Tests
+    - type: AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder
+      assemblyName: AsyncGenerator.Core
     - type: AsyncGenerator.Core.Plugins.EmptyRegionRemover
       assemblyName: AsyncGenerator.Core
   - name: NHibernate.DomainModel
@@ -179,8 +179,8 @@
       scanForMissingAsyncMembers:
       - anyInterfaceRule: NHibernateAssembly
     registerPlugin:
-    - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter
-      assemblyName: AsyncGenerator.Tests
+    - type: AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder
+      assemblyName: AsyncGenerator.Core
     - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder
       assemblyName: AsyncGenerator.Tests
     - type: NUnitAsyncCountepartFinder

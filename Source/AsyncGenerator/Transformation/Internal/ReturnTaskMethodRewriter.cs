@@ -258,7 +258,7 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			if (_methodResult.ForwardCall)
 			{
-				return ForwardCall();
+				return ForwardCall(body);
 			}
 			if (_methodResult.Faulted)
 			{
@@ -292,13 +292,13 @@ namespace AsyncGenerator.Transformation.Internal
 
 		
 
-		private BlockSyntax ForwardCall()
+		private BlockSyntax ForwardCall(BlockSyntax bodyBlock)
 		{
 			var methodNode = _methodResult.Node;
 			var invocation = methodNode.ForwardCall(_methodResult.Symbol, methodNode.Identifier.ValueText);
 			var block = Block()
-				.WithCloseBraceToken(methodNode.Body.CloseBraceToken)
-				.WithOpenBraceToken(methodNode.Body.OpenBraceToken);
+				.WithCloseBraceToken(bodyBlock.CloseBraceToken)
+				.WithOpenBraceToken(bodyBlock.OpenBraceToken);
 			foreach (var precondition in _methodResult.Preconditions)
 			{
 				block = block.AddStatements(precondition);

@@ -184,6 +184,7 @@
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPreconditionChecker.cs" />
     <Compile Include="Plugins\MethodTransformerResult.cs" />
+    <Compile Include="Plugins\TransactionScopeAsyncFlowAdder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReferenceConversion.cs" />
     <Compile Include="Transformation\IDocumentTransformationResult.cs" />

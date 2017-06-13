@@ -224,7 +224,7 @@ namespace AsyncGenerator.Transformation.Internal
 													SingletonSeparatedList(
 														methodResult.Symbol.ReturnsVoid
 															? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-															: methodResult.Node.ReturnType.WithTrailingTrivia())
+															: methodResult.Node.ReturnType.WithoutTrivia())
 														))))
 									.WithArgumentList(
 										ArgumentList(

@@ -102,7 +102,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 							)
 						)
 						.RegisterPlugin<EmptyRegionRemover>()
-						.RegisterPlugin<TransactionScopeRewriter>() // Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory
+						.RegisterPlugin<TransactionScopeAsyncFlowAdder>() // Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory
 					)
 					.ConfigureProject("NHibernate.DomainModel", p => p
 						.ConfigureAnalyzation(a => a
@@ -167,7 +167,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 									return TypeConversion.Unknown;
 								})
 						)
-						.RegisterPlugin<TransactionScopeRewriter>()
+						.RegisterPlugin<TransactionScopeAsyncFlowAdder>()
 						.RegisterPlugin<LinqAsyncCounterpartsFinder>()
 						.RegisterPlugin<NUnitAsyncCountepartFinder>()
 					)

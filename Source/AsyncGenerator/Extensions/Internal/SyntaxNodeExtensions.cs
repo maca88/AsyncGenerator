@@ -685,12 +685,14 @@ namespace AsyncGenerator.Extensions.Internal
 										Space))));
 			}
 
-			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
-			var parameters = node.ParameterList.Parameters
-				.Union(new []{ parameter })
-				.SelectMany((o, i) => i == 0
-					? new SyntaxNodeOrToken[] { o }
-					: new SyntaxNodeOrToken[] { comma, o });
+			var parameters = node.ParameterList.Parameters.GetWithSeparators()
+				.Union(node.ParameterList.Parameters.Count > 0 
+					? new SyntaxNodeOrToken[]
+					{
+						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
+						parameter
+					}
+					: new SyntaxNodeOrToken[] { parameter });
 			node = node.WithParameterList(node.ParameterList.WithParameters(SeparatedList<ParameterSyntax>(parameters)));
 			
 			var commentTrivia = node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));

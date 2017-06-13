@@ -97,7 +97,7 @@
           </DocumentationComments>
         </Transformation>
         <RegisterPlugin>
-          <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" /> <!--Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory-->
+          <Plugin type="AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder" assemblyName="AsyncGenerator.Core" /> <!--Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory-->
           <Plugin type="AsyncGenerator.Core.Plugins.EmptyRegionRemover" assemblyName="AsyncGenerator.Core" />
         </RegisterPlugin>
       </Project>
@@ -149,7 +149,7 @@
           </TypeConversion>
         </Analyzation>
         <RegisterPlugin>
-          <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.TransactionScopeRewriter" assemblyName="AsyncGenerator.Tests" />
+          <Plugin type="AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder" assemblyName="AsyncGenerator.Core" />
           <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder" assemblyName="AsyncGenerator.Tests" />
           <Plugin type="NUnitAsyncCountepartFinder" />
         </RegisterPlugin>
