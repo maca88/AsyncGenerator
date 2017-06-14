@@ -12,6 +12,7 @@
     <description>$description$</description>
     <copyright>Copyright 2017</copyright>
     <tags>Async Generator Roslyn</tags>
+    <developmentDependency>true</developmentDependency>
   </metadata>
   <files>
     <file src="bin\Release\AsyncGenerator.CommandLine.exe.config" target="tools" />
