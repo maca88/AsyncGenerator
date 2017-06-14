@@ -3,6 +3,7 @@ using System.IO;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core.Configuration;
+using log4net.Config;
 
 namespace AsyncGenerator.CommandLine
 {
@@ -10,24 +11,32 @@ namespace AsyncGenerator.CommandLine
 	{
 		public static void Main(string[] args)
 		{
+			XmlConfigurator.Configure();
 			Console.WriteLine("AsyncGenerator");
 			Console.WriteLine();
-			var configuration = Configure();
-			if (configuration == null)
+			try
 			{
-				Console.WriteLine("Could not find configuration file:");
-				Console.WriteLine("\t - please make sure that your working directory contains either AsyncGenerator.xml or AsyncGenerator.yml");
-				Console.WriteLine();
-				Console.WriteLine("Working directory:");
-				Console.WriteLine("\t- {0}", Environment.CurrentDirectory);
-				Console.WriteLine();
-				return;
-			}
+				var configuration = Configure();
+				if (configuration == null)
+				{
+					Console.WriteLine("Could not find configuration file:");
+					Console.WriteLine("\t - please make sure that your working directory contains either AsyncGenerator.xml or AsyncGenerator.yml");
+					Console.WriteLine();
+					Console.WriteLine("Working directory:");
+					Console.WriteLine("\t- {0}", Environment.CurrentDirectory);
+					Console.WriteLine();
+					return;
+				}
 
-			var generator = new AsyncCodeGenerator();
-			
-			generator.GenerateAsync(configuration)
-				.GetAwaiter().GetResult();
+				var generator = new AsyncCodeGenerator();
+				generator.GenerateAsync(configuration)
+					.GetAwaiter()
+					.GetResult();
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine(e);
+			}
 		}
 
 		static AsyncCodeConfiguration Configure()

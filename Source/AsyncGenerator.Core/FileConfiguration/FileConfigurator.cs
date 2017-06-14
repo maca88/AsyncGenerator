@@ -62,7 +62,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				if (!string.IsNullOrEmpty(plugin.AssemblyName) && !assemblies.ContainsKey(plugin.AssemblyName))
 				{
-					throw new DllNotFoundException($"Assembly with name {plugin.AssemblyName} was not found.");
+					assemblies[plugin.AssemblyName] = Assembly.Load(plugin.AssemblyName);
 				}
 				if (string.IsNullOrEmpty(plugin.AssemblyName) && dynamicAssembly == null)
 				{
