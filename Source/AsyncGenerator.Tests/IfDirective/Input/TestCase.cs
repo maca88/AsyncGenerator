@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-#if DEBUG
+#if ASYNC
 namespace AsyncGenerator.Tests.IfDirective
 {
 	#if TRACE
@@ -15,7 +15,7 @@ namespace AsyncGenerator.Tests.IfDirective
 		{
 			public class TestCase
 			{
-				#if DEBUG
+				#if ASYNC
 
 				public void Read()
 				{
