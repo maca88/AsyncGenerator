@@ -185,7 +185,7 @@
     registerPlugin:
     - type: AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder
       assemblyName: AsyncGenerator.Core
-    - type: AsyncGenerator.Core.Plugins.NUnitAsyncCountepartFinder
+    - type: AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartFinder
       assemblyName: AsyncGenerator.Core
 methodRules:
 - filters:

@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.Plugins
 {
-	public class NUnitAsyncCountepartFinder : IAsyncCounterpartsFinder
+	public class NUnitAsyncCounterpartFinder : IAsyncCounterpartsFinder
 	{
 		public Task Initialize(Project project, IProjectConfiguration configuration)
 		{
