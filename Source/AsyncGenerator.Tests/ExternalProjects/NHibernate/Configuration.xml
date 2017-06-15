@@ -155,7 +155,7 @@
         </Analyzation>
         <RegisterPlugin>
           <Plugin type="AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder" assemblyName="AsyncGenerator.Core" />
-          <Plugin type="AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartFinder" assemblyName="AsyncGenerator.Core" />
+          <Plugin type="AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder" assemblyName="AsyncGenerator.Core" />
         </RegisterPlugin>
       </Project>
     </Projects>

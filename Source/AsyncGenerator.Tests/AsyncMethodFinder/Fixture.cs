@@ -54,7 +54,7 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 						Assert.AreEqual(GetOutputFile(nameof(NUnitAssertThat)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartFinder>()
+				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
 			);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));

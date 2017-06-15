@@ -171,7 +171,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 								})
 						)
 						.RegisterPlugin<TransactionScopeAsyncFlowAdder>()
-						.RegisterPlugin<NUnitAsyncCounterpartFinder>()
+						.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
 					)
 					.ApplyChanges(true)
 				);
