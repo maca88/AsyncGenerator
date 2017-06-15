@@ -50,9 +50,9 @@ namespace AsyncGenerator.Configuration
 			return ConfigureSolutionFromFile(filePath, new T());
 		}
 
-		public AsyncCodeConfiguration ConfigureSolutionFromStream<T>(Stream stream) where T : class, ISolutionFileConfigurator, new()
+		public AsyncCodeConfiguration ConfigureSolutionFromStream<T>(Stream stream, string basePath = null) where T : class, ISolutionFileConfigurator, new()
 		{
-			return ConfigureSolutionFromStream(stream, new T());
+			return ConfigureSolutionFromStream(stream, new T(), basePath);
 		}
 
 		private AsyncCodeConfiguration ConfigureSolutionFromFile(string filePath, ISolutionFileConfigurator fileConfigurator)
