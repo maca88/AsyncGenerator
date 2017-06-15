@@ -12,6 +12,7 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
@@ -46,8 +47,19 @@ namespace AsyncGenerator
 
 				foreach (var projectData in solutionData.GetProjects())
 				{
+					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
+
 					// Register internal plugins
 					RegisterInternalPlugins(projectData.Configuration);
+
+					// Register async extension methods finders
+					foreach (var pair in analyzeConfig.AsyncExtensionMethods.ProjectFiles)
+					{
+						foreach (var fileName in pair.Value)
+						{
+							RegisterPlugin(projectData.Configuration, new AsyncExtensionMethodsFinder(pair.Key, fileName));
+						}
+					}
 
 					// Initialize plugins
 					Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' started");
@@ -62,7 +74,7 @@ namespace AsyncGenerator
 
 					// Analyze project
 					Logger.Info($"Analyzing project '{projectData.Project.Name}' started");
-					var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
+					
 					var analyzationResult = await AnalyzeProject(projectData).ConfigureAwait(false);
 					foreach (var action in analyzeConfig.AfterAnalyzation)
 					{
@@ -205,6 +217,11 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new CancellationTokenMethodTransformer());
 			configuration.RegisterPlugin(new SplitTailMethodTransformer());
 			configuration.RegisterPlugin(new DocumentationCommentMethodTransformer());
+		}
+
+		private void RegisterPlugin(IFluentProjectConfiguration configuration, IPlugin plugin)
+		{
+			configuration.RegisterPlugin(plugin);
 		}
 	}
 }

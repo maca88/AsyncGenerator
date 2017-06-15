@@ -83,12 +83,31 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("AsyncExtensionMethods")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class AsyncExtensionMethods
+	{
+		[XmlArrayItem("ProjectFile", IsNullable = false)]
+		public List<ProjectFile> ProjectFiles { get; set; }
+
+		public AsyncExtensionMethods()
+		{
+			ProjectFiles = new List<ProjectFile>();
+		}
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("Analyzation")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Analyzation
 	{
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodConversionFilter> MethodConversion { get; set; }
+		[XmlElement("AsyncExtensionMethods")]
+		public AsyncExtensionMethods AsyncExtensionMethods { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> PreserveReturnType { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
@@ -108,6 +127,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		public Analyzation()
 		{
+			AsyncExtensionMethods = new AsyncExtensionMethods();
 			CancellationTokens = new CancellationTokens();
 			IgnoreSearchForAsyncCounterparts = new List<MethodFilter>();
 			IgnoreDocuments = new List<DocumentFilter>();
@@ -188,6 +208,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 	{
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("ProjectFile")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class ProjectFile
+	{
+		[XmlAttribute(AttributeName = "fileName")]
+		public string FileName { get; set; }
+
+		[XmlAttribute(AttributeName = "projectName")]
+		public string ProjectName { get; set; }
 	}
 
 	[Serializable]

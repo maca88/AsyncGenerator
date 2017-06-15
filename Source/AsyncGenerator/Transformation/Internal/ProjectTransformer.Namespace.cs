@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;

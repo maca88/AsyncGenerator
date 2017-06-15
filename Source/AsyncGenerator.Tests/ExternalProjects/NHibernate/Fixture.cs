@@ -124,6 +124,9 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 									}
 									return MethodConversion.Unknown;
 								})
+							.AsyncExtensionMethods(e => e
+								.ProjectFile("NHibernate", "LinqExtensionMethods.cs")
+							)
 							.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
 							.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
 							.CancellationTokens(t => t
@@ -168,7 +171,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 								})
 						)
 						.RegisterPlugin<TransactionScopeAsyncFlowAdder>()
-						.RegisterPlugin<LinqAsyncCounterpartsFinder>()
 						.RegisterPlugin<NUnitAsyncCountepartFinder>()
 					)
 					.ApplyChanges(true)

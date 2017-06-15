@@ -117,6 +117,11 @@
             <Method conversion="Ignore" hasAttributeName="IgnoreAttribute" />
             <Method conversion="Smart" hasAttributeName="TestAttribute" />
           </MethodConversion>
+          <AsyncExtensionMethods>
+            <ProjectFiles>
+              <ProjectFile projectName="NHibernate" fileName="LinqExtensionMethods.cs"/>
+            </ProjectFiles>
+          </AsyncExtensionMethods>
           <PreserveReturnType>
             <Method hasAttributeName="TestAttribute" />
           </PreserveReturnType>
@@ -150,8 +155,7 @@
         </Analyzation>
         <RegisterPlugin>
           <Plugin type="AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder" assemblyName="AsyncGenerator.Core" />
-          <Plugin type="AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder" assemblyName="AsyncGenerator.Tests" />
-          <Plugin type="NUnitAsyncCountepartFinder" />
+          <Plugin type="AsyncGenerator.Core.Plugins.NUnitAsyncCountepartFinder" assemblyName="AsyncGenerator.Core" />
         </RegisterPlugin>
       </Project>
     </Projects>
@@ -201,37 +205,4 @@
       </Filters>
     </TypeRule>
   </TypeRules>
-  <CSharpScript>
-    <![CDATA[
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AsyncGenerator.Core;
-using AsyncGenerator.Core.Configuration;
-using AsyncGenerator.Core.Plugins;
-using Microsoft.CodeAnalysis;
-
-public class NUnitAsyncCountepartFinder : IAsyncCounterpartsFinder
-{
-	public Task Initialize(Project project, IProjectConfiguration configuration)
-	{
-		return Task.CompletedTask;
-	}
-
-	public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
-	{
-		if (syncMethodSymbol.Name != "That" || syncMethodSymbol.ContainingType.Name != "Assert" ||syncMethodSymbol.ContainingType.ContainingNamespace.ToString() != "NUnit.Framework")
-		{
-			yield break;
-		}
-
-		var firstParamType = syncMethodSymbol.Parameters.First().Type;
-		if (firstParamType.Name == "ActualValueDelegate" || firstParamType.Name == "TestDelegate")
-		{
-			yield return syncMethodSymbol;
-		}
-	}
-}
-]]>
-  </CSharpScript>
 </AsyncGenerator>

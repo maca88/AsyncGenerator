@@ -134,6 +134,23 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="ProjectFile">
+    <xs:attribute name="projectName" type="xs:string" use="required"/>
+    <xs:attribute name="fileName" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="AsyncExtensionMethods">
+    <xs:sequence>
+      <xs:element name="ProjectFiles" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="ProjectFile" type="ProjectFile" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
   <xs:complexType name="CancellationTokens">
     <xs:all>
       <xs:element name="Guards" type="xs:boolean" nillable="true" minOccurs="0" />
@@ -170,6 +187,7 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
+      <xs:element name="AsyncExtensionMethods" type="AsyncExtensionMethods" minOccurs="0"/>
       <xs:element name="PreserveReturnType" minOccurs="0">
         <xs:complexType>
           <xs:sequence>

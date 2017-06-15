@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.IfDirective
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<Input.Parent>
+	public class Fixture : BaseFixture
 	{
 		[Test]
 		public void TestAfterTransformation()

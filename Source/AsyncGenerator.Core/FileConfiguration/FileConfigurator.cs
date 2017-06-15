@@ -100,6 +100,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 				fluentConfig.ScanForMissingAsyncMembers(CreateTypePredicate(globalConfig, config.ScanForMissingAsyncMembers));
 			}
 			fluentConfig.CancellationTokens(o => Configure(globalConfig, config.CancellationTokens, o));
+			fluentConfig.AsyncExtensionMethods(o => Configure(config.AsyncExtensionMethods, o));
 
 			if (config.IgnoreDocuments.Any())
 			{
@@ -120,6 +121,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 			if (config.TypeConversion.Any())
 			{
 				fluentConfig.TypeConversion(CreateTypeConversionFunction(globalConfig, config.TypeConversion));
+			}
+		}
+
+		private static void Configure(AsyncExtensionMethods config, IFluentProjectAsyncExtensionMethodsConfiguration fluentConfig)
+		{
+			foreach (var projectFile in config.ProjectFiles)
+			{
+				fluentConfig.ProjectFile(projectFile.ProjectName, projectFile.FileName);
 			}
 		}
 

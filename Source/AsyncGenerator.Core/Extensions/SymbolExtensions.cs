@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using AsyncGenerator.Extensions.Internal;
+using AsyncGenerator.Core.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 
-namespace AsyncGenerator.Extensions
+namespace AsyncGenerator.Core.Extensions
 {
 	public static class SymbolExtensions
 	{
@@ -143,6 +140,66 @@ namespace AsyncGenerator.Extensions
 				return result;
 			}
 			return candidateAsyncMethod.Parameters.Last().Type.Name == nameof(CancellationToken) && result;
+		}
+
+		/// <summary>
+		/// Searches for an async counterpart methods within containing and its bases types
+		/// </summary>
+		/// <param name="methodSymbol"></param>
+		/// <param name="invokedFromType"></param>
+		/// <param name="equalParameters"></param>
+		/// <param name="searchInheritedTypes"></param>
+		/// <param name="hasCancellationToken"></param>
+		/// <param name="ignoreReturnType"></param>
+		/// <returns></returns>
+		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, ITypeSymbol invokedFromType,
+			bool equalParameters, bool searchInheritedTypes, bool hasCancellationToken, bool ignoreReturnType)
+		{
+			var asyncName = methodSymbol.Name + "Async";
+			if (searchInheritedTypes)
+			{
+				return methodSymbol.ContainingType.GetBaseTypesAndThis()
+					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
+					.OfType<IMethodSymbol>()
+					.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
+			}
+			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
+				.OfType<IMethodSymbol>()
+				.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
+		}
+
+		/// <summary>
+		/// Check if the given type satisfies the constraints of the type parameter
+		/// </summary>
+		/// <param name="parameterSymbol"></param>
+		/// <param name="typeSymbol"></param>
+		/// <returns></returns>
+		public static bool CanApply(this ITypeParameterSymbol parameterSymbol, ITypeSymbol typeSymbol)
+		{
+			// Check if the given type symbol is also a type parameter
+			if (parameterSymbol.AreEqual(typeSymbol))
+			{
+				return true;
+			}
+			// We have to check if all constraints can be applied to the given type
+			if (parameterSymbol.HasConstructorConstraint)
+			{
+				// TODO: check if is a public ctor
+				if (typeSymbol is INamedTypeSymbol namedTypeSymbol && !namedTypeSymbol.Constructors.Any(o => !o.Parameters.Any()))
+				{
+					return false;
+				}
+				return false;
+			}
+			if (parameterSymbol.HasReferenceTypeConstraint && !typeSymbol.IsReferenceType)
+			{
+				return false;
+			}
+			if (parameterSymbol.HasReferenceTypeConstraint && !typeSymbol.IsReferenceType)
+			{
+				return false;
+			}
+			return parameterSymbol.ConstraintTypes.All(typeSymbol.InheritsFromOrEquals);
 		}
 	}
 }

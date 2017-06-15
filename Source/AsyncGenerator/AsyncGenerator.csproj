@@ -149,15 +149,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\Internal\ProjectAsyncExtensionMethodsConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectParseConfiguration.cs" />
     <Compile Include="Extensions\Internal\EnumExtensions.cs" />
     <Compile Include="Extensions\Internal\ObjectExtensions.cs" />
     <Compile Include="Extensions\Internal\SpecialTypeExtensions.cs" />
+    <Compile Include="Extensions\Internal\SymbolExtensions.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.Async.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.Await.cs" />
-    <Compile Include="Extensions\SymbolExtensions.cs" />
     <Compile Include="Internal\AbstractData.cs" />
     <Compile Include="Internal\AbstractFunctionReferenceData.cs" />
     <Compile Include="Internal\AbstractReferenceData.cs" />
@@ -178,9 +179,7 @@
     <Compile Include="Configuration\Internal\SolutionConfiguration.cs" />
     <Compile Include="Internal\CrefFunctionReferenceData.cs" />
     <Compile Include="Internal\DocumentData.cs" />
-    <Compile Include="Extensions\AnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\Internal\MethodKindExtensions.cs" />
-    <Compile Include="Extensions\Internal\SymbolExtensions.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.cs" />
     <Compile Include="Internal\FunctionData.cs" />
     <Compile Include="Internal\AsyncLock.cs" />

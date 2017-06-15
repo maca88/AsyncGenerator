@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;

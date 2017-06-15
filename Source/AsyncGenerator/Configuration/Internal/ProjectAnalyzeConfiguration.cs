@@ -41,6 +41,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ProjectCancellationTokenConfiguration CancellationTokens { get; } = new ProjectCancellationTokenConfiguration();
 
+		public ProjectAsyncExtensionMethodsConfiguration AsyncExtensionMethods { get; } = new ProjectAsyncExtensionMethodsConfiguration();
+
 		public bool ScanMethodBody { get; private set; }
 
 		public Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; private set; }
@@ -123,6 +125,17 @@ namespace AsyncGenerator.Configuration.Internal
 			}
 			CancellationTokens.Enabled = true;
 			action(CancellationTokens);
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AsyncExtensionMethods(Action<IFluentProjectAsyncExtensionMethodsConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			CancellationTokens.Enabled = true;
+			action(AsyncExtensionMethods);
 			return this;
 		}
 

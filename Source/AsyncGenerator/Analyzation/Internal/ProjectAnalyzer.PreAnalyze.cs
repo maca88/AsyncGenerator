@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AsyncGenerator.Core;
+using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;

@@ -152,6 +152,10 @@
         hasAttributeName: IgnoreAttribute
       - conversion: Smart
         hasAttributeName: TestAttribute
+      asyncExtensionMethods:
+        projectFiles:
+        - fileName: LinqExtensionMethods.cs
+          projectName: NHibernate
       preserveReturnType:
       - hasAttributeName: TestAttribute
       typeConversion:
@@ -181,9 +185,8 @@
     registerPlugin:
     - type: AsyncGenerator.Core.Plugins.TransactionScopeAsyncFlowAdder
       assemblyName: AsyncGenerator.Core
-    - type: AsyncGenerator.Tests.ExternalProjects.NHibernate.LinqAsyncCounterpartsFinder
-      assemblyName: AsyncGenerator.Tests
-    - type: NUnitAsyncCountepartFinder
+    - type: AsyncGenerator.Core.Plugins.NUnitAsyncCountepartFinder
+      assemblyName: AsyncGenerator.Core
 methodRules:
 - filters:
   - containingTypeName: IAutoFlushEventListener
@@ -217,33 +220,3 @@ typeRules:
 - filters:
   - name: TestCase
   name: IsTestCase
-cSharpScript: | 
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using AsyncGenerator.Core;
-    using AsyncGenerator.Core.Configuration;
-    using AsyncGenerator.Core.Plugins;
-    using Microsoft.CodeAnalysis;
-
-    public class NUnitAsyncCountepartFinder : IAsyncCounterpartsFinder
-    {
-        public Task Initialize(Project project, IProjectConfiguration configuration)
-        {
-            return Task.CompletedTask;
-        }
-
-        public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
-        {
-            if (syncMethodSymbol.Name != "That" || syncMethodSymbol.ContainingType.Name != "Assert" ||syncMethodSymbol.ContainingType.ContainingNamespace.ToString() != "NUnit.Framework")
-            {
-                yield break;
-            }
-
-            var firstParamType = syncMethodSymbol.Parameters.First().Type;
-            if (firstParamType.Name == "ActualValueDelegate" || firstParamType.Name == "TestDelegate")
-            {
-                yield return syncMethodSymbol;
-            }
-        }
-    }

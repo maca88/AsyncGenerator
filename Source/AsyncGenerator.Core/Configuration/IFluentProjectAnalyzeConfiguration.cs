@@ -72,6 +72,11 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration CancellationTokens(Action<IFluentProjectCancellationTokenConfiguration> action);
 
 		/// <summary>
+		/// Register the location of the async extension methods
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration AsyncExtensionMethods(Action<IFluentProjectAsyncExtensionMethodsConfiguration> action);
+
+		/// <summary>
 		/// Set the predicate that will decide whether the return type of an async method should be preserved or not.
 		/// The predicate will be called only for methods that do not have any async invocation that returns a <see cref="Task"/>
 		/// <para>Default false is choosen for all methods.</para>

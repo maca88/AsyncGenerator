@@ -2,6 +2,7 @@
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
+using AsyncGenerator.Core.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -18,6 +19,7 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 			var config = Configure(nameof(CustomLinqExtensions), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
+					.AsyncExtensionMethods(e => e.ProjectFile("AsyncGenerator.Tests", "LinqExtensions.cs"))
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -29,7 +31,6 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 						Assert.AreEqual(GetOutputFile(nameof(CustomLinqExtensions)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<LinqAsyncCounterpartsFinder>()
 			);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

@@ -188,10 +188,8 @@
     <Compile Include="AsyncMethodFinder\Input\GenericParameter.cs" />
     <Compile Include="AsyncMethodFinder\Input\IgnoreSomeAsyncMethods.cs" />
     <Compile Include="AsyncMethodFinder\Input\NUnitAssertThat.cs" />
-    <Compile Include="AsyncMethodFinder\LinqAsyncCounterpartsFinder.cs" />
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
     <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
-    <Compile Include="AsyncMethodFinder\NUnitAsyncCountepartFinder.cs" />
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CallForwarding\Fixture.cs" />
     <Compile Include="CallForwarding\Input\TestCase.cs" />
@@ -210,8 +208,6 @@
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
-    <Compile Include="ExternalProjects\NHibernate\LinqAsyncCounterpartsFinder.cs" />
-    <Compile Include="ExternalProjects\NHibernate\NUnitAsyncCountepartFinder.cs" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="Formatting\Fixture.cs" />
