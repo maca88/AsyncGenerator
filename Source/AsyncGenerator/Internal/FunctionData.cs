@@ -37,6 +37,8 @@ namespace AsyncGenerator.Internal
 
 		public ConcurrentDictionary<SyntaxNode, ChildFunctionData> ChildFunctions { get; } = new ConcurrentDictionary<SyntaxNode, ChildFunctionData>();
 
+		public List<LockData> Locks { get; } = new List<LockData>();
+
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 
 		public abstract SyntaxNode GetBodyNode();
@@ -193,6 +195,9 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<IChildFunctionAnalyzationResult> _cachedChildFunctions;
 		IReadOnlyList<IChildFunctionAnalyzationResult> IFunctionAnalyzationResult.ChildFunctions => _cachedChildFunctions ?? (_cachedChildFunctions = ChildFunctions.Values.ToImmutableArray());
+
+		private IReadOnlyList<ILockAnalyzationResult> _cachedLocks;
+		IReadOnlyList<ILockAnalyzationResult> IFunctionAnalyzationResult.Locks => _cachedLocks ?? (_cachedLocks = Locks.ToImmutableArray());
 
 		#endregion
 	}

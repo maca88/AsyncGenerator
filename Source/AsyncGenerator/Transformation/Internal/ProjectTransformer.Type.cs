@@ -132,6 +132,20 @@ namespace AsyncGenerator.Transformation.Internal
 					var transformedNode = new MethodTransformationResult(methodResult);
 					transformResult.TransformedMethods.Add(transformedNode);
 					rootTypeNode = rootTypeNode.ReplaceNode(methodNode, methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
+
+					// Annotate all locks inside the method before the transformations begins as will be easier to transform them if needed
+					foreach (var lockData in methodResult.Locks)
+					{
+						var lockSpanStart = lockData.Node.SpanStart - startRootTypeSpan;
+						var lockSpanLength = lockData.Node.Span.Length;
+						var lockNode = rootTypeNode.DescendantNodes()
+							.OfType<LockStatementSyntax>()
+							.First(o => o.SpanStart == lockSpanStart && o.Span.Length == lockSpanLength);
+						var lockTransformedNode = new LockTransformationResult(lockData);
+						transformedNode.TransformedLocks.Add(lockTransformedNode);
+						rootTypeNode = rootTypeNode.ReplaceNode(lockNode,
+							lockNode.WithAdditionalAnnotations(new SyntaxAnnotation(lockTransformedNode.Annotation)));
+					}
 				}
 			}
 			// Save the orignal node that was only annotated

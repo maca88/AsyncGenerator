@@ -13,10 +13,10 @@ namespace AsyncGenerator.Core.Transformation
 
 		IImmutableSet<string> MemberNames { get; }
 
-		SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+		SyntaxTrivia LeadingWhitespaceTrivia { get; }
 
-		SyntaxTrivia EndOfLineTrivia { get; set; }
+		SyntaxTrivia EndOfLineTrivia { get; }
 
-		SyntaxTrivia IndentTrivia { get; set; }
+		SyntaxTrivia IndentTrivia { get; }
 	}
 }

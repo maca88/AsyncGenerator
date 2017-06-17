@@ -221,6 +221,8 @@
     <Compile Include="Generics\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
     <Compile Include="LocalFunctions\Input\TestCase.cs" />
+    <Compile Include="LockStatement\Fixture.cs" />
+    <Compile Include="LockStatement\Input\Lock.cs" />
     <Compile Include="MissingMembers\Fixture.cs" />
     <Compile Include="MissingMembers\Input\TestCase.cs" />
     <Compile Include="NestedNamespaces\Fixture.cs" />
@@ -545,6 +547,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Plugins\Output\TransactionScopeAsyncFlow.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LockStatement\Output\Lock.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

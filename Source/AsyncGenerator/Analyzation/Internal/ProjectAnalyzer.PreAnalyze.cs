@@ -40,7 +40,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					else
 					{
-						PreAnalyzeMethodData(methodData);
+						PreAnalyzeMethodData(methodData, documentData.SemanticModel);
 					}
 
 					foreach (var node in methodNode
@@ -95,7 +95,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			typeData.IsPartial = typeData.Node.IsPartial();
 		}
 
-		private void PreAnalyzeMethodData(MethodData methodData)
+		private void PreAnalyzeMethodData(MethodData methodData, SemanticModel semanticModel)
 		{
 			var methodSymbol = methodData.Symbol;
 			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
@@ -318,6 +318,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					return;
 				}
 			}
+			FillFunctionLocks(methodData, semanticModel);
 		}
 
 		private void PreAnalyzeAnonymousFunction(AnonymousFunctionData functionData, SemanticModel semanticModel)
@@ -367,7 +368,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				log(functionData);
 				return;
 			}
-			//functionData.ArgumentOfMethod = new Tuple<IMethodSymbol, int>(methodSymbol, index);
+			FillFunctionLocks(functionData, semanticModel);
 		}
 
 		private void PreAnalyzeLocalFunction(LocalFunctionData functionData, SemanticModel semanticModel)
@@ -378,6 +379,34 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			//TODO
+			FillFunctionLocks(functionData, semanticModel);
+		}
+
+		private void FillFunctionLocks(FunctionData functionData, SemanticModel semanticModel)
+		{
+			var bodyNode = functionData.GetBodyNode();
+			if (bodyNode == null)
+			{
+				return;
+			}
+			var locks = bodyNode.DescendantNodes().OfType<LockStatementSyntax>().ToList();
+			if (!locks.Any())
+			{
+				return;
+			}
+			foreach (var lockNode in locks)
+			{
+				ISymbol symbol;
+				if (lockNode.Expression is TypeOfExpressionSyntax typeOfExpression)
+				{
+					symbol = semanticModel.GetSymbolInfo(typeOfExpression.Type).Symbol;
+				}
+				else
+				{
+					symbol = semanticModel.GetSymbolInfo(lockNode.Expression).Symbol;
+				}
+				functionData.Locks.Add(new LockData(symbol, lockNode));
+			}
 		}
 	}
 }

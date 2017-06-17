@@ -143,6 +143,7 @@
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
+    <Compile Include="Analyzation\ILockAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodSymbolInfo.cs" />
@@ -195,6 +196,7 @@
     <Compile Include="ReferenceConversion.cs" />
     <Compile Include="Transformation\IDocumentTransformationResult.cs" />
     <Compile Include="Transformation\IFunctionReferenceTransformationResult.cs" />
+    <Compile Include="Transformation\ILockTransformationResult.cs" />
     <Compile Include="Transformation\IMemberTransformationResult.cs" />
     <Compile Include="Transformation\IMethodTransformationResult.cs" />
     <Compile Include="Transformation\INamespaceTransformationMetadata.cs" />

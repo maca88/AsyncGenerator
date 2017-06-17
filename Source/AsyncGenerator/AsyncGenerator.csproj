@@ -189,6 +189,7 @@
     <Compile Include="Internal\DefaultAsyncCounterpartsFinder.cs" />
     <Compile Include="Internal\DelegateAsyncCounterpartsFinder.cs" />
     <Compile Include="Internal\DelegatePreconditionChecker.cs" />
+    <Compile Include="Internal\LockData.cs" />
     <Compile Include="Internal\MethodData.cs" />
     <Compile Include="Internal\BodyFunctionReferenceData.cs" />
     <Compile Include="Internal\NamespaceData.cs" />

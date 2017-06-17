@@ -47,6 +47,11 @@ namespace AsyncGenerator.Core.Analyzation
 		IReadOnlyList<IChildFunctionAnalyzationResult> ChildFunctions { get; }
 
 		/// <summary>
+		/// Contains lock statements information inside the function
+		/// </summary>
+		IReadOnlyList<ILockAnalyzationResult> Locks { get; }
+
+		/// <summary>
 		/// When true, the async keyword will be omitted
 		/// </summary>
 		bool OmitAsync { get; }

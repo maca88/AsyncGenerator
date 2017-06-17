@@ -46,6 +46,16 @@ namespace AsyncGenerator.Transformation.Internal
 		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
 	}
 
+	internal class LockTransformationResult : TransformationResult, ILockTransformationResult
+	{
+		public LockTransformationResult(ILockAnalyzationResult result) : base(result.Node)
+		{
+			AnalyzationResult = result;
+		}
+
+		public ILockAnalyzationResult AnalyzationResult { get; }
+	}
+
 	internal class MethodTransformationResult : TransformationResult<MethodDeclarationSyntax>, IMethodTransformationResult
 	{
 		public MethodTransformationResult(IMethodAnalyzationResult result) : base(result.Node)
@@ -62,6 +72,8 @@ namespace AsyncGenerator.Transformation.Internal
 		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
 
 		public List<RootFunctionTransformationResult> TransformedFunctions { get; } = new List<RootFunctionTransformationResult>();
+
+		public List<LockTransformationResult> TransformedLocks { get; } = new List<LockTransformationResult>();
 
 		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
 
@@ -80,6 +92,10 @@ namespace AsyncGenerator.Transformation.Internal
 		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodTransformationResult.TransformedFunctionReferences =>
 			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
 
+		private IReadOnlyList<ILockTransformationResult> _cachedTransformedLocks;
+		IReadOnlyList<ILockTransformationResult> IMethodTransformationResult.TransformedLocks =>
+			_cachedTransformedLocks ?? (_cachedTransformedLocks = TransformedLocks.ToImmutableList());
+		
 		#endregion
 
 

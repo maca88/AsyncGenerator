@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
@@ -33,13 +34,65 @@ namespace AsyncGenerator.Transformation.Internal
 		public MethodTransformerResult Transform(IMethodTransformationResult result, 
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
-			if (!result.AnalyzationResult.MustRunSynchronized)
+			if (!result.TransformedLocks.Any() && !result.AnalyzationResult.MustRunSynchronized)
 			{
 				return MethodTransformerResult.Skip;
 			}
-			var methodSymbol = result.AnalyzationResult.Symbol;
-			var fieldName = GetLockFieldName(methodSymbol, typeMetadata);
+			var newFields = new Dictionary<string, FieldDeclarationSyntax>();
 			var node = result.Transformed;
+			// Transform all lock statements that contains at least one async invocation.
+			foreach (var lockResult in result.TransformedLocks)
+			{
+				var lockNode = node.GetAnnotatedNodes(lockResult.Annotation).OfType<LockStatementSyntax>().First();
+				if (result.AnalyzationResult.MethodReferences
+					.Where(r => lockResult.AnalyzationResult.Node.Span.Contains(r.ReferenceNameNode.Span))
+					.All(r => r.GetConversion() != ReferenceConversion.ToAsync))
+				{
+					continue;
+				}
+				var lockSymbol = lockResult.AnalyzationResult.Symbol;
+				var typeLock = lockSymbol is INamedTypeSymbol;
+				var isStatic = lockSymbol.IsStatic || typeLock;
+				var lockFieldName = GetLockFieldName(lockResult.AnalyzationResult.Symbol, isStatic, typeLock ? "Lock" : "",  "Async");
+				// TODO: handle name collisions
+				if (!typeMetadata.MemberNames.Contains(lockFieldName) && !newFields.ContainsKey(lockFieldName))
+				{
+					newFields.Add(lockFieldName, GetAsyncLockField(lockFieldName, isStatic, result));
+				}
+
+				var usingNode = GetUsingAsyncLock(lockFieldName, lockNode.GetLeadingTrivia(),
+						lockNode.CloseParenToken.TrailingTrivia, lockNode.Statement);
+				node = node.ReplaceNode(lockNode, usingNode);
+			}
+
+			if (result.AnalyzationResult.MustRunSynchronized)
+			{
+				var methodSymbol = result.AnalyzationResult.Symbol;
+				var fieldName = GetLockFieldName(methodSymbol, methodSymbol.IsStatic, typeMetadata);
+				var newBody = GetUsingAsyncLock(fieldName,
+						TriviaList(result.LeadingWhitespaceTrivia), TriviaList(result.EndOfLineTrivia), node.Body)
+					.AppendIndent(result.IndentTrivia.ToFullString());
+				node = node.WithBody(node.Body
+					.WithStatements(SingletonList<StatementSyntax>(newBody)));
+
+				// Remove the Synchronized option from the MethodImpl attribute
+				var methodImplAttr = node.AttributeLists.SelectMany(o => o.Attributes).First(o => o.Name.ToString() == "MethodImpl");
+				var newMethodImplAttr = (AttributeSyntax)VisitAttribute(methodImplAttr);
+
+				node = node.ReplaceNode(methodImplAttr, newMethodImplAttr);
+				newFields.Add(fieldName, GetAsyncLockField(fieldName, methodSymbol.IsStatic, result));
+			}
+
+			var transformResult = MethodTransformerResult.Update(node);
+			foreach (var newField in newFields.Values)
+			{
+				transformResult.AddField(newField);
+			}
+			return transformResult;
+		}
+
+		private UsingStatementSyntax GetUsingAsyncLock(string fieldName, SyntaxTriviaList usingLeadingTrivia, SyntaxTriviaList closeParenTrailingTrivia, StatementSyntax statement)
+		{
 			var expression = AwaitExpression(
 				Token(TriviaList(), SyntaxKind.AwaitKeyword, TriviaList(Space)),
 				InvocationExpression(
@@ -47,36 +100,29 @@ namespace AsyncGenerator.Transformation.Internal
 						SyntaxKind.SimpleMemberAccessExpression,
 						IdentifierName(fieldName),
 						IdentifierName(_configuration.AsyncLockMethodName))));
-			var newBody = UsingStatement(
-							Token(TriviaList(result.LeadingWhitespaceTrivia), SyntaxKind.UsingKeyword, TriviaList(Space)),
-							Token(TriviaList(), SyntaxKind.OpenParenToken, TriviaList()),
-							null,
-							expression,
-							Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(result.EndOfLineTrivia)),
-							node.Body)
-							.AppendIndent(result.IndentTrivia.ToFullString())
-				;
-			node = node.WithBody(node.Body
-				.WithStatements(SingletonList<StatementSyntax>(newBody)));
-
-			// Remove the Synchronized option from the MethodImpl attribute
-			var methodImplAttr = node.AttributeLists.SelectMany(o => o.Attributes).First(o => o.Name.ToString() == "MethodImpl");
-			var newMethodImplAttr = (AttributeSyntax)VisitAttribute(methodImplAttr);
-
-			node = node.ReplaceNode(methodImplAttr, newMethodImplAttr);
-			var field = GetAsyncLockField(fieldName, methodSymbol.IsStatic, result);
-			return MethodTransformerResult.Update(node)
-				.AddField(field);
+			return UsingStatement(
+				Token(usingLeadingTrivia, SyntaxKind.UsingKeyword, TriviaList(Space)),
+				Token(TriviaList(), SyntaxKind.OpenParenToken, TriviaList()),
+				null,
+				expression,
+				Token(TriviaList(), SyntaxKind.CloseParenToken, closeParenTrailingTrivia),
+				statement);
 		}
 
-		// TODO: helper method
-		private static string GetLockFieldName(IMethodSymbol symbol, ITypeTransformationMetadata typeTransformMetadata)
+		private static string GetLockFieldName(ISymbol symbol, bool isStatic, string prefix = "", string postfix = "")
 		{
-			var fieldName = symbol.Name;
-			if (!symbol.IsStatic)
+			var fieldName = $"{prefix}{symbol.Name.Trim('_')}{postfix}";
+			if (!isStatic)
 			{
 				fieldName = "_" + fieldName.Substring(0, 1).ToLowerInvariant() + fieldName.Substring(1);
 			}
+			return fieldName;
+		}
+
+		// TODO: helper method
+		private static string GetLockFieldName(ISymbol symbol, bool isStatic, ITypeTransformationMetadata typeTransformMetadata, string prefix = "", string postfix = "")
+		{
+			var fieldName = GetLockFieldName(symbol, isStatic, prefix, postfix);
 			var currentIdx = 2;
 			var newFieldName = fieldName;
 			while (typeTransformMetadata.MemberNames.Contains(newFieldName))

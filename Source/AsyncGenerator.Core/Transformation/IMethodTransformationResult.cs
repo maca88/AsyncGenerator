@@ -17,5 +17,7 @@ namespace AsyncGenerator.Core.Transformation
 		SyntaxTrivia BodyLeadingWhitespaceTrivia { get; }
 
 		IReadOnlyList<IFunctionReferenceTransformationResult> TransformedFunctionReferences { get; }
+
+		IReadOnlyList<ILockTransformationResult> TransformedLocks { get; }
 	}
 }
