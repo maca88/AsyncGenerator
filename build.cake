@@ -77,8 +77,15 @@ Task("Run-Unit-Tests")
 // PACKAGE
 //////////////////////////////////////////////////////////////////////
 
+Task("Clean-Packages")
+    .Does(() =>
+{
+    CleanDirectory(PACKAGE_DIR);
+});
+
 Task("Pack-NuGet-Packages")
     .IsDependentOn("Build")
+    .IsDependentOn("Clean-Packages")
     .Description("Creates NuGet packages")
     .Does(() =>
 {
