@@ -9,7 +9,7 @@ namespace AsyncGenerator.CommandLine
 {
 	static class Program
 	{
-		public static void Main(string[] args)
+		public static int Main(string[] args)
 		{
 			XmlConfigurator.Configure();
 			Console.WriteLine("AsyncGenerator");
@@ -25,17 +25,20 @@ namespace AsyncGenerator.CommandLine
 					Console.WriteLine("Working directory:");
 					Console.WriteLine("\t- {0}", Environment.CurrentDirectory);
 					Console.WriteLine();
-					return;
+					return 1;
 				}
 
 				var generator = new AsyncCodeGenerator();
 				generator.GenerateAsync(configuration)
 					.GetAwaiter()
 					.GetResult();
+
+				return 0;
 			}
 			catch (Exception e)
 			{
 				Console.WriteLine(e);
+				return -1;
 			}
 		}
 
