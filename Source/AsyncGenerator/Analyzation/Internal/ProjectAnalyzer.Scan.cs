@@ -460,7 +460,17 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
 				// Save the reference as it can be made async
 				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
-				var referenceSymbol = (IMethodSymbol) documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
+				var referenceSymbolInfo = documentData.SemanticModel.GetSymbolInfo(nameNode);
+				var referenceSymbol = (IMethodSymbol)referenceSymbolInfo.Symbol;
+				if (referenceSymbol == null)
+				{
+					if (!referenceSymbolInfo.CandidateSymbols.Any())
+					{
+						throw new InvalidOperationException($"Unable to find symbol for node {nameNode} inside function {baseMethodData.Symbol}");
+					}
+					referenceSymbol = (IMethodSymbol)referenceSymbolInfo.CandidateSymbols.SingleOrDefault();
+					Logger.Warn($"GetSymbolInfo did not successfully resloved symbol for node {nameNode} inside function {baseMethodData.Symbol}, but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}");
+				}
 				var referenceMethodData = ProjectData.GetMethodData(referenceSymbol);
 				// Check if the reference is a cref reference
 				if (nameNode.Parent.IsKind(SyntaxKind.NameMemberCref))
