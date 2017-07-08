@@ -9,6 +9,58 @@ namespace AsyncGenerator.Core.Extensions
 	public static class SymbolExtensions
 	{
 		/// <summary>
+		/// Check if the definition (excluding method name) of both methods matches
+		/// </summary>
+		/// <param name="method"></param>
+		/// <param name="toMatch"></param>
+		/// <returns></returns>
+		public static bool MatchesDefinition(this IMethodSymbol method, IMethodSymbol toMatch)
+		{
+			if (method.IsExtensionMethod)
+			{
+				// System.Linq extensions
+				method = method.ReducedFrom ?? method;
+			}
+			if (method.Parameters.Length != toMatch.Parameters.Length ||
+			    method.TypeParameters.Length != toMatch.TypeParameters.Length ||
+				!method.ReturnType.AreEqual(toMatch.ReturnType))
+			{
+				return false;
+			}
+			for (var i = 0; i < method.TypeParameters.Length; i++)
+			{
+				var param = method.TypeParameters[i];
+				var candidateParam = toMatch.TypeParameters[i];
+				if (param.Variance != candidateParam.Variance ||
+				    param.TypeParameterKind != candidateParam.TypeParameterKind ||
+				    param.ConstraintTypes.Length != candidateParam.ConstraintTypes.Length)
+				{
+					return false;
+				}
+				if (param.ConstraintTypes.Where((t, j) => !t.Equals(candidateParam.ConstraintTypes[j])).Any())
+				{
+					return false;
+				}
+			}
+			for (var i = 0; i < method.Parameters.Length; i++)
+			{
+				var param = method.Parameters[i];
+				var candidateParam = toMatch.Parameters[i];
+				if (param.IsOptional != candidateParam.IsOptional ||
+				    param.IsParams != candidateParam.IsParams ||
+				    param.RefKind != candidateParam.RefKind)
+				{
+					return false;
+				}
+				if (!param.Type.AreEqual(candidateParam.Type))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
 		/// Check if the candidate asynchronous method is an asynchronous counterpart of the synchronous method.
 		/// </summary>
 		/// <param name="syncMethod">The synchronous method</param>

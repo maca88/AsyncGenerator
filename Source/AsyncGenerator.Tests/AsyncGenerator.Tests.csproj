@@ -241,6 +241,7 @@
     <Compile Include="OutsideMethodFunction\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
     <Compile Include="PartialCompilation\Fixture.cs" />
+    <Compile Include="PartialCompilation\Input\CtorMultiOverloads.cs" />
     <Compile Include="PartialCompilation\Input\Ctor.cs" />
     <Compile Include="Plugins\Fixture.cs" />
     <Compile Include="Plugins\Input\EmptyRegions.cs" />
@@ -555,6 +556,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PartialCompilation\Output\Ctor.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PartialCompilation\Output\CtorMultiOverloads.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

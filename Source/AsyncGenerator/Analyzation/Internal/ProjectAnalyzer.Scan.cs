@@ -464,11 +464,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				var referenceSymbol = (IMethodSymbol)referenceSymbolInfo.Symbol;
 				if (referenceSymbol == null)
 				{
-					if (!referenceSymbolInfo.CandidateSymbols.Any())
+					referenceSymbol = TryFindCandidate(nameNode, referenceSymbolInfo, documentData.SemanticModel);
+					if (referenceSymbol == null)
 					{
 						throw new InvalidOperationException($"Unable to find symbol for node {nameNode} inside function {baseMethodData.Symbol}");
 					}
-					referenceSymbol = (IMethodSymbol)referenceSymbolInfo.CandidateSymbols.SingleOrDefault();
 					Logger.Warn($"GetSymbolInfo did not successfully resloved symbol for node {nameNode} inside function {baseMethodData.Symbol}, but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}");
 				}
 				var referenceMethodData = ProjectData.GetMethodData(referenceSymbol);
@@ -502,6 +502,60 @@ namespace AsyncGenerator.Analyzation.Internal
 					await ScanMethodData(methodData, depth).ConfigureAwait(false);
 				}
 			}
+		}
+
+		private IMethodSymbol TryFindCandidate(SyntaxNode nameNode, SymbolInfo symbolInfo, SemanticModel semanticModel)
+		{
+			if (!symbolInfo.CandidateSymbols.Any())
+			{
+				return null;
+			}
+			if (symbolInfo.CandidateSymbols.Length == 1)
+			{
+				return (IMethodSymbol)symbolInfo.CandidateSymbols.First();
+			}
+
+			// Try to figure out which is the correct one by finding the symbol of the parent node
+			// eg. new Ctor(GetList, GetListAsync) -> if we get multiple candidates for GetList, try to find the symbol for the Ctor.ctor.
+			// If found (only one Ctor.ctor symbol) we can figure out which is the correct GetList candidate
+			var ascend = true;
+			var currNode = nameNode.Parent;
+			int? argumentIndex = null;
+			while (ascend)
+			{
+				ascend = false;
+				switch (currNode.Kind())
+				{
+					case SyntaxKind.SimpleMemberAccessExpression: // We get the same symbol as for the name node
+						ascend = true;
+						break;
+					case SyntaxKind.Argument:
+						ascend = true;
+						argumentIndex = ((ArgumentListSyntax)currNode.Parent).Arguments.IndexOf((ArgumentSyntax)currNode);
+						currNode = currNode.Parent; // Skip the ArgumentList node
+						break;
+				}
+				if (ascend)
+				{
+					currNode = currNode.Parent;
+				}
+			}
+			var parentSymbolInfo = semanticModel.GetSymbolInfo(currNode);
+			if (parentSymbolInfo.CandidateSymbols.Length == 1 && argumentIndex.HasValue)
+			{
+				var parameter = parentSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
+					.First()
+					.Parameters[argumentIndex.Value];
+				var parameterTypeSymbol = parameter.Type as INamedTypeSymbol;
+				var parameterDelegate = parameterTypeSymbol?.DelegateInvokeMethod;
+
+				return parameterDelegate != null 
+					? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
+					.FirstOrDefault(o => o.MatchesDefinition(parameterDelegate))
+					: null;
+			}
+			return null;
+			// TODO: analyze if we need an option for the consumer to select the correct candidate
 		}
 
 		#endregion

@@ -15,7 +15,7 @@ namespace AsyncGenerator.Tests.PartialCompilation
 		[Test]
 		public void TestCtorAfterTransformation()
 		{
-			var config = Configure(o => o
+			var config = Configure(nameof(Ctor), o => o
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -30,6 +30,31 @@ namespace AsyncGenerator.Tests.PartialCompilation
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(Ctor)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestCtorMultiOverloadsAfterTransformation()
+		{
+			var config = Configure(nameof(CtorMultiOverloads), o => o
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(CtorMultiOverloads)), document.Transformed.ToFullString());
 					})
 				)
 			);
