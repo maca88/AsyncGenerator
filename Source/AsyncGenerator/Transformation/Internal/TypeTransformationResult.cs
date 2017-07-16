@@ -27,6 +27,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<MethodTransformationResult> TransformedMethods { get; } = new List<MethodTransformationResult>();
 
+		public List<FunctionTransformationResult> TransformedSpecialMethods { get; } = new List<FunctionTransformationResult>();
+
+		public List<PropertyTransformationResult> TransformedProperties { get; } = new List<PropertyTransformationResult>();
+
 		public TypeTransformationResult Partial { get; set; }
 
 		public IImmutableSet<string> MemberNames { get; set; }

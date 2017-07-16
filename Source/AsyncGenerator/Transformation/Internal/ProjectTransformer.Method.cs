@@ -50,7 +50,7 @@ namespace AsyncGenerator.Transformation.Internal
 				if (methodConversion.HasFlag(MethodConversion.ToAsync))
 				{
 					result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
-						.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+						.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
 					if (methodConversion.HasFlag(MethodConversion.Copy))
 					{
 						result.AddMethod(methodResult.Node);
@@ -162,6 +162,7 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}
 
+			// TODO: to plugins
 			if (methodResult.RewriteYields)
 			{
 				var yieldRewriter = new YieldRewriter(result);
@@ -179,7 +180,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			methodNode = methodNode
-				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+				.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
 			if (!methodResult.PreserveReturnType)
 			{
 				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
@@ -189,10 +190,21 @@ namespace AsyncGenerator.Transformation.Internal
 			return result;
 		}
 
-		private MethodDeclarationSyntax FixupBodyFormatting(MethodDeclarationSyntax methodNode, MethodTransformationResult result)
+		private MethodDeclarationSyntax FixupBodyFormatting(MethodDeclarationSyntax methodNode, IMethodOrAccessorTransformationResult result)
 		{
 			if (methodNode.Body == null)
 			{
+				if (methodNode.ExpressionBody == null)
+				{
+					return methodNode;
+				}
+				// Add space after the close paren token
+				if (string.IsNullOrEmpty(methodNode.ParameterList.CloseParenToken.TrailingTrivia.ToFullString()))
+				{
+					methodNode = methodNode.ReplaceToken(methodNode.ParameterList.CloseParenToken,
+						methodNode.ParameterList.CloseParenToken.WithTrailingTrivia(TriviaList(Space)));
+				}
+
 				return methodNode;
 			}
 			var eol = result.EndOfLineTrivia.ToFullString();

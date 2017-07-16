@@ -3,41 +3,158 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
-using AsyncGenerator.Analyzation;
-using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
-	internal class MethodData : FunctionData, IMethodAnalyzationResult, IMethodSymbolInfo
+	internal class AccessorData : MethodOrAccessorData, IAccessorAnalyzationResult
 	{
-		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node) : base(symbol)
+		public AccessorData(PropertyData propertyData, IMethodSymbol symbol, SyntaxNode node) : base(propertyData?.TypeData, symbol, node)
+		{
+			PropertyData = propertyData ?? throw new ArgumentNullException(nameof(propertyData));
+			Node = node ?? throw new ArgumentNullException(nameof(node));
+		}
+
+		public PropertyData PropertyData { get; }
+
+		public SyntaxNode Node { get; } // Can be an AccessorDeclarationSyntax or ArrowExpressionClauseSyntax
+
+		public override TypeData TypeData => PropertyData.TypeData;
+
+		public override MethodOrAccessorData GetMethodOrAccessorData() => this;
+	}
+
+
+	internal class PropertyData : AbstractData, IPropertyAnalyzationResult
+	{
+		public PropertyData(TypeData typeData, IPropertySymbol symbol, PropertyDeclarationSyntax node)
+		{
+			TypeData = typeData ?? throw new ArgumentNullException(nameof(typeData));
+			Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
+			Node = node ?? throw new ArgumentNullException(nameof(node));
+			if (Symbol.GetMethod != null)
+			{
+				GetAccessorData = new AccessorData(this, Symbol.GetMethod, Node.AccessorList != null 
+					? (SyntaxNode)Node.AccessorList.Accessors.First(o => o.Keyword.IsKind(SyntaxKind.GetKeyword))
+					: Node.ExpressionBody);
+			}
+			if (Symbol.SetMethod != null)
+			{
+				SetAccessorData = new AccessorData(this, Symbol.SetMethod, Node.AccessorList.Accessors.First(o => o.Keyword.IsKind(SyntaxKind.SetKeyword)));
+			}
+		}
+
+		public IPropertySymbol Symbol { get; }
+
+		public TypeData TypeData { get; }
+
+		public PropertyDeclarationSyntax Node { get; }
+
+		public AccessorData GetAccessorData { get; }
+
+		public AccessorData SetAccessorData { get; }
+
+		public IEnumerable<AccessorData> GetAccessors()
+		{
+			if (GetAccessorData != null)
+			{
+				yield return GetAccessorData;
+			}
+			if (SetAccessorData != null)
+			{
+				yield return SetAccessorData;
+			}
+		}
+
+		#region IPropertyAnalyzationResult
+
+		IEnumerable<IAccessorAnalyzationResult> IPropertyAnalyzationResult.GetAccessors() => GetAccessors();
+
+		#endregion
+
+		public override SyntaxNode GetNode()
+		{
+			return Node;
+		}
+
+		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		{
+			IgnoredReason = reason;
+			ExplicitlyIgnored = explicitlyIgnored;
+			GetAccessorData?.Ignore("Cascade ignored.");
+			SetAccessorData?.Ignore("Cascade ignored.");
+		}
+	}
+
+	internal class BaseMethodData : FunctionData
+	{
+		private readonly SyntaxNode _node;
+		private readonly SyntaxNode _bodyNode;
+
+		public BaseMethodData(TypeData typeData, IMethodSymbol symbol, SyntaxNode node) : base(symbol)
 		{
 			TypeData = typeData;
-			Node = node;
+			_node = node;
+			// Find and set body node
+			if (_node is BaseMethodDeclarationSyntax baseMethodNode)
+			{
+				_bodyNode = baseMethodNode.Body ?? (SyntaxNode)baseMethodNode.ExpressionBody;
+			}
+			else if (_node is AccessorDeclarationSyntax accessorNode) // Property getter/setter
+			{
+				_bodyNode = accessorNode.Body ?? (SyntaxNode)accessorNode.ExpressionBody;
+			}
+			else if (_node is ArrowExpressionClauseSyntax arrowNode) // Property arrow getter
+			{
+				_bodyNode = arrowNode;
+			}
+			else
+			{
+				throw new InvalidOperationException($"Invalid base method node {node}");
+			}
+		}
+
+		/// <summary>
+		/// Implementation/derived/base/interface methods
+		/// </summary>
+		public ConcurrentSet<MethodOrAccessorData> RelatedMethods { get; } = new ConcurrentSet<MethodOrAccessorData>();
+
+		public override TypeData TypeData { get; }
+
+		public override SyntaxNode GetNode()
+		{
+			return _node;
+		}
+
+		public override SyntaxNode GetBodyNode()
+		{
+			return _bodyNode;
+		}
+
+		public override MethodOrAccessorData GetMethodOrAccessorData() => null;
+
+		public override BaseMethodData GetBaseMethodData() => this;
+	}
+
+	internal abstract class MethodOrAccessorData : BaseMethodData, IMethodOrAccessorAnalyzationResult, IMethodSymbolInfo
+	{
+		protected MethodOrAccessorData(TypeData typeData, IMethodSymbol symbol, SyntaxNode node) : base(typeData, symbol, node)
+		{
 			InterfaceMethod = Symbol.ContainingType.TypeKind == TypeKind.Interface;
 		}
 
 		public bool InterfaceMethod { get; }
 
-		/// <summary>
-		/// Methods 
-		/// </summary>
 		public ConcurrentSet<IMethodSymbol> ExternalAsyncMethods { get; } = new ConcurrentSet<IMethodSymbol>();
 
 		/// <summary>
 		/// Interface members within project that the method implements
 		/// </summary>
 		public ConcurrentSet<IMethodSymbol> ImplementedInterfaces { get; } = new ConcurrentSet<IMethodSymbol>();
-
-		/// <summary>
-		/// Implementation/derived/base/interface methods
-		/// </summary>
-		public ConcurrentSet<MethodData> RelatedMethods { get; } = new ConcurrentSet<MethodData>();
 
 		/// <summary>
 		/// External Base/derivered or interface/implementation methods
@@ -57,10 +174,7 @@ namespace AsyncGenerator.Internal
 		/// <summary>
 		/// Related and invoked by methods
 		/// </summary>
-		public IEnumerable<FunctionData> Dependencies
-		{
-			get { return InvokedBy.Union(RelatedMethods); }
-		}
+		public IEnumerable<FunctionData> Dependencies => InvokedBy.Union(RelatedMethods);
 
 		/// <summary>
 		/// The base method that is overriden
@@ -79,61 +193,9 @@ namespace AsyncGenerator.Internal
 
 		public bool CancellationTokenRequired { get; set; }
 
-		//public MethodConversion CalculatedConversion { get; internal set; }
+		#region Analyzation step
 
-		public override TypeData TypeData { get; }
-
-		public MethodDeclarationSyntax Node { get; }
-
-		#region IMethodAnalyzationResult
-
-		private IReadOnlyList<IFunctionAnalyzationResult> _cachedInvokedBy;
-		IReadOnlyList<IFunctionAnalyzationResult> IMethodAnalyzationResult.InvokedBy => _cachedInvokedBy ?? (_cachedInvokedBy = InvokedBy.ToImmutableArray());
-
-		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodCrefReferences;
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodAnalyzationResult.CrefMethodReferences =>
-			_cachedMethodCrefReferences ?? (_cachedMethodCrefReferences = CrefMethodReferences.ToImmutableArray());
-
-		#endregion
-
-		#region IMemberAnalyzationResult
-
-		public IMemberAnalyzationResult GetNext()
-		{
-			// Try to find the next sibling that can be only a method
-			var sibling = TypeData.Methods.Values
-				.Where(o => o != this)
-				.OrderBy(o => o.Node.SpanStart)
-				.FirstOrDefault(o => o.Node.SpanStart > Node.Span.End);
-			return sibling ?? (IMemberAnalyzationResult)TypeData;
-		}
-
-		public IMemberAnalyzationResult GetPrevious()
-		{
-			// Try to find the previous sibling that can be only a method
-			var sibling = TypeData.Methods.Values
-				.Where(o => o != this)
-				.OrderByDescending(o => o.Node.Span.End)
-				.FirstOrDefault(o => o.Node.Span.End < Node.SpanStart);
-			return sibling ?? (IMemberAnalyzationResult)TypeData;
-		}
-
-		public bool IsParent(IAnalyzationResult analyzationResult)
-		{
-			return TypeData == analyzationResult;
-		}
-
-		#endregion
-
-		#region IMethodSymbolInfo
-
-		private IReadOnlyList<IMethodSymbol> _cachedImplementedInterfaces;
-		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.ImplementedInterfaces => 
-			_cachedImplementedInterfaces ?? (_cachedImplementedInterfaces = ImplementedInterfaces.ToImmutableArray());
-
-		private IReadOnlyList<IMethodSymbol> _cachedOverridenMethods;
-		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.OverridenMethods =>
-			_cachedOverridenMethods ?? (_cachedOverridenMethods = OverridenMethods.ToImmutableArray());
+		public bool MustRunSynchronized { get; set; }
 
 		#endregion
 
@@ -142,12 +204,6 @@ namespace AsyncGenerator.Internal
 		internal bool Scanned { get; set; }
 
 		public bool Missing { get; set; }
-
-		#endregion
-
-		#region Analyzation step
-
-		public bool MustRunSynchronized { get; set; }
 
 		#endregion
 
@@ -161,11 +217,36 @@ namespace AsyncGenerator.Internal
 
 		#endregion
 
-		public IEnumerable<MethodData> GetAllRelatedMethods()
+		#region IMethodOrAccessorAnalyzationResult
+
+		private IReadOnlyList<IFunctionAnalyzationResult> _cachedInvokedBy;
+		IReadOnlyList<IFunctionAnalyzationResult> IMethodOrAccessorAnalyzationResult.InvokedBy => _cachedInvokedBy ?? (_cachedInvokedBy = InvokedBy.ToImmutableArray());
+
+		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodCrefReferences;
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodOrAccessorAnalyzationResult.CrefMethodReferences =>
+			_cachedMethodCrefReferences ?? (_cachedMethodCrefReferences = CrefMethodReferences.ToImmutableArray());
+
+		#endregion
+
+		#region IMethodSymbolInfo
+
+		private IReadOnlyList<IMethodSymbol> _cachedImplementedInterfaces;
+		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.ImplementedInterfaces =>
+			_cachedImplementedInterfaces ?? (_cachedImplementedInterfaces = ImplementedInterfaces.ToImmutableArray());
+
+		private IReadOnlyList<IMethodSymbol> _cachedOverridenMethods;
+		IReadOnlyList<IMethodSymbol> IMethodSymbolInfo.OverridenMethods =>
+			_cachedOverridenMethods ?? (_cachedOverridenMethods = OverridenMethods.ToImmutableArray());
+
+		#endregion
+
+		public override MethodOrAccessorData GetMethodOrAccessorData() => this;
+
+		public IEnumerable<MethodOrAccessorData> GetAllRelatedMethods()
 		{
-			var result = new HashSet<MethodData>();
-			var deps = new HashSet<MethodData>();
-			var depsQueue = new Queue<MethodData>(RelatedMethods);
+			var result = new HashSet<MethodOrAccessorData>();
+			var deps = new HashSet<MethodOrAccessorData>();
+			var depsQueue = new Queue<MethodOrAccessorData>(RelatedMethods);
 			while (depsQueue.Count > 0)
 			{
 				var dependency = depsQueue.Dequeue();
@@ -187,49 +268,16 @@ namespace AsyncGenerator.Internal
 			return result;
 		}
 
-		public override SyntaxNode GetNode()
+	}
+
+	internal class MethodData : MethodOrAccessorData, IMethodAnalyzationResult
+	{
+		public MethodData(TypeData typeData, IMethodSymbol symbol, MethodDeclarationSyntax node) : base(typeData, symbol, node)
 		{
-			return Node;
+			Node = node;
 		}
 
-		public override SyntaxNode GetBodyNode()
-		{
-			return Node.Body ?? (SyntaxNode)Node.ExpressionBody;
-		}
-
-		public override MethodData GetMethodData() => this;
-
-		//public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax type, bool create = false)
-		//{
-		//	var nestedNodes = new Stack<AnonymousFunctionExpressionSyntax>();
-		//	foreach (var node in type.AncestorsAndSelf()
-		//		.TakeWhile(o => !o.IsKind(SyntaxKind.MethodDeclaration))
-		//		.OfType<AnonymousFunctionExpressionSyntax>())
-		//	{
-		//		nestedNodes.Push(node);
-		//	}
-		//	AnonymousFunctionData currentFunData = null;
-		//	while (nestedNodes.Count > 0)
-		//	{
-		//		var node = nestedNodes.Pop();
-		//		var typeDataDict = currentFunData?.NestedAnonymousFunctionData ?? AnonymousFunctionData;
-		//		AnonymousFunctionData typeData;
-		//		if (typeDataDict.TryGetValue(node, out typeData))
-		//		{
-		//			currentFunData = typeData;
-		//			continue;
-		//		}
-		//		if (!create)
-		//		{
-		//			return null;
-		//		}
-		//		var funSymbol = TypeData.NamespaceData.DocumentData.SemanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-		//		currentFunData = typeDataDict.GetOrAdd(node, k => new AnonymousFunctionData(this, node, funSymbol, currentFunData));
-		//	}
-		//	return currentFunData;
-		//}
-
-
+		public MethodDeclarationSyntax Node { get; }
 
 	}
 }

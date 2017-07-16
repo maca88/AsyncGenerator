@@ -20,7 +20,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	public class CancellationTokenMethodTransformer : IMethodTransformer
+	public class CancellationTokenMethodTransformer : IMethodOrAccessorTransformer
 	{
 		private IProjectCancellationTokenConfiguration _configuration;
 
@@ -30,7 +30,7 @@ namespace AsyncGenerator.Transformation.Internal
 			return Task.CompletedTask;
 		}
 
-		public MethodTransformerResult Transform(IMethodTransformationResult transformResult,
+		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult transformResult,
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;
@@ -38,7 +38,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				return MethodTransformerResult.Skip;
 			}
-
+			var originalNode = methodResult.GetNode();
 			var cancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
 			var generationOptions = methodResult.MethodCancellationToken.GetValueOrDefault();
 			var methodNode = transformResult.Transformed;
@@ -104,13 +104,18 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 			}
 
+			var originalMethodNode = originalNode as MethodDeclarationSyntax;
+
 			// Add an additional overload if specified
-			if (!generationOptions.HasFlag(MethodCancellationToken.ForwardNone) &&
-				!generationOptions.HasFlag(MethodCancellationToken.SealedForwardNone))
+			if (originalMethodNode == null ||
+				(
+					!generationOptions.HasFlag(MethodCancellationToken.ForwardNone) &&
+					!generationOptions.HasFlag(MethodCancellationToken.SealedForwardNone)
+				))
 			{
 				return MethodTransformerResult.Update(methodNode);
 			}
-			var overloadNode = methodResult.Node
+			var overloadNode = originalMethodNode
 				.ReturnAsTask(namespaceMetadata.TaskConflict)
 				.WithTriviaFrom(transformResult.Transformed) // We want to have the sumamry of the transformed node but not the parameter list
 				.WithoutAnnotations(transformResult.Annotation)
@@ -145,7 +150,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithBody(methodBody
 					.WithStatements(
 						SingletonList<StatementSyntax>(
-							ReturnStatement(methodResult.Node.ForwardCall(methodResult.Symbol, methodNode.Identifier.ValueText, tokenArg))
+							ReturnStatement(originalMethodNode.ForwardCall(methodResult.Symbol, methodNode.Identifier.ValueText, tokenArg))
 								.WithReturnKeyword(
 									Token(TriviaList(transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space))
 								)
@@ -158,19 +163,19 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					// For virtual methods we need to remove the virtual keyword
 					overloadNode = overloadNode
-						.WithModifiers(TokenList(methodResult.Node.Modifiers.Where(o => !o.IsKind(SyntaxKind.VirtualKeyword))));
+						.WithModifiers(TokenList(originalMethodNode.Modifiers.Where(o => !o.IsKind(SyntaxKind.VirtualKeyword))));
 				}
 				else if (methodResult.Symbol.OverriddenMethod != null)
 				{
 					// For overrides we need to add the sealed keyword
 					overloadNode = overloadNode
-						.WithModifiers(methodResult.Node.Modifiers.Add(Token(TriviaList(), SyntaxKind.SealedKeyword, TriviaList(Space))));
+						.WithModifiers(originalMethodNode.Modifiers.Add(Token(TriviaList(), SyntaxKind.SealedKeyword, TriviaList(Space))));
 				}
 				else if (methodResult.Symbol.IsAbstract)
 				{
 					// For abstract we need to remove the abstract keyword
 					overloadNode = overloadNode
-						.WithModifiers(TokenList(methodResult.Node.Modifiers.Where(o => !o.IsKind(SyntaxKind.AbstractKeyword))));
+						.WithModifiers(TokenList(originalMethodNode.Modifiers.Where(o => !o.IsKind(SyntaxKind.AbstractKeyword))));
 				}
 			}
 			// We need to remove all directives
@@ -203,7 +208,7 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 
-		private StatementSyntax GetSyncGuard(IMethodAnalyzationResult methodResult, string parameterName, SyntaxTrivia leadingWhitespace, 
+		private StatementSyntax GetSyncGuard(IMethodOrAccessorAnalyzationResult methodResult, string parameterName, SyntaxTrivia leadingWhitespace, 
 			SyntaxTrivia endOfLine, SyntaxTrivia indent)
 		{
 			return IfStatement(
@@ -224,7 +229,7 @@ namespace AsyncGenerator.Transformation.Internal
 													SingletonSeparatedList(
 														methodResult.Symbol.ReturnsVoid
 															? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-															: methodResult.Node.ReturnType.WithoutTrivia())
+															: methodResult.GetNode().GetReturnType().WithoutTrivia())
 														))))
 									.WithArgumentList(
 										ArgumentList(

@@ -72,7 +72,7 @@ namespace AsyncGenerator.Core.Plugins
 			{
 				yield break;
 			}
-			var asyncName = symbol.Name + "Async";
+			var asyncName = symbol.GetAsyncName();
 			foreach (var asyncCandidate in _linqMethodsLookup[asyncName])
 			{
 				if (!symbol.IsAsyncCounterpart(invokedFromType, asyncCandidate, true, true, false))

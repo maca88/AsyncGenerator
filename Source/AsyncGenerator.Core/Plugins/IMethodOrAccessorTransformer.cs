@@ -2,9 +2,9 @@
 
 namespace AsyncGenerator.Core.Plugins
 {
-	public interface IMethodTransformer : IPlugin
+	public interface IMethodOrAccessorTransformer : IPlugin
 	{
-		MethodTransformerResult Transform(IMethodTransformationResult methodTransformResult,
+		MethodTransformerResult Transform(IMethodOrAccessorTransformationResult methodTransformResult,
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata);
 
 	}

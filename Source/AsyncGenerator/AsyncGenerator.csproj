@@ -214,6 +214,7 @@
     <Compile Include="Transformation\Internal\ProjectTransformer.FunctionReference.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Method.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Namespace.cs" />
+    <Compile Include="Transformation\Internal\ProjectTransformer.Property.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
     <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
     <Compile Include="Transformation\Internal\RootNamespaceTransformationResult.cs" />

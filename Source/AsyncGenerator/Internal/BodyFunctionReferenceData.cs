@@ -100,7 +100,7 @@ namespace AsyncGenerator.Internal
 		{
 			if (ReferenceFunctionData != null)
 			{
-				var refMethodData = ReferenceFunctionData.GetMethodData();
+				var refMethodData = ReferenceFunctionData.GetMethodOrAccessorData();
 					return refMethodData.MethodCancellationToken.GetValueOrDefault().HasOptionalCancellationToken();
 			}
 

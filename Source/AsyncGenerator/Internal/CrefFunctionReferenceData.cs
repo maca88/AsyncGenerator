@@ -30,7 +30,7 @@ namespace AsyncGenerator.Internal
 		public override string AsyncCounterpartName
 		{
 			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
-				? ReferenceFunctionData.Symbol.Name + "Async"
+				? ReferenceFunctionData.AsyncCounterpartName
 				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartName;
 			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartName)} for {nameof(CrefFunctionReferenceData)} is not supported");
 		}

@@ -207,7 +207,7 @@ namespace AsyncGenerator.Core.Extensions
 		public static IEnumerable<IMethodSymbol> GetAsyncCounterparts(this IMethodSymbol methodSymbol, ITypeSymbol invokedFromType,
 			bool equalParameters, bool searchInheritedTypes, bool hasCancellationToken, bool ignoreReturnType)
 		{
-			var asyncName = methodSymbol.Name + "Async";
+			var asyncName = methodSymbol.GetAsyncName();
 			if (searchInheritedTypes)
 			{
 				return methodSymbol.ContainingType.GetBaseTypesAndThis()
@@ -218,6 +218,21 @@ namespace AsyncGenerator.Core.Extensions
 			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
 				.OfType<IMethodSymbol>()
 				.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
+		}
+
+		/// <summary>
+		/// Generate an async name for the given method smybol
+		/// </summary>
+		public static string GetAsyncName(this IMethodSymbol methodSymbol)
+		{
+			var asyncName = methodSymbol.Name.Split('.').Last() + "Async"; // Split is needed for explicit methods
+			if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet)
+			{
+				// We have to rename async name from eg. get_SomethingAsync to GetSomethingAsync by capitalize the first char and remove the underscore
+				asyncName = char.ToUpperInvariant(asyncName[0]) + asyncName.Substring(1).Replace("_", "");
+			}
+			
+			return asyncName;
 		}
 
 		/// <summary>

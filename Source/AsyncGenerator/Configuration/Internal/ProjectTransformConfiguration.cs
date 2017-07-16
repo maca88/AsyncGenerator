@@ -40,7 +40,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ProjectDocumentationCommentConfiguration DocumentationComments { get; }
 
-		public List<IMethodTransformer> MethodTransformers { get; } = new List<IMethodTransformer>();
+		public List<IMethodOrAccessorTransformer> MethodTransformers { get; } = new List<IMethodOrAccessorTransformer>();
 
 		public List<IDocumentTransformer> DocumentTransformers { get; } = new List<IDocumentTransformer>();
 

@@ -102,21 +102,6 @@ namespace AsyncGenerator.Transformation.Internal
 						transformResult.TransformedNodes.Add(transformedNode);
 						rootTypeNode = rootTypeNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 					}
-
-					// We have to replace all constructors as TypeReferences will never contain them, but only for new types not for copied ones
-					// TODO: ctor must be registered like method
-					if (typeResult.Conversion == TypeConversion.NewType)
-					{
-						foreach (var ctorSpan in typeNode.Members.OfType<ConstructorDeclarationSyntax>().Select(o => o.Span))
-						{
-							var ctorNode = rootTypeNode.DescendantNodes()
-								.OfType<ConstructorDeclarationSyntax>()
-								.First(o => o.Span.Equals(ctorSpan));
-							var annotation = Guid.NewGuid().ToString();
-							transformResult.TransformedTokens.Add(annotation, Identifier(ctorNode.Identifier.ValueText + "Async").WithTriviaFrom(ctorNode.Identifier));
-							rootTypeNode = rootTypeNode.ReplaceToken(ctorNode.Identifier, ctorNode.Identifier.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
-						}
-					}
 				}
 
 				// Annotate and save an empty method transformation result
@@ -146,6 +131,31 @@ namespace AsyncGenerator.Transformation.Internal
 						rootTypeNode = rootTypeNode.ReplaceNode(lockNode,
 							lockNode.WithAdditionalAnnotations(new SyntaxAnnotation(lockTransformedNode.Annotation)));
 					}
+				}
+
+				foreach (var methodResult in typeResult.SpecialMethods)
+				{
+					var methodSpanStart = methodResult.GetNode().SpanStart - startRootTypeSpan;
+					var methodSpanLength = methodResult.GetNode().Span.Length;
+					var methodNode = rootTypeNode.DescendantNodes()
+						.OfType<BaseMethodDeclarationSyntax>()
+						.First(o => o.SpanStart == methodSpanStart && o.Span.Length == methodSpanLength);
+					var transformedNode = new FunctionTransformationResult(methodResult);
+					transformResult.TransformedSpecialMethods.Add(transformedNode);
+					rootTypeNode = rootTypeNode.ReplaceNode(methodNode, methodNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
+				}
+
+
+				foreach (var propertyResult in typeResult.Properties)
+				{
+					var spanStart = propertyResult.Node.SpanStart - startRootTypeSpan;
+					var spanLength = propertyResult.Node.Span.Length;
+					var node = rootTypeNode.DescendantNodes()
+						.OfType<PropertyDeclarationSyntax>()
+						.First(o => o.SpanStart == spanStart && o.Span.Length == spanLength);
+					var transformedNode = new PropertyTransformationResult(propertyResult);
+					transformResult.TransformedProperties.Add(transformedNode);
+					rootTypeNode = rootTypeNode.ReplaceNode(node, node.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 				}
 			}
 			// Save the orignal node that was only annotated
@@ -181,9 +191,10 @@ namespace AsyncGenerator.Transformation.Internal
 					// We need to remove the attributes as they cannot be defined in both partial classes
 					var newTypeNode = typeNode.AddPartial().WithoutAttributes();
 
-					// We need to remove all other members that are not methods or types
-					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => !(o is MethodDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
-					newTypeNode = TransformMethods(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
+					// We need to remove all other members that are not methods, properties or types
+					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => 
+						!(o is BaseMethodDeclarationSyntax || o is TypeDeclarationSyntax || o is PropertyDeclarationSyntax), memberWhitespace);
+					newTypeNode = TransformMethodsAndProperties(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
 
 					// Add the <content> instead of <summary> tag
 					newTypeNode = newTypeNode.WithXmlContentTrivia(transformResult.EndOfLineTrivia, transformResult.LeadingWhitespaceTrivia);
@@ -218,7 +229,7 @@ namespace AsyncGenerator.Transformation.Internal
 						newTypeNode = newTypeNode.ReplaceToken(newTypeNode.GetAnnotatedTokens(newToken.Key).First(), newToken.Value);
 					}
 
-					newTypeNode = TransformMethods(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, false);
+					newTypeNode = TransformMethodsAndProperties(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, false);
 					transformResult.Transformed = newTypeNode;
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 				}
@@ -228,57 +239,167 @@ namespace AsyncGenerator.Transformation.Internal
 			return rootTransformResult;
 		}
 
-		private TypeDeclarationSyntax TransformMethods(TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
+		private TypeDeclarationSyntax TransformMethodsAndProperties(TypeDeclarationSyntax newTypeNode,
+			TypeTransformationResult transformResult,
+			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
 		{
-			foreach (var methodTransform in transformResult.TransformedMethods.OrderByDescending(o => o.OriginalStartSpan))
+			foreach (var transform in transformResult.TransformedMethods
+				.Cast<AnnotatedNode>()
+				.Union(transformResult.TransformedProperties)
+				.Union(transformResult.TransformedSpecialMethods)
+				.OrderByDescending(o => o.OriginalStartSpan))
 			{
-				if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || (onlyMissingMembers && !methodTransform.AnalyzationResult.Missing))
+				if (transform is MethodTransformationResult methodTransform)
 				{
-					// We need to add a whitespace trivia to keept directives as they will not have any leading whitespace
-					newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);
-					continue;
+					newTypeNode = TransformMethod(methodTransform, newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
 				}
-				var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
-					.OfType<MethodDeclarationSyntax>()
-					.First();
-				var transformedNode = TransformMethod(methodNode, !onlyMissingMembers, methodTransform, transformResult, namespaceMetadata);
-				if (transformedNode.Transformed != null)
+				else if (transform is PropertyTransformationResult propertyTransform)
 				{
-					foreach (var transformer in _configuration.MethodTransformers)
-					{
-						var methodTransformResult = transformer.Transform(transformedNode, transformResult, namespaceMetadata);
-						if (methodTransformResult == MethodTransformerResult.Skip)
-						{
-							continue;
-						}
-						transformedNode.Transformed = methodTransformResult.TransformedNode ?? transformedNode.Transformed;
-						if (methodTransformResult.Fields != null)
-						{
-							if (transformedNode.Fields == null)
-							{
-								transformedNode.Fields = new List<FieldDeclarationSyntax>(1);
-							}
-							transformedNode.Fields.AddRange(methodTransformResult.Fields);
-							// Update member names  for next transformators
-							foreach (var variable in methodTransformResult.Fields.SelectMany(o => o.Declaration.Variables))
-							{
-								transformResult.MemberNames = transformResult.MemberNames.Add(variable.Identifier.Text);
-							}
-						}
-						if (methodTransformResult.Methods != null)
-						{
-							transformedNode.AddMethods(methodTransformResult.Methods);
-							// Update member names for next transformators
-							foreach (var method in methodTransformResult.Methods)
-							{
-								transformResult.MemberNames = transformResult.MemberNames.Add(method.Identifier.Text);
-							}
-						}
-					}
+					newTypeNode = TransformProperty(propertyTransform, newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
 				}
-				newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, methodTransform.Transformed, methodTransform.Fields, methodTransform.Methods);
+				else if (transform is FunctionTransformationResult functionTransform)
+				{
+					newTypeNode = TransformSpecialMethod(functionTransform, newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
+				}
 			}
 			return newTypeNode;
 		}
+
+		private TypeDeclarationSyntax TransformSpecialMethod(FunctionTransformationResult methodTransform,
+			TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult,
+			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
+		{
+			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore)
+			{
+				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);
+				return newTypeNode;
+			}
+			var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
+				.OfType<BaseMethodDeclarationSyntax>()
+				.First();
+			var transformedResult = TransformFunction(methodTransform.AnalyzationResult, transformResult, namespaceMetadata);
+			var transformedNode = (BaseMethodDeclarationSyntax)transformedResult.Transformed;
+			if (transformedNode is ConstructorDeclarationSyntax ctorNode && transformResult.AnalyzationResult.Conversion == TypeConversion.NewType)
+			{
+				transformedNode = ctorNode.WithIdentifier(Identifier(ctorNode.Identifier.ValueText + "Async")
+					.WithTriviaFrom(ctorNode.Identifier));
+			}
+			newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, transformedNode);
+			return newTypeNode;
+		}
+
+		private TypeDeclarationSyntax TransformMethod(MethodTransformationResult methodTransform, TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult,
+			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
+		{
+			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || (onlyMissingMembers && !methodTransform.AnalyzationResult.Missing))
+			{
+				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);
+				return newTypeNode;
+			}
+			var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
+				.OfType<MethodDeclarationSyntax>()
+				.First();
+			var transformedNode = TransformMethod(methodNode, !onlyMissingMembers, methodTransform, transformResult, namespaceMetadata);
+			if (transformedNode.Transformed != null)
+			{
+				foreach (var transformer in _configuration.MethodTransformers)
+				{
+					var methodTransformResult = transformer.Transform(transformedNode, transformResult, namespaceMetadata);
+					if (methodTransformResult == MethodTransformerResult.Skip)
+					{
+						continue;
+					}
+					transformedNode.Transformed = methodTransformResult.TransformedNode ?? transformedNode.Transformed;
+					if (methodTransformResult.Fields != null)
+					{
+						if (transformedNode.Fields == null)
+						{
+							transformedNode.Fields = new List<FieldDeclarationSyntax>(1);
+						}
+						transformedNode.Fields.AddRange(methodTransformResult.Fields);
+						// Update member names  for next transformators
+						foreach (var variable in methodTransformResult.Fields.SelectMany(o => o.Declaration.Variables))
+						{
+							transformResult.MemberNames = transformResult.MemberNames.Add(variable.Identifier.Text);
+						}
+					}
+					if (methodTransformResult.Methods != null)
+					{
+						transformedNode.AddMethods(methodTransformResult.Methods);
+						// Update member names for next transformators
+						foreach (var method in methodTransformResult.Methods)
+						{
+							transformResult.MemberNames = transformResult.MemberNames.Add(method.Identifier.Text);
+						}
+					}
+				}
+			}
+			newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, methodTransform.Transformed, methodTransform.Fields, methodTransform.Methods);
+			return newTypeNode;
+		}
+
+		private TypeDeclarationSyntax TransformProperty(PropertyTransformationResult propertyTransform, TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult,
+			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
+		{
+			if (propertyTransform.AnalyzationResult.GetAccessors().All(o => o.Conversion == MethodConversion.Ignore) || 
+				(onlyMissingMembers && propertyTransform.AnalyzationResult.GetAccessors().All(o => !o.Missing)))
+			{
+				// Do not remove the property if the type is copied or new
+				//if (transformResult.AnalyzationResult.Conversion == TypeConversion.Copy || transformResult.AnalyzationResult.Conversion == TypeConversion.NewType)
+				//{
+				//	return newTypeNode;
+				//}
+
+				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(propertyTransform.Annotation, memberWhitespace);
+				return newTypeNode;
+			}
+			var methodNode = newTypeNode.GetAnnotatedNodes(propertyTransform.Annotation)
+				.OfType<PropertyDeclarationSyntax>()
+				.First();
+			var transformedNode = TransformProperty(methodNode, !onlyMissingMembers, propertyTransform, transformResult, namespaceMetadata);
+			foreach (var transformedAccessor in transformedNode.TransformedAccessors.Where(o => o.Transformed != null))
+			{
+				foreach (var transformer in _configuration.MethodTransformers)
+				{
+					var methodTransformResult = transformer.Transform(transformedAccessor, transformResult, namespaceMetadata);
+					if (methodTransformResult == MethodTransformerResult.Skip)
+					{
+						continue;
+					}
+					transformedAccessor.Transformed = methodTransformResult.TransformedNode ?? transformedAccessor.Transformed;
+					if (methodTransformResult.Fields != null)
+					{
+						if (transformedNode.Fields == null)
+						{
+							transformedNode.Fields = new List<FieldDeclarationSyntax>(1);
+						}
+						transformedNode.Fields.AddRange(methodTransformResult.Fields);
+						// Update member names  for next transformators
+						foreach (var variable in methodTransformResult.Fields.SelectMany(o => o.Declaration.Variables))
+						{
+							transformResult.MemberNames = transformResult.MemberNames.Add(variable.Identifier.Text);
+						}
+					}
+					if (methodTransformResult.Methods != null)
+					{
+						transformedNode.AddMethods(methodTransformResult.Methods);
+						// Update member names for next transformators
+						foreach (var method in methodTransformResult.Methods)
+						{
+							transformResult.MemberNames = transformResult.MemberNames.Add(method.Identifier.Text);
+						}
+					}
+				}
+			}
+			newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, propertyTransform.Transformed, propertyTransform.Fields, propertyTransform.Methods);
+			return newTypeNode;
+		}
+
+
+
+		
 	}
 }

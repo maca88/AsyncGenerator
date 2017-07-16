@@ -5,10 +5,33 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Core.Analyzation
 {
-	public interface IMethodAnalyzationResult : IFunctionAnalyzationResult, IMemberAnalyzationResult
+	public interface IMethodAnalyzationResult : IMethodOrAccessorAnalyzationResult
 	{
 		MethodDeclarationSyntax Node { get; }
+	}
 
+	public interface IAccessorAnalyzationResult : IMethodOrAccessorAnalyzationResult
+	{
+		SyntaxNode Node { get; }
+	}
+
+	public interface IPropertyAnalyzationResult : IMemberAnalyzationResult
+	{
+		PropertyDeclarationSyntax Node { get; }
+
+		/// <summary>
+		/// Symbol of the property
+		/// </summary>
+		IPropertySymbol Symbol { get; }
+
+		/// <summary>
+		/// Returns getter and setter accessors of the property.
+		/// </summary>
+		IEnumerable<IAccessorAnalyzationResult> GetAccessors();
+	}
+
+	public interface IMethodOrAccessorAnalyzationResult : IFunctionAnalyzationResult, IMemberAnalyzationResult
+	{
 		/// <summary>
 		/// Methods that invokes this method
 		/// </summary>

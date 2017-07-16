@@ -15,7 +15,7 @@ namespace AsyncGenerator.Internal
 	{
 		protected FunctionData(IMethodSymbol methodSymbol)
 		{
-			Symbol = methodSymbol;
+			Symbol = methodSymbol ?? throw new ArgumentNullException(nameof(methodSymbol));
 		}
 
 		public IMethodSymbol Symbol { get; }
@@ -24,9 +24,7 @@ namespace AsyncGenerator.Internal
 
 		public MethodConversion Conversion { get; set; }
 
-		public string IgnoredReason { get; private set; }
-
-		public bool ExplicitlyIgnored { get; set; }
+		public string AsyncCounterpartName { get; set; }
 
 		/// <summary>
 		/// References to other methods that are referenced/invoked inside this function/method and are candidates to be async
@@ -43,7 +41,9 @@ namespace AsyncGenerator.Internal
 
 		public abstract SyntaxNode GetBodyNode();
 
-		public abstract MethodData GetMethodData();
+		public abstract MethodOrAccessorData GetMethodOrAccessorData();
+
+		public abstract BaseMethodData GetBaseMethodData();
 
 		public ChildFunctionData GetChildFunction(SyntaxNode node, SemanticModel semanticModel, bool create = false)
 		{
@@ -59,13 +59,13 @@ namespace AsyncGenerator.Internal
 			if (node is AnonymousFunctionExpressionSyntax anonymousFunc)
 			{
 				var symbol = semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-				return ChildFunctions.GetOrAdd(node, syntax => new AnonymousFunctionData(GetMethodData(), symbol, anonymousFunc, this));
+				return ChildFunctions.GetOrAdd(node, syntax => new AnonymousFunctionData(GetBaseMethodData(), symbol, anonymousFunc, this));
 			}
 
 			if (node is LocalFunctionStatementSyntax localFunc)
 			{
 				var symbol = semanticModel.GetDeclaredSymbol(node) as IMethodSymbol;
-				return ChildFunctions.GetOrAdd(node, syntax => new LocalFunctionData(GetMethodData(), symbol, localFunc, this));
+				return ChildFunctions.GetOrAdd(node, syntax => new LocalFunctionData(GetBaseMethodData(), symbol, localFunc, this));
 			}
 			throw new InvalidOperationException($"Cannot get a ChildFunctionData from syntax node {node}");
 		}
@@ -80,7 +80,7 @@ namespace AsyncGenerator.Internal
 			return ChildFunctions.Values.SelectMany(o => o.GetSelfAndDescendantsFunctionsRecursively(o, predicate));
 		}
 
-		internal void Copy()
+		public void Copy()
 		{
 			// Copy can be mixed with Smart, ToAsync and Unknown
 			//Conversion &= ~MethodConversion.Ignore;
@@ -102,7 +102,7 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		internal void Ignore(string reason, bool explicitlyIgnored = false)
+		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{
 			Conversion = MethodConversion.Ignore;
 			IgnoredReason = reason;
@@ -117,7 +117,7 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		internal void ToAsync()
+		public void ToAsync()
 		{
 			if (Conversion.HasFlag(MethodConversion.Smart))
 			{
@@ -182,7 +182,7 @@ namespace AsyncGenerator.Internal
 
 		#region IFunctionAnalyzationResult
 
-		IMethodAnalyzationResult IFunctionAnalyzationResult.GetMethod() => GetMethodData();
+		IMethodOrAccessorAnalyzationResult IFunctionAnalyzationResult.GetMethodOrAccessor() => GetMethodOrAccessorData();
 
 		private IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> _cachedMethodReferences;
 		IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = BodyMethodReferences.ToImmutableArray());

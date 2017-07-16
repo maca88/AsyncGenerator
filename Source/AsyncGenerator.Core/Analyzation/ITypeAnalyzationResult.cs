@@ -27,5 +27,12 @@ namespace AsyncGenerator.Core.Analyzation
 		IReadOnlyList<ITypeAnalyzationResult> NestedTypes { get; }
 
 		IReadOnlyList<IMethodAnalyzationResult> Methods { get; }
+
+		/// <summary>
+		/// Contains constructors, destructors, operators and conversion operator methods
+		/// </summary>
+		IReadOnlyList<IFunctionAnalyzationResult> SpecialMethods { get; }
+
+		IReadOnlyList<IPropertyAnalyzationResult> Properties { get; }
 	}
 }

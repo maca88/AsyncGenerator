@@ -22,12 +22,13 @@ namespace AsyncGenerator.Transformation.Internal
 	/// </summary>
 	internal class ReturnTaskMethodRewriter : CSharpSyntaxRewriter
 	{
-		private readonly IMethodAnalyzationResult _methodResult;
-		private readonly MethodTransformationResult _transformResult;
+		private readonly IMethodOrAccessorAnalyzationResult _methodResult;
+		private readonly IMethodOrAccessorTransformationResult _transformResult;
 		private readonly INamespaceTransformationMetadata _namespaceMetadata;
 		private SyntaxKind? _rewritingSyntaxKind;
+		private MethodDeclarationSyntax _methodNode;
 
-		public ReturnTaskMethodRewriter(MethodTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
+		public ReturnTaskMethodRewriter(IMethodOrAccessorTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			_transformResult = transformResult;
 			_methodResult = transformResult.AnalyzationResult;
@@ -37,6 +38,7 @@ namespace AsyncGenerator.Transformation.Internal
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
 		{
 			_rewritingSyntaxKind = node.Kind();
+			_methodNode = node;
 			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
 			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
 			if (bodyBlock != null)
@@ -225,7 +227,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Node.ReturnType.WithoutTrivia())))))
+											: _methodNode.ReturnType.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -247,7 +249,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Node.ReturnType.WithoutTrivia())))))
+											: _methodNode.ReturnType.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -294,7 +296,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax ForwardCall(BlockSyntax bodyBlock)
 		{
-			var methodNode = _methodResult.Node;
+			var methodNode = _methodNode;
 			var invocation = methodNode.ForwardCall(_methodResult.Symbol, methodNode.Identifier.ValueText);
 			var block = Block()
 				.WithCloseBraceToken(bodyBlock.CloseBraceToken)
@@ -370,7 +372,7 @@ namespace AsyncGenerator.Transformation.Internal
 														SingletonSeparatedList(
 															_methodResult.Symbol.ReturnsVoid
 																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-																: _methodResult.Node.ReturnType.WithoutTrivia())))))
+																: _methodNode.ReturnType.WithoutTrivia())))))
 									.WithArgumentList(
 										ArgumentList(
 											SingletonSeparatedList(

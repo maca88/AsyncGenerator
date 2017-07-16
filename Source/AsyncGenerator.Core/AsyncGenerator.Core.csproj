@@ -186,7 +186,7 @@
     <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
     <Compile Include="Plugins\IDocumentTransformer.cs" />
     <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
-    <Compile Include="Plugins\IMethodTransformer.cs" />
+    <Compile Include="Plugins\IMethodOrAccessorTransformer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPreconditionChecker.cs" />
     <Compile Include="Plugins\MethodTransformerResult.cs" />

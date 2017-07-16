@@ -14,17 +14,26 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 	}
 
-	internal class TransformationResult<T> : AnnotatedNode<T> where T : SyntaxNode
+	internal class TransformationResult<TOriginal> : TransformationResult<TOriginal, TOriginal> where TOriginal : SyntaxNode
 	{
-		public TransformationResult(T originalNode) : base(originalNode)
+		public TransformationResult(TOriginal originalNode) : base(originalNode)
+		{
+		}
+	}
+
+	internal class TransformationResult<TOriginal, TTransformed> : AnnotatedNode<TOriginal> 
+		where TOriginal : SyntaxNode 
+		where TTransformed : SyntaxNode
+	{
+		public TransformationResult(TOriginal originalNode) : base(originalNode)
 		{
 		}
 
-		public T Transformed { get; set; }
+		public TTransformed Transformed { get; set; }
 
-		public T OriginalModified { get; set; }
+		public TOriginal OriginalModified { get; set; }
 
-		public int OriginalStartSpan => OriginalNode.SpanStart;
+		public override int OriginalStartSpan => OriginalNode.SpanStart;
 
 		public virtual IEnumerable<SyntaxNode> GetTransformedNodes()
 		{

@@ -190,6 +190,10 @@
     <Compile Include="AsyncMethodFinder\Input\NUnitAssertThat.cs" />
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
     <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
+    <Compile Include="AsyncProperites\Fixture.cs" />
+    <Compile Include="AsyncProperites\Input\ArrowGetter.cs" />
+    <Compile Include="AsyncProperites\Input\AbstractGetter.cs" />
+    <Compile Include="AsyncProperites\Input\Getter.cs" />
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CallForwarding\Fixture.cs" />
     <Compile Include="CallForwarding\Input\TestCase.cs" />
@@ -559,6 +563,21 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PartialCompilation\Output\CtorMultiOverloads.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\Getter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\GetterNoConversion.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ArrowGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractGetterNewType.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

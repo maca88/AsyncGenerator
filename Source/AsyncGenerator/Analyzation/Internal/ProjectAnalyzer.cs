@@ -168,7 +168,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// </summary>
 		/// <param name="methodData">The method data to be searched</param>
 		/// <returns>Collection of invoked methods that have an async counterpart</returns>
-		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(MethodData methodData)
+		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(FunctionData methodData)
 		{
 			var result = new HashSet<IMethodSymbol>();
 			var methodDataBody = methodData.GetBodyNode();

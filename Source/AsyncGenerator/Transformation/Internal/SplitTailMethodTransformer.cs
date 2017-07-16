@@ -21,7 +21,7 @@ namespace AsyncGenerator.Transformation.Internal
 	/// A method transformer that splits method into two when SplitTail is set to true.
 	/// This transformer must run after the <see cref="CancellationTokenMethodTransformer"/>
 	/// </summary>
-	internal class SplitTailMethodTransformer : IMethodTransformer
+	internal class SplitTailMethodTransformer : IMethodOrAccessorTransformer
 	{
 		private IProjectTransformConfiguration _configuration;
 		private IProjectAnalyzeConfiguration _analyzeConfiguration;
@@ -36,7 +36,7 @@ namespace AsyncGenerator.Transformation.Internal
 		/// <summary>
 		/// The method with SplitTail needs to be splitted into two methods
 		/// </summary>
-		public MethodTransformerResult Transform(IMethodTransformationResult transformResult, 
+		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult transformResult, 
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;

@@ -82,9 +82,9 @@ namespace AsyncGenerator.Internal
 			return documentData.GetMethodData(node);
 		}*/
 
-		public MethodData GetMethodData(IMethodSymbol symbol)
+		public MethodOrAccessorData GetMethodOrAccessorData(IMethodSymbol symbol)
 		{
-			return (MethodData)GetFunctionData(symbol);
+			return (MethodOrAccessorData)GetFunctionData(symbol);
 		}
 
 		public FunctionData GetFunctionData(IMethodSymbol methodSymbol)
@@ -98,10 +98,7 @@ namespace AsyncGenerator.Internal
 			{
 				return null;
 			}
-			return documentData.GetAllTypeDatas()
-				.SelectMany(o => o.Methods.Values)
-				.SelectMany(o => o.GetSelfAndDescendantsFunctions())
-				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
+			return documentData.GetFunctionData(methodSymbol);
 		}
 
 		public DocumentData GetDocumentData(Document document)

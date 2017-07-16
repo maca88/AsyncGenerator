@@ -21,7 +21,7 @@ using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtens
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class AsyncLockMethodTransformer : CSharpSyntaxRewriter, IMethodTransformer
+	internal class AsyncLockMethodTransformer : CSharpSyntaxRewriter, IMethodOrAccessorTransformer
 	{
 		private IProjectTransformConfiguration _configuration;
 
@@ -31,7 +31,7 @@ namespace AsyncGenerator.Transformation.Internal
 			return Task.CompletedTask;
 		}
 
-		public MethodTransformerResult Transform(IMethodTransformationResult result, 
+		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult result, 
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			if (!result.TransformedLocks.Any() && !result.AnalyzationResult.MustRunSynchronized)
@@ -133,7 +133,7 @@ namespace AsyncGenerator.Transformation.Internal
 			return newFieldName;
 		}
 
-		private FieldDeclarationSyntax GetAsyncLockField(string fieldName, bool isStatic, IMethodTransformationResult result)
+		private FieldDeclarationSyntax GetAsyncLockField(string fieldName, bool isStatic, IMethodOrAccessorTransformationResult result)
 		{
 			var list = TokenList(Token(TriviaList(result.LeadingWhitespaceTrivia), SyntaxKind.PrivateKeyword, TriviaList(Space)));
 			if (isStatic)

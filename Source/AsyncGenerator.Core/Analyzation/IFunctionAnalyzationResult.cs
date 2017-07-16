@@ -20,10 +20,10 @@ namespace AsyncGenerator.Core.Analyzation
 		SyntaxNode GetBodyNode();
 
 		/// <summary>
-		/// Get the method that contains this function
+		/// Get the method or accessor that contains this function
 		/// </summary>
 		/// <returns></returns>
-		IMethodAnalyzationResult GetMethod();
+		IMethodOrAccessorAnalyzationResult GetMethodOrAccessor();
 
 		/// <summary>
 		/// References of types that are used inside this function
@@ -80,5 +80,10 @@ namespace AsyncGenerator.Core.Analyzation
 		/// When true, yield statements in method body will be rewritten to return statements
 		/// </summary>
 		bool RewriteYields { get; }
+
+		/// <summary>
+		/// The name what will be used for the async counterpart
+		/// </summary>
+		string AsyncCounterpartName { get; }
 	}
 }

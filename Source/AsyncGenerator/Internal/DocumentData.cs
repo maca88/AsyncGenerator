@@ -25,6 +25,16 @@ namespace AsyncGenerator.Internal
 			SyntaxKind.LocalFunctionStatement,
 			// Method
 			SyntaxKind.MethodDeclaration,
+			SyntaxKind.ConstructorDeclaration,
+			SyntaxKind.DestructorDeclaration,
+			SyntaxKind.OperatorDeclaration,
+			SyntaxKind.ConversionOperatorDeclaration,
+			// Property
+			SyntaxKind.PropertyDeclaration,
+			SyntaxKind.GetAccessorDeclaration,
+			SyntaxKind.SetAccessorDeclaration,
+			//SyntaxKind.FieldDeclaration,
+			//SyntaxKind.DelegateDeclaration,
 			// Type
 			SyntaxKind.ClassDeclaration,
 			SyntaxKind.InterfaceDeclaration,
@@ -107,13 +117,14 @@ namespace AsyncGenerator.Internal
 			bool create = false,
 			NamespaceData namespaceData = null,
 			TypeData typeData = null,
-			MethodData methodData = null)
+			BaseMethodData baseMethodData = null)
 		{
-			ChildFunctionData functionData = null;
+			FunctionData functionData = null;
+			PropertyData propertyData = null;
 			SyntaxNode endNode;
-			if (methodData != null)
+			if (baseMethodData != null)
 			{
-				endNode = methodData.Node;
+				endNode = baseMethodData.GetNode();
 			}
 			else if (typeData != null)
 			{
@@ -140,7 +151,7 @@ namespace AsyncGenerator.Internal
 					case SyntaxKind.AnonymousMethodExpression:
 					case SyntaxKind.SimpleLambdaExpression:
 					case SyntaxKind.LocalFunctionStatement:
-						if (methodData == null)
+						if (baseMethodData == null)
 						{
 							// ParenthesizedLambda, AnonymousMethod and SimpleLambda can be also defined inside a type
 							if (!n.IsKind(SyntaxKind.LocalFunctionStatement))
@@ -154,7 +165,7 @@ namespace AsyncGenerator.Internal
 						}
 						functionData = functionData != null 
 							? functionData.GetChildFunction(n, SemanticModel, create)
-							: methodData.GetChildFunction(n, SemanticModel, create);
+							: baseMethodData.GetChildFunction(n, SemanticModel, create);
 						if (functionData == null)
 						{
 							return null;
@@ -166,8 +177,57 @@ namespace AsyncGenerator.Internal
 							throw new InvalidOperationException($"Method {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
 						}
 						var methodNode = (MethodDeclarationSyntax) n;
-						methodData = typeData.GetMethodData(methodNode, SemanticModel, create);
-						if (methodData == null)
+						baseMethodData = typeData.GetMethodData(methodNode, SemanticModel, create);
+						if (baseMethodData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.DestructorDeclaration:
+					case SyntaxKind.ConstructorDeclaration:
+					case SyntaxKind.OperatorDeclaration:
+					case SyntaxKind.ConversionOperatorDeclaration:
+						if (typeData == null)
+						{
+							throw new InvalidOperationException($"Method {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
+						}
+						var baseMethodNode = (BaseMethodDeclarationSyntax)n;
+						baseMethodData = typeData.GetSpecialMethodData(baseMethodNode, SemanticModel, create);
+						if (baseMethodData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.GetAccessorDeclaration:
+						if (propertyData == null)
+						{
+							throw new InvalidOperationException($"Get accessor property {n} is declared outside a {nameof(PropertyDeclarationSyntax)}");
+						}
+						functionData = propertyData.GetAccessorData;
+						if (functionData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.SetAccessorDeclaration:
+						if (propertyData == null)
+						{
+							throw new InvalidOperationException($"Set accessor property {n} is declared outside a {nameof(PropertyDeclarationSyntax)}");
+						}
+						functionData = propertyData.SetAccessorData;
+						if (functionData == null)
+						{
+							return null;
+						}
+						break;
+					case SyntaxKind.PropertyDeclaration:
+						if (typeData == null)
+						{
+							throw new InvalidOperationException($"Property {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
+						}
+						var propertyNode = (PropertyDeclarationSyntax)n;
+						propertyData = typeData.GetPropertyData(propertyNode, SemanticModel, create);
+						if (propertyData == null)
 						{
 							return null;
 						}
@@ -180,8 +240,6 @@ namespace AsyncGenerator.Internal
 							namespaceData = GlobalNamespaceData;
 						}
 						var typeNode = (TypeDeclarationSyntax)n;
-						// TODO: optimize - symbol is not required if the data exist
-						
 						typeData = typeData != null 
 							? typeData.GetNestedTypeData(typeNode, SemanticModel, create) 
 							: namespaceData.GetTypeData(typeNode, SemanticModel, create);
@@ -209,20 +267,23 @@ namespace AsyncGenerator.Internal
 				case SyntaxKind.AnonymousMethodExpression:
 				case SyntaxKind.SimpleLambdaExpression:
 				case SyntaxKind.LocalFunctionStatement:
+				case SyntaxKind.GetAccessorDeclaration: // Property getter
+				case SyntaxKind.SetAccessorDeclaration: // Property setter
 					return functionData;
 				case SyntaxKind.MethodDeclaration:
-					return methodData;
+				case SyntaxKind.DestructorDeclaration:
+				case SyntaxKind.ConstructorDeclaration:
+				case SyntaxKind.OperatorDeclaration:
+				case SyntaxKind.ConversionOperatorDeclaration:
+					return baseMethodData;
 				case SyntaxKind.ClassDeclaration:
 				case SyntaxKind.InterfaceDeclaration:
 				case SyntaxKind.StructDeclaration:
 					return typeData;
 				case SyntaxKind.NamespaceDeclaration:
 					return namespaceData;
-				case SyntaxKind.DestructorDeclaration:
-				case SyntaxKind.ConstructorDeclaration:
-				case SyntaxKind.OperatorDeclaration:
-				case SyntaxKind.ConversionOperatorDeclaration:
-					return null; // TODO: should we add them in the pre analyzation step?
+				case SyntaxKind.PropertyDeclaration:
+					return propertyData;
 				default:
 					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
 			}
@@ -235,7 +296,7 @@ namespace AsyncGenerator.Internal
 			return (FunctionData)GetNodeData(node);
 		}
 		*/
-		public FunctionData GetFunctionData(IMethodSymbol methodSymbol)
+		public FunctionData GetFunctionData(ISymbol methodSymbol)
 		{
 			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
 			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
@@ -243,7 +304,7 @@ namespace AsyncGenerator.Internal
 				return null;
 			}
 			return GetAllTypeDatas()
-				.SelectMany(o => o.Methods.Values)
+				.SelectMany(o => o.MethodsAndAccessors)
 				.SelectMany(o => o.GetSelfAndDescendantsFunctions())
 				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
 		}
@@ -255,14 +316,14 @@ namespace AsyncGenerator.Internal
 			return (AnonymousFunctionData)GetNodeData(node);
 		}
 
-		public AnonymousFunctionData GetOrCreateAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, MethodData methodData = null)
+		public AnonymousFunctionData GetOrCreateAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, BaseMethodData methodData = null)
 		{
-			return (AnonymousFunctionData)GetNodeData(node, true, methodData: methodData);
+			return (AnonymousFunctionData)GetNodeData(node, true, baseMethodData: methodData);
 		}
 
-		public LocalFunctionData GetOrCreateLocalFunctionData(LocalFunctionStatementSyntax node, MethodData methodData = null)
+		public LocalFunctionData GetOrCreateLocalFunctionData(LocalFunctionStatementSyntax node, BaseMethodData methodData = null)
 		{
-			return (LocalFunctionData)GetNodeData(node, true, methodData: methodData);
+			return (LocalFunctionData)GetNodeData(node, true, baseMethodData: methodData);
 		}
 
 		#endregion
@@ -286,9 +347,24 @@ namespace AsyncGenerator.Internal
 			return (MethodData)GetNodeData(node);
 		}
 
+		public MethodOrAccessorData GetMethodOrAccessorData(SyntaxNode node)
+		{
+			return (MethodOrAccessorData)GetNodeData(node);
+		}
+
 		public MethodData GetOrCreateMethodData(MethodDeclarationSyntax node, TypeData typeData = null)
 		{
 			return (MethodData)GetNodeData(node, true, typeData: typeData);
+		}
+
+		public BaseMethodData GetOrCreateBaseMethodData(BaseMethodDeclarationSyntax node, TypeData typeData = null)
+		{
+			return (BaseMethodData)GetNodeData(node, true, typeData: typeData);
+		}
+
+		public PropertyData GetOrCreatePropertyData(PropertyDeclarationSyntax node, TypeData typeData = null)
+		{
+			return (PropertyData)GetNodeData(node, true, typeData: typeData);
 		}
 
 		#endregion
@@ -332,35 +408,18 @@ namespace AsyncGenerator.Internal
 			return !create ? null : Namespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
 		}
 
-		// TODO: DEBUG
 		public ISymbol GetEnclosingSymbol(ReferenceLocation reference)
 		{
 			var enclosingSymbol = SemanticModel.GetEnclosingSymbol(reference.Location.SourceSpan.Start);
-
 			for (var current = enclosingSymbol; current != null; current = current.ContainingSymbol)
 			{
-				if (current.Kind == SymbolKind.Field)
+				switch (current.Kind)
 				{
-					return current;
-				}
-
-				if (current.Kind == SymbolKind.Property)
-				{
-					return current;
-				}
-
-				if (current.Kind == SymbolKind.Method)
-				{
-					var method = (IMethodSymbol)current;
-					if (method.IsAccessor())
-					{
-						return method.AssociatedSymbol;
-					}
-					return method;
-				}
-				if (current.Kind == SymbolKind.NamedType)
-				{
-					return current;
+					case SymbolKind.Field:
+					case SymbolKind.Property:
+					case SymbolKind.Method:
+					case SymbolKind.NamedType:
+						return current;
 				}
 			}
 			//TODO: reference to a cref

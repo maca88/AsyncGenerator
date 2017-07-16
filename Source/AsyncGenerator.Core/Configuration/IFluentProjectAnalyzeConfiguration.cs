@@ -16,6 +16,11 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration MethodConversion(Func<IMethodSymbol, MethodConversion> func);
 
 		/// <summary>
+		/// Enable or disable generation of async methods for properties that contain async invocations
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration PropertyConversion(bool value);
+
+		/// <summary>
 		/// Set a function that will decide what type of conversion to apply for a given type.
 		/// <para>Default <see cref="F:AsyncGenerator.Core.TypeConversion.Unknown"/> is chosen for all types.</para> 
 		/// </summary>

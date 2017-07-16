@@ -48,9 +48,10 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public void Ignore(string reason)
+		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{
 			IgnoredReason = reason;
+			ExplicitlyIgnored = explicitlyIgnored;
 			Conversion = TypeConversion.Ignore;
 			foreach (var typeData in GetSelfAndDescendantsTypeData().Where(o => o.Conversion != TypeConversion.Ignore))
 			{
@@ -58,13 +59,20 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public string IgnoredReason { get; private set; }
-
 		public bool IsPartial { get; set; }
 
 		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> Methods { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
 
+		public ConcurrentDictionary<BaseMethodDeclarationSyntax, BaseMethodData> SpecialMethods { get; } = new ConcurrentDictionary<BaseMethodDeclarationSyntax, BaseMethodData>();
+
+		public ConcurrentDictionary<PropertyDeclarationSyntax, PropertyData> Properties { get; } = new ConcurrentDictionary<PropertyDeclarationSyntax, PropertyData>();
+
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypes { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
+
+		public IEnumerable<MethodOrAccessorData> MethodsAndAccessors
+		{
+			get { return Methods.Values.Cast<MethodOrAccessorData>().Union(Properties.Values.SelectMany(o => o.GetAccessors())); }
+		}
 
 		public override SyntaxNode GetNode()
 		{
@@ -124,8 +132,7 @@ namespace AsyncGenerator.Internal
 
 		public TypeData GetNestedTypeData(TypeDeclarationSyntax node, SemanticModel semanticModel, bool create = false)
 		{
-			TypeData typeData;
-			if (NestedTypes.TryGetValue(node, out typeData))
+			if (NestedTypes.TryGetValue(node, out TypeData typeData))
 			{
 				return typeData;
 			}
@@ -135,13 +142,32 @@ namespace AsyncGenerator.Internal
 
 		public MethodData GetMethodData(MethodDeclarationSyntax methodNode, SemanticModel semanticModel, bool create = false)
 		{
-			MethodData methodData;
-			if (Methods.TryGetValue(methodNode, out methodData))
+			if (Methods.TryGetValue(methodNode, out MethodData methodData))
 			{
 				return methodData;
 			}
 			var methodSymbol = semanticModel.GetDeclaredSymbol(methodNode);
 			return !create ? null : Methods.GetOrAdd(methodNode, syntax => new MethodData(this, methodSymbol, methodNode));
+		}
+
+		public BaseMethodData GetSpecialMethodData(BaseMethodDeclarationSyntax methodNode, SemanticModel semanticModel, bool create = false)
+		{
+			if (SpecialMethods.TryGetValue(methodNode, out BaseMethodData methodData))
+			{
+				return methodData;
+			}
+			var methodSymbol = semanticModel.GetDeclaredSymbol(methodNode);
+			return !create ? null : SpecialMethods.GetOrAdd(methodNode, syntax => new BaseMethodData(this, methodSymbol, methodNode));
+		}
+
+		public PropertyData GetPropertyData(PropertyDeclarationSyntax node, SemanticModel semanticModel, bool create = false)
+		{
+			if (Properties.TryGetValue(node, out PropertyData data))
+			{
+				return data;
+			}
+			var symbol = semanticModel.GetDeclaredSymbol(node);
+			return !create ? null : Properties.GetOrAdd(node, syntax => new PropertyData(this, symbol, node));
 		}
 
 		#region ITypeAnalyzationResult
@@ -157,6 +183,12 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedNestedTypes;
 		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => _cachedNestedTypes ?? (_cachedNestedTypes = NestedTypes.Values.ToImmutableArray());
+
+		private IReadOnlyList<IPropertyAnalyzationResult> _cachedProperties;
+		IReadOnlyList<IPropertyAnalyzationResult> ITypeAnalyzationResult.Properties => _cachedProperties ?? (_cachedProperties = Properties.Values.ToImmutableArray());
+
+		private IReadOnlyList<IFunctionAnalyzationResult> _cachedSpecialMethods;
+		IReadOnlyList<IFunctionAnalyzationResult> ITypeAnalyzationResult.SpecialMethods => _cachedSpecialMethods ?? (_cachedSpecialMethods = SpecialMethods.Values.ToImmutableArray());
 
 		#endregion
 

@@ -11,6 +11,8 @@ using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
@@ -81,6 +83,19 @@ namespace AsyncGenerator.Transformation.Internal
 						rootFuncNode = rootFuncNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.TaskReturnedAnnotation)));
 					}
 				}
+				foreach (var typeReference in funcResult.TypeReferences)
+				{
+					var reference = typeReference.ReferenceLocation;
+					var refSpanStart = reference.Location.SourceSpan.Start - startRootFuncSpan;
+					var refSpanLength = reference.Location.SourceSpan.Length;
+					var nameNode = rootFuncNode.GetSimpleName(refSpanStart, refSpanLength, typeReference.IsCref);
+					var transformedNode = new TransformationResult(nameNode)
+					{
+						Transformed = nameNode.WithIdentifier(Identifier(nameNode.Identifier.ValueText + "Async").WithTriviaFrom(nameNode.Identifier))
+					};
+					transformResult.TransformedNodes.Add(transformedNode);
+					rootFuncNode = rootFuncNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
+				}
 
 			}
 
@@ -90,6 +105,20 @@ namespace AsyncGenerator.Transformation.Internal
 				foreach (var transfromReference in transformResult.TransformedFunctionReferences.OrderByDescending(o => o.OriginalStartSpan))
 				{
 					rootFuncNode = TransformFunctionReference(rootFuncNode, rootFuncResult, transfromReference, namespaceMetadata);
+				}
+
+				// Replace all rewritten nodes
+				foreach (var rewNode in transformResult.TransformedNodes)
+				{
+					var node = rootFuncNode.GetAnnotatedNodes(rewNode.Annotation).First();
+					if (rewNode.Transformed == null)
+					{
+						rootFuncNode = rootFuncNode.RemoveNode(node, SyntaxRemoveOptions.KeepUnbalancedDirectives);
+					}
+					else
+					{
+						rootFuncNode = rootFuncNode.ReplaceNode(node, rewNode.Transformed);
+					}
 				}
 
 				var funcNode = rootFuncNode.GetAnnotatedNodes(transformResult.Annotation).First();

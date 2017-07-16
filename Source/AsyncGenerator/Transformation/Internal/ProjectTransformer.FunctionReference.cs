@@ -29,7 +29,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithTriviaFrom(nameNode);
 			transfromReference.Transformed = newNameNode;
 
-			var cancellationTokenParamName = funcResult.GetMethod().CancellationTokenRequired ? "cancellationToken" : null; // TODO: remove
+			var cancellationTokenParamName = funcResult.GetMethodOrAccessor().CancellationTokenRequired ? "cancellationToken" : null; // TODO: remove
 
 			// If we have a cref change the name to the async counterpart and add/update arguments
 			if (bodyFuncReferenceResult == null)
@@ -51,7 +51,7 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				// If the async counterpart is internal and a token is required add a token parameter
-				if (funReferenceResult.AsyncCounterpartFunction?.GetMethod()?.CancellationTokenRequired == true)
+				if (funReferenceResult.AsyncCounterpartFunction?.GetMethodOrAccessor()?.CancellationTokenRequired == true)
 				{
 					paramList.Add(CrefParameter(IdentifierName(nameof(CancellationToken))));
 				}
@@ -111,7 +111,8 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			InvocationExpressionSyntax invokeNode = null;
-			if (bodyFuncReferenceResult.PassCancellationToken || bodyFuncReferenceResult.AwaitInvocation)
+			var isAccessor = bodyFuncReferenceResult.ReferenceSymbol.IsAccessor();
+			if (!isAccessor && (bodyFuncReferenceResult.PassCancellationToken || bodyFuncReferenceResult.AwaitInvocation))
 			{
 				invokeNode = nameNode.Ancestors().OfType<InvocationExpressionSyntax>().First();
 			}
@@ -128,10 +129,16 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, newNameNode)
 							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
 					}
+					else if (isAccessor)
+					{
+						node = node
+							.ReplaceNode(nameNode, InvocationExpression(newNameNode));
+					}
 					else
 					{
 						node = node
 							.ReplaceNode(nameNode, newNameNode);
+						
 					}
 				}
 				else
@@ -142,6 +149,10 @@ namespace AsyncGenerator.Transformation.Internal
 						newStatement = statement.ReplaceNode(invokeNode, invokeNode
 							.ReplaceNode(nameNode, newNameNode)
 							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
+					}
+					else if (isAccessor)
+					{
+						newStatement = statement.ReplaceNode(nameNode, InvocationExpression(newNameNode));
 					}
 					else
 					{
@@ -161,12 +172,23 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				// We need to annotate the invocation node because of the AddAwait method as it needs the parent node
 				var invokeAnnotation = Guid.NewGuid().ToString();
-				node = node
-					.ReplaceNode(invokeNode, invokeNode
-						.ReplaceNode(nameNode, newNameNode)
-						.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
-						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
-					);
+				if (isAccessor)
+				{
+					node = node
+						.ReplaceNode(nameNode, InvocationExpression(newNameNode)
+							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
+							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation)));
+				}
+				else
+				{
+					node = node
+						.ReplaceNode(invokeNode, invokeNode
+							.ReplaceNode(nameNode, newNameNode)
+							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
+							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
+						);
+				}
+
 				invokeNode = node.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
 				node = node.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
 			}

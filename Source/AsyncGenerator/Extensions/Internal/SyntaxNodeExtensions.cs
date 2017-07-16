@@ -217,6 +217,23 @@ namespace AsyncGenerator.Extensions.Internal
 			return Whitespace(nodeIndent.Substring(parentIndent.Length));
 		}
 
+		internal static TypeSyntax GetReturnType(this SyntaxNode node)
+		{
+			if (node is MethodDeclarationSyntax methodNode)
+			{
+				return methodNode.ReturnType;
+			}
+			if (node is AccessorDeclarationSyntax accessorNode)
+			{
+				var propertyNode = accessorNode.Ancestors().OfType<PropertyDeclarationSyntax>().FirstOrDefault();
+				if (propertyNode != null)
+				{
+					return propertyNode.Type;
+				}
+			}
+			throw new InvalidOperationException($"Unable to get return type for node {node}");
+		}
+
 		internal static SyntaxNode PrependCloseBraceLeadingTrivia(this SyntaxNode node, SyntaxTriviaList leadingTrivia)
 		{
 			if (node is TypeDeclarationSyntax typeNode)
@@ -381,18 +398,14 @@ namespace AsyncGenerator.Extensions.Internal
 
 		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node, 
 			MemberDeclarationSyntax member, MemberDeclarationSyntax newMember,
-			IEnumerable<FieldDeclarationSyntax> extraFields, IEnumerable<MethodDeclarationSyntax> extraMethods)
+			IEnumerable<FieldDeclarationSyntax> extraFields = null, IEnumerable<MethodDeclarationSyntax> extraMethods = null)
 		{
-			if (newMember == null)
-			{
-				throw new ArgumentNullException(nameof(newMember));
-			}
 			if (extraMethods != null)
 			{
 				// Append all additional members after the original one
 				var index = node.Members.IndexOf(member);
 				node = node.ReplaceNode(member, newMember);
-				var currIndex = index + 1;
+				var currIndex = newMember == null ? index : index + 1;
 				foreach (var extraMethod in extraMethods)
 				{
 					node = node.WithMembers(node.Members.Insert(currIndex, extraMethod));

@@ -32,21 +32,17 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
-				foreach (var methodData in typeData.Methods.Values
+				foreach (var methodOrAccessorData in typeData.MethodsAndAccessors
 					.Where(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart)))
 				{
-					await ScanMethodData(methodData).ConfigureAwait(false);
-					//foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
-					//{
-					//	// TODO: do we need something here?
-					//}
+					await ScanMethodData(methodOrAccessorData).ConfigureAwait(false);
 				}
 			}
 		}
 
 		private readonly ConcurrentSet<IMethodSymbol> _searchedOverrides = new ConcurrentSet<IMethodSymbol>();
 
-		private Task FindOverrides(IMethodSymbol methodSymbol, Action<IMethodSymbol, MethodData> action)
+		private Task FindOverrides(IMethodSymbol methodSymbol, Action<IMethodSymbol, MethodOrAccessorData> action)
 		{
 			methodSymbol = methodSymbol.OriginalDefinition;
 			if (!_searchedOverrides.TryAdd(methodSymbol))
@@ -67,8 +63,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					var overrideDocumentData = ProjectData.GetDocumentData(overrideDocument);
-					var overrideMethodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-					var overrideMethodData = overrideDocumentData.GetMethodData(overrideMethodNode);
+					var overrideMethodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+					var overrideMethodData = overrideDocumentData.GetMethodOrAccessorData(overrideMethodNode);
 
 					action(overrideMethod, overrideMethodData);
 				}
@@ -78,7 +74,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<IMethodSymbol> _searchedImplementations = new ConcurrentSet<IMethodSymbol>();
 
-		private Task FindImplementations(IMethodSymbol methodSymbol, Func<IMethodSymbol, MethodData, Task> action)
+		private Task FindImplementations(IMethodSymbol methodSymbol, Func<IMethodSymbol, MethodOrAccessorData, Task> action)
 		{
 			methodSymbol = methodSymbol.OriginalDefinition;
 			if (!_searchedImplementations.TryAdd(methodSymbol))
@@ -99,8 +95,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					var documentData = ProjectData.GetDocumentData(syntax);
-					var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-					var implMethodData = documentData.GetMethodData(methodNode);
+					var methodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+					var implMethodData = documentData.GetMethodOrAccessorData(methodNode);
 
 					await action(implMethod, implMethodData).ConfigureAwait(false);
 				}
@@ -108,27 +104,27 @@ namespace AsyncGenerator.Analyzation.Internal
 			return Find();
 		}
 
-		private async Task ScanMethodData(MethodData methodData, int depth = 0)
+		private async Task ScanMethodData(MethodOrAccessorData methodOrAccessorData, int depth = 0)
 		{
-			if (methodData.Scanned)
+			if (methodOrAccessorData.Scanned)
 			{
 				return;
 			}
-			methodData.Scanned = true;
+			methodOrAccessorData.Scanned = true;
 
 			SyntaxReference syntax;
-			var bodyScanMethodDatas = new HashSet<MethodData>();
+			var bodyScanMethodDatas = new HashSet<MethodOrAccessorData>();
 			var referenceScanMethods = new HashSet<IMethodSymbol>();
 
-			if (_configuration.ScanMethodBody || methodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
+			if (_configuration.ScanMethodBody || methodOrAccessorData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 			{
-				bodyScanMethodDatas.Add(methodData);
+				bodyScanMethodDatas.Add(methodOrAccessorData);
 			}
 
-			var interfaceMethods = methodData.ImplementedInterfaces.ToImmutableHashSet();
-			if (methodData.InterfaceMethod)
+			var interfaceMethods = methodOrAccessorData.ImplementedInterfaces.ToImmutableHashSet();
+			if (methodOrAccessorData.InterfaceMethod)
 			{
-				interfaceMethods = interfaceMethods.Add(methodData.Symbol);
+				interfaceMethods = interfaceMethods.Add(methodOrAccessorData.Symbol);
 			}
 			// Get and save all interface implementations
 			foreach (var interfaceMethod in interfaceMethods)
@@ -142,8 +138,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 				var documentData = ProjectData.GetDocumentData(document);
-				var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-				var interfaceMethodData = documentData.GetMethodData(methodNode);
+				var methodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+				var interfaceMethodData = documentData.GetMethodOrAccessorData(methodNode);
 
 				// NOTE: FindImplementationsAsync will not find all implementations when we have an abstract/virtual implementation of the interface.
 				// In this case we will get only the abstract/virtual method so we have to find all overrides for it manually
@@ -175,16 +171,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				}).ConfigureAwait(false);
 			}
 
-			MethodData baseMethodData = null;
+			MethodOrAccessorData baseMethodData = null;
 			IMethodSymbol baseMethodSymbol = null;
-			if (methodData.BaseOverriddenMethod?.DeclaringSyntaxReferences.Any() == true)
+			if (methodOrAccessorData.BaseOverriddenMethod?.DeclaringSyntaxReferences.Any() == true)
 			{
-				baseMethodSymbol = methodData.BaseOverriddenMethod;
+				baseMethodSymbol = methodOrAccessorData.BaseOverriddenMethod;
 			}
-			else if (!methodData.InterfaceMethod && (methodData.Symbol.IsVirtual || methodData.Symbol.IsAbstract)) // interface method has IsAbstract true
+			else if (!methodOrAccessorData.InterfaceMethod && (methodOrAccessorData.Symbol.IsVirtual || methodOrAccessorData.Symbol.IsAbstract)) // interface method has IsAbstract true
 			{
-				baseMethodSymbol = methodData.Symbol;
-				baseMethodData = methodData;
+				baseMethodSymbol = methodOrAccessorData.Symbol;
+				baseMethodData = methodOrAccessorData;
 			}
 
 			// Get and save all derived methods
@@ -198,8 +194,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					var document = _solution.GetDocument(syntax.SyntaxTree);
 					if (CanProcessDocument(document))
 					{
-						var methodNode = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-						baseMethodData = ProjectData.GetDocumentData(document).GetMethodData(methodNode);
+						var methodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+						baseMethodData = ProjectData.GetDocumentData(document).GetMethodOrAccessorData(methodNode);
 					}
 				}
 
@@ -228,7 +224,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			if (baseMethodSymbol == null && !interfaceMethods.Any()) //TODO: what about hiding methods
 			{
-				referenceScanMethods.Add(methodData.Symbol);
+				referenceScanMethods.Add(methodOrAccessorData.Symbol);
 			}
 
 			foreach (var mData in bodyScanMethodDatas)
@@ -398,8 +394,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 
-				var refMethodSymbol = symbol as IMethodSymbol;
-				if (refMethodSymbol == null)
+				if (symbol.Kind != SymbolKind.Method)
 				{
 					if (symbol.Kind != SymbolKind.NamedType)
 					{
@@ -418,7 +413,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						continue;
 					}
-					var crefReferenceMethodData = ProjectData.GetMethodData(crefReferenceSymbol);
+					var crefReferenceMethodData = ProjectData.GetMethodOrAccessorData(crefReferenceSymbol);
 					var crefReferenceData = new CrefFunctionReferenceData(refLocation, crefReferenceNameNode, crefReferenceSymbol, crefReferenceMethodData);
 
 					var memberNode = crefReferenceNameNode.Ancestors().OfType<MemberDeclarationSyntax>().First();
@@ -441,9 +436,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue; // No need to further scan a cref reference
 				}
 
-				var baseMethodData = documentData.GetFunctionData(refMethodSymbol);
-				if (baseMethodData == null) // TODO: Current is null for ctor, operator, destructor, conversion
+				var baseMethodData = documentData.GetFunctionData(symbol);
+				if (baseMethodData == null) // TODO: Current is null for lambda in fields
 				{
+					var refMethodSymbol = (IMethodSymbol) symbol;
 					if (refMethodSymbol.MethodKind == MethodKind.AnonymousFunction || refMethodSymbol.MethodKind == MethodKind.LambdaMethod)
 					{
 						Logger.Warn($"Function inside member {refMethodSymbol.ContainingSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
@@ -452,8 +448,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						Logger.Warn($"Method {refMethodSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
 					}
-
-					
 					continue;
 				}
 
@@ -461,21 +455,29 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Save the reference as it can be made async
 				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
 				var referenceSymbolInfo = documentData.SemanticModel.GetSymbolInfo(nameNode);
-				var referenceSymbol = (IMethodSymbol)referenceSymbolInfo.Symbol;
-				if (referenceSymbol == null)
+				var referenceSymbol = referenceSymbolInfo.Symbol;
+				var methodReferenceSymbol = referenceSymbol as IMethodSymbol;
+				if (methodReferenceSymbol == null && referenceSymbol is IPropertySymbol propertyReferenceSymbol)
 				{
-					referenceSymbol = TryFindCandidate(nameNode, referenceSymbolInfo, documentData.SemanticModel);
-					if (referenceSymbol == null)
+					// We need to find the usage of the property, if getter or setter is used
+					methodReferenceSymbol = nameNode.Parent is AssignmentExpressionSyntax 
+						? propertyReferenceSymbol.SetMethod 
+						: propertyReferenceSymbol.GetMethod;
+				}
+				if (methodReferenceSymbol == null)
+				{
+					methodReferenceSymbol = TryFindCandidate(nameNode, referenceSymbolInfo, documentData.SemanticModel);
+					if (methodReferenceSymbol == null)
 					{
 						throw new InvalidOperationException($"Unable to find symbol for node {nameNode} inside function {baseMethodData.Symbol}");
 					}
 					Logger.Warn($"GetSymbolInfo did not successfully resloved symbol for node {nameNode} inside function {baseMethodData.Symbol}, but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}");
 				}
-				var referenceMethodData = ProjectData.GetMethodData(referenceSymbol);
+				var referenceMethodData = ProjectData.GetMethodOrAccessorData(methodReferenceSymbol);
 				// Check if the reference is a cref reference
 				if (nameNode.Parent.IsKind(SyntaxKind.NameMemberCref))
 				{
-					var crefReferenceData = new CrefFunctionReferenceData(refLocation, nameNode, referenceSymbol, referenceMethodData);
+					var crefReferenceData = new CrefFunctionReferenceData(refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
 					if (!baseMethodData.CrefMethodReferences.TryAdd(crefReferenceData))
 					{
 						Logger.Debug($"Performance hit: CrefFunctionReferenceData {nameNode} already added");
@@ -483,10 +485,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue; // No need to further scan a cref reference
 				}
 				referenceMethodData?.InvokedBy.Add(baseMethodData);
-				var methodReferenceData = new BodyFunctionReferenceData(baseMethodData, refLocation, nameNode, referenceSymbol, referenceMethodData);
+				var methodReferenceData = new BodyFunctionReferenceData(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
 				if (!baseMethodData.BodyMethodReferences.TryAdd(methodReferenceData))
 				{
-					Logger.Debug($"Performance hit: method reference {referenceSymbol} already processed");
+					Logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
 					continue; // Reference already processed
 				}
 
