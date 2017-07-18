@@ -157,13 +157,22 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			// Shall not wrap the return type into Task when all async invocations do not return a task. Here we mark only methods that do not contain 
 			// any references to internal methods
-			if (!methodData.RelatedMethods.Any() &&
-				methodData.BodyMethodReferences
-					.Where(o => o.ArgumentOfFunctionInvocation == null)
-					.All(o =>
-						o.GetConversion() == ReferenceConversion.ToAsync &&
-						o.ReferenceFunctionData == null &&
-						!o.AsyncCounterpartSymbol.ReturnType.IsTaskType()))
+			if (!methodData.RelatedMethods.Any())
+			{
+				CalculatePreserveReturnType(methodData);
+			}
+		}
+
+		private void CalculatePreserveReturnType(FunctionData methodData)
+		{
+			// Shall not wrap the return type into Task when all async invocations do not return a task. Here we mark only methods that do not contain 
+			// any references to internal methods
+			if (methodData.BodyMethodReferences
+				    .Where(o => o.ArgumentOfFunctionInvocation == null)
+				    .All(o =>
+					    o.GetConversion() == ReferenceConversion.ToAsync &&
+					    o.ReferenceFunctionData == null &&
+					    !o.AsyncCounterpartSymbol.ReturnType.IsTaskType()))
 			{
 				methodData.PreserveReturnType = _configuration.PreserveReturnType(methodData.Symbol);
 			}

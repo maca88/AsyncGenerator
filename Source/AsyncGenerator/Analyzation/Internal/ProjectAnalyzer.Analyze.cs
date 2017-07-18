@@ -22,11 +22,11 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				foreach (var methodData in typeData.Methods.Values.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
-					AnalyzeMethodData(documentData, methodData);
-					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore))
+					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore).OrderByDescending(o => o.GetNode().SpanStart))
 					{
 						AnalyzeAnonymousFunctionData(documentData, functionData);
 					}
+					AnalyzeMethodData(documentData, methodData);
 				}
 			}
 		}
@@ -124,10 +124,10 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void AnalyzeAnonymousFunctionData(DocumentData documentData, ChildFunctionData functionData)
 		{
 			// Ignore if the anonymous function is passed as an argument to a non async candidate
-			if (functionData.GetNode().Parent.IsKind(SyntaxKind.Argument) && functionData.ArgumentOfFunctionInvocation == null)
-			{
-				functionData.Ignore("Function is passed as an argument to a non async invocation");
-			}
+			//if (functionData.GetNode().Parent.IsKind(SyntaxKind.Argument) && functionData.ArgumentOfFunctionInvocation == null)
+			//{
+			//	functionData.Ignore("Function is passed as an argument to a non async invocation");
+			//}
 
 			// Order by descending so we are sure that methods passed by argument will be processed before the invoked method with those arguments
 			foreach (var reference in functionData.BodyMethodReferences.OrderByDescending(o => o.ReferenceNameNode.SpanStart))
@@ -293,8 +293,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				typeSymbol = documentData.SemanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
 			}
-			FindAndSetAsyncCounterparts(functionReferenceData, typeSymbol);
-
+			
 			for (var i = 0; i < node.ArgumentList.Arguments.Count; i++)
 			{
 				var argument = node.ArgumentList.Arguments[i];
@@ -345,6 +344,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
+			FindAndSetAsyncCounterparts(functionReferenceData, typeSymbol);
+
 			CalculateLastInvocation(node, functionReferenceData);
 
 			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)
@@ -364,7 +365,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				// We need to set CancellationTokenRequired to true for the method that contains this invocation
 				var methodData = functionReferenceData.FunctionData.GetMethodData();
-				if (!methodData.ExternalRelatedMethods.Any())
+				if (methodData == functionReferenceData.FunctionData && !methodData.ExternalRelatedMethods.Any())
 				{
 					methodData.CancellationTokenRequired = true;
 				}
@@ -523,29 +524,65 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Set CancellationTokenRequired if we detect that one of the async counterparts has a cancellation token as a parameter
 				if (useTokens)
 				{
-					var tokenOverload = functionReferenceData.ReferenceAsyncSymbols
-						.SingleOrDefault(o => o.Parameters.Length > methodSymbol.Parameters.Length); // TODO: select the right one if we have more than one
-					if (tokenOverload != null)
+					var tokenOverloads = functionReferenceData.ReferenceAsyncSymbols
+						.Where(o => o.Parameters.Length > methodSymbol.Parameters.Length)
+						.ToList();
+					if (tokenOverloads.Count == 1)
 					{
 						functionReferenceData.PassCancellationToken = true;
-						functionReferenceData.AsyncCounterpartSymbol = tokenOverload;
-						functionReferenceData.AsyncCounterpartName = tokenOverload.Name;
+						functionReferenceData.AsyncCounterpartSymbol = tokenOverloads[0];
+						functionReferenceData.AsyncCounterpartName = tokenOverloads[0].Name;
+					}
+					else
+					{
+						// By default we will get here when the there are multiple overloads of an async function (e.g. Task.Run<T>(Func<T>, CancellationToken) and Task.Run<T>(Func<Task<T>>, CancellationToken))
+						// In the Task.Run case we have to check the delegate argument if it can be asnyc or not (the delegate argument will be processed before the invocation)
+						if (!functionReferenceData.FunctionArguments.Any())
+						{
+							functionReferenceData.Ignore("Multiple async counterparts without delegate arguments.");
+							return false;
+						}
+						foreach (var functionArgument in functionReferenceData.FunctionArguments)
+						{
+							var funcData = functionArgument.FunctionData;
+							if (funcData != null) // Anonymous function as argument
+							{
+								if (funcData.BodyMethodReferences.All(o => o.Conversion != ReferenceConversion.ToAsync))
+								{
+									return false;
+								}
+								CalculatePreserveReturnType(funcData);
+								foreach (var tokenOverload in tokenOverloads)
+								{
+									var index = tokenOverload.Parameters[functionArgument.Index];
+									// TODO
+								}
+							}
+							else
+							{
+								// TODO
+								return false;
+							}
+						}
 					}
 				}
 				if (functionReferenceData.AsyncCounterpartSymbol == null)
 				{
 					var nameGroups = functionReferenceData.ReferenceAsyncSymbols.GroupBy(o => o.Name).ToList();
-					if (nameGroups.Count == 1)
+					if (nameGroups.Count == 1 && nameGroups[0].Count() == 1)
 					{
 						functionReferenceData.AsyncCounterpartName = nameGroups[0].Key;
-						functionReferenceData.AsyncCounterpartSymbol = nameGroups[0].Single(); // TODO: select the right one
+						functionReferenceData.AsyncCounterpartSymbol = nameGroups[0].First();
 					}
 					else
 					{
-						// TODO: select the right one
+						return false; // TODO: select the right one
 					}
 				}
-				functionReferenceData.Conversion = ReferenceConversion.ToAsync;
+				if (functionReferenceData.AsyncCounterpartSymbol != null)
+				{
+					functionReferenceData.Conversion = ReferenceConversion.ToAsync;
+				}
 			}
 			else if (!ProjectData.Contains(methodSymbol))
 			{
@@ -558,15 +595,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				functionReferenceData.AsyncCounterpartName = methodSymbol.Name + "Async";
 				functionReferenceData.AsyncCounterpartSymbol = methodSymbol;
-				switch (functionReferenceData.Conversion)
-				{
-					case ReferenceConversion.ToAsync:
-						functionReferenceData.Conversion = ReferenceConversion.ToAsync;
-						break;
-					case ReferenceConversion.Ignore:
-						functionReferenceData.Conversion = ReferenceConversion.Ignore;
-						break;
-				}
 				
 			}
 			return true;
