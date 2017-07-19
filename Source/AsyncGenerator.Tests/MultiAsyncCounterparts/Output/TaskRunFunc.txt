@@ -14,64 +14,51 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
+using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.Cref.Input
+namespace AsyncGenerator.Tests.MultiAsyncCounterparts.Input
 {
+	using System.Threading;
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class TestCase
+	public partial class TaskRunFunc
 	{
-		/// <summary>
-		/// Uses the <see cref="ReadAsync(bool, IList{bool})"/> method
-		/// </summary>
-		public Task ReadAsync()
+
+		public Task Test2Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.ReadAsync();
+			return Task.Run(async () =>
+			{
+				await (SimpleFile.ReadAsync(cancellationToken));
+				return true;
+			}, cancellationToken);
 		}
 
-		public Task ReadAsync(bool value, IList<bool> generic)
+		public Task Test3Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.ReadAsync();
+			return Task.Run(() =>
+			{
+				return FuncAsync(cancellationToken);
+			}, cancellationToken);
 		}
 
-		/// <summary>
-		/// It is the same as calling <see cref="ReadFileAsync(bool, bool, bool)"/> with the last two parameters as false
-		/// </summary>
-		/// <param name="value"></param>
-		public Task ReadFileAsync(bool value)
+		public Task Test5Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return ReadFileAsync(value, false);
+			return Task.Run(() =>
+			{
+				Assert.DoesNotThrowAsync(() =>
+				{
+					return SimpleFile.ReadAsync(cancellationToken);
+				});
+				return true;
+			}, cancellationToken);
 		}
 
-		/// <summary>
-		/// Uses <see cref="ReadFileAsync(bool, bool, bool)"/> with the last parameter as false
-		/// </summary>
-		/// <param name="value"></param>
-		/// <param name="value2"></param>
-		public Task ReadFileAsync(bool value, bool value2)
-		{
-			return ReadFileAsync(value, value2, false);
-		}
-
-		public Task ReadFileAsync(bool value, bool value2, bool value3)
-		{
-			return SimpleFile.ReadAsync();
-		}
-
-		/// <summary>
-		/// Uses <see cref="WriteToFileAsync(bool,byte[],IList{bool})"/>
-		/// </summary>
-		/// <returns></returns>
-		public Task<bool> WriteAsync()
-		{
-			return WriteToFileAsync(false, null, null);
-		}
-
-		public Task<bool> WriteToFileAsync(bool value, byte[] bytes, IList<bool> bools)
+		public Task<bool> FuncAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return SimpleFile.WriteAsync("");
 		}
+
 
 	}
 }

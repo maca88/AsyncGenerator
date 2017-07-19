@@ -159,7 +159,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// any references to internal methods
 			if (!methodData.RelatedMethods.Any())
 			{
-				CalculatePreserveReturnType(methodData);
+				CalculatePreserveReturnType((FunctionData)methodData);
 			}
 		}
 
@@ -248,10 +248,11 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void CalculateFinalFunctionConversion(FunctionData functionData, ICollection<MethodData> asyncMethodDatas)
 		{
-
-			// Before checking the conversion of method references we have to calculate the conversion of invocations that have one or more methods passed as an argument as the current calculated conversion may be wrong
+			// Before checking the conversion of method references we have to calculate the conversion of invocations that 
+			// have one or more methods passed as an argument as the current calculated conversion may be wrong
 			// (eg. one of the arguments may be ignored in the post-analyze step)
-			foreach (var bodyRefData in functionData.BodyMethodReferences.Values.Where(o => o.FunctionArguments != null))
+			// TODO: analyze if all code is required
+			foreach (var bodyRefData in functionData.BodyMethodReferences.Values.Where(o => o.FunctionArguments != null && o.Conversion != ReferenceConversion.Ignore))
 			{
 				var asyncCounterpart = bodyRefData.AsyncCounterpartSymbol;
 				if (asyncCounterpart == null)
@@ -430,10 +431,16 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 2. Step - Go through remaining methods and set them to be async if there is at least one method invocation that will get converted
 			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
 			var remainingMethodData = toProcessMethodData.ToList();
+			var postponedMethodData = new List<MethodData>();
 			foreach (var methodData in remainingMethodData)
 			{
 				if (methodData.BodyMethodReferences.Where(o => o.ArgumentOfFunctionInvocation == null).All(o => o.GetConversion() != ReferenceConversion.ToAsync))
 				{
+					// Postpone the conversion calculation of methods that have nested functions as one of the function may be async after all remaining methods are processed
+					if (methodData.ChildFunctions.Values.Any(o => o.Conversion != MethodConversion.Ignore && o.Conversion != MethodConversion.Copy))
+					{
+						postponedMethodData.Add(methodData);
+					}
 					continue;
 				}
 				if (methodData.Conversion == MethodConversion.Ignore)
@@ -447,6 +454,25 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (toProcessMethodData.Count == 0)
 				{
 					break;
+				}
+			}
+
+			// 2.1 Step - Retry to calculate the conversion of the postponed methods
+			foreach (var methodData in postponedMethodData)
+			{
+				foreach (var bodyMethodRef in methodData.BodyMethodReferences.Where(o => o.ReferenceAsyncSymbols.Any() && o.AsyncCounterpartSymbol == null))
+				{
+					SetAsyncCounterpart(bodyMethodRef);
+				}
+				if (methodData.BodyMethodReferences.Where(o => o.ArgumentOfFunctionInvocation == null).Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
+				{
+					methodData.ToAsync();
+					// Set all dependencies to be async for the newly discovered async method
+					PostAnalyzeAsyncMethodData(methodData, toProcessMethodData);
+					if (toProcessMethodData.Count == 0)
+					{
+						break;
+					}
 				}
 			}
 

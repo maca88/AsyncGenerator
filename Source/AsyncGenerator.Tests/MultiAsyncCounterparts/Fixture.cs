@@ -18,6 +18,7 @@ namespace AsyncGenerator.Tests.MultiAsyncCounterparts
 			var config = Configure(nameof(TaskRunFunc), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(symbol => true)
 					.CancellationTokens(t => t
 					.RequiresCancellationToken(symbol => true))
 				)
