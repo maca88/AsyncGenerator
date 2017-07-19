@@ -191,6 +191,7 @@
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
     <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
     <Compile Include="AsyncProperites\Fixture.cs" />
+    <Compile Include="AsyncProperites\Input\InterfaceGetter.cs" />
     <Compile Include="AsyncProperites\Input\ArrowGetter.cs" />
     <Compile Include="AsyncProperites\Input\AbstractGetter.cs" />
     <Compile Include="AsyncProperites\Input\Getter.cs" />
@@ -574,10 +575,16 @@
     <EmbeddedResource Include="AsyncProperites\Output\ArrowGetter.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="AsyncProperites\Output\AbstractGetter.txt" />
+    <EmbeddedResource Include="AsyncProperites\Output\InterfaceGetter.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AsyncProperites\Output\AbstractGetterNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\InterfaceGetterNewType.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

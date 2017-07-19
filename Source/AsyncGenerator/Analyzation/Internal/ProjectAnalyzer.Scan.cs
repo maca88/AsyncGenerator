@@ -84,9 +84,25 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			async Task Find()
 			{
-				var implementations = await SymbolFinder.FindImplementationsAsync(methodSymbol, _solution, _analyzeProjects)
-					.ConfigureAwait(false);
-				foreach (var implMethod in implementations.OfType<IMethodSymbol>())
+				IEnumerable<IMethodSymbol> implementations;
+				// For properties FindImplementationsAsync will retrive implementations only for property symbol.
+				// This may be a bug as FindOverridesAsync works also for accessors
+				if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet)
+				{
+					implementations = (await SymbolFinder
+							.FindImplementationsAsync(methodSymbol.AssociatedSymbol /* Property symbol */, _solution, _analyzeProjects)
+							.ConfigureAwait(false))
+						.OfType<IPropertySymbol>()
+						.Select(o => methodSymbol.MethodKind == MethodKind.PropertyGet ? o.GetMethod : o.SetMethod)
+						.Where(o => o != null);
+				}
+				else
+				{
+					implementations = (await SymbolFinder.FindImplementationsAsync(methodSymbol, _solution, _analyzeProjects)
+							.ConfigureAwait(false))
+						.OfType<IMethodSymbol>();
+				}
+				foreach (var implMethod in implementations)
 				{
 					var syntax = implMethod.DeclaringSyntaxReferences.Single();
 					var document = _solution.GetDocument(syntax.SyntaxTree);

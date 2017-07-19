@@ -205,6 +205,7 @@
     <Compile Include="Transformation\ITransformationResult.cs" />
     <Compile Include="Transformation\ITypeTransformationMetadata.cs" />
     <Compile Include="Transformation\ITypeTransformationResult.cs" />
+    <Compile Include="PropertyConversion.cs" />
     <Compile Include="TypeConversion.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -82,11 +82,12 @@ namespace AsyncGenerator.Internal
 
 		public void Copy()
 		{
+			// TODO: ToAsync and Copy combined
 			// Copy can be mixed with Smart, ToAsync and Unknown
 			//Conversion &= ~MethodConversion.Ignore;
 			//Conversion &= ~MethodConversion.Unknown;
 			IgnoredReason = null;
-			if (this is MethodData methodData)
+			if (this is MethodOrAccessorData methodData)
 			{
 				methodData.CancellationTokenRequired = false;
 			}

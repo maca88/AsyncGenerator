@@ -17,22 +17,14 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
-	public class AbstractGetterAsync : BaseAbstractGetterAsync
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial class InterfaceGetter : IInterfaceGetter
 	{
-		public override bool IsSuccess { get { return true; } }
-
-		public override bool WriteSuccess
-		{
-			get { return Write(); }
-		}
-		public override Task<bool> GetWriteSuccessAsync()
+		public Task<bool> GetWriteSuccessAsync()
 		{
 			return WriteAsync();
-		}
-
-		private bool Write()
-		{
-			return SimpleFile.Write("");
 		}
 
 		private Task<bool> WriteAsync()
@@ -49,11 +41,11 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	public abstract class BaseAbstractGetterAsync
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial interface IInterfaceGetter
 	{
-		public abstract bool WriteSuccess { get; }
-		public abstract Task<bool> GetWriteSuccessAsync();
-
-		public abstract bool IsSuccess { get; }
+		Task<bool> GetWriteSuccessAsync();
 	}
 }

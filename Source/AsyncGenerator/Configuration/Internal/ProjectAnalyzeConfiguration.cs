@@ -23,7 +23,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
 
-		public bool PropertyConversion { get; private set; } = true;
+		public Func<IPropertySymbol, PropertyConversion> PropertyConversionFunction { get; private set; } = m => PropertyConversion.Ignore;
 
 		public Func<INamedTypeSymbol, TypeConversion> TypeConversionFunction { get; private set; } = m => TypeConversion.Unknown;
 
@@ -63,9 +63,9 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PropertyConversion(bool value)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PropertyConversion(Func<IPropertySymbol, PropertyConversion> func)
 		{
-			PropertyConversion = value;
+			PropertyConversionFunction = func;
 			return this;
 		}
 

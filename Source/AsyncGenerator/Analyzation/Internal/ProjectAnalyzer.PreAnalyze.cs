@@ -109,6 +109,14 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzePropertyData(PropertyData propertyData, SemanticModel semanticModel)
 		{
+			var propertySymbol = propertyData.Symbol;
+			propertyData.Conversion = _configuration.PropertyConversionFunction(propertySymbol);
+			// TODO: validate conversion
+			if (propertyData.Conversion == PropertyConversion.Ignore)
+			{
+				propertyData.Ignore("Ignored by PropertyConversion function", true);
+				return;
+			}
 			var getter = propertyData.GetAccessorData;
 			if (getter != null)
 			{
@@ -155,15 +163,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				IgnoreOrCopy("Is already async");
 				return;
 			}
-			if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet) 
-			{
-				if (!_configuration.PropertyConversion)
-				{
-					IgnoreOrCopy($"Property getter/setter {methodSymbol} will be ignored because async properties are disabled.");
-					return;
-				}
-			}
-			else if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
+			if (
+				methodSymbol.MethodKind != MethodKind.Ordinary && 
+				methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation &&
+				methodSymbol.MethodKind != MethodKind.PropertyGet &&
+				methodSymbol.MethodKind != MethodKind.PropertySet)
 			{
 				IgnoreOrCopy($"Unsupported method kind {methodSymbol.MethodKind}");
 				return;

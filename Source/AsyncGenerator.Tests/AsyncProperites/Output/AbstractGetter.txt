@@ -34,7 +34,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 
 		private async Task CheckSuccessAsync()
 		{
-			if (await (GetWriteSuccessAsync())&& IsSuccess)
+			if (await (GetWriteSuccessAsync()) && IsSuccess)
 			{
 				return;
 			}

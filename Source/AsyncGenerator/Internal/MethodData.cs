@@ -50,6 +50,8 @@ namespace AsyncGenerator.Internal
 
 		public IPropertySymbol Symbol { get; }
 
+		public PropertyConversion Conversion { get; set; }
+
 		public TypeData TypeData { get; }
 
 		public PropertyDeclarationSyntax Node { get; }

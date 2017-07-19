@@ -48,9 +48,10 @@ namespace AsyncGenerator.Transformation.Internal
 				propertyNode = propertyNode.ReplaceNode(accessorNode, accessorNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 			}
 
-			if (typeMetadata.AnalyzationResult.Conversion == TypeConversion.Copy ||
-			    typeMetadata.AnalyzationResult.Conversion == TypeConversion.NewType) // TODO: copy only if needed
+			if (canCopy && (typeMetadata.AnalyzationResult.Conversion == TypeConversion.Copy ||
+			    typeMetadata.AnalyzationResult.Conversion == TypeConversion.NewType)) // TODO: copy only if needed
 			{
+
 				result.Transformed = result.OriginalNode;
 			}
 
