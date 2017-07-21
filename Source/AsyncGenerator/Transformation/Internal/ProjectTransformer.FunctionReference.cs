@@ -132,7 +132,7 @@ namespace AsyncGenerator.Transformation.Internal
 					else if (isAccessor)
 					{
 						node = node
-							.ReplaceNode(nameNode, InvocationExpression(newNameNode));
+							.ReplaceNode(nameNode, InvocationExpression(newNameNode.WithoutTrivia()).WithTriviaFrom(newNameNode));
 					}
 					else
 					{
@@ -152,7 +152,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					else if (isAccessor)
 					{
-						newStatement = statement.ReplaceNode(nameNode, InvocationExpression(newNameNode));
+						newStatement = statement.ReplaceNode(nameNode, InvocationExpression(newNameNode.WithoutTrivia()).WithTriviaFrom(newNameNode));
 					}
 					else
 					{
@@ -175,7 +175,7 @@ namespace AsyncGenerator.Transformation.Internal
 				if (isAccessor)
 				{
 					node = node
-						.ReplaceNode(nameNode, InvocationExpression(newNameNode)
+						.ReplaceNode(nameNode, InvocationExpression(newNameNode.WithoutTrivia()).WithTriviaFrom(newNameNode)
 							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
 							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation)));
 				}

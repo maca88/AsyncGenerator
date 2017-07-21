@@ -230,6 +230,8 @@
     <Compile Include="LockStatement\Input\Lock.cs" />
     <Compile Include="MissingMembers\Fixture.cs" />
     <Compile Include="MissingMembers\Input\TestCase.cs" />
+    <Compile Include="MultiAsyncCounterparts\Fixture.cs" />
+    <Compile Include="MultiAsyncCounterparts\Input\TaskRunFunc.cs" />
     <Compile Include="NestedNamespaces\Fixture.cs" />
     <Compile Include="NestedNamespaces\Input\TestCase.cs" />
     <Compile Include="NestedTypes\Fixture.cs" />
@@ -564,6 +566,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PartialCompilation\Output\CtorMultiOverloads.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MultiAsyncCounterparts\Output\TaskRunFunc.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AsyncProperites\Output\Getter.txt" />

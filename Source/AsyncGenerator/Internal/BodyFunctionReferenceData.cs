@@ -34,6 +34,8 @@ namespace AsyncGenerator.Internal
 
 		public bool SynchronouslyAwaited { get; set; }
 
+		public ITypeSymbol InvokedFromType { get; set; }
+
 		public bool PassCancellationToken { get; set; }
 
 		public IParameterSymbol CancellationTokenParameter { get; set; }
