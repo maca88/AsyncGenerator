@@ -12,41 +12,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AsyncProperites.Input
+namespace AsyncGenerator.Tests.MissingMembers.Input
 {
+
+	#if TEST
+
+	#endif
+
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class InterfaceGetter : IInterfaceGetter
+	public partial class GetterProperty : IGetterProperty
 	{
-
 		public Task<bool> GetWriteSuccessAsync()
 		{
-			return WriteAsync();
-		}
-
-		private Task<bool> WriteAsync()
-		{
 			return SimpleFile.WriteAsync("");
-		}
+		} 
+		public Task<bool> GetWriteSuccess2Async() => SimpleFile.WriteAsync("2");
 
-		private async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()) && IsSuccess)
-			{
-				return;
-			}
-		}
-	}
-
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
-	public partial interface IInterfaceGetter
-	{
-		Task<bool> GetWriteSuccessAsync();
+		public Task<bool> GetWriteSuccess3Async() => SimpleFile.WriteAsync("3");
 	}
 }

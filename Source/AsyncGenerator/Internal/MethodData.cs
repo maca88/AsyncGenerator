@@ -60,6 +60,11 @@ namespace AsyncGenerator.Internal
 
 		public AccessorData SetAccessorData { get; }
 
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
+
 		public IEnumerable<AccessorData> GetAccessors()
 		{
 			if (GetAccessorData != null)
@@ -85,10 +90,18 @@ namespace AsyncGenerator.Internal
 
 		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{
+			Conversion = PropertyConversion.Ignore;
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
 			GetAccessorData?.Ignore("Cascade ignored.");
 			SetAccessorData?.Ignore("Cascade ignored.");
+		}
+
+		public void Copy()
+		{
+			IgnoredReason = null;
+			ExplicitlyIgnored = false;
+			Conversion = PropertyConversion.Copy;
 		}
 	}
 

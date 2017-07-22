@@ -251,9 +251,9 @@ namespace AsyncGenerator.Analyzation.Internal
 				.ToImmutableHashSet();
 		}
 
-		private void LogIgnoredReason(FunctionData functionData, bool warn = false)
+		private void LogIgnoredReason(AbstractData functionData, bool warn = false)
 		{
-			var message = $"Method {functionData.Symbol} was ignored. Reason: {functionData.IgnoredReason}";
+			var message = $"Method {functionData.GetSymbol()} was ignored. Reason: {functionData.IgnoredReason}";
 			if (warn)
 			{
 				Logger.Warn(message);
@@ -264,12 +264,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void WarnLogIgnoredReason(FunctionData functionData)
+		private void WarnLogIgnoredReason(AbstractData functionData)
 		{
 			LogIgnoredReason(functionData, true);
 		}
 
-		private void VoidLog(FunctionData functionData)
+		private void VoidLog(AbstractData functionData)
 		{
 		}
 	}

@@ -20,33 +20,12 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class InterfaceGetter : IInterfaceGetter
+	public partial class GetterWithAsyncPart
 	{
-
-		public Task<bool> GetWriteSuccessAsync()
-		{
-			return WriteAsync();
-		}
 
 		private Task<bool> WriteAsync()
 		{
 			return SimpleFile.WriteAsync("");
 		}
-
-		private async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()) && IsSuccess)
-			{
-				return;
-			}
-		}
-	}
-
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
-	public partial interface IInterfaceGetter
-	{
-		Task<bool> GetWriteSuccessAsync();
 	}
 }

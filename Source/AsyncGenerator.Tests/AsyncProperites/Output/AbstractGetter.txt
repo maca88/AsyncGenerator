@@ -22,6 +22,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// </content>
 	public partial class AbstractGetter : BaseAbstractGetter
 	{
+
 		public override Task<bool> GetWriteSuccessAsync()
 		{
 			return WriteAsync();

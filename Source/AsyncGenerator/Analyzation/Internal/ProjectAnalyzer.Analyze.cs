@@ -20,10 +20,10 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
-				foreach (var methodData in typeData
-					.MethodsAndAccessors.Where(o => o.Conversion != MethodConversion.Ignore))
+				foreach (var methodData in typeData.MethodsAndAccessors.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
-					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore).OrderByDescending(o => o.GetNode().SpanStart))
+					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore)
+						.OrderByDescending(o => o.GetNode().SpanStart))
 					{
 						AnalyzeAnonymousFunctionData(documentData, functionData);
 					}

@@ -18,7 +18,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 			var config = Configure(nameof(Getter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.PropertyConversion(symbol => PropertyConversion.Smart)
+					.PropertyConversion(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -28,6 +28,29 @@ namespace AsyncGenerator.Tests.AsyncProperites
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(Getter)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestGetterWithAsyncPartAfterTransformation()
+		{
+			var config = Configure(nameof(GetterWithAsyncPart), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PropertyConversion(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(GetterWithAsyncPart)), document.Transformed.ToFullString());
 					})
 				)
 			);
@@ -63,7 +86,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 			var config = Configure(nameof(ArrowGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.PropertyConversion(symbol => PropertyConversion.Smart)
+					.PropertyConversion(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -86,7 +109,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 			var config = Configure(nameof(AbstractGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.PropertyConversion(symbol => PropertyConversion.Smart)
+					.PropertyConversion(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -110,7 +133,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.PropertyConversion(symbol => PropertyConversion.Smart)
+					.PropertyConversion(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -133,7 +156,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 			var config = Configure(nameof(InterfaceGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.PropertyConversion(symbol => PropertyConversion.Smart)
+					.PropertyConversion(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -157,7 +180,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.PropertyConversion(symbol => PropertyConversion.Smart)
+					.PropertyConversion(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -165,7 +188,7 @@ namespace AsyncGenerator.Tests.AsyncProperites
 						AssertValidAnnotations(result);
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
+						Assert.IsNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile("InterfaceGetterNewType"), document.Transformed.ToFullString());
 					})
 				)

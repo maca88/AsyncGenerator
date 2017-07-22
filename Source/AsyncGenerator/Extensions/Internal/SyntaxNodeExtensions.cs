@@ -396,16 +396,44 @@ namespace AsyncGenerator.Extensions.Internal
 			return false;
 		}
 
-		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node, 
-			MemberDeclarationSyntax member, MemberDeclarationSyntax newMember,
-			IEnumerable<FieldDeclarationSyntax> extraFields = null, IEnumerable<MethodDeclarationSyntax> extraMethods = null)
+		internal static TypeDeclarationSyntax AppendMembers(this TypeDeclarationSyntax node,
+			MemberDeclarationSyntax member, IEnumerable<FieldDeclarationSyntax> extraFields = null, IEnumerable<MethodDeclarationSyntax> extraMethods = null)
 		{
 			if (extraMethods != null)
 			{
 				// Append all additional members after the original one
 				var index = node.Members.IndexOf(member);
+				var currIndex = index + 1;
+				foreach (var extraMethod in extraMethods)
+				{
+					node = node.WithMembers(node.Members.Insert(currIndex, extraMethod));
+					currIndex++;
+				}
+			}
+			if (extraFields != null)
+			{
+				foreach (var extraField in extraFields)
+				{
+					node = node.WithMembers(node.Members.Insert(0, extraField));
+				}
+			}
+			return node;
+		}
+
+		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node,
+			MemberDeclarationSyntax member, MemberDeclarationSyntax newMember,
+			IEnumerable<FieldDeclarationSyntax> extraFields, IEnumerable<MethodDeclarationSyntax> extraMethods)
+		{
+			if (newMember == null)
+			{
+				throw new ArgumentNullException(nameof(newMember));
+			}
+			if (extraMethods != null)
+			{
+				// Append all additional members after the original one
+				var index = node.Members.IndexOf(member);
 				node = node.ReplaceNode(member, newMember);
-				var currIndex = newMember == null ? index : index + 1;
+				var currIndex = index + 1;
 				foreach (var extraMethod in extraMethods)
 				{
 					node = node.WithMembers(node.Members.Insert(currIndex, extraMethod));

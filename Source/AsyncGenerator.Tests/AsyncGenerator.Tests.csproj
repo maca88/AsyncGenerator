@@ -191,6 +191,7 @@
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
     <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
     <Compile Include="AsyncProperites\Fixture.cs" />
+    <Compile Include="AsyncProperites\Input\GetterWithAsyncPart.cs" />
     <Compile Include="AsyncProperites\Input\InterfaceGetter.cs" />
     <Compile Include="AsyncProperites\Input\ArrowGetter.cs" />
     <Compile Include="AsyncProperites\Input\AbstractGetter.cs" />
@@ -229,6 +230,8 @@
     <Compile Include="LockStatement\Fixture.cs" />
     <Compile Include="LockStatement\Input\Lock.cs" />
     <Compile Include="MissingMembers\Fixture.cs" />
+    <Compile Include="MissingMembers\Input\GetterProperty.cs" />
+    <Compile Include="MissingMembers\Input\NestedType.cs" />
     <Compile Include="MissingMembers\Input\TestCase.cs" />
     <Compile Include="MultiAsyncCounterparts\Fixture.cs" />
     <Compile Include="MultiAsyncCounterparts\Input\TaskRunFunc.cs" />
@@ -590,6 +593,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AsyncProperites\Output\InterfaceGetterNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\GetterWithAsyncPart.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\GetterProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\NestedType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\NestedTypeNewType.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

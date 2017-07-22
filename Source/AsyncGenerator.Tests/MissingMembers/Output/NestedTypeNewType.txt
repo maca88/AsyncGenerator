@@ -15,29 +15,33 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AsyncProperites.Input
+namespace AsyncGenerator.Tests.MissingMembers.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
-	public partial class InterfaceGetter : IInterfaceGetter
+
+	#if TEST
+
+	#endif
+
+	public class NestedTypeAsync
 	{
+		public bool IsSuccess { get; set; }
 
-		public Task<bool> GetWriteSuccessAsync()
+		public bool Write()
 		{
-			return WriteAsync();
+			return SimpleFile.Write("");
 		}
 
-		private Task<bool> WriteAsync()
+		public class NestedClass : INestedClass
 		{
-			return SimpleFile.WriteAsync("");
-		}
+			public bool Executed { get; set; }
 
-		private async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()) && IsSuccess)
+			public Task MethodAsync()
 			{
-				return;
+				return Task.CompletedTask;
+			}
+
+			public void Method()
+			{
 			}
 		}
 	}
@@ -45,8 +49,19 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial interface IInterfaceGetter
+	public partial class NestedType
 	{
-		Task<bool> GetWriteSuccessAsync();
+
+		/// <content>
+		/// Contains generated async methods
+		/// </content>
+		public partial class NestedClass : INestedClass
+		{
+
+			public Task MethodAsync()
+			{
+				return Task.CompletedTask;
+			}
+		}
 	}
 }

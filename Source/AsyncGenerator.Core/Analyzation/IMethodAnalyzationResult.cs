@@ -28,6 +28,8 @@ namespace AsyncGenerator.Core.Analyzation
 		/// Returns getter and setter accessors of the property.
 		/// </summary>
 		IEnumerable<IAccessorAnalyzationResult> GetAccessors();
+
+		PropertyConversion Conversion { get; }
 	}
 
 	public interface IMethodOrAccessorAnalyzationResult : IFunctionAnalyzationResult, IMemberAnalyzationResult

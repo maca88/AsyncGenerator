@@ -16,10 +16,10 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration MethodConversion(Func<IMethodSymbol, MethodConversion> func);
 
 		/// <summary>
-		/// Set a function that will decide what type of conversion to apply for a given property.
-		/// <para>Default <see cref="F:AsyncGenerator.Core.PropertyConversion.Ignore"/> is chosen for all properties.</para> 
+		/// Enable or disable scanning for async counterparts for property accessors (getter and setters).
+		/// <para>Default is set to false.</para>
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration PropertyConversion(Func<IPropertySymbol, PropertyConversion> func);
+		IFluentProjectAnalyzeConfiguration PropertyConversion(bool value);
 
 		/// <summary>
 		/// Set a function that will decide what type of conversion to apply for a given type.

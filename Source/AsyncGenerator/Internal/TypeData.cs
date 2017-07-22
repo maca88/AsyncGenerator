@@ -39,6 +39,11 @@ namespace AsyncGenerator.Internal
 
 		public TypeConversion Conversion { get; internal set; }
 
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
+
 		internal void Copy()
 		{
 			Conversion = TypeConversion.Copy;

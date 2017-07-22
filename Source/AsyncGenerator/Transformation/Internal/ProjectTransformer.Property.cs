@@ -29,7 +29,7 @@ namespace AsyncGenerator.Transformation.Internal
 			result.IndentTrivia = propertyNode.GetIndent(result.LeadingWhitespaceTrivia, typeMetadata.LeadingWhitespaceTrivia);
 			result.BodyLeadingWhitespaceTrivia = Whitespace(result.LeadingWhitespaceTrivia.ToFullString() + result.IndentTrivia.ToFullString());
 
-			if (analyzeResult.GetAccessors().All(o =>o.Conversion == MethodConversion.Ignore))
+			if (analyzeResult.Conversion == PropertyConversion.Ignore && analyzeResult.GetAccessors().All(o => o.Conversion == MethodConversion.Ignore))
 			{
 				return result;
 			}
@@ -48,10 +48,8 @@ namespace AsyncGenerator.Transformation.Internal
 				propertyNode = propertyNode.ReplaceNode(accessorNode, accessorNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 			}
 
-			if (canCopy && (typeMetadata.AnalyzationResult.Conversion == TypeConversion.Copy ||
-			    typeMetadata.AnalyzationResult.Conversion == TypeConversion.NewType)) // TODO: copy only if needed
+			if (canCopy && result.AnalyzationResult.Conversion == PropertyConversion.Copy)
 			{
-
 				result.Transformed = result.OriginalNode;
 			}
 
@@ -88,7 +86,7 @@ namespace AsyncGenerator.Transformation.Internal
 						methodResult.AsyncCounterpartName
 					)
 					.WithModifiers(propertyResult.OriginalNode.Modifiers)
-					.WithLeadingTrivia(propertyResult.LeadingWhitespaceTrivia)
+					.WithLeadingTrivia(propertyResult.OriginalNode.GetLeadingTrivia())
 					.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(propertyResult.EndOfLineTrivia)));
 				if (!methodResult.PreserveReturnType)
 				{
@@ -98,7 +96,6 @@ namespace AsyncGenerator.Transformation.Internal
 				result.Transformed = methodNode;
 				return;
 			}
-
 
 			var startMethodSpan = methodResult.Node.Span.Start;
 			node = node.WithAdditionalAnnotations(new SyntaxAnnotation(result.Annotation));
@@ -184,7 +181,7 @@ namespace AsyncGenerator.Transformation.Internal
 					methodResult.AsyncCounterpartName
 				)
 				.WithModifiers(propertyResult.OriginalNode.Modifiers)
-				.WithLeadingTrivia(propertyResult.LeadingWhitespaceTrivia);
+				.WithLeadingTrivia(propertyResult.OriginalNode.GetLeadingTrivia());
 			if (node is ArrowExpressionClauseSyntax arrowNode)
 			{
 				methodNode = methodNode
@@ -193,9 +190,18 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 			else if (node is AccessorDeclarationSyntax accessorNode)
 			{
-				methodNode = methodNode
-					.WithExpressionBody(accessorNode.ExpressionBody)
-					.WithBody(accessorNode.Body);
+				if (accessorNode.ExpressionBody != null)
+				{
+					methodNode = methodNode
+						.WithExpressionBody(accessorNode.ExpressionBody)
+						.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(propertyResult.EndOfLineTrivia)));
+				}
+				else
+				{
+					methodNode = methodNode
+						.WithBody(accessorNode.Body);
+				}
+				
 			}
 			methodNode = FixupBodyFormatting(methodNode, result);
 

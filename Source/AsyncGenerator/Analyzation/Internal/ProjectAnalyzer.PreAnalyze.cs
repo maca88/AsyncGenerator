@@ -109,12 +109,22 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzePropertyData(PropertyData propertyData, SemanticModel semanticModel)
 		{
-			var propertySymbol = propertyData.Symbol;
-			propertyData.Conversion = _configuration.PropertyConversionFunction(propertySymbol);
-			// TODO: validate conversion
-			if (propertyData.Conversion == PropertyConversion.Ignore)
+			var newType = propertyData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
+			if (!_configuration.PropertyConversion)
 			{
-				propertyData.Ignore("Ignored by PropertyConversion function", true);
+				// Ignore getter and setter accessors and copy the property if needed
+				propertyData.Ignore("Ignored by PropertyConversion function");
+			}
+			if (newType)
+			{
+				propertyData.Copy();  // TODO: copy only if needed
+			}
+			else
+			{
+				propertyData.Conversion = PropertyConversion.Ignore; // For partial types we do not want to copy the property
+			}
+			if (!_configuration.PropertyConversion)
+			{
 				return;
 			}
 			var getter = propertyData.GetAccessorData;
@@ -133,6 +143,12 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void PreAnalyzeFunctionData(FunctionData functionData, SemanticModel semanticModel)
 		{
 			var methodSymbol = functionData.Symbol;
+
+			if (functionData.Conversion == MethodConversion.Ignore)
+			{
+				return;
+			}
+
 			functionData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
 			// TODO: validate conversion
 			if (functionData.Conversion == MethodConversion.Ignore)
@@ -140,11 +156,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				functionData.Ignore("Ignored by MethodConversion function", true);
 				return;
 			}
-			functionData.AsyncCounterpartName = functionData.Symbol.GetAsyncName();
 
 			var forceAsync = functionData.Conversion.HasFlag(MethodConversion.ToAsync);
 			var newType = functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
-			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
+			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
 			void IgnoreOrCopy(string reason)
 			{
 				if (newType)
@@ -375,9 +390,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			var funcionSymbol = functionData.Symbol;
-			functionData.AsyncCounterpartName = functionData.Symbol.GetAsyncName();
 			var forceAsync = functionData.MethodData.Conversion.HasFlag(MethodConversion.ToAsync);
-			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog;
+			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog;
 			if (funcionSymbol.IsAsync)
 			{
 				functionData.Ignore("Is already async");
@@ -420,7 +434,6 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeLocalFunction(LocalFunctionData functionData, SemanticModel semanticModel)
 		{
-			functionData.AsyncCounterpartName = functionData.Symbol.GetAsyncName();
 			if (functionData.MethodData.Conversion.HasFlag(MethodConversion.Copy))
 			{
 				functionData.Copy();

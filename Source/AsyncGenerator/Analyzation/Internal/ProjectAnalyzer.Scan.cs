@@ -287,13 +287,38 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void ScanForTypeMissingAsyncMethods(TypeData typeData)
 		{
 			var documentData = typeData.NamespaceData.DocumentData;
-			var members = typeData.Node.Members
+			var syncMethods = typeData.Node.Members
 				.OfType<MethodDeclarationSyntax>()
-				.Select(o => new { Node = o, Symbol = documentData.SemanticModel.GetDeclaredSymbol(o) })
-				.ToLookup(o =>
-					o.Symbol.MethodKind == MethodKind.ExplicitInterfaceImplementation
-						? o.Symbol.Name.Split('.').Last()
-						: o.Symbol.Name);
+				.Where(o => !o.Identifier.ValueText.EndsWith("Async"))
+				.Select(o => new
+				{
+					Node = (SyntaxNode) o,
+					Symbol = documentData.SemanticModel.GetDeclaredSymbol(o)
+				})
+				// Expression properties
+				.Union(
+					typeData.Node.Members
+						.OfType<PropertyDeclarationSyntax>()
+						.Where(o => o.ExpressionBody != null)
+						.Select(o => new
+						{
+							Node = (SyntaxNode) o.ExpressionBody,
+							Symbol = documentData.SemanticModel.GetDeclaredSymbol(o).GetMethod
+						})
+				)
+				// Non expression properties
+				.Union(
+					typeData.Node.Members
+						.OfType<PropertyDeclarationSyntax>()
+						.Where(o => o.ExpressionBody == null)
+						.SelectMany(o => o.AccessorList.Accessors)
+						.Select(o => new
+						{
+							Node = (SyntaxNode) o,
+							Symbol = documentData.SemanticModel.GetDeclaredSymbol(o)
+						})
+				)
+				.ToLookup(o => o.Symbol.GetAsyncName());
 
 			foreach (var asyncMember in typeData.Symbol.AllInterfaces
 												  .SelectMany(o => o.GetMembers().OfType<IMethodSymbol>()
@@ -305,14 +330,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					continue;
 				}
-				var nonAsyncName = asyncMember.Name.Remove(asyncMember.Name.LastIndexOf("Async", StringComparison.InvariantCulture));
-				if (!members.Contains(nonAsyncName))
+				if (!syncMethods.Contains(asyncMember.Name))
 				{
+					// Try to find if there is a property with that name
 					Logger.Debug($"Sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 					continue;
 				}
-				var nonAsyncMember = members[nonAsyncName].First(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false));
-				var methodData = documentData.GetMethodData(nonAsyncMember.Node);
+				var nonAsyncMember = syncMethods[asyncMember.Name].First(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false)); // TODO: what to do if there are more than one?
+				var methodData = documentData.GetMethodOrAccessorData(nonAsyncMember.Node);
 				methodData.ToAsync();
 				methodData.Missing = true;
 				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
@@ -338,19 +363,18 @@ namespace AsyncGenerator.Analyzation.Internal
 					.OfType<IMethodSymbol>()
 					.Where(o => o.IsAbstract && o.Name.EndsWith("Async")))
 				{
-					var nonAsyncName = asyncMember.Name.Remove(asyncMember.Name.LastIndexOf("Async", StringComparison.InvariantCulture));
-					if (!members.Contains(nonAsyncName))
+					if (!syncMethods.Contains(asyncMember.Name))
 					{
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
-					var nonAsyncMember = members[nonAsyncName].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false));
+					var nonAsyncMember = syncMethods[asyncMember.Name].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false));
 					if (nonAsyncMember == null)
 					{
 						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
 						continue;
 					}
-					var methodData = documentData.GetMethodData(nonAsyncMember.Node);
+					var methodData = documentData.GetMethodOrAccessorData(nonAsyncMember.Node);
 					methodData.ToAsync();
 					methodData.Missing = true;
 					// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart

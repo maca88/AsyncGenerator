@@ -33,6 +33,7 @@ namespace AsyncGenerator.Internal
 			SyntaxKind.PropertyDeclaration,
 			SyntaxKind.GetAccessorDeclaration,
 			SyntaxKind.SetAccessorDeclaration,
+			SyntaxKind.ArrowExpressionClause, // arrow expression getter
 			//SyntaxKind.FieldDeclaration,
 			//SyntaxKind.DelegateDeclaration,
 			// Type
@@ -198,6 +199,13 @@ namespace AsyncGenerator.Internal
 							return null;
 						}
 						break;
+					case SyntaxKind.ArrowExpressionClause:
+						if (propertyData == null)
+						{
+							continue;
+						}
+						functionData = propertyData.GetAccessorData;
+						break;
 					case SyntaxKind.GetAccessorDeclaration:
 						if (propertyData == null)
 						{
@@ -269,6 +277,7 @@ namespace AsyncGenerator.Internal
 				case SyntaxKind.LocalFunctionStatement:
 				case SyntaxKind.GetAccessorDeclaration: // Property getter
 				case SyntaxKind.SetAccessorDeclaration: // Property setter
+				case SyntaxKind.ArrowExpressionClause: // Arrow expression property getter
 					return functionData;
 				case SyntaxKind.MethodDeclaration:
 				case SyntaxKind.DestructorDeclaration:

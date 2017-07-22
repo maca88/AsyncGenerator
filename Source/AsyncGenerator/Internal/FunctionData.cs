@@ -6,6 +6,7 @@ using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -16,6 +17,7 @@ namespace AsyncGenerator.Internal
 		protected FunctionData(IMethodSymbol methodSymbol)
 		{
 			Symbol = methodSymbol ?? throw new ArgumentNullException(nameof(methodSymbol));
+			AsyncCounterpartName = Symbol.GetAsyncName();
 		}
 
 		public IMethodSymbol Symbol { get; }
@@ -25,6 +27,11 @@ namespace AsyncGenerator.Internal
 		public MethodConversion Conversion { get; set; }
 
 		public string AsyncCounterpartName { get; set; }
+
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
 
 		/// <summary>
 		/// References to other methods that are referenced/invoked inside this function/method and are candidates to be async
@@ -78,6 +85,13 @@ namespace AsyncGenerator.Internal
 		public IEnumerable<ChildFunctionData> GetDescendantsChildFunctions(Func<ChildFunctionData, bool> predicate = null)
 		{
 			return ChildFunctions.Values.SelectMany(o => o.GetSelfAndDescendantsFunctionsRecursively(o, predicate));
+		}
+
+		public void SoftCopy()
+		{
+			Conversion &= ~MethodConversion.Ignore;
+			Conversion &= ~MethodConversion.Unknown;
+			Conversion |= MethodConversion.Copy;
 		}
 
 		public void Copy()

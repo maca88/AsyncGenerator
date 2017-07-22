@@ -401,6 +401,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart, MethodConversion.Unknown))));
 			//TODO: optimize steps for better performance
 
+			// We have to copy methods that are used by properties that are marked to be copied
+			foreach (var methodData in toProcessMethodData.OfType<MethodData>()
+				.Where(o => o.TypeData.GetSelfAndAncestorsTypeData().Any(t => t.Conversion == TypeConversion.NewType)))
+			{
+				if (methodData.InvokedBy.OfType<AccessorData>().Any(o => o.PropertyData.Conversion == PropertyConversion.Copy))
+				{
+					methodData.SoftCopy();
+				}
+			}
+
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
 			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
@@ -489,8 +499,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					else
 					{
-						methodData.Conversion &= ~MethodConversion.Unknown;
-						methodData.Conversion &= ~MethodConversion.Smart;
 						methodData.Copy();
 					}
 				}

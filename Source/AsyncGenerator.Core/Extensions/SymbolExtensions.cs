@@ -223,15 +223,14 @@ namespace AsyncGenerator.Core.Extensions
 		/// <summary>
 		/// Generate an async name for the given method smybol
 		/// </summary>
-		public static string GetAsyncName(this IMethodSymbol methodSymbol)
+		public static string GetAsyncName(this IMethodSymbol methodSymbol, string postfix = "Async")
 		{
-			var asyncName = methodSymbol.Name.Split('.').Last() + "Async"; // Split is needed for explicit methods
+			var asyncName = $"{methodSymbol.Name.Split('.').Last()}{postfix}"; // Split is needed for explicit methods
 			if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet)
 			{
 				// We have to rename async name from eg. get_SomethingAsync to GetSomethingAsync by capitalize the first char and remove the underscore
 				asyncName = char.ToUpperInvariant(asyncName[0]) + asyncName.Substring(1).Replace("_", "");
 			}
-			
 			return asyncName;
 		}
 

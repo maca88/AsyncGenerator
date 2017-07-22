@@ -285,7 +285,7 @@ namespace AsyncGenerator.Transformation.Internal
 				transformedNode = ctorNode.WithIdentifier(Identifier(ctorNode.Identifier.ValueText + "Async")
 					.WithTriviaFrom(ctorNode.Identifier));
 			}
-			newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, transformedNode);
+			newTypeNode = newTypeNode.ReplaceNode(methodNode, transformedNode);
 			return newTypeNode;
 		}
 
@@ -343,23 +343,10 @@ namespace AsyncGenerator.Transformation.Internal
 		private TypeDeclarationSyntax TransformProperty(PropertyTransformationResult propertyTransform, TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult,
 			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
 		{
-			if (propertyTransform.AnalyzationResult.GetAccessors().All(o => o.Conversion == MethodConversion.Ignore) || 
-				(onlyMissingMembers && propertyTransform.AnalyzationResult.GetAccessors().All(o => !o.Missing)))
-			{
-				// Do not remove the property if the type is copied or new
-				//if (transformResult.AnalyzationResult.Conversion == TypeConversion.Copy || transformResult.AnalyzationResult.Conversion == TypeConversion.NewType)
-				//{
-				//	return newTypeNode;
-				//}
-
-				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
-				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(propertyTransform.Annotation, memberWhitespace);
-				return newTypeNode;
-			}
-			var methodNode = newTypeNode.GetAnnotatedNodes(propertyTransform.Annotation)
+			var propertyNode = newTypeNode.GetAnnotatedNodes(propertyTransform.Annotation)
 				.OfType<PropertyDeclarationSyntax>()
 				.First();
-			var transformedNode = TransformProperty(methodNode, !onlyMissingMembers, propertyTransform, transformResult, namespaceMetadata);
+			var transformedNode = TransformProperty(propertyNode, !onlyMissingMembers, propertyTransform, transformResult, namespaceMetadata);
 			foreach (var transformedAccessor in transformedNode.TransformedAccessors.Where(o => o.Transformed != null))
 			{
 				foreach (var transformer in _configuration.MethodTransformers)
@@ -394,7 +381,13 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 				}
 			}
-			newTypeNode = newTypeNode.ReplaceWithMembers(methodNode, propertyTransform.Transformed, propertyTransform.Fields, propertyTransform.Methods);
+			newTypeNode = newTypeNode.AppendMembers(propertyNode, propertyTransform.Fields, propertyTransform.Methods);
+			// We need to remove the property when generating only the missing members
+			if (onlyMissingMembers || propertyTransform.AnalyzationResult.Conversion == PropertyConversion.Ignore)
+			{
+				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(propertyTransform.Annotation, memberWhitespace);
+			}
 			return newTypeNode;
 		}
 

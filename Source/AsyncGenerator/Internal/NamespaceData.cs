@@ -36,6 +36,11 @@ namespace AsyncGenerator.Internal
 
 		public bool IsGlobal => Node == null;
 
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
+
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> Types { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
 
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NestedNamespaces { get; } = 

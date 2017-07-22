@@ -25,19 +25,20 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		{
 			get { return Write(); }
 		}
+
 		public override Task<bool> GetWriteSuccessAsync()
 		{
 			return WriteAsync();
 		}
 
-		private bool Write()
-		{
-			return SimpleFile.Write("");
-		}
-
 		private Task<bool> WriteAsync()
 		{
 			return SimpleFile.WriteAsync("");
+		}
+
+		private bool Write()
+		{
+			return SimpleFile.Write("");
 		}
 
 		private async Task CheckSuccessAsync()
