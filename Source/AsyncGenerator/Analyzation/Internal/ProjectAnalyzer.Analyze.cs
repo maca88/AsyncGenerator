@@ -179,7 +179,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var currNode = nameNode.Parent;
 			var ascend = true;
 
-			if (refData.ReferenceFunctionData is AccessorData)
+			if (refData.ReferenceSymbol.MethodKind == MethodKind.PropertySet || refData.ReferenceSymbol.MethodKind == MethodKind.PropertyGet)
 			{
 				ascend = false;
 				AnalyzeAccessor(documentData, nameNode, refData);
@@ -455,7 +455,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			// Check if the invocation node is returned in an expression body
 			if (node.Parent.Equals(functionBodyNode) || //eg. bool ExpressionReturn() => SimpleFile.Write();
-			    node.Equals(functionBodyNode) // eg. Func<bool> fn = () => SimpleFile.Write();
+			    node.Equals(functionBodyNode) || // eg. Func<bool> fn = () => SimpleFile.Write();
+				(
+					node.IsKind(SyntaxKind.IdentifierName) && 
+					node.Parent.Parent.IsKind(SyntaxKind.ArrowExpressionClause) &&
+					node.Parent.Parent.Equals(functionBodyNode)
+				) // eg. bool Prop => StaticClass.Property;
 			)
 			{
 				functionReferenceData.LastInvocation = true;

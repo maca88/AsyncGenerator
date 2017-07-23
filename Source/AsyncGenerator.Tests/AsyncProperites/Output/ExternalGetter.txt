@@ -20,20 +20,26 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class GetterWithAsyncPart
+	public partial class ExternalGetter
 	{
-
-		private Task<bool> WriteAsync()
+		public async Task<bool> TestAsync()
 		{
-			return SimpleFile.WriteAsync("");
-		}
-
-		private async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()))
+			if (await (AsyncProperties.GetSuccessAsync()))
 			{
-				return;
+				return false;
 			}
+			return !await (AsyncProperties.GetSuccessAsync());
 		}
+
+		public async Task<string> Test2Async()
+		{
+			if (await (GetSuccessPropAsync()))
+			{
+				return null;
+			}
+			return "";
+		}
+
+		public Task<bool> GetSuccessPropAsync() => AsyncProperties.GetSuccessAsync();
 	}
 }

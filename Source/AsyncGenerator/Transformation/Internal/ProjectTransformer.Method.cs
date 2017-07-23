@@ -192,7 +192,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private MethodDeclarationSyntax FixupBodyFormatting(MethodDeclarationSyntax methodNode, IMethodOrAccessorTransformationResult result)
 		{
-			if (methodNode.Body == null)
+			var methodBody = methodNode.Body;
+			if (methodBody == null)
 			{
 				if (methodNode.ExpressionBody == null)
 				{
@@ -207,6 +208,24 @@ namespace AsyncGenerator.Transformation.Internal
 
 				return methodNode;
 			}
+			// Make a diff by using only the whitespaces
+			var triviaLengthDiff = string.Join("", methodBody.GetLeadingTrivia()
+					                       .Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+					                       .Select(o => o.ToFullString()))
+				                       .Length -
+			                       string.Join("", methodNode.GetLeadingTrivia()
+					                       .Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+					                       .Select(o => o.ToFullString()))
+				                       .Length;
+			if (triviaLengthDiff > 0)
+			{
+				// Normalize leading trivia
+				methodNode = methodNode.WithBody(methodBody
+					.SubtractIndent(string.Join("", methodBody.GetLeadingTrivia()
+						.Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+						.Select(o => o.ToFullString())).Substring(0, triviaLengthDiff)));
+			}
+
 			var eol = result.EndOfLineTrivia.ToFullString();
 			// Add end of line for the close paren token if missing
 			if (!methodNode.ConstraintClauses.Any() && !methodNode.ParameterList.CloseParenToken.TrailingTrivia.ToFullString().Contains(eol))
@@ -223,7 +242,7 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode.ReplaceToken(methodNode.Body.OpenBraceToken,
 					methodNode.Body.OpenBraceToken.WithLeadingTrivia(result.LeadingWhitespaceTrivia));
 			}
-			var methodBody = methodNode.Body;
+			methodBody = methodNode.Body;
 			var getLineSpan = methodBody.GetLocation().GetLineSpan().Span;
 			// Add end of line tokens for open brace and statements when the whole block is written in one line (eg. { DoSomething(); })
 			if (getLineSpan.End.Line == getLineSpan.Start.Line)

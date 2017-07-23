@@ -10,9 +10,16 @@ namespace AsyncGenerator.TestCases
 	{
 		public static bool Success { get; }
 
-		public static Task<bool> GetSuccessAsync
+		public static Task<bool> GetSuccessAsync()
 		{
-			get { return Task.FromResult(true); }
+			return Task.FromResult(true);
+		}
+
+		public static string Write { get; set; }
+
+		public static async Task SetWriteAsync(string value)
+		{
+			await Task.Yield();
 		}
 	}
 }

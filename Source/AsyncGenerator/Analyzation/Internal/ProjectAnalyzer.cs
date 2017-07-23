@@ -9,6 +9,7 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using log4net;
 using Microsoft.CodeAnalysis;
@@ -184,44 +185,58 @@ namespace AsyncGenerator.Analyzation.Internal
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 
-			foreach (var invocation in methodDataBody.DescendantNodes().OfType<InvocationExpressionSyntax>())
+			foreach (var node in methodDataBody.DescendantNodes().Where(o => o.IsKind(SyntaxKind.InvocationExpression) || o.IsKind(SyntaxKind.IdentifierName)))
 			{
-				var methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
+				IMethodSymbol methodSymbol = null;
+				ITypeSymbol typeSymbol = null;
+				var invocation = node as InvocationExpressionSyntax;
+				if (invocation != null)
+				{
+					methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
+					if (invocation.Expression is SimpleNameSyntax)
+					{
+						typeSymbol = methodData.Symbol.ContainingType;
+					}
+					else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
+					{
+						typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+					}
+				}
+				else if (node is IdentifierNameSyntax identifier)
+				{
+					var propertySymbol = semanticModel.GetSymbolInfo(identifier).Symbol as IPropertySymbol;
+					if (propertySymbol == null)
+					{
+						continue;
+					}
+					typeSymbol = propertySymbol.ContainingType;
+					methodSymbol = identifier.IsAssigned() ? propertySymbol.SetMethod : propertySymbol.GetMethod;
+				}
 				if (methodSymbol == null)
 				{
 					continue;
 				}
-				
+
 				methodSymbol = methodSymbol.OriginalDefinition;
 				if (result.Contains(methodSymbol))
 				{
 					continue;
 				}
 
-				ITypeSymbol typeSymbol = null;
-				if (invocation.Expression is SimpleNameSyntax)
-				{
-					typeSymbol = methodData.Symbol.ContainingType;
-				}
-				else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
-				{
-					typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
-				}
-
 				if (!_configuration.SearchForAsyncCounterparts(methodSymbol))
 				{
 					continue;
 				}
-
 				// Add method only if new
 				if (GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions, true).Any())
 				{
 					result.Add(methodSymbol);
 				}
-				if (!GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions).Any())
+				if (invocation == null || !GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions).Any())
 				{
 					continue;
 				}
+
 				// Check if there is any method passed as argument that have also an async counterpart
 				foreach (var argument in invocation.ArgumentList.Arguments
 					.Where(o => o.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression) || o.Expression.IsKind(SyntaxKind.IdentifierName)))

@@ -380,6 +380,7 @@ namespace AsyncGenerator.Transformation.Internal
 						}
 					}
 				}
+				propertyTransform.AddMethod(transformedAccessor.Transformed);
 			}
 			newTypeNode = newTypeNode.AppendMembers(propertyNode, propertyTransform.Fields, propertyTransform.Methods);
 			// We need to remove the property when generating only the missing members

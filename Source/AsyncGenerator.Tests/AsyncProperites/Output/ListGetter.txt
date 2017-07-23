@@ -20,20 +20,20 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class GetterWithAsyncPart
+	public partial class ListGetter
 	{
-
-		private Task<bool> WriteAsync()
+		public async Task TestAsync()
 		{
-			return SimpleFile.WriteAsync("");
-		}
-
-		private async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()))
+			if ((await (GetListAsync())).Count > 0 || (await (GetListAsync())).Contains("") || (await (new ListGetter().GetListAsync())).Count > 0)
 			{
 				return;
 			}
+		}
+
+		public async Task<List<string>> GetListAsync()
+		{
+			await (SimpleFile.ReadAsync());
+			return new List<string>();
 		}
 	}
 }

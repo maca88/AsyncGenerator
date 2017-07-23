@@ -91,6 +91,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.CallForwarding(config.CallForwarding.Value);
 			}
+			if (config.PropertyConversion.HasValue)
+			{
+				fluentConfig.PropertyConversion(config.PropertyConversion.Value);
+			}
 			if (config.ScanMethodBody.HasValue)
 			{
 				fluentConfig.ScanMethodBody(config.ScanMethodBody.Value);

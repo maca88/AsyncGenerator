@@ -317,7 +317,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (functionData.Conversion != MethodConversion.Ignore && functionData.BodyMethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
 			{
 				// A method may be already calculated to be async, but we will ignore it if the method does not have any dependency and was not explicitly set to be async
-				var methodData = functionData as MethodData;
+				var methodData = functionData as MethodOrAccessorData;
 				if (methodData == null || (!methodData.Missing && !methodData.Dependencies.Any() && !asyncMethodDatas.Contains(methodData)))
 				{
 					functionData.Ignore("Does not have any async invocations");

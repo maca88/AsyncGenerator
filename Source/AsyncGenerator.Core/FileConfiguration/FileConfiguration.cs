@@ -118,6 +118,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public List<MethodFilter> IgnoreSearchForAsyncCounterparts { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? CallForwarding { get; set; }
+		[XmlElement(IsNullable = true)]
+		public bool? PropertyConversion { get; set; }
 		[XmlElement("CancellationTokens")]
 		public CancellationTokens CancellationTokens { get; set; }
 		[XmlElement(IsNullable = true)]

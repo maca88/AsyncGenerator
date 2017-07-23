@@ -16,7 +16,7 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration MethodConversion(Func<IMethodSymbol, MethodConversion> func);
 
 		/// <summary>
-		/// Enable or disable scanning for async counterparts for property accessors (getter and setters).
+		/// Enable or disable generating async counterparts for property accessors (getter and setters).
 		/// <para>Default is set to false.</para>
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration PropertyConversion(bool value);

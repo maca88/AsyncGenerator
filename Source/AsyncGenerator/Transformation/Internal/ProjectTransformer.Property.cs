@@ -92,7 +92,6 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
 				}
-				propertyResult.AddMethod(methodNode);
 				result.Transformed = methodNode;
 				return;
 			}
@@ -225,7 +224,6 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
 			}
-			propertyResult.AddMethod(methodNode);
 			result.Transformed = methodNode;
 		}
 	}

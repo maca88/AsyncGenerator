@@ -500,7 +500,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodReferenceSymbol == null && referenceSymbol is IPropertySymbol propertyReferenceSymbol)
 				{
 					// We need to find the usage of the property, if getter or setter is used
-					methodReferenceSymbol = nameNode.Parent is AssignmentExpressionSyntax 
+					methodReferenceSymbol = nameNode.IsAssigned()
 						? propertyReferenceSymbol.SetMethod 
 						: propertyReferenceSymbol.GetMethod;
 				}
@@ -538,7 +538,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 
-				var methodData = baseMethodData as MethodData;
+				var methodData = baseMethodData as MethodOrAccessorData;
 				if (methodData != null && !methodData.Scanned)
 				{
 					await ScanMethodData(methodData, depth).ConfigureAwait(false);

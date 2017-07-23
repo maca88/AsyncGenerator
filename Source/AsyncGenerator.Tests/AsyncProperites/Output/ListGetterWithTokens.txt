@@ -17,23 +17,24 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
+	using System.Threading;
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class GetterWithAsyncPart
+	public partial class ListGetter
 	{
-
-		private Task<bool> WriteAsync()
+		public async Task TestAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.WriteAsync("");
-		}
-
-		private async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()))
+			if ((await (GetListAsync(cancellationToken))).Count > 0 || (await (GetListAsync(cancellationToken))).Contains("") || (await (new ListGetter().GetListAsync(cancellationToken))).Count > 0)
 			{
 				return;
 			}
+		}
+
+		public async Task<List<string>> GetListAsync(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			await (SimpleFile.ReadAsync(cancellationToken));
+			return new List<string>();
 		}
 	}
 }

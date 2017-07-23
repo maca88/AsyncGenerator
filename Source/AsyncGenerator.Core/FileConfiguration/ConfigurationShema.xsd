@@ -187,6 +187,7 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
+      <xs:element name="PropertyConversion" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="AsyncExtensionMethods" type="AsyncExtensionMethods" minOccurs="0"/>
       <xs:element name="PreserveReturnType" minOccurs="0">
         <xs:complexType>

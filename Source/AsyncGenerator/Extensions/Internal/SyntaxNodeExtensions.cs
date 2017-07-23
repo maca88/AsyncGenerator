@@ -300,6 +300,34 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 		}
 
+		internal static bool IsAssigned(this SimpleNameSyntax identifier)
+		{
+			var statement = identifier.Ancestors()
+				.TakeWhile(o => !(o is StatementSyntax) && !(o is ArrowExpressionClauseSyntax))
+				.OfType<AssignmentExpressionSyntax>()
+				.FirstOrDefault();
+			// Check if the assignement belongs to the current identifier
+			return statement != null && statement.DescendantTokens().Any(o => o.SpanStart == identifier.Span.End + 1 && o.IsKind(SyntaxKind.EqualsToken));
+		}
+		/// <summary>
+		/// Get the whole expression for the accessor
+		/// eg: Property => Property
+		/// eg: Property.Count => Property
+		/// eg: StaticClass.Property => StaticClass.Property
+		/// eg: StaticClass.Property.Count => StaticClass.Property
+		/// eg: new Class().Property.Method() => new Class().Property
+		/// </summary>
+		/// <param name="identifier"></param>
+		/// <returns></returns>
+		internal static ExpressionSyntax GetAccessorExpression(this SimpleNameSyntax identifier)
+		{
+			if (identifier.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Span.End == identifier.Span.End)
+			{
+				return memberAccess;
+			}
+			return identifier;
+		}
+
 		// TODO: remove
 		/// <summary>
 		/// Check if the node is returned with a <see cref="ReturnStatementSyntax"/>
@@ -566,6 +594,12 @@ namespace AsyncGenerator.Extensions.Internal
 		internal static T AppendIndent<T>(this T node, string indent) where T : SyntaxNode
 		{
 			var indentRewriter = new IndentRewriter(indent);
+			return (T)indentRewriter.Visit(node);
+		}
+
+		internal static T SubtractIndent<T>(this T node, string indent) where T : SyntaxNode
+		{
+			var indentRewriter = new IndentRewriter(indent, true);
 			return (T)indentRewriter.Visit(node);
 		}
 
