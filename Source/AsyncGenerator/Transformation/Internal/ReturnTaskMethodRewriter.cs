@@ -4,10 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,6 +20,52 @@ using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtens
 
 namespace AsyncGenerator.Transformation.Internal
 {
+	internal class ReturnTaskTransformer : IMethodOrAccessorTransformer
+	{
+		public Task Initialize(Project project, IProjectConfiguration configuration)
+		{
+			return Task.CompletedTask;
+		}
+
+		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult transformResult,
+			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
+		{
+			var methodResult = transformResult.AnalyzationResult;
+			if (!methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
+			{
+				return MethodTransformerResult.Skip;
+			}
+			var methodNode = transformResult.Transformed;
+			if (methodNode.GetFunctionBody() == null)
+			{
+				return Update(methodNode, methodResult, namespaceMetadata);
+			}
+			if (methodResult.SplitTail || methodResult.PreserveReturnType || !methodResult.OmitAsync)
+			{
+				if (!methodResult.OmitAsync)
+				{
+					methodNode = methodNode.AddAsync();
+				}
+				return Update(methodNode, methodResult, namespaceMetadata);
+			}
+			var rewriter = new ReturnTaskMethodRewriter(transformResult, namespaceMetadata);
+			methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
+			return Update(methodNode, methodResult, namespaceMetadata);
+		}
+
+		private MethodTransformerResult Update(MethodDeclarationSyntax methodNode, 
+			IMethodOrAccessorAnalyzationResult methodResult, INamespaceTransformationMetadata namespaceMetadata)
+		{
+			methodNode = methodNode.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
+			if (!methodResult.PreserveReturnType && methodResult.Symbol.MethodKind != MethodKind.PropertySet)
+			{
+				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
+			}
+			return MethodTransformerResult.Update(methodNode);
+		}
+	}
+
+
 	/// <summary>
 	/// Wraps all non taskable returns statements into a <see cref="Task.FromResult{TResult}"/> and conditionally wraps the method body
 	/// in a try/catch block (without preconditions) 
@@ -39,13 +89,20 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			_rewritingSyntaxKind = node.Kind();
 			_methodNode = node;
-			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
-			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
-			if (bodyBlock != null)
+			if (!_methodResult.Faulted && 
+				(
+					(_methodResult.Symbol.ReturnsVoid && node.IsReturnStatementRequired()) || 
+					_methodResult.WrapInTryCatch
+				)
+			)
 			{
-				return node.WithBody(RewriteFunctionBody(bodyBlock));
+				node = node.ConvertExpressionBodyToBlock(_transformResult);
 			}
-			// TODO: handle arrow methods
+			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
+			if (node.GetFunctionBody() is BlockSyntax blockBody)
+			{
+				return node.WithBody(RewriteFunctionBody(blockBody));
+			}
 			return node;
 		}
 
@@ -136,6 +193,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public override SyntaxNode Visit(SyntaxNode node)
 		{
+			if (node == null)
+			{
+				return null;
+			}
 			// Skip if the statement is a precondition
 			if (_methodResult.Preconditions.Count > 0)
 			{
@@ -157,13 +218,13 @@ namespace AsyncGenerator.Transformation.Internal
 
 			// If the expression is returned and does not return a Task then wrap it into Task.FromResult
 			var expression = node as ExpressionSyntax;
-			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any())
+			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(Annotations.TaskReturned).Any())
 			{
 				// Before wrapping into a task we need to check if is a conditional expression as we can have a conditional expression and one or both parts can return a Task
 				if (node is ConditionalExpressionSyntax conditionalExpression)
 				{
-					var isWhenTrueTask = conditionalExpression.WhenTrue.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any();
-					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any();
+					var isWhenTrueTask = conditionalExpression.WhenTrue.GetAnnotations(Annotations.TaskReturned).Any();
+					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(Annotations.TaskReturned).Any();
 					var whenFalse = isWhenFalseTask
 						? conditionalExpression.WhenFalse
 						: WrapInTaskFromResult(conditionalExpression.WhenFalse);

@@ -43,7 +43,7 @@ namespace AsyncGenerator.Core.Plugins
 		{
 			var requiredNamespaces = transformationResult.AnalyzationResult.GetAllTypes()
 				.SelectMany(o => o.GetSelfAndDescendantsTypes())
-				.SelectMany(o => o.Methods.SelectMany(m => m.MethodReferences.Where(r => _linqMethods.Contains(r.AsyncCounterpartSymbol))))
+				.SelectMany(o => o.MethodsAndAccessors.SelectMany(m => m.MethodReferences.Where(r => _linqMethods.Contains(r.AsyncCounterpartSymbol))))
 				.Select(o => o.AsyncCounterpartSymbol.ContainingNamespace.ToString())
 				.Distinct()
 				.ToList();

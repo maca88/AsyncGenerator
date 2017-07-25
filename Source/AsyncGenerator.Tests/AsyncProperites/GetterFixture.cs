@@ -10,7 +10,7 @@ using AsyncGenerator.Tests.AsyncProperites.Input;
 namespace AsyncGenerator.Tests.AsyncProperites
 {
 	[TestFixture]
-	public class Fixture : BaseFixture
+	public class GetterFixture : BaseFixture
 	{
 		[Test]
 		public void TestGetterAfterTransformation()
@@ -307,6 +307,29 @@ namespace AsyncGenerator.Tests.AsyncProperites
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile("ListGetterWithTokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestArgumentGetterAfterTransformation()
+		{
+			var config = Configure(nameof(ArgumentGetter), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PropertyConversion(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ArgumentGetter)), document.Transformed.ToFullString());
 					})
 				)
 			);

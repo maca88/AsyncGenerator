@@ -24,7 +24,8 @@ namespace AsyncGenerator.Transformation.Internal
 	{
 		private RootTypeTransformationResult TransformType(ITypeAnalyzationResult rootTypeResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
-			var anyMissingMembers = rootTypeResult.Conversion != TypeConversion.Partial && rootTypeResult.GetSelfAndDescendantsTypes().Any(o => o.Methods.Any(m => m.Missing));
+			var anyMissingMembers = rootTypeResult.Conversion != TypeConversion.Partial && rootTypeResult.GetSelfAndDescendantsTypes()
+				.Any(o => o.MethodsAndAccessors.Any(m => m.Missing));
 			var result = TransformType(rootTypeResult, namespaceMetadata, false);
 			if (anyMissingMembers)
 			{

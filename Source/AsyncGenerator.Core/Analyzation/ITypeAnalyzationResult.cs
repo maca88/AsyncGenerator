@@ -28,6 +28,8 @@ namespace AsyncGenerator.Core.Analyzation
 
 		IReadOnlyList<IMethodAnalyzationResult> Methods { get; }
 
+		IEnumerable<IMethodOrAccessorAnalyzationResult> MethodsAndAccessors { get; }
+
 		/// <summary>
 		/// Contains constructors, destructors, operators and conversion operator methods
 		/// </summary>

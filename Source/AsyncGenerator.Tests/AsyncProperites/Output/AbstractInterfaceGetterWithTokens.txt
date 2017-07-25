@@ -46,7 +46,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// </content>
 	public partial class Concrete2AbstractInterfaceGetter : AbstractInterfaceGetter
 	{
-		public override Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken)) => true;
+		public override Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken)) => Task.FromResult<bool>(true);
 	}
 
 	/// <content>
@@ -54,7 +54,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// </content>
 	public partial class Concrete3AbstractInterfaceGetter : AbstractInterfaceGetter
 	{
-		public override Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken)) => false;
+		public override Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken)) => Task.FromResult<bool>(false);
 	}
 
 	/// <content>

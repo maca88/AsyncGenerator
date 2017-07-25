@@ -31,21 +31,5 @@ namespace AsyncGenerator.Tests.Plugins.Input
 		#region Empty2
 
 		#endregion
-
-		#region Sync
-
-		#region Nested
-
-		public void Test2()
-		{
-		}
-
-		#endregion
-
-		public void Test3()
-		{
-		}
-
-		#endregion Sync
 	}
 }

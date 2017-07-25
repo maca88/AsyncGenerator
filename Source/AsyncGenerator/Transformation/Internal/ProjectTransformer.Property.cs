@@ -77,21 +77,19 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				return;
 			}
-			MethodDeclarationSyntax methodNode;
+			var methodNode = MethodDeclaration(
+					methodResult.Symbol.MethodKind != MethodKind.PropertySet
+					? propertyResult.OriginalNode.Type
+					: IdentifierName(nameof(Task)).WithTriviaFrom(propertyResult.OriginalNode.Type),
+					methodResult.AsyncCounterpartName
+				)
+				.WithModifiers(propertyResult.OriginalNode.Modifiers)
+				.WithLeadingTrivia(propertyResult.OriginalNode.GetLeadingTrivia());
 			var methodBodyNode = methodResult.GetBodyNode();
 			if (methodBodyNode == null)
 			{
-				methodNode = MethodDeclaration(
-						propertyResult.OriginalNode.Type,
-						methodResult.AsyncCounterpartName
-					)
-					.WithModifiers(propertyResult.OriginalNode.Modifiers)
-					.WithLeadingTrivia(propertyResult.OriginalNode.GetLeadingTrivia())
+				methodNode = methodNode
 					.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(propertyResult.EndOfLineTrivia)));
-				if (!methodResult.PreserveReturnType)
-				{
-					methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
-				}
 				result.Transformed = methodNode;
 				return;
 			}
@@ -150,7 +148,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					startSpan = refNode.SpanStart - startMethodSpan;
 					var referenceNode = node.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);
-					node = node.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.TaskReturnedAnnotation)));
+					node = node.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 				}
 			}
 
@@ -175,12 +173,18 @@ namespace AsyncGenerator.Transformation.Internal
 				node = TransformFunctionReference(node, methodResult, transfromReference, namespaceMetadata);
 			}
 
-			methodNode = MethodDeclaration(
-					propertyResult.OriginalNode.Type,
-					methodResult.AsyncCounterpartName
-				)
-				.WithModifiers(propertyResult.OriginalNode.Modifiers)
-				.WithLeadingTrivia(propertyResult.OriginalNode.GetLeadingTrivia());
+			if (methodResult.Symbol.MethodKind == MethodKind.PropertySet)
+			{
+				methodNode = methodNode.WithParameterList(
+					methodNode.ParameterList.WithParameters(
+						SingletonSeparatedList(
+							Parameter(Identifier(TriviaList(), "value", TriviaList()))
+								.WithType(propertyResult.OriginalNode.Type.WithoutTrivia().WithTrailingTrivia(TriviaList(Space)))
+						)
+					)
+				);
+			}
+
 			if (node is ArrowExpressionClauseSyntax arrowNode)
 			{
 				methodNode = methodNode
@@ -203,27 +207,6 @@ namespace AsyncGenerator.Transformation.Internal
 				
 			}
 			methodNode = FixupBodyFormatting(methodNode, result);
-
-			// TODO: to plugins
-			if (methodResult.RewriteYields)
-			{
-				var yieldRewriter = new YieldRewriter(result);
-				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
-			}
-
-			if (!methodResult.SplitTail && !methodResult.PreserveReturnType && methodResult.OmitAsync)
-			{
-				var rewriter = new ReturnTaskMethodRewriter(result, namespaceMetadata);
-				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
-			}
-			else if (!methodResult.OmitAsync)
-			{
-				methodNode = methodNode.AddAsync();
-			}
-			if (!methodResult.PreserveReturnType)
-			{
-				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
-			}
 			result.Transformed = methodNode;
 		}
 	}

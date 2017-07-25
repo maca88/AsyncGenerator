@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -112,6 +113,33 @@ namespace AsyncGenerator.Extensions.Internal
 					.WithUsingKeyword(Token(leadingTrivia, SyntaxKind.UsingKeyword, TriviaList(Space)))
 					.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(endOfLineTrivia)))
 					);
+		}
+
+		internal static bool IsReturnStatementRequired(this SyntaxNode node)
+		{
+			var body = node.GetFunctionBody();
+			if (body is BlockSyntax block)
+			{
+				return block.IsReturnStatementRequired();
+			}
+			if (body is ArrowExpressionClauseSyntax arrow)
+			{
+				return arrow.Expression.IsReturnStatementRequired();
+			}
+			if (body is ExpressionSyntax expressionNode)
+			{
+				return expressionNode.IsReturnStatementRequired();
+			}
+			throw new InvalidOperationException("Unable to detect if the return statement is required for body: " + body);
+		}
+
+		internal static bool IsReturnStatementRequired(this ExpressionSyntax expressionNode)
+		{
+			if (expressionNode is AssignmentExpressionSyntax)
+			{
+				return true;
+			}
+			return false;
 		}
 
 		internal static bool IsReturnStatementRequired(this BlockSyntax node)
@@ -321,6 +349,11 @@ namespace AsyncGenerator.Extensions.Internal
 		/// <returns></returns>
 		internal static ExpressionSyntax GetAccessorExpression(this SimpleNameSyntax identifier)
 		{
+			if (identifier.Parent is AssignmentExpressionSyntax assignmentExpression)
+			{
+				return assignmentExpression;
+			}
+
 			if (identifier.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Span.End == identifier.Span.End)
 			{
 				return memberAccess;
@@ -343,6 +376,12 @@ namespace AsyncGenerator.Extensions.Internal
 			var statement = node.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
 			if (statement == null || !statement.IsKind(SyntaxKind.ReturnStatement))
 			{
+				if (!node.IsKind(SyntaxKind.ThrowExpression) &&
+					!node.IsKind(SyntaxKind.SimpleAssignmentExpression) &&
+					node.Parent.IsKind(SyntaxKind.ArrowExpressionClause))
+				{
+					return true;
+				}
 				return false;
 			}
 			var currNode = node;
@@ -640,6 +679,30 @@ namespace AsyncGenerator.Extensions.Internal
 			return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
 		}
 
+		internal static InvocationExpressionSyntax AddAssignedValueAsArgument(this InvocationExpressionSyntax node, ExpressionSyntax expressionNode)
+		{
+			if (expressionNode is AssignmentExpressionSyntax assignmentExpression)
+			{
+				var argument = Argument(assignmentExpression.Right);
+				if (!node.ArgumentList.Arguments.Any())
+				{
+					return node.AddArgumentListArguments(argument);
+				}
+
+				// We need to add an extra space after the comma
+				var argumentList = SeparatedList<ArgumentSyntax>(
+					node.ArgumentList.Arguments.GetWithSeparators()
+						.Concat(new SyntaxNodeOrToken[]
+						{
+							Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
+							argument
+						})
+				);
+				return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
+			}
+			return node;
+		}
+
 		internal static InvocationExpressionSyntax ForwardCall(this MethodDeclarationSyntax methodNode, IMethodSymbol symbol, string identifier, params ArgumentSyntax[] additionalArgs)
 		{
 			var name = methodNode.TypeParameterList != null
@@ -674,6 +737,42 @@ namespace AsyncGenerator.Extensions.Internal
 				.WithArgumentList(
 					ArgumentList(
 						SeparatedList<ArgumentSyntax>(arguments)));
+		}
+
+		internal static MethodDeclarationSyntax ConvertExpressionBodyToBlock(this MethodDeclarationSyntax methodNode,
+			IMethodOrAccessorTransformationResult transformResult)
+		{
+			if (methodNode.ExpressionBody != null)
+			{
+				return methodNode
+					.WithBody(ConvertToBlock(methodNode.ExpressionBody.Expression, transformResult))
+					.WithParameterList(
+						methodNode.ParameterList.WithCloseParenToken(
+							methodNode.ParameterList.CloseParenToken.WithTrailingTrivia(transformResult.EndOfLineTrivia)))
+					.WithExpressionBody(null)
+					.WithSemicolonToken(Token(SyntaxKind.None));
+			}
+			return methodNode;
+		}
+
+		internal static BlockSyntax ConvertToBlock(this ExpressionSyntax expressionNode, IMethodOrAccessorTransformationResult transformResult)
+		{
+			var analyzeResult = transformResult.AnalyzationResult;
+			var statement = analyzeResult.Symbol.ReturnsVoid
+				? (StatementSyntax)ExpressionStatement(
+					expressionNode.WithLeadingTrivia(transformResult.BodyLeadingWhitespaceTrivia),
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia))
+				)
+				: ReturnStatement(
+					Token(TriviaList(transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					expressionNode,
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia))
+				);
+			return Block(
+				Token(TriviaList(transformResult.LeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(transformResult.EndOfLineTrivia)),
+				SingletonList(statement),
+				Token(TriviaList(transformResult.LeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(transformResult.EndOfLineTrivia))
+			);
 		}
 
 		private static ReturnStatementSyntax GetReturnTaskCompleted(bool useQualifiedName)

@@ -75,6 +75,11 @@ namespace AsyncGenerator.Extensions.Internal
 			return (symbol as IMethodSymbol)?.MethodKind.IsPropertyAccessor() == true;
 		}
 
+		internal static bool IsPropertyAccessor(this IMethodSymbol symbol)
+		{
+			return symbol.MethodKind.IsPropertyAccessor();
+		}
+
 		internal static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol, bool insideCref = false, bool onlyName = false)
 		{
 			var predefinedType = symbol.SpecialType.ToPredefinedType();

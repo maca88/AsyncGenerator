@@ -97,7 +97,9 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
-			foreach (var reference in methodOrData.BodyMethodReferences.Where(o => o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
+			// Do not ignore accessor as they are executed prior passing
+			foreach (var reference in methodOrData.BodyMethodReferences
+				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
@@ -157,7 +159,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
-			foreach (var reference in functionData.BodyMethodReferences.Where(o => o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
+			foreach (var reference in functionData.BodyMethodReferences
+				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
@@ -176,13 +179,17 @@ namespace AsyncGenerator.Analyzation.Internal
 			var nameNode = refData.ReferenceNameNode;
 
 			// Find the actual usage of the method
-			var currNode = nameNode.Parent;
+			SyntaxNode currNode = nameNode;
 			var ascend = true;
 
-			if (refData.ReferenceSymbol.MethodKind == MethodKind.PropertySet || refData.ReferenceSymbol.MethodKind == MethodKind.PropertyGet)
+			if (refData.ReferenceSymbol.IsPropertyAccessor())
 			{
 				ascend = false;
 				AnalyzeAccessor(documentData, nameNode, refData);
+			}
+			else
+			{
+				currNode = nameNode.Parent;
 			}
 
 			while (ascend)

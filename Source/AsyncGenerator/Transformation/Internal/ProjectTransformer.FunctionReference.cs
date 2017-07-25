@@ -9,6 +9,7 @@ using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -131,10 +132,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					else if (isAccessor)
 					{
-						var expressionNode = nameNode.GetAccessorExpression();
-						node = node
-							.ReplaceNode(expressionNode, InvocationExpression(expressionNode.ReplaceNode(nameNode, newNameNode).WithoutTrivia())
-								.WithTriviaFrom(newNameNode));
+						node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult);
 					}
 					else
 					{
@@ -154,10 +152,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					else if (isAccessor)
 					{
-						var expressionNode = nameNode.GetAccessorExpression();
-						newStatement = statement
-							.ReplaceNode(expressionNode, InvocationExpression(expressionNode.ReplaceNode(nameNode, newNameNode).WithoutTrivia())
-								.WithTriviaFrom(newNameNode));
+						newStatement = ConvertAccessor(statement, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult);
 					}
 					else
 					{
@@ -179,12 +174,8 @@ namespace AsyncGenerator.Transformation.Internal
 				var invokeAnnotation = Guid.NewGuid().ToString();
 				if (isAccessor)
 				{
-					var expressionNode = nameNode.GetAccessorExpression();
-					node = node
-						.ReplaceNode(expressionNode, InvocationExpression(expressionNode.ReplaceNode(nameNode, newNameNode).WithoutTrivia())
-							.WithTriviaFrom(expressionNode)
-							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
-							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation)));
+					node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, o => o
+						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation)));
 				}
 				else
 				{
@@ -201,6 +192,27 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			return node;
+		}
+
+		private static TNode ConvertAccessor<TNode>(TNode node, SimpleNameSyntax nameNode, SimpleNameSyntax newNameNode, 
+			string cancellationTokenParamName, IBodyFunctionReferenceAnalyzationResult bodyFuncReferenceResult,
+			Func<InvocationExpressionSyntax, InvocationExpressionSyntax> alterFn = null) where TNode : SyntaxNode
+		{
+			var expressionNode = nameNode.GetAccessorExpression();
+			var invocation = InvocationExpression(
+					expressionNode.IsKind(SyntaxKind.SimpleAssignmentExpression)
+						? newNameNode.WithoutTrivia().WithoutAnnotations()
+						: expressionNode.ReplaceNode(nameNode, newNameNode).WithoutTrivia().WithoutAnnotations()
+				)
+				.WithTriviaFrom(expressionNode)
+				.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
+				.WithAdditionalAnnotations(nameNode.GetAnnotations(Annotations.TaskReturned))
+				.AddAssignedValueAsArgument(expressionNode);
+			if (alterFn != null)
+			{
+				invocation = alterFn(invocation);
+			}
+			return node.ReplaceNode(expressionNode, invocation);
 		}
 	}
 }

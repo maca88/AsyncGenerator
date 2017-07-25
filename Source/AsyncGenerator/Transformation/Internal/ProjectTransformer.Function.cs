@@ -10,6 +10,7 @@ using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -80,7 +81,7 @@ namespace AsyncGenerator.Transformation.Internal
 					{
 						startSpan = refNode.SpanStart - startRootFuncSpan;
 						var referenceNode = rootFuncNode.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);
-						rootFuncNode = rootFuncNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.TaskReturnedAnnotation)));
+						rootFuncNode = rootFuncNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 					}
 				}
 				foreach (var typeReference in funcResult.TypeReferences)

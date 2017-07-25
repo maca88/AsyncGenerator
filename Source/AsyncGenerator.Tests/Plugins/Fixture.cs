@@ -38,6 +38,29 @@ namespace AsyncGenerator.Tests.Plugins
 		}
 
 		[Test]
+		public void TestNestedEmptyRegionRemoverAfterTransformation()
+		{
+			var config = Configure(nameof(NestedEmptyRegions), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(NestedEmptyRegions)), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin<EmptyRegionRemover>()
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
 		public void TestTransactionScopeAsyncFlowAfterTransformation()
 		{
 			var config = Configure(nameof(TransactionScopeAsyncFlow), p => p

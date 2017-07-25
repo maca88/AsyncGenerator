@@ -30,7 +30,5 @@ namespace AsyncGenerator.Core.Transformation
 		IReadOnlyList<IFunctionReferenceTransformationResult> TransformedFunctionReferences { get; }
 
 		IReadOnlyList<ILockTransformationResult> TransformedLocks { get; }
-
-		string TaskReturnedAnnotation { get; } // TODO: remove
 	}
 }

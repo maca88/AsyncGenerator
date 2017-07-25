@@ -119,8 +119,11 @@ namespace AsyncGenerator.Internal
 
 		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{
+			if (Conversion != MethodConversion.Ignore)
+			{
+				IgnoredReason = reason;
+			}
 			Conversion = MethodConversion.Ignore;
-			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
 			foreach (var bodyReference in BodyMethodReferences)
 			{

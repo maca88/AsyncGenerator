@@ -43,9 +43,6 @@ namespace AsyncGenerator.Transformation.Internal
 		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
 
 		public List<TransformationResult> TransformedNodes { get; } = new List<TransformationResult>();
-
-		// TODO: find a better approach
-		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
 	}
 
 	internal class LockTransformationResult : TransformationResult, ILockTransformationResult
@@ -147,9 +144,6 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public SyntaxTrivia IndentTrivia { get; set; }
 
-		// TODO: find a better approach
-		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
-
 		#region IMethodOrAccessorTransformationResult
 
 		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
@@ -193,9 +187,6 @@ namespace AsyncGenerator.Transformation.Internal
 		public SyntaxTrivia EndOfLineTrivia { get; set; }
 
 		public SyntaxTrivia IndentTrivia { get; set; }
-
-		// TODO: find a better approach
-		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
 
 		#region IMethodOrAccessorTransformationResult
 

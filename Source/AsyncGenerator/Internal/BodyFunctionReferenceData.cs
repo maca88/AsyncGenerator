@@ -63,8 +63,11 @@ namespace AsyncGenerator.Internal
 
 		public void Ignore(string reason)
 		{
+			if (Conversion != ReferenceConversion.Ignore)
+			{
+				IgnoredReason = reason;
+			}
 			Conversion = ReferenceConversion.Ignore;
-			IgnoredReason = reason;
 			if (FunctionArguments == null)
 			{
 				return;

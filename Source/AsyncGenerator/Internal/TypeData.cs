@@ -186,6 +186,8 @@ namespace AsyncGenerator.Internal
 		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
 		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = Methods.Values.ToImmutableArray());
 
+		IEnumerable<IMethodOrAccessorAnalyzationResult> ITypeAnalyzationResult.MethodsAndAccessors => MethodsAndAccessors;
+
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedNestedTypes;
 		IReadOnlyList<ITypeAnalyzationResult> ITypeAnalyzationResult.NestedTypes => _cachedNestedTypes ?? (_cachedNestedTypes = NestedTypes.Values.ToImmutableArray());
 

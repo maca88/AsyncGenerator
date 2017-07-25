@@ -20,7 +20,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class TestAbstractInterfaceGetter
+	public partial class TestAbstractInterfaceSetter
 	{
 		Task TestAsync()
 		{
@@ -31,44 +31,40 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class ConcreteAbstractInterfaceGetter : AbstractInterfaceGetter
+	public partial class ConcreteAbstractInterfaceSetter : AbstractInterfaceSetter
 	{
-		public override async Task<bool> GetSuccessAsync()
+		public override Task SetSuccessAsync(bool value)
 		{
-			await (SimpleFile.ReadAsync());
-			return true;
+			return SimpleFile.ReadAsync();
 		}
 	}
 
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class Concrete2AbstractInterfaceGetter : AbstractInterfaceGetter
+	public partial class Concrete2AbstractInterfaceSetter : AbstractInterfaceSetter
 	{
-		public override Task<bool> GetSuccessAsync() => Task.FromResult<bool>(true);
+
+		public override Task SetSuccessAsync(bool value)
+		{
+			_success = value;
+			return Task.CompletedTask;
+		}
 	}
 
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class Concrete3AbstractInterfaceGetter : AbstractInterfaceGetter
+	public abstract partial class AbstractInterfaceSetter : IAbstractInterfaceSetter
 	{
-		public override Task<bool> GetSuccessAsync() => Task.FromResult<bool>(false);
+		public abstract Task SetSuccessAsync();
 	}
 
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public abstract partial class AbstractInterfaceGetter : IAbstractInterfaceGetter
+	public partial interface IAbstractInterfaceSetter
 	{
-		public abstract Task<bool> GetSuccessAsync();
-	}
-
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
-	public partial interface IAbstractInterfaceGetter
-	{
-		Task<bool> GetSuccessAsync();
+		Task SetSuccessAsync();
 	}
 }

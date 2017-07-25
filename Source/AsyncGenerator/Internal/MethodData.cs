@@ -283,6 +283,35 @@ namespace AsyncGenerator.Internal
 			return result;
 		}
 
+		public IEnumerable<FunctionData> GetAllInvokedBy()
+		{
+			var result = new HashSet<FunctionData>();
+			var deps = new HashSet<FunctionData>();
+			var depsQueue = new Queue<FunctionData>(InvokedBy);
+			while (depsQueue.Count > 0)
+			{
+				var dependency = depsQueue.Dequeue();
+				if (deps.Contains(dependency))
+				{
+					continue;
+				}
+				deps.Add(dependency);
+				if (dependency is MethodOrAccessorData methodOrAccessorData)
+				{
+					foreach (var subDependency in methodOrAccessorData.InvokedBy)
+					{
+						if (!deps.Contains(subDependency))
+						{
+							depsQueue.Enqueue(subDependency);
+						}
+					}
+				}
+				//yield return dependency;
+				result.Add(dependency);
+			}
+			return result;
+		}
+
 	}
 
 	internal class MethodData : MethodOrAccessorData, IMethodAnalyzationResult

@@ -49,8 +49,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				if (methodConversion.HasFlag(MethodConversion.ToAsync))
 				{
-					result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
-						.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
+					result.Transformed = methodNode;
 					if (methodConversion.HasFlag(MethodConversion.Copy))
 					{
 						result.AddMethod(methodResult.Node);
@@ -135,7 +134,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					startSpan = refNode.SpanStart - startMethodSpan;
 					var referenceNode = methodNode.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);
-					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.TaskReturnedAnnotation)));
+					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 				}
 			}
 			// Before modifying, fixup method body formatting in order to prevent weird formatting when adding additinal code
@@ -162,29 +161,6 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}
 
-			// TODO: to plugins
-			if (methodResult.RewriteYields)
-			{
-				var yieldRewriter = new YieldRewriter(result);
-				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
-			}
-
-			if (!methodResult.SplitTail && !methodResult.PreserveReturnType && methodResult.OmitAsync)
-			{
-				var rewriter = new ReturnTaskMethodRewriter(result, namespaceMetadata);
-				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
-			}
-			else if(!methodResult.OmitAsync)
-			{
-				methodNode = methodNode.AddAsync();
-			}
-
-			methodNode = methodNode
-				.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
-			if (!methodResult.PreserveReturnType)
-			{
-				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
-			}
 			result.Transformed = methodNode;
 
 			return result;
