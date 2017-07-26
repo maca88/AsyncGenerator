@@ -32,11 +32,11 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeMethodData(DocumentData documentData, MethodOrAccessorData methodOrData)
+		private void AnalyzeMethodData(DocumentData documentData, MethodOrAccessorData methodAccessorData)
 		{
-			if (methodOrData.Conversion == MethodConversion.Copy)
+			if (methodAccessorData.Conversion == MethodConversion.Copy)
 			{
-				foreach (var bodyReference in methodOrData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
+				foreach (var bodyReference in methodAccessorData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
 				{
 					var invokedMethodData = bodyReference.ReferenceFunctionData;
 					if (invokedMethodData.Conversion != MethodConversion.Ignore)
@@ -48,16 +48,16 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			
 			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
-			var baseMethods = methodOrData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
-			if (!methodOrData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
+			var baseMethods = methodAccessorData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
+			if (!methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
 			{
-				if (methodOrData.TypeData.GetSelfAndAncestorsTypeData()
+				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData()
 					.Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
 				{
-					methodOrData.Copy();
+					methodAccessorData.Copy();
 					// Check if there are any internal methods that are candidate to be async and are invoked inside this method
 					// If there are, then we need to copy them
-					foreach (var bodyReference in methodOrData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
+					foreach (var bodyReference in methodAccessorData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
 					{
 						var invokedMethodData = bodyReference.ReferenceFunctionData;
 						if (invokedMethodData.Conversion != MethodConversion.Ignore)
@@ -68,43 +68,43 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
-					methodOrData.Ignore("All abstract/virtual related methods are ignored");
+					methodAccessorData.Ignore("All abstract/virtual related methods are ignored");
 				}
 				return;
 			}
 
 
-			var methodBody = methodOrData.GetBodyNode();
-			methodOrData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
-			methodOrData.MustRunSynchronized = methodOrData.Symbol.GetAttributes()
+			var methodBody = methodAccessorData.GetBodyNode();
+			methodAccessorData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodAccessorData.MustRunSynchronized = methodAccessorData.Symbol.GetAttributes()
 				.Where(o => o.AttributeClass.Name == "MethodImplAttribute")
 				.Any(o => ((MethodImplOptions)(int)o.ConstructorArguments.First().Value).HasFlag(MethodImplOptions.Synchronized));
 
 			if (methodBody == null)
 			{
-				methodOrData.OmitAsync = true;
+				methodAccessorData.OmitAsync = true;
 			}
 
 			// Order by descending so we are sure that methods passed by argument will be processed before the invoked method with those arguments
-			foreach (var reference in methodOrData.BodyMethodReferences.OrderByDescending(o => o.ReferenceNameNode.SpanStart))
+			foreach (var reference in methodAccessorData.BodyMethodReferences.OrderByDescending(o => o.ReferenceNameNode.SpanStart))
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
 
-			foreach (var reference in methodOrData.CrefMethodReferences)
+			foreach (var reference in methodAccessorData.CrefMethodReferences)
 			{
-				AnalyzeCrefMethodReference(documentData, methodOrData, reference);
+				AnalyzeCrefMethodReference(documentData, methodAccessorData, reference);
 			}
 
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
 			// Do not ignore accessor as they are executed prior passing
-			foreach (var reference in methodOrData.BodyMethodReferences
+			foreach (var reference in methodAccessorData.BodyMethodReferences
 				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
-			if (methodOrData.Conversion.HasFlag(MethodConversion.ToAsync))
+			if (methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return;
 			}
@@ -113,15 +113,15 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Methods with Unknown may not have InvokedBy populated so we cannot ignore them here
 			// Do not ignore methods that are inside a type with conversion NewType as ExternalRelatedMethods may not be populated
 			if (
-				!methodOrData.Dependencies.Any() && 
-				methodOrData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
-				methodOrData.Conversion.HasFlag(MethodConversion.Smart) &&
-			    methodOrData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
-				!methodOrData.ExternalRelatedMethods.Any()
+				!methodAccessorData.Dependencies.Any() && 
+				methodAccessorData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
+				methodAccessorData.Conversion.HasFlag(MethodConversion.Smart) &&
+			    methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
+				!methodAccessorData.ExternalRelatedMethods.Any()
 			)
 			{
-				methodOrData.Ignore("Method is never used and has no async invocations");
-				LogIgnoredReason(methodOrData);
+				methodAccessorData.Ignore("Method is never used and has no async invocations");
+				LogIgnoredReason(methodAccessorData);
 			}
 		}
 

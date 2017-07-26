@@ -166,7 +166,9 @@
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PostAnalyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PreAnalyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.Scan.cs" />
+    <Compile Include="Internal\AccessorData.cs" />
     <Compile Include="Internal\Annotations.cs" />
+    <Compile Include="Internal\BaseMethodData.cs" />
     <Compile Include="Internal\ChildFunctionData.cs" />
     <Compile Include="Internal\FunctionArgumentData.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
@@ -183,8 +185,6 @@
     <Compile Include="Extensions\Internal\MethodKindExtensions.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.cs" />
     <Compile Include="Internal\FunctionData.cs" />
-    <Compile Include="Internal\AsyncLock.cs" />
-    <Compile Include="Internal\AsyncSemaphore.cs" />
     <Compile Include="Internal\ConcurrentSet.cs" />
     <Compile Include="Internal\DefaultPreconditionChecker.cs" />
     <Compile Include="Internal\DefaultAsyncCounterpartsFinder.cs" />
@@ -193,8 +193,10 @@
     <Compile Include="Internal\LockData.cs" />
     <Compile Include="Internal\MethodData.cs" />
     <Compile Include="Internal\BodyFunctionReferenceData.cs" />
+    <Compile Include="Internal\MethodOrAccessorData.cs" />
     <Compile Include="Internal\NamespaceData.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.cs" />
+    <Compile Include="Internal\PropertyData.cs" />
     <Compile Include="Internal\SourceCodeCompiler.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
     <Compile Include="Internal\ProjectData.cs" />
@@ -218,12 +220,14 @@
     <Compile Include="Transformation\Internal\ProjectTransformer.Property.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
     <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
+    <Compile Include="Transformation\Internal\ReturnTaskMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\RootNamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\RootTypeTransformationResult.cs" />
     <Compile Include="Transformation\Internal\SplitTailMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\TransformationResult.cs" />
     <Compile Include="Transformation\Internal\TypeTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IndentRewriter.cs" />
+    <Compile Include="Transformation\Internal\YieldMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\YieldRewriter.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
     <Compile Include="Internal\TypeData.cs" />

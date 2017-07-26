@@ -13,7 +13,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	public class DocumentationCommentMethodTransformer : IMethodOrAccessorTransformer
+	internal class DocumentationCommentMethodTransformer : IMethodOrAccessorTransformer
 	{
 		private IProjectDocumentationCommentConfiguration _configuration;
 		private bool _isEnabled;

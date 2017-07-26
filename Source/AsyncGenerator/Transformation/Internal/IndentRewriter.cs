@@ -10,7 +10,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	public class IndentRewriter : CSharpSyntaxRewriter
+	internal class IndentRewriter : CSharpSyntaxRewriter
 	{
 		private readonly string _indent;
 		private readonly bool _subtract;

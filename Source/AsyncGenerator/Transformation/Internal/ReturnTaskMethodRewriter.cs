@@ -20,52 +20,6 @@ using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtens
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class ReturnTaskTransformer : IMethodOrAccessorTransformer
-	{
-		public Task Initialize(Project project, IProjectConfiguration configuration)
-		{
-			return Task.CompletedTask;
-		}
-
-		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult transformResult,
-			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
-		{
-			var methodResult = transformResult.AnalyzationResult;
-			if (!methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
-			{
-				return MethodTransformerResult.Skip;
-			}
-			var methodNode = transformResult.Transformed;
-			if (methodNode.GetFunctionBody() == null)
-			{
-				return Update(methodNode, methodResult, namespaceMetadata);
-			}
-			if (methodResult.SplitTail || methodResult.PreserveReturnType || !methodResult.OmitAsync)
-			{
-				if (!methodResult.OmitAsync)
-				{
-					methodNode = methodNode.AddAsync();
-				}
-				return Update(methodNode, methodResult, namespaceMetadata);
-			}
-			var rewriter = new ReturnTaskMethodRewriter(transformResult, namespaceMetadata);
-			methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
-			return Update(methodNode, methodResult, namespaceMetadata);
-		}
-
-		private MethodTransformerResult Update(MethodDeclarationSyntax methodNode, 
-			IMethodOrAccessorAnalyzationResult methodResult, INamespaceTransformationMetadata namespaceMetadata)
-		{
-			methodNode = methodNode.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
-			if (!methodResult.PreserveReturnType && methodResult.Symbol.MethodKind != MethodKind.PropertySet)
-			{
-				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
-			}
-			return MethodTransformerResult.Update(methodNode);
-		}
-	}
-
-
 	/// <summary>
 	/// Wraps all non taskable returns statements into a <see cref="Task.FromResult{TResult}"/> and conditionally wraps the method body
 	/// in a try/catch block (without preconditions) 
