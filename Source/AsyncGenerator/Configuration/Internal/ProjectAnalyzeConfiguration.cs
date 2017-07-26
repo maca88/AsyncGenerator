@@ -23,6 +23,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public Func<IMethodSymbol, MethodConversion> MethodConversionFunction { get; private set; } = m => MethodConversion.Unknown;
 
+		public bool PropertyConversion { get; private set; }
+
 		public Func<INamedTypeSymbol, TypeConversion> TypeConversionFunction { get; private set; } = m => TypeConversion.Unknown;
 
 		public Predicate<Document> DocumentSelectionPredicate { get; private set; } = m => true;
@@ -58,6 +60,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
 		{
 			MethodConversionFunction = func ?? throw new ArgumentNullException(nameof(func));
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PropertyConversion(bool value)
+		{
+			PropertyConversion = value;
 			return this;
 		}
 

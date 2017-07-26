@@ -11,14 +11,14 @@ namespace AsyncGenerator.Core.Plugins
 	/// <summary>
 	/// Adds TransactionScopeAsyncFlowOption option for TransactionScope
 	/// </summary>
-	public class TransactionScopeAsyncFlowAdder : CSharpSyntaxRewriter, IMethodTransformer
+	public class TransactionScopeAsyncFlowAdder : CSharpSyntaxRewriter, IMethodOrAccessorTransformer
 	{
 		public Task Initialize(Project project, IProjectConfiguration configuration)
 		{
 			return Task.CompletedTask;
 		}
 
-		public MethodTransformerResult Transform(IMethodTransformationResult methodTransformResult,
+		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult methodTransformResult,
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			return MethodTransformerResult.Update((MethodDeclarationSyntax) VisitMethodDeclaration(methodTransformResult.Transformed));

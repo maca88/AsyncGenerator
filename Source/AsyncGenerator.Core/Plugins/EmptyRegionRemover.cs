@@ -18,53 +18,88 @@ namespace AsyncGenerator.Core.Plugins
 			return Task.CompletedTask;
 		}
 
+		private class RegionInfo
+		{
+			public RegionInfo Parent { get; set; }
+
+			public int? EndOfLineIndex { get; set; }
+
+			public int? StartRegionIndex { get; set; }
+
+			public int? StartRegionEndOfLineIndex { get; set; }
+
+			public int? StartIndex => StartRegionEndOfLineIndex ?? StartRegionIndex;
+
+			public int? EndIndex { get; set; }
+
+			private bool IsValid => EndIndex.HasValue && StartIndex.HasValue;
+
+			public RegionInfo GetValidRoot()
+			{
+				if (Parent?.IsValid == true)
+				{
+					return Parent.GetValidRoot();
+				}
+				return IsValid ? this : null;
+			}
+		}
+
 		public CompilationUnitSyntax Transform(IDocumentTransformationResult transformationResult)
 		{
 			var transformed = transformationResult.Transformed;
 			// Start and end hash of an empty region will always be on the same token
-			foreach (var span in transformed.DescendantTokens().Where(o => o.ContainsDirectives).Select(o => o.Span).OrderByDescending(o => o.Start))
+			var directives = transformed.DescendantTokens()
+				.Where(o => o.ContainsDirectives)
+				.Select(o => o.Span)
+				.OrderByDescending(o => o.Start)
+				.ToList();
+			foreach (var span in directives)
 			{
 				var token = transformed.DescendantTokens().First(o => o.Span == span);
-				var startRegionIdx = -1;
-				var startRegionEndOfLineIdx = -1;
-				var currentEndOfLineIndex = -1;
-				var toRemoveIndexes = new Dictionary<int, int>();
+				var toRemoveRegions = new List<RegionInfo>();
+				var currentRegion = new RegionInfo();
+				var stack = new Stack<RegionInfo>();
+
 				for (var i = 0; i < token.LeadingTrivia.Count; i++)
 				{
 					var trivia = token.LeadingTrivia[i];
 					// End of line trivia can be also located on the trailing trivia of a parent token in this case check for the whitespace
-					if (trivia.IsKind(SyntaxKind.EndOfLineTrivia) || (currentEndOfLineIndex < 0 && trivia.IsKind(SyntaxKind.WhitespaceTrivia)))
+					if (trivia.IsKind(SyntaxKind.EndOfLineTrivia) || (!currentRegion.EndOfLineIndex.HasValue && trivia.IsKind(SyntaxKind.WhitespaceTrivia)))
 					{
-						currentEndOfLineIndex = i;
+						currentRegion.EndOfLineIndex = i;
 					}
 					else if (trivia.IsKind(SyntaxKind.RegionDirectiveTrivia))
 					{
-						startRegionIdx = i;
-						startRegionEndOfLineIdx = currentEndOfLineIndex;
+						if (currentRegion.StartRegionIndex.HasValue) // Nested regions
+						{
+							stack.Push(currentRegion);
+							currentRegion = new RegionInfo
+							{
+								Parent = currentRegion
+							};
+						}
+						currentRegion.StartRegionIndex = i;
+						currentRegion.StartRegionEndOfLineIndex = currentRegion.EndOfLineIndex;
 					}
 					else if (trivia.IsKind(SyntaxKind.EndRegionDirectiveTrivia))
 					{
-						if (startRegionIdx < 0)
+						if (currentRegion.StartRegionIndex.HasValue)
 						{
-							startRegionEndOfLineIdx = currentEndOfLineIndex = - 1;
-							continue;
+							currentRegion.EndIndex = i;
+							toRemoveRegions.Add(currentRegion);
 						}
-						var removeFromIndex = startRegionEndOfLineIdx < 0 ? startRegionIdx : startRegionEndOfLineIdx;
-						toRemoveIndexes.Add(removeFromIndex, i);
-						startRegionIdx = currentEndOfLineIndex = - 1;
+						currentRegion = stack.Any() ? stack.Pop() : new RegionInfo();
 					}
 				}
-				if (!toRemoveIndexes.Any())
+				if (!toRemoveRegions.Any())
 				{
 					continue;
 				}
 
 				var newToken = token;
-				foreach (var pair in toRemoveIndexes.OrderByDescending(o => o.Key))
+				foreach (var regionInfo in toRemoveRegions.Select(o => o.GetValidRoot()).Where(o => o != null).Distinct().OrderByDescending(o => o.StartIndex))
 				{
-					var from = pair.Key;
-					var to = pair.Value;
-					for (var j = to; j >= from; j--)
+					for (var j = regionInfo.EndIndex.GetValueOrDefault(); j >= regionInfo.StartIndex.GetValueOrDefault(); j--)
 					{
 						newToken = newToken.WithLeadingTrivia(newToken.LeadingTrivia.RemoveAt(j));
 					}

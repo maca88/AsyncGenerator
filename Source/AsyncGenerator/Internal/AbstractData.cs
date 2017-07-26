@@ -15,5 +15,13 @@ namespace AsyncGenerator.Internal
 		/// Get the syntax node of the function
 		/// </summary>
 		public abstract SyntaxNode GetNode();
+
+		public abstract ISymbol GetSymbol();
+
+		public string IgnoredReason { get; protected set; }
+
+		public bool ExplicitlyIgnored { get; set; }
+
+		public abstract void Ignore(string reason, bool explicitlyIgnored = false);
 	}
 }

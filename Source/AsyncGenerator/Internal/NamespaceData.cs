@@ -36,6 +36,11 @@ namespace AsyncGenerator.Internal
 
 		public bool IsGlobal => Node == null;
 
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
+
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> Types { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
 
 		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> NestedNamespaces { get; } = 
@@ -61,7 +66,7 @@ namespace AsyncGenerator.Internal
 				return true;
 			}
 			if(fullNamespace == "System.Threading" && Types.Values
-				.Any(o => o.GetSelfAndDescendantsTypeData().Any(t => t.Methods.Values.Any(m => m.CancellationTokenRequired))))
+				.Any(o => o.GetSelfAndDescendantsTypeData().Any(t => t.MethodsAndAccessors.Any(m => m.CancellationTokenRequired))))
 			{
 				return true;
 			}
@@ -71,6 +76,13 @@ namespace AsyncGenerator.Internal
 		public override SyntaxNode GetNode()
 		{
 			return Node;
+		}
+
+		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		{
+			IgnoredReason = reason;
+			ExplicitlyIgnored = explicitlyIgnored;
+			Conversion = NamespaceConversion.Ignore;
 		}
 
 		public IEnumerable<NamespaceData> GetSelfAndDescendantsNamespaceData(Func<NamespaceData, bool> predicate = null)

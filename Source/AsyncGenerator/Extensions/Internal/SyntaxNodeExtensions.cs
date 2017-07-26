@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -114,6 +115,33 @@ namespace AsyncGenerator.Extensions.Internal
 					);
 		}
 
+		internal static bool IsReturnStatementRequired(this SyntaxNode node)
+		{
+			var body = node.GetFunctionBody();
+			if (body is BlockSyntax block)
+			{
+				return block.IsReturnStatementRequired();
+			}
+			if (body is ArrowExpressionClauseSyntax arrow)
+			{
+				return arrow.Expression.IsReturnStatementRequired();
+			}
+			if (body is ExpressionSyntax expressionNode)
+			{
+				return expressionNode.IsReturnStatementRequired();
+			}
+			throw new InvalidOperationException("Unable to detect if the return statement is required for body: " + body);
+		}
+
+		internal static bool IsReturnStatementRequired(this ExpressionSyntax expressionNode)
+		{
+			if (expressionNode is AssignmentExpressionSyntax)
+			{
+				return true;
+			}
+			return false;
+		}
+
 		internal static bool IsReturnStatementRequired(this BlockSyntax node)
 		{
 			var lastStatement = node.Statements.LastOrDefault();
@@ -217,6 +245,23 @@ namespace AsyncGenerator.Extensions.Internal
 			return Whitespace(nodeIndent.Substring(parentIndent.Length));
 		}
 
+		internal static TypeSyntax GetReturnType(this SyntaxNode node)
+		{
+			if (node is MethodDeclarationSyntax methodNode)
+			{
+				return methodNode.ReturnType;
+			}
+			if (node is AccessorDeclarationSyntax accessorNode)
+			{
+				var propertyNode = accessorNode.Ancestors().OfType<PropertyDeclarationSyntax>().FirstOrDefault();
+				if (propertyNode != null)
+				{
+					return propertyNode.Type;
+				}
+			}
+			throw new InvalidOperationException($"Unable to get return type for node {node}");
+		}
+
 		internal static SyntaxNode PrependCloseBraceLeadingTrivia(this SyntaxNode node, SyntaxTriviaList leadingTrivia)
 		{
 			if (node is TypeDeclarationSyntax typeNode)
@@ -283,6 +328,39 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 		}
 
+		internal static bool IsAssigned(this SimpleNameSyntax identifier)
+		{
+			var statement = identifier.Ancestors()
+				.TakeWhile(o => !(o is StatementSyntax) && !(o is ArrowExpressionClauseSyntax))
+				.OfType<AssignmentExpressionSyntax>()
+				.FirstOrDefault();
+			// Check if the assignement belongs to the current identifier
+			return statement != null && statement.DescendantTokens().Any(o => o.SpanStart == identifier.Span.End + 1 && o.IsKind(SyntaxKind.EqualsToken));
+		}
+		/// <summary>
+		/// Get the whole expression for the accessor
+		/// eg: Property => Property
+		/// eg: Property.Count => Property
+		/// eg: StaticClass.Property => StaticClass.Property
+		/// eg: StaticClass.Property.Count => StaticClass.Property
+		/// eg: new Class().Property.Method() => new Class().Property
+		/// </summary>
+		/// <param name="identifier"></param>
+		/// <returns></returns>
+		internal static ExpressionSyntax GetAccessorExpression(this SimpleNameSyntax identifier)
+		{
+			if (identifier.Parent is AssignmentExpressionSyntax assignmentExpression)
+			{
+				return assignmentExpression;
+			}
+
+			if (identifier.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Span.End == identifier.Span.End)
+			{
+				return memberAccess;
+			}
+			return identifier;
+		}
+
 		// TODO: remove
 		/// <summary>
 		/// Check if the node is returned with a <see cref="ReturnStatementSyntax"/>
@@ -298,6 +376,12 @@ namespace AsyncGenerator.Extensions.Internal
 			var statement = node.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
 			if (statement == null || !statement.IsKind(SyntaxKind.ReturnStatement))
 			{
+				if (!node.IsKind(SyntaxKind.ThrowExpression) &&
+					!node.IsKind(SyntaxKind.SimpleAssignmentExpression) &&
+					node.Parent.IsKind(SyntaxKind.ArrowExpressionClause))
+				{
+					return true;
+				}
 				return false;
 			}
 			var currNode = node;
@@ -379,7 +463,31 @@ namespace AsyncGenerator.Extensions.Internal
 			return false;
 		}
 
-		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node, 
+		internal static TypeDeclarationSyntax AppendMembers(this TypeDeclarationSyntax node,
+			MemberDeclarationSyntax member, IEnumerable<FieldDeclarationSyntax> extraFields = null, IEnumerable<MethodDeclarationSyntax> extraMethods = null)
+		{
+			if (extraMethods != null)
+			{
+				// Append all additional members after the original one
+				var index = node.Members.IndexOf(member);
+				var currIndex = index + 1;
+				foreach (var extraMethod in extraMethods)
+				{
+					node = node.WithMembers(node.Members.Insert(currIndex, extraMethod));
+					currIndex++;
+				}
+			}
+			if (extraFields != null)
+			{
+				foreach (var extraField in extraFields)
+				{
+					node = node.WithMembers(node.Members.Insert(0, extraField));
+				}
+			}
+			return node;
+		}
+
+		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node,
 			MemberDeclarationSyntax member, MemberDeclarationSyntax newMember,
 			IEnumerable<FieldDeclarationSyntax> extraFields, IEnumerable<MethodDeclarationSyntax> extraMethods)
 		{
@@ -528,6 +636,12 @@ namespace AsyncGenerator.Extensions.Internal
 			return (T)indentRewriter.Visit(node);
 		}
 
+		internal static T SubtractIndent<T>(this T node, string indent) where T : SyntaxNode
+		{
+			var indentRewriter = new IndentRewriter(indent, true);
+			return (T)indentRewriter.Visit(node);
+		}
+
 		internal static InvocationExpressionSyntax AddCancellationTokenArgumentIf(this InvocationExpressionSyntax node, string argumentName, IBodyFunctionReferenceAnalyzationResult functionReference)
 		{
 			if (!functionReference.PassCancellationToken)
@@ -565,6 +679,30 @@ namespace AsyncGenerator.Extensions.Internal
 			return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
 		}
 
+		internal static InvocationExpressionSyntax AddAssignedValueAsArgument(this InvocationExpressionSyntax node, ExpressionSyntax expressionNode)
+		{
+			if (expressionNode is AssignmentExpressionSyntax assignmentExpression)
+			{
+				var argument = Argument(assignmentExpression.Right);
+				if (!node.ArgumentList.Arguments.Any())
+				{
+					return node.AddArgumentListArguments(argument);
+				}
+
+				// We need to add an extra space after the comma
+				var argumentList = SeparatedList<ArgumentSyntax>(
+					node.ArgumentList.Arguments.GetWithSeparators()
+						.Concat(new SyntaxNodeOrToken[]
+						{
+							Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
+							argument
+						})
+				);
+				return node.WithArgumentList(node.ArgumentList.WithArguments(argumentList));
+			}
+			return node;
+		}
+
 		internal static InvocationExpressionSyntax ForwardCall(this MethodDeclarationSyntax methodNode, IMethodSymbol symbol, string identifier, params ArgumentSyntax[] additionalArgs)
 		{
 			var name = methodNode.TypeParameterList != null
@@ -599,6 +737,42 @@ namespace AsyncGenerator.Extensions.Internal
 				.WithArgumentList(
 					ArgumentList(
 						SeparatedList<ArgumentSyntax>(arguments)));
+		}
+
+		internal static MethodDeclarationSyntax ConvertExpressionBodyToBlock(this MethodDeclarationSyntax methodNode,
+			IMethodOrAccessorTransformationResult transformResult)
+		{
+			if (methodNode.ExpressionBody != null)
+			{
+				return methodNode
+					.WithBody(ConvertToBlock(methodNode.ExpressionBody.Expression, transformResult))
+					.WithParameterList(
+						methodNode.ParameterList.WithCloseParenToken(
+							methodNode.ParameterList.CloseParenToken.WithTrailingTrivia(transformResult.EndOfLineTrivia)))
+					.WithExpressionBody(null)
+					.WithSemicolonToken(Token(SyntaxKind.None));
+			}
+			return methodNode;
+		}
+
+		internal static BlockSyntax ConvertToBlock(this ExpressionSyntax expressionNode, IMethodOrAccessorTransformationResult transformResult)
+		{
+			var analyzeResult = transformResult.AnalyzationResult;
+			var statement = analyzeResult.Symbol.ReturnsVoid
+				? (StatementSyntax)ExpressionStatement(
+					expressionNode.WithLeadingTrivia(transformResult.BodyLeadingWhitespaceTrivia),
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia))
+				)
+				: ReturnStatement(
+					Token(TriviaList(transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+					expressionNode,
+					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(transformResult.EndOfLineTrivia))
+				);
+			return Block(
+				Token(TriviaList(transformResult.LeadingWhitespaceTrivia), SyntaxKind.OpenBraceToken, TriviaList(transformResult.EndOfLineTrivia)),
+				SingletonList(statement),
+				Token(TriviaList(transformResult.LeadingWhitespaceTrivia), SyntaxKind.CloseBraceToken, TriviaList(transformResult.EndOfLineTrivia))
+			);
 		}
 
 		private static ReturnStatementSyntax GetReturnTaskCompleted(bool useQualifiedName)

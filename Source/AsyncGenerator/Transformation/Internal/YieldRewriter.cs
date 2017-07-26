@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
+using AsyncGenerator.Core.Transformation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,9 +16,9 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	internal class YieldRewriter : CSharpSyntaxRewriter
 	{
-		private readonly MethodTransformationResult _transformResult;
+		private readonly IMethodOrAccessorTransformationResult _transformResult;
 
-		public YieldRewriter(MethodTransformationResult transformResult)
+		public YieldRewriter(IMethodOrAccessorTransformationResult transformResult)
 		{
 			_transformResult = transformResult;
 		}

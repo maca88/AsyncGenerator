@@ -70,9 +70,9 @@ namespace AsyncGenerator.Transformation.Internal
 					rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformTypeResult.Annotation)));
 
 					transformResult.ThreadingUsingRequired |=
-						typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.Methods).Any(o => o.CancellationTokenRequired) ||
+						typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.MethodsAndAccessors).Any(o => o.CancellationTokenRequired) ||
 						typeResult.GetSelfAndDescendantsTypes()
-							.SelectMany(o => o.Methods)
+							.SelectMany(o => o.MethodsAndAccessors)
 							.SelectMany(o => o.GetSelfAndDescendantsFunctions())
 							.Any(o => o.MethodReferences.Any(r => r.PassCancellationToken));
 				}

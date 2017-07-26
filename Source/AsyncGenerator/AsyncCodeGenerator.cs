@@ -213,6 +213,9 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new IncludeFilePathTransformer()); // TODO: remove - make it optional
 
 			// Method transformers
+			configuration.RegisterPlugin(new YieldMethodTransformer());
+			configuration.RegisterPlugin(new ReturnTaskMethodTransformer());
+
 			configuration.RegisterPlugin(new AsyncLockMethodTransformer());
 			configuration.RegisterPlugin(new CancellationTokenMethodTransformer());
 			configuration.RegisterPlugin(new SplitTailMethodTransformer());

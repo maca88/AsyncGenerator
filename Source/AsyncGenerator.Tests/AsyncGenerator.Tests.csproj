@@ -190,6 +190,21 @@
     <Compile Include="AsyncMethodFinder\Input\NUnitAssertThat.cs" />
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
     <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
+    <Compile Include="AsyncProperites\GetterFixture.cs" />
+    <Compile Include="AsyncProperites\Input\AbstractInterfaceSetter.cs" />
+    <Compile Include="AsyncProperites\Input\AbstractInterfaceGetter.cs" />
+    <Compile Include="AsyncProperites\Input\ArgumentGetter.cs" />
+    <Compile Include="AsyncProperites\Input\ExternalGetter.cs" />
+    <Compile Include="AsyncProperites\Input\ArrowSetter.cs" />
+    <Compile Include="AsyncProperites\Input\AbstractSetter.cs" />
+    <Compile Include="AsyncProperites\Input\Setter.cs" />
+    <Compile Include="AsyncProperites\Input\GetterWithAsyncPart.cs" />
+    <Compile Include="AsyncProperites\Input\InterfaceGetter.cs" />
+    <Compile Include="AsyncProperites\Input\ArrowGetter.cs" />
+    <Compile Include="AsyncProperites\Input\AbstractGetter.cs" />
+    <Compile Include="AsyncProperites\Input\Getter.cs" />
+    <Compile Include="AsyncProperites\Input\ListGetter.cs" />
+    <Compile Include="AsyncProperites\SetterFixture.cs" />
     <Compile Include="BaseFixture.cs" />
     <Compile Include="CallForwarding\Fixture.cs" />
     <Compile Include="CallForwarding\Input\TestCase.cs" />
@@ -224,6 +239,8 @@
     <Compile Include="LockStatement\Fixture.cs" />
     <Compile Include="LockStatement\Input\Lock.cs" />
     <Compile Include="MissingMembers\Fixture.cs" />
+    <Compile Include="MissingMembers\Input\GetterProperty.cs" />
+    <Compile Include="MissingMembers\Input\NestedType.cs" />
     <Compile Include="MissingMembers\Input\TestCase.cs" />
     <Compile Include="MultiAsyncCounterparts\Fixture.cs" />
     <Compile Include="MultiAsyncCounterparts\Input\TaskRunFunc.cs" />
@@ -234,6 +251,7 @@
     <Compile Include="NewTypes\Fixture.cs" />
     <Compile Include="NewTypes\Input\Inheritance.cs" />
     <Compile Include="NewTypes\Input\MissingMembers.cs" />
+    <Compile Include="NewTypes\Input\NestedCopy.cs" />
     <Compile Include="NewTypes\Input\NonAsync.cs" />
     <Compile Include="NewTypes\Input\NestedClasses.cs" />
     <Compile Include="OmitAsync\Fixture.cs" />
@@ -246,6 +264,7 @@
     <Compile Include="PartialCompilation\Input\CtorMultiOverloads.cs" />
     <Compile Include="PartialCompilation\Input\Ctor.cs" />
     <Compile Include="Plugins\Fixture.cs" />
+    <Compile Include="Plugins\Input\NestedEmptyRegions.cs" />
     <Compile Include="Plugins\Input\EmptyRegions.cs" />
     <Compile Include="Plugins\Input\TransactionScopeAsyncFlow.cs" />
     <Compile Include="PreconditionOmitAsync\Fixture.cs" />
@@ -564,6 +583,81 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MultiAsyncCounterparts\Output\TaskRunFunc.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\Getter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\GetterNoConversion.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ArrowGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\InterfaceGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractGetterNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\InterfaceGetterNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\GetterWithAsyncPart.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\GetterProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\NestedType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MissingMembers\Output\NestedTypeNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ExternalGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractInterfaceGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ListGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ListGetterWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractInterfaceGetterWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\NestedCopy.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ArgumentGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Plugins\Output\NestedEmptyRegions.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\Setter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\ArrowSetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractSetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractSetterNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractInterfaceSetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AsyncProperites\Output\AbstractInterfaceSetterWithTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

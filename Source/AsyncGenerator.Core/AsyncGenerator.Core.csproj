@@ -136,6 +136,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzation\IAccessorAnalyzationResult.cs" />
     <Compile Include="Analyzation\IAnalyzationResult.cs" />
     <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
@@ -146,9 +147,11 @@
     <Compile Include="Analyzation\ILockAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IMethodOrAccessorAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMethodSymbolInfo.cs" />
     <Compile Include="Analyzation\INamespaceAnalyzationResult.cs" />
     <Compile Include="Analyzation\IProjectAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IPropertyAnalyzationResult.cs" />
     <Compile Include="Analyzation\IReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\ITypeAnalyzationResult.cs" />
     <Compile Include="Analyzation\ITypeReferenceAnalyzationResult.cs" />
@@ -186,7 +189,7 @@
     <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
     <Compile Include="Plugins\IDocumentTransformer.cs" />
     <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
-    <Compile Include="Plugins\IMethodTransformer.cs" />
+    <Compile Include="Plugins\IMethodOrAccessorTransformer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPreconditionChecker.cs" />
     <Compile Include="Plugins\MethodTransformerResult.cs" />
@@ -194,10 +197,12 @@
     <Compile Include="Plugins\TransactionScopeAsyncFlowAdder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReferenceConversion.cs" />
+    <Compile Include="Transformation\IAccessorTransformationResult.cs" />
     <Compile Include="Transformation\IDocumentTransformationResult.cs" />
     <Compile Include="Transformation\IFunctionReferenceTransformationResult.cs" />
     <Compile Include="Transformation\ILockTransformationResult.cs" />
     <Compile Include="Transformation\IMemberTransformationResult.cs" />
+    <Compile Include="Transformation\IMethodOrAccessorTransformationResult.cs" />
     <Compile Include="Transformation\IMethodTransformationResult.cs" />
     <Compile Include="Transformation\INamespaceTransformationMetadata.cs" />
     <Compile Include="Transformation\INamespaceTransformationResult.cs" />
@@ -205,6 +210,7 @@
     <Compile Include="Transformation\ITransformationResult.cs" />
     <Compile Include="Transformation\ITypeTransformationMetadata.cs" />
     <Compile Include="Transformation\ITypeTransformationResult.cs" />
+    <Compile Include="PropertyConversion.cs" />
     <Compile Include="TypeConversion.cs" />
   </ItemGroup>
   <ItemGroup>

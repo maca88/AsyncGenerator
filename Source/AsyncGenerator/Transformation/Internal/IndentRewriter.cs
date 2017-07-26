@@ -10,9 +10,10 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	public class IndentRewriter : CSharpSyntaxRewriter
+	internal class IndentRewriter : CSharpSyntaxRewriter
 	{
 		private readonly string _indent;
+		private readonly bool _subtract;
 
 		// TODO: unit test and add missing ones
 		private readonly HashSet<SyntaxKind> _validSyntaxes = new HashSet<SyntaxKind>
@@ -23,9 +24,10 @@ namespace AsyncGenerator.Transformation.Internal
 			SyntaxKind.CaseSwitchLabel
 		};
 
-		public IndentRewriter(string indent)
+		public IndentRewriter(string indent, bool subtract = false)
 		{
 			_indent = indent;
+			_subtract = subtract;
 		}
 
 		public override SyntaxNode Visit(SyntaxNode node)
@@ -34,7 +36,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				return base.Visit(node);
 			}
-			node = node.WithLeadingTrivia(AppendIndent(node.GetLeadingTrivia()));
+			node = node.WithLeadingTrivia(AlterIndent(node.GetLeadingTrivia()));
 			return base.Visit(node);
 		}
 
@@ -42,12 +44,12 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			node = node
 				.WithCloseBraceToken(
-					node.CloseBraceToken.WithLeadingTrivia(AppendIndent(node.CloseBraceToken.LeadingTrivia))
+					node.CloseBraceToken.WithLeadingTrivia(AlterIndent(node.CloseBraceToken.LeadingTrivia))
 				);
 			return base.VisitBlock(node);
 		}
 
-		private SyntaxTriviaList AppendIndent(SyntaxTriviaList leadTrivia)
+		private SyntaxTriviaList AlterIndent(SyntaxTriviaList leadTrivia)
 		{
 			var whitespaces = leadTrivia
 				.Select((trivia, i) => new
@@ -59,9 +61,12 @@ namespace AsyncGenerator.Transformation.Internal
 				.ToList();
 			foreach (var whitespace in whitespaces)
 			{
+				var trivia = whitespace.Trivia.ToFullString();
 				leadTrivia = leadTrivia
 					.RemoveAt(whitespace.Index)
-					.Insert(whitespace.Index, Whitespace(whitespace.Trivia.ToFullString() + _indent));
+					.Insert(whitespace.Index, _subtract
+						? Whitespace(trivia.Substring(0, Math.Max(trivia.Length - _indent.Length, 0)))
+						: Whitespace(trivia + _indent));
 			}
 			return leadTrivia;
 		}

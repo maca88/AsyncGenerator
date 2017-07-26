@@ -13,7 +13,7 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	public class DocumentationCommentMethodTransformer : IMethodTransformer
+	internal class DocumentationCommentMethodTransformer : IMethodOrAccessorTransformer
 	{
 		private IProjectDocumentationCommentConfiguration _configuration;
 		private bool _isEnabled;
@@ -30,7 +30,7 @@ namespace AsyncGenerator.Transformation.Internal
 			return Task.CompletedTask;
 		}
 
-		public MethodTransformerResult Transform(IMethodTransformationResult methodTransformResult,
+		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult methodTransformResult,
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			if (!_isEnabled)
@@ -83,7 +83,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private DocumentationCommentTriviaSyntax ProcessTag(
 			DocumentationCommentTriviaSyntax documentationNode,
-			IMethodTransformationResult methodTransformResult, 
+			IMethodOrAccessorTransformationResult methodTransformResult, 
 			string tagName, 
 			Func<IMethodSymbol, string> addOrReplace, 
 			Predicate<IMethodSymbol> canRemove,

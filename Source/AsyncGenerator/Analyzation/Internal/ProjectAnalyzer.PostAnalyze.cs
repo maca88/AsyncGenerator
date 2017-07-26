@@ -18,13 +18,13 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// </summary>
 		/// <param name="asyncMethodData">Method data that is marked to be async</param>
 		/// <param name="toProcessMethodData">All method data that needs to be processed</param>
-		private void PostAnalyzeAsyncMethodData(MethodData asyncMethodData, ISet<MethodData> toProcessMethodData)
+		private void PostAnalyzeAsyncMethodData(MethodOrAccessorData asyncMethodData, ISet<MethodOrAccessorData> toProcessMethodData)
 		{
 			if (!toProcessMethodData.Contains(asyncMethodData))
 			{
 				return;
 			}
-			var processingMetodData = new Queue<MethodData>();
+			var processingMetodData = new Queue<MethodOrAccessorData>();
 			processingMetodData.Enqueue(asyncMethodData);
 			while (processingMetodData.Any())
 			{
@@ -59,7 +59,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
-					var depMethodData = depFunctionData as MethodData;
+					var depMethodData = depFunctionData as MethodOrAccessorData;
 					var bodyReferences = depFunctionData.BodyMethodReferences.Where(o => o.ReferenceFunctionData == currentMethodData).ToList();
 					if (depMethodData != null)
 					{
@@ -153,7 +153,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void CalculatePreserveReturnType(MethodData methodData)
+		private void CalculatePreserveReturnType(MethodOrAccessorData methodData)
 		{
 			// Shall not wrap the return type into Task when all async invocations do not return a task. Here we mark only methods that do not contain 
 			// any references to internal methods
@@ -178,7 +178,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void ValidateMethodCancellationToken(MethodData methodData)
+		private void ValidateMethodCancellationToken(MethodOrAccessorData methodData)
 		{
 			var methodGeneration = methodData.MethodCancellationToken.GetValueOrDefault();
 
@@ -246,7 +246,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			methodData.MethodCancellationToken = methodGeneration;
 		}
 
-		private void CalculateFinalFunctionConversion(FunctionData functionData, ICollection<MethodData> asyncMethodDatas)
+		private void CalculateFinalFunctionConversion(FunctionData functionData, ICollection<MethodOrAccessorData> asyncMethodDatas)
 		{
 			// Before checking the conversion of method references we have to calculate the conversion of invocations that 
 			// have one or more methods passed as an argument as the current calculated conversion may be wrong
@@ -317,7 +317,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (functionData.Conversion != MethodConversion.Ignore && functionData.BodyMethodReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
 			{
 				// A method may be already calculated to be async, but we will ignore it if the method does not have any dependency and was not explicitly set to be async
-				var methodData = functionData as MethodData;
+				var methodData = functionData as MethodOrAccessorData;
 				if (methodData == null || (!methodData.Missing && !methodData.Dependencies.Any() && !asyncMethodDatas.Contains(methodData)))
 				{
 					functionData.Ignore("Does not have any async invocations");
@@ -355,7 +355,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			foreach (var methodData in allNamespaceData
 				.SelectMany(o => o.Types.Values)
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData())
-				.SelectMany(o => o.Methods.Values.Where(m => m.ExplicitlyIgnored)))
+				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.ExplicitlyIgnored))
+				)
 			{
 				// If an abstract method is ignored we have to ignore also the overrides otherwise we may break the functionality and the code from compiling (eg. base.Call())
 				if (methodData.Symbol.IsAbstract || methodData.Symbol.IsVirtual)
@@ -396,9 +397,24 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.GetSelfAndDescendantsTypeData(t => t.Conversion != TypeConversion.Ignore))
 				//.Where(o => o.Conversion != TypeConversion.Ignore)
 				.ToList();
-			var toProcessMethodData = new HashSet<MethodData>(allTypeData
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart, MethodConversion.Unknown))));
+			var toProcessMethodData = new HashSet<MethodOrAccessorData>(allTypeData
+				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart, MethodConversion.Unknown))));
 			//TODO: optimize steps for better performance
+
+			// We have to copy methods that are used by properties or methods that are marked to be copied
+			foreach (var methodData in toProcessMethodData.OfType<MethodData>()
+				.Where(o => !o.Conversion.HasFlag(MethodConversion.Copy) && o.TypeData.GetSelfAndAncestorsTypeData().Any(t => t.Conversion == TypeConversion.NewType)))
+			{
+				if (methodData.GetAllInvokedBy()
+						.Any(o =>
+							o.Conversion.HasFlag(MethodConversion.Copy) ||
+							(o is AccessorData accessorData && accessorData.PropertyData.Conversion == PropertyConversion.Copy)
+						)
+				)
+				{
+					methodData.SoftCopy();
+				}
+			}
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
@@ -431,7 +447,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 2. Step - Go through remaining methods and set them to be async if there is at least one method invocation that will get converted
 			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
 			var remainingMethodData = toProcessMethodData.ToList();
-			var postponedMethodData = new List<MethodData>();
+			var postponedMethodData = new List<MethodOrAccessorData>();
 			foreach (var methodData in remainingMethodData)
 			{
 				if (methodData.BodyMethodReferences.Where(o => o.ArgumentOfFunctionInvocation == null).All(o => o.GetConversion() != ReferenceConversion.ToAsync))
@@ -488,8 +504,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					else
 					{
-						methodData.Conversion &= ~MethodConversion.Unknown;
-						methodData.Conversion &= ~MethodConversion.Smart;
 						methodData.Copy();
 					}
 				}
@@ -502,7 +516,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 
 			// We need to calculate the final conversion for the local/anonymous functions
-			foreach (var methodData in allTypeData.SelectMany(o => o.Methods.Values.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync))))
+			foreach (var methodData in allTypeData.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync))))
 			{
 				// We have to calculate the conversion from bottom to top as a body reference may depend on a child function (passed by argument)
 				foreach (var childFunction in methodData.GetSelfAndDescendantsFunctions().Where(o => o.GetBodyNode() != null).OrderByDescending(o => o.GetBodyNode().SpanStart))
@@ -520,7 +534,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						if (functionRefData.ReferenceFunctionData != null)
 						{
-							var refMethodData = functionRefData.ReferenceFunctionData.GetMethodData();
+							var refMethodData = functionRefData.ReferenceFunctionData.GetMethodOrAccessorData();
 							functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;
 						}
 						if (!methodData.CancellationTokenRequired && functionRefData.CanSkipCancellationTokenArgument() == true)
@@ -539,7 +553,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 				// A type can be ignored only if it has no async methods that will get converted
-				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.Methods.Values.All(o => o.Conversion == MethodConversion.Ignore || o.Conversion == MethodConversion.Copy)))
+				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.MethodsAndAccessors.All(o => o.Conversion == MethodConversion.Ignore || o.Conversion == MethodConversion.Copy)))
 				{
 					if (typeData.ParentTypeData?.Conversion == TypeConversion.NewType)
 					{
@@ -566,7 +580,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				// A type can be ignored only if it has no async methods that will get converted
 				if (namespaceData.GetSelfAndDescendantsNamespaceData().All(t => t.Types.Values.All(o => o.Conversion == TypeConversion.Ignore)))
 				{
-					namespaceData.Conversion = NamespaceConversion.Ignore;
+					namespaceData.Ignore("Has no async members.");
 				}
 				else
 				{
@@ -576,7 +590,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 6. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
 			foreach (var functionData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
-				.SelectMany(o => o.Methods.Values.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync)))
+				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync)))
 				.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
 			{
 				CalculateFinalFlags(functionData);

@@ -42,8 +42,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
 
-		// TODO: find a better approach
-		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
+		public List<TransformationResult> TransformedNodes { get; } = new List<TransformationResult>();
 	}
 
 	internal class LockTransformationResult : TransformationResult, ILockTransformationResult
@@ -54,6 +53,112 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 		public ILockAnalyzationResult AnalyzationResult { get; }
+	}
+
+	internal class PropertyTransformationResult : TransformationResult<PropertyDeclarationSyntax>
+	{
+		public PropertyTransformationResult(IPropertyAnalyzationResult result) : base(result.Node)
+		{
+			AnalyzationResult = result;
+		}
+
+		public List<AccessorTransformationResult> TransformedAccessors { get; } = new List<AccessorTransformationResult>();
+
+		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia BodyLeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		public SyntaxTrivia IndentTrivia { get; set; }
+
+		public IPropertyAnalyzationResult AnalyzationResult { get; }
+
+		public List<MethodDeclarationSyntax> Methods { get; private set; }
+
+		public List<FieldDeclarationSyntax> Fields { get; set; }
+
+		public void AddMethod(MethodDeclarationSyntax node)
+		{
+			Methods = Methods ?? new List<MethodDeclarationSyntax>();
+			Methods.Add(node);
+		}
+
+		public void AddMethods(IEnumerable<MethodDeclarationSyntax> nodes)
+		{
+			Methods = Methods ?? new List<MethodDeclarationSyntax>();
+			Methods.AddRange(nodes);
+		}
+
+		public override IEnumerable<SyntaxNode> GetTransformedNodes()
+		{
+			if (Fields != null)
+			{
+				foreach (var field in Fields)
+				{
+					yield return field;
+				}
+			}
+
+			if (Transformed != null)
+			{
+				yield return Transformed;
+			}
+
+			foreach (var accessor in TransformedAccessors.Where(o => o.Transformed != null))
+			{
+				yield return accessor.Transformed;
+			}
+
+			if (Methods == null)
+			{
+				yield break;
+			}
+			foreach (var method in Methods)
+			{
+				yield return method;
+			}
+		}
+	}
+
+	internal class AccessorTransformationResult : TransformationResult<SyntaxNode, MethodDeclarationSyntax>, IAccessorTransformationResult
+	{
+		public AccessorTransformationResult(IAccessorAnalyzationResult result) : base(result.Node)
+		{
+			AnalyzationResult = result;
+		}
+
+		public IAccessorAnalyzationResult AnalyzationResult { get; }
+
+		public List<RootFunctionTransformationResult> TransformedFunctions { get; } = new List<RootFunctionTransformationResult>();
+
+		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
+
+		public List<LockTransformationResult> TransformedLocks { get; } = new List<LockTransformationResult>();
+
+		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia BodyLeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		public SyntaxTrivia IndentTrivia { get; set; }
+
+		#region IMethodOrAccessorTransformationResult
+
+		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
+		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodOrAccessorTransformationResult.TransformedFunctionReferences =>
+			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
+
+		private IReadOnlyList<ILockTransformationResult> _cachedTransformedLocks;
+		IReadOnlyList<ILockTransformationResult> IMethodOrAccessorTransformationResult.TransformedLocks =>
+			_cachedTransformedLocks ?? (_cachedTransformedLocks = TransformedLocks.ToImmutableList());
+
+		IMethodOrAccessorAnalyzationResult IMethodOrAccessorTransformationResult.AnalyzationResult => AnalyzationResult;
+
+		#endregion
+
+		IMemberAnalyzationResult IMemberTransformationResult.GetAnalyzationResult() => AnalyzationResult;
 	}
 
 	internal class MethodTransformationResult : TransformationResult<MethodDeclarationSyntax>, IMethodTransformationResult
@@ -83,19 +188,18 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public SyntaxTrivia IndentTrivia { get; set; }
 
-		// TODO: find a better approach
-		public string TaskReturnedAnnotation { get; set; } = "TaskReturned";
-
-		#region IMethodTransformationResult
+		#region IMethodOrAccessorTransformationResult
 
 		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
-		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodTransformationResult.TransformedFunctionReferences =>
+		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodOrAccessorTransformationResult.TransformedFunctionReferences =>
 			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
 
 		private IReadOnlyList<ILockTransformationResult> _cachedTransformedLocks;
-		IReadOnlyList<ILockTransformationResult> IMethodTransformationResult.TransformedLocks =>
+		IReadOnlyList<ILockTransformationResult> IMethodOrAccessorTransformationResult.TransformedLocks =>
 			_cachedTransformedLocks ?? (_cachedTransformedLocks = TransformedLocks.ToImmutableList());
-		
+
+		IMethodOrAccessorAnalyzationResult IMethodOrAccessorTransformationResult.AnalyzationResult => AnalyzationResult;
+
 		#endregion
 
 
@@ -140,9 +244,6 @@ namespace AsyncGenerator.Transformation.Internal
 			return AnalyzationResult;
 		}
 
-		IMemberAnalyzationResult IMemberTransformationResult.GetAnalyzationResult()
-		{
-			throw new NotImplementedException();
-		}
+		IMemberAnalyzationResult IMemberTransformationResult.GetAnalyzationResult() => AnalyzationResult;
 	}
 }

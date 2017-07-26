@@ -4,10 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -22,12 +26,13 @@ namespace AsyncGenerator.Transformation.Internal
 	/// </summary>
 	internal class ReturnTaskMethodRewriter : CSharpSyntaxRewriter
 	{
-		private readonly IMethodAnalyzationResult _methodResult;
-		private readonly MethodTransformationResult _transformResult;
+		private readonly IMethodOrAccessorAnalyzationResult _methodResult;
+		private readonly IMethodOrAccessorTransformationResult _transformResult;
 		private readonly INamespaceTransformationMetadata _namespaceMetadata;
 		private SyntaxKind? _rewritingSyntaxKind;
+		private MethodDeclarationSyntax _methodNode;
 
-		public ReturnTaskMethodRewriter(MethodTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
+		public ReturnTaskMethodRewriter(IMethodOrAccessorTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			_transformResult = transformResult;
 			_methodResult = transformResult.AnalyzationResult;
@@ -37,13 +42,21 @@ namespace AsyncGenerator.Transformation.Internal
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
 		{
 			_rewritingSyntaxKind = node.Kind();
-			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
-			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
-			if (bodyBlock != null)
+			_methodNode = node;
+			if (!_methodResult.Faulted && 
+				(
+					(_methodResult.Symbol.ReturnsVoid && node.IsReturnStatementRequired()) || 
+					_methodResult.WrapInTryCatch
+				)
+			)
 			{
-				return node.WithBody(RewriteFunctionBody(bodyBlock));
+				node = node.ConvertExpressionBodyToBlock(_transformResult);
 			}
-			// TODO: handle arrow methods
+			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
+			if (node.GetFunctionBody() is BlockSyntax blockBody)
+			{
+				return node.WithBody(RewriteFunctionBody(blockBody));
+			}
 			return node;
 		}
 
@@ -134,6 +147,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public override SyntaxNode Visit(SyntaxNode node)
 		{
+			if (node == null)
+			{
+				return null;
+			}
 			// Skip if the statement is a precondition
 			if (_methodResult.Preconditions.Count > 0)
 			{
@@ -155,13 +172,13 @@ namespace AsyncGenerator.Transformation.Internal
 
 			// If the expression is returned and does not return a Task then wrap it into Task.FromResult
 			var expression = node as ExpressionSyntax;
-			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any())
+			if (expression != null && expression.IsReturned() && !expression.GetAnnotations(Annotations.TaskReturned).Any())
 			{
 				// Before wrapping into a task we need to check if is a conditional expression as we can have a conditional expression and one or both parts can return a Task
 				if (node is ConditionalExpressionSyntax conditionalExpression)
 				{
-					var isWhenTrueTask = conditionalExpression.WhenTrue.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any();
-					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(_transformResult.TaskReturnedAnnotation).Any();
+					var isWhenTrueTask = conditionalExpression.WhenTrue.GetAnnotations(Annotations.TaskReturned).Any();
+					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(Annotations.TaskReturned).Any();
 					var whenFalse = isWhenFalseTask
 						? conditionalExpression.WhenFalse
 						: WrapInTaskFromResult(conditionalExpression.WhenFalse);
@@ -225,7 +242,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Node.ReturnType.WithoutTrivia())))))
+											: _methodNode.ReturnType.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -247,7 +264,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodResult.Node.ReturnType.WithoutTrivia())))))
+											: _methodNode.ReturnType.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -294,7 +311,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax ForwardCall(BlockSyntax bodyBlock)
 		{
-			var methodNode = _methodResult.Node;
+			var methodNode = _methodNode;
 			var invocation = methodNode.ForwardCall(_methodResult.Symbol, methodNode.Identifier.ValueText);
 			var block = Block()
 				.WithCloseBraceToken(bodyBlock.CloseBraceToken)
@@ -370,7 +387,7 @@ namespace AsyncGenerator.Transformation.Internal
 														SingletonSeparatedList(
 															_methodResult.Symbol.ReturnsVoid
 																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-																: _methodResult.Node.ReturnType.WithoutTrivia())))))
+																: _methodNode.ReturnType.WithoutTrivia())))))
 									.WithArgumentList(
 										ArgumentList(
 											SingletonSeparatedList(

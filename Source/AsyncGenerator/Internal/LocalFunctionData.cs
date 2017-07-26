@@ -10,16 +10,16 @@ namespace AsyncGenerator.Internal
 {
 	internal class LocalFunctionData : ChildFunctionData
 	{
-		public LocalFunctionData(MethodData methodData, IMethodSymbol symbol, LocalFunctionStatementSyntax node,
+		public LocalFunctionData(BaseMethodData methodData, IMethodSymbol symbol, LocalFunctionStatementSyntax node,
 			FunctionData parent = null) : base(symbol, parent ?? methodData)
 		{
-			MethodData = methodData;
-			Node = node;
+			MethodData = methodData ?? throw new ArgumentNullException(nameof(methodData));
+			Node = node ?? throw new ArgumentNullException(nameof(node));
 		}
 
 		public LocalFunctionStatementSyntax Node { get; }
 
-		public MethodData MethodData { get; }
+		public BaseMethodData MethodData { get; }
 
 		public override TypeData TypeData => MethodData.TypeData;
 
@@ -33,7 +33,12 @@ namespace AsyncGenerator.Internal
 			return Node.Body ?? (SyntaxNode)Node.ExpressionBody;
 		}
 
-		public override MethodData GetMethodData()
+		public override MethodOrAccessorData GetMethodOrAccessorData()
+		{
+			return MethodData as MethodOrAccessorData;
+		}
+
+		public override BaseMethodData GetBaseMethodData()
 		{
 			return MethodData;
 		}

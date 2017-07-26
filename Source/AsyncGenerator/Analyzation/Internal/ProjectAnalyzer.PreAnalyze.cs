@@ -28,50 +28,62 @@ namespace AsyncGenerator.Analyzation.Internal
 				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
 				PreAnalyzeType(typeData);
 
-				// TODO: we have to pre-analyze properties as they can also contains some async calls.
 				// TODO: fields can have anonymous functions that have async calls
-				foreach (var methodNode in typeNode.Members
-					.OfType<MethodDeclarationSyntax>())
+				foreach (var memberNode in typeNode.Members)
 				{
-					var methodData = documentData.GetOrCreateMethodData(methodNode, typeData);
-					if (typeData.Conversion == TypeConversion.Ignore)
+					if (memberNode is BaseMethodDeclarationSyntax methodNode)
 					{
-						methodData.Ignore("Ignored by TypeConversion function", true);
-					}
-					else
-					{
-						PreAnalyzeMethodData(methodData, documentData.SemanticModel);
-					}
-
-					foreach (var node in methodNode
-						.DescendantNodes())
-					{
-						switch (node.Kind())
+						var methodData = documentData.GetOrCreateBaseMethodData(methodNode, typeData);
+						if (typeData.Conversion == TypeConversion.Ignore)
 						{
-							case SyntaxKind.ParenthesizedLambdaExpression:
-							case SyntaxKind.AnonymousMethodExpression:
-							case SyntaxKind.SimpleLambdaExpression:
-								var anonFunData = documentData.GetOrCreateAnonymousFunctionData((AnonymousFunctionExpressionSyntax)node, methodData);
-								if (methodData.Conversion == MethodConversion.Ignore)
-								{
-									anonFunData.Ignore("Cascade ignored.");
-								}
-								else
-								{
-									PreAnalyzeAnonymousFunction(anonFunData, documentData.SemanticModel);
-								}
-								break;
-							case SyntaxKind.LocalFunctionStatement:
-								var localFunData = documentData.GetOrCreateLocalFunctionData((LocalFunctionStatementSyntax)node, methodData);
-								if (methodData.Conversion == MethodConversion.Ignore)
-								{
-									localFunData.Ignore("Cascade ignored.");
-								}
-								else
-								{
-									PreAnalyzeLocalFunction(localFunData, documentData.SemanticModel);
-								}
-								break;
+							methodData.Ignore("Ignored by TypeConversion function", true);
+						}
+						else
+						{
+							PreAnalyzeFunctionData(methodData, documentData.SemanticModel);
+						}
+
+						foreach (var node in methodNode.DescendantNodes())
+						{
+							switch (node.Kind())
+							{
+								case SyntaxKind.ParenthesizedLambdaExpression:
+								case SyntaxKind.AnonymousMethodExpression:
+								case SyntaxKind.SimpleLambdaExpression:
+									var anonFunData = documentData.GetOrCreateAnonymousFunctionData((AnonymousFunctionExpressionSyntax)node, methodData);
+									if (methodData.Conversion == MethodConversion.Ignore)
+									{
+										anonFunData.Ignore("Cascade ignored.");
+									}
+									else
+									{
+										PreAnalyzeAnonymousFunction(anonFunData, documentData.SemanticModel);
+									}
+									break;
+								case SyntaxKind.LocalFunctionStatement:
+									var localFunData = documentData.GetOrCreateLocalFunctionData((LocalFunctionStatementSyntax)node, methodData);
+									if (methodData.Conversion == MethodConversion.Ignore)
+									{
+										localFunData.Ignore("Cascade ignored.");
+									}
+									else
+									{
+										PreAnalyzeLocalFunction(localFunData, documentData.SemanticModel);
+									}
+									break;
+							}
+						}
+					}
+					else if (memberNode is PropertyDeclarationSyntax propertyNode)
+					{
+						var propertyData = documentData.GetOrCreatePropertyData(propertyNode, typeData);
+						if (typeData.Conversion == TypeConversion.Ignore)
+						{
+							propertyData.Ignore("Ignored by TypeConversion function", true);
+						}
+						else
+						{
+							PreAnalyzePropertyData(propertyData, documentData.SemanticModel);
 						}
 					}
 				}
@@ -95,30 +107,69 @@ namespace AsyncGenerator.Analyzation.Internal
 			typeData.IsPartial = typeData.Node.IsPartial();
 		}
 
-		private void PreAnalyzeMethodData(MethodData methodData, SemanticModel semanticModel)
+		private void PreAnalyzePropertyData(PropertyData propertyData, SemanticModel semanticModel)
 		{
-			var methodSymbol = methodData.Symbol;
-			methodData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
-			// TODO: validate conversion
-			if (methodData.Conversion == MethodConversion.Ignore)
+			var newType = propertyData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
+			if (!_configuration.PropertyConversion)
 			{
-				methodData.Ignore("Ignored by MethodConversion function", true);
+				// Ignore getter and setter accessors and copy the property if needed
+				propertyData.Ignore("Ignored by PropertyConversion function");
+			}
+			if (newType)
+			{
+				propertyData.Copy();  // TODO: copy only if needed
+			}
+			else
+			{
+				propertyData.Conversion = PropertyConversion.Ignore; // For partial types we do not want to copy the property
+			}
+			if (!_configuration.PropertyConversion)
+			{
+				return;
+			}
+			var getter = propertyData.GetAccessorData;
+			if (getter != null)
+			{
+				PreAnalyzeFunctionData(getter, semanticModel);
+			}
+			var setter = propertyData.SetAccessorData;
+			if (setter != null)
+			{
+				PreAnalyzeFunctionData(setter, semanticModel);
+			}
+		}
+
+
+		private void PreAnalyzeFunctionData(FunctionData functionData, SemanticModel semanticModel)
+		{
+			var methodSymbol = functionData.Symbol;
+
+			if (functionData.Conversion == MethodConversion.Ignore)
+			{
 				return;
 			}
 
-			var forceAsync = methodData.Conversion.HasFlag(MethodConversion.ToAsync);
-			var newType = methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
-			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
+			functionData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
+			// TODO: validate conversion
+			if (functionData.Conversion == MethodConversion.Ignore)
+			{
+				functionData.Ignore("Ignored by MethodConversion function", true);
+				return;
+			}
+
+			var forceAsync = functionData.Conversion.HasFlag(MethodConversion.ToAsync);
+			var newType = functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
+			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
 			void IgnoreOrCopy(string reason)
 			{
 				if (newType)
 				{
-					methodData.Copy();
+					functionData.Copy();
 				}
 				else
 				{
-					methodData.Ignore(reason);
-					log(methodData);
+					functionData.Ignore(reason);
+					log(functionData);
 				}
 			}
 
@@ -127,7 +178,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				IgnoreOrCopy("Is already async");
 				return;
 			}
-			if (methodSymbol.MethodKind != MethodKind.Ordinary && methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation)
+			if (
+				methodSymbol.MethodKind != MethodKind.Ordinary && 
+				methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation &&
+				methodSymbol.MethodKind != MethodKind.PropertyGet &&
+				methodSymbol.MethodKind != MethodKind.PropertySet)
 			{
 				IgnoreOrCopy($"Unsupported method kind {methodSymbol.MethodKind}");
 				return;
@@ -136,6 +191,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (methodSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
 				IgnoreOrCopy("Has out parameters");
+				return;
+			}
+			FillFunctionLocks(functionData, semanticModel);
+
+			var methodData = functionData as MethodOrAccessorData;
+			if (methodData == null)
+			{
 				return;
 			}
 
@@ -151,7 +213,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						// Check if the interface member has an async counterpart
 						var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 							.OfType<IMethodSymbol>()
-							.Where(o => o.Name == methodSymbol.Name + "Async")
+							.Where(o => o.Name == methodSymbol.GetAsyncName())
 							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
 
 						if (asyncConterPart == null)
@@ -189,7 +251,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Check if the external member has an async counterpart that is not implemented in the current type (missing member)
 					var asyncConterPart = overridenMethod.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
-						.Where(o => o.Name == methodSymbol.Name + "Async" && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
+						.Where(o => o.Name == methodSymbol.GetAsyncName() && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
 						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
 					if (asyncConterPart == null)
 					{
@@ -247,7 +309,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Check if the member has an async counterpart that is not implemented in the current type (missing member)
 					var asyncConterPart = interfaceMember.ContainingType.GetMembers()
 						.OfType<IMethodSymbol>()
-						.Where(o => o.Name == methodSymbol.Name + "Async")
+						.Where(o => o.Name == methodSymbol.GetAsyncName())
 						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
 					if (asyncConterPart == null)
 					{
@@ -318,7 +380,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					return;
 				}
 			}
-			FillFunctionLocks(methodData, semanticModel);
 		}
 
 		private void PreAnalyzeAnonymousFunction(AnonymousFunctionData functionData, SemanticModel semanticModel)
@@ -330,7 +391,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			var funcionSymbol = functionData.Symbol;
 			var forceAsync = functionData.MethodData.Conversion.HasFlag(MethodConversion.ToAsync);
-			var log = forceAsync ? WarnLogIgnoredReason : (Action<FunctionData>)VoidLog;
+			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog;
 			if (funcionSymbol.IsAsync)
 			{
 				functionData.Ignore("Is already async");

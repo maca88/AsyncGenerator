@@ -81,7 +81,6 @@ namespace AsyncGenerator.Tests.RegionDirective
 			return SimpleFile.ReadAsync(cancellationToken);
 		}
 
-
 		public Task ReadAsync()
 		{
 			return ReadAsync(CancellationToken.None);

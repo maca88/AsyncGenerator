@@ -9,23 +9,18 @@ namespace AsyncGenerator.Internal
 {
 	internal class AnonymousFunctionData : ChildFunctionData
 	{
-		public AnonymousFunctionData(MethodData methodData, IMethodSymbol symbol, AnonymousFunctionExpressionSyntax node,
+		public AnonymousFunctionData(BaseMethodData methodData, IMethodSymbol symbol, AnonymousFunctionExpressionSyntax node,
 			FunctionData parent = null) : base(symbol, parent ?? methodData)
 		{
-			MethodData = methodData;
-			Node = node;
+			MethodData = methodData ?? throw new ArgumentNullException(nameof(methodData));
+			Node = node ?? throw new ArgumentNullException(nameof(node));
 		}
 
 		public AnonymousFunctionExpressionSyntax Node { get; }
 
-		public MethodData MethodData { get; }
+		public BaseMethodData MethodData { get; }
 
 		public override TypeData TypeData => MethodData.TypeData;
-
-		/// <summary>
-		/// Symbol of the method that uses this function as an argument, value represents the index of the argument
-		/// </summary>
-		//public Tuple<IMethodSymbol, int> ArgumentOfMethod { get; set; }
 
 		public override SyntaxNode GetNode()
 		{
@@ -37,7 +32,12 @@ namespace AsyncGenerator.Internal
 			return Node.Body;
 		}
 
-		public override MethodData GetMethodData()
+		public override MethodOrAccessorData GetMethodOrAccessorData()
+		{
+			return MethodData as MethodOrAccessorData;
+		}
+
+		public override BaseMethodData GetBaseMethodData()
 		{
 			return MethodData;
 		}

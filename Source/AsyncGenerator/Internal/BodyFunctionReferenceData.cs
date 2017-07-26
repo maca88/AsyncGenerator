@@ -63,8 +63,11 @@ namespace AsyncGenerator.Internal
 
 		public void Ignore(string reason)
 		{
+			if (Conversion != ReferenceConversion.Ignore)
+			{
+				IgnoredReason = reason;
+			}
 			Conversion = ReferenceConversion.Ignore;
-			IgnoredReason = reason;
 			if (FunctionArguments == null)
 			{
 				return;
@@ -102,7 +105,7 @@ namespace AsyncGenerator.Internal
 		{
 			if (ReferenceFunctionData != null)
 			{
-				var refMethodData = ReferenceFunctionData.GetMethodData();
+				var refMethodData = ReferenceFunctionData.GetMethodOrAccessorData();
 					return refMethodData.MethodCancellationToken.GetValueOrDefault().HasOptionalCancellationToken();
 			}
 

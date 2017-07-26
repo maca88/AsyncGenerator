@@ -20,9 +20,10 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
-				foreach (var methodData in typeData.Methods.Values.Where(o => o.Conversion != MethodConversion.Ignore))
+				foreach (var methodData in typeData.MethodsAndAccessors.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
-					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore).OrderByDescending(o => o.GetNode().SpanStart))
+					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore)
+						.OrderByDescending(o => o.GetNode().SpanStart))
 					{
 						AnalyzeAnonymousFunctionData(documentData, functionData);
 					}
@@ -31,11 +32,11 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeMethodData(DocumentData documentData, MethodData methodData)
+		private void AnalyzeMethodData(DocumentData documentData, MethodOrAccessorData methodAccessorData)
 		{
-			if (methodData.Conversion == MethodConversion.Copy)
+			if (methodAccessorData.Conversion == MethodConversion.Copy)
 			{
-				foreach (var bodyReference in methodData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
+				foreach (var bodyReference in methodAccessorData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
 				{
 					var invokedMethodData = bodyReference.ReferenceFunctionData;
 					if (invokedMethodData.Conversion != MethodConversion.Ignore)
@@ -47,16 +48,16 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			
 			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
-			var baseMethods = methodData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
-			if (!methodData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
+			var baseMethods = methodAccessorData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
+			if (!methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
 			{
-				if (methodData.TypeData.GetSelfAndAncestorsTypeData()
+				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData()
 					.Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
 				{
-					methodData.Copy();
+					methodAccessorData.Copy();
 					// Check if there are any internal methods that are candidate to be async and are invoked inside this method
 					// If there are, then we need to copy them
-					foreach (var bodyReference in methodData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
+					foreach (var bodyReference in methodAccessorData.BodyMethodReferences.Where(o => o.ReferenceFunctionData != null))
 					{
 						var invokedMethodData = bodyReference.ReferenceFunctionData;
 						if (invokedMethodData.Conversion != MethodConversion.Ignore)
@@ -67,40 +68,43 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
-					methodData.Ignore("All abstract/virtual related methods are ignored");
+					methodAccessorData.Ignore("All abstract/virtual related methods are ignored");
 				}
 				return;
 			}
 
 
-			var methodBody = methodData.GetBodyNode();
-			methodData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
-			methodData.MustRunSynchronized = methodData.Symbol.GetAttributes()
+			var methodBody = methodAccessorData.GetBodyNode();
+			methodAccessorData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodAccessorData.MustRunSynchronized = methodAccessorData.Symbol.GetAttributes()
 				.Where(o => o.AttributeClass.Name == "MethodImplAttribute")
 				.Any(o => ((MethodImplOptions)(int)o.ConstructorArguments.First().Value).HasFlag(MethodImplOptions.Synchronized));
+
 			if (methodBody == null)
 			{
-				methodData.OmitAsync = true;
+				methodAccessorData.OmitAsync = true;
 			}
 
 			// Order by descending so we are sure that methods passed by argument will be processed before the invoked method with those arguments
-			foreach (var reference in methodData.BodyMethodReferences.OrderByDescending(o => o.ReferenceNameNode.SpanStart))
+			foreach (var reference in methodAccessorData.BodyMethodReferences.OrderByDescending(o => o.ReferenceNameNode.SpanStart))
 			{
 				AnalyzeMethodReference(documentData, reference);
 			}
 
-			foreach (var reference in methodData.CrefMethodReferences)
+			foreach (var reference in methodAccessorData.CrefMethodReferences)
 			{
-				AnalyzeCrefMethodReference(documentData, methodData, reference);
+				AnalyzeCrefMethodReference(documentData, methodAccessorData, reference);
 			}
 
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
-			foreach (var reference in methodData.BodyMethodReferences.Where(o => o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
+			// Do not ignore accessor as they are executed prior passing
+			foreach (var reference in methodAccessorData.BodyMethodReferences
+				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
-			if (methodData.Conversion.HasFlag(MethodConversion.ToAsync))
+			if (methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return;
 			}
@@ -109,15 +113,15 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Methods with Unknown may not have InvokedBy populated so we cannot ignore them here
 			// Do not ignore methods that are inside a type with conversion NewType as ExternalRelatedMethods may not be populated
 			if (
-				!methodData.Dependencies.Any() && 
-				methodData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
-				methodData.Conversion.HasFlag(MethodConversion.Smart) &&
-			    methodData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
-				!methodData.ExternalRelatedMethods.Any()
+				!methodAccessorData.Dependencies.Any() && 
+				methodAccessorData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
+				methodAccessorData.Conversion.HasFlag(MethodConversion.Smart) &&
+			    methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
+				!methodAccessorData.ExternalRelatedMethods.Any()
 			)
 			{
-				methodData.Ignore("Method is never used and has no async invocations");
-				LogIgnoredReason(methodData);
+				methodAccessorData.Ignore("Method is never used and has no async invocations");
+				LogIgnoredReason(methodAccessorData);
 			}
 		}
 
@@ -155,7 +159,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
-			foreach (var reference in functionData.BodyMethodReferences.Where(o => o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
+			foreach (var reference in functionData.BodyMethodReferences
+				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
@@ -163,7 +168,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			functionData.RewriteYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
-		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodData methoData, CrefFunctionReferenceData crefData)
+		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodOrAccessorData methoData, CrefFunctionReferenceData crefData)
 		{
 			crefData.RelatedBodyFunctionReferences.AddRange(
 				methoData.BodyMethodReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
@@ -174,8 +179,19 @@ namespace AsyncGenerator.Analyzation.Internal
 			var nameNode = refData.ReferenceNameNode;
 
 			// Find the actual usage of the method
-			var currNode = nameNode.Parent;
+			SyntaxNode currNode = nameNode;
 			var ascend = true;
+
+			if (refData.ReferenceSymbol.IsPropertyAccessor())
+			{
+				ascend = false;
+				AnalyzeAccessor(documentData, nameNode, refData);
+			}
+			else
+			{
+				currNode = nameNode.Parent;
+			}
+
 			while (ascend)
 			{
 				ascend = false;
@@ -227,22 +243,48 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, BodyFunctionReferenceData functionReferenceData)
+		private void AnalyzeAccessor(DocumentData documentData, SimpleNameSyntax node, BodyFunctionReferenceData functionReferenceData)
 		{
 			var functionData = functionReferenceData.FunctionData;
-			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionNode = functionData.GetNode();
+
+			if (IgnoreIfInsideQueryExpression(node, functionNode, functionReferenceData))
+			{
+				return;
+			}
+			functionReferenceData.InvokedFromType = functionData.Symbol.ContainingType;
+			FindAsyncCounterparts(functionReferenceData);
+			SetAsyncCounterpart(functionReferenceData);
+			CalculateLastInvocation(node, functionReferenceData);
+			PropagateCancellationToken(functionReferenceData);
+		}
+
+		private bool IgnoreIfInsideQueryExpression(SyntaxNode node, SyntaxNode endNode, BodyFunctionReferenceData functionReferenceData)
+		{
 			var queryExpression = node.Ancestors()
-				.TakeWhile(o => o != functionNode)
+				.TakeWhile(o => o != endNode)
 				.OfType<QueryExpressionSyntax>()
 				.FirstOrDefault();
 			if (queryExpression != null) // Await is not supported in a linq query
 			{
 				functionReferenceData.Ignore($"Cannot await async method in a query expression:\r\n{queryExpression}\r\n");
 				Logger.Warn(functionReferenceData.IgnoredReason);
+				return true;
+			}
+			return false;
+		}
+
+		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, BodyFunctionReferenceData functionReferenceData)
+		{
+			var functionData = functionReferenceData.FunctionData;
+			var methodSymbol = functionReferenceData.ReferenceSymbol;
+			var functionNode = functionData.GetNode();
+
+			if (IgnoreIfInsideQueryExpression(node, functionNode, functionReferenceData))
+			{
 				return;
 			}
-
+			
 			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
 			if (methodSymbol.ReturnType.IsTaskType())
 			{
@@ -311,6 +353,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				functionReferenceData.InvokedFromType = documentData.SemanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
 			}
+			
 
 			FindAsyncCounterparts(functionReferenceData);
 
@@ -386,7 +429,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// </summary>
 		private void PropagateCancellationToken(BodyFunctionReferenceData functionReferenceData)
 		{
-			var methodData = functionReferenceData.FunctionData.GetMethodData();
+			var methodData = functionReferenceData.FunctionData.GetMethodOrAccessorData();
 			// We will set CancellationTokenRequired to true only for the method that contains this invocation
 			if (functionReferenceData.Conversion != ReferenceConversion.ToAsync || 
 				methodData != functionReferenceData.FunctionData || 
@@ -408,7 +451,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void CalculateLastInvocation(InvocationExpressionSyntax node, BodyFunctionReferenceData functionReferenceData)
+		private void CalculateLastInvocation(SyntaxNode node, BodyFunctionReferenceData functionReferenceData)
 		{
 			var functionData = functionReferenceData.FunctionData;
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
@@ -419,7 +462,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			// Check if the invocation node is returned in an expression body
 			if (node.Parent.Equals(functionBodyNode) || //eg. bool ExpressionReturn() => SimpleFile.Write();
-			    node.Equals(functionBodyNode) // eg. Func<bool> fn = () => SimpleFile.Write();
+			    node.Equals(functionBodyNode) || // eg. Func<bool> fn = () => SimpleFile.Write();
+				(
+					node.IsKind(SyntaxKind.IdentifierName) && 
+					node.Parent.Parent.IsKind(SyntaxKind.ArrowExpressionClause) &&
+					node.Parent.Parent.Equals(functionBodyNode)
+				) // eg. bool Prop => StaticClass.Property;
 			)
 			{
 				functionReferenceData.LastInvocation = true;
@@ -609,7 +657,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			else if (functionReferenceData.ReferenceFunctionData != null)
 			{
-				functionReferenceData.AsyncCounterpartName = methodSymbol.Name + "Async";
+				functionReferenceData.AsyncCounterpartName = functionReferenceData.ReferenceFunctionData.AsyncCounterpartName;
 				functionReferenceData.AsyncCounterpartSymbol = methodSymbol;
 				
 			}

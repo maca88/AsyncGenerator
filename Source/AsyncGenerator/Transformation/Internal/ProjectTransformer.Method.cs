@@ -49,8 +49,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				if (methodConversion.HasFlag(MethodConversion.ToAsync))
 				{
-					result.Transformed = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict)
-						.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
+					result.Transformed = methodNode;
 					if (methodConversion.HasFlag(MethodConversion.Copy))
 					{
 						result.AddMethod(methodResult.Node);
@@ -135,7 +134,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					startSpan = refNode.SpanStart - startMethodSpan;
 					var referenceNode = methodNode.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);
-					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(result.TaskReturnedAnnotation)));
+					methodNode = methodNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 				}
 			}
 			// Before modifying, fixup method body formatting in order to prevent weird formatting when adding additinal code
@@ -162,39 +161,47 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
 			}
 
-			if (methodResult.RewriteYields)
-			{
-				var yieldRewriter = new YieldRewriter(result);
-				methodNode = (MethodDeclarationSyntax)yieldRewriter.VisitMethodDeclaration(methodNode);
-			}
-
-			if (!methodResult.SplitTail && !methodResult.PreserveReturnType && methodResult.OmitAsync)
-			{
-				var rewriter = new ReturnTaskMethodRewriter(result, namespaceMetadata);
-				methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
-			}
-			else if(!methodResult.OmitAsync)
-			{
-				methodNode = methodNode.AddAsync();
-			}
-
-			methodNode = methodNode
-				.WithIdentifier(Identifier(methodNode.Identifier.Value + "Async"));
-			if (!methodResult.PreserveReturnType)
-			{
-				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
-			}
 			result.Transformed = methodNode;
 
 			return result;
 		}
 
-		private MethodDeclarationSyntax FixupBodyFormatting(MethodDeclarationSyntax methodNode, MethodTransformationResult result)
+		private MethodDeclarationSyntax FixupBodyFormatting(MethodDeclarationSyntax methodNode, IMethodOrAccessorTransformationResult result)
 		{
-			if (methodNode.Body == null)
+			var methodBody = methodNode.Body;
+			if (methodBody == null)
 			{
+				if (methodNode.ExpressionBody == null)
+				{
+					return methodNode;
+				}
+				// Add space after the close paren token
+				if (string.IsNullOrEmpty(methodNode.ParameterList.CloseParenToken.TrailingTrivia.ToFullString()))
+				{
+					methodNode = methodNode.ReplaceToken(methodNode.ParameterList.CloseParenToken,
+						methodNode.ParameterList.CloseParenToken.WithTrailingTrivia(TriviaList(Space)));
+				}
+
 				return methodNode;
 			}
+			// Make a diff by using only the whitespaces
+			var triviaLengthDiff = string.Join("", methodBody.GetLeadingTrivia()
+					                       .Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+					                       .Select(o => o.ToFullString()))
+				                       .Length -
+			                       string.Join("", methodNode.GetLeadingTrivia()
+					                       .Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+					                       .Select(o => o.ToFullString()))
+				                       .Length;
+			if (triviaLengthDiff > 0)
+			{
+				// Normalize leading trivia
+				methodNode = methodNode.WithBody(methodBody
+					.SubtractIndent(string.Join("", methodBody.GetLeadingTrivia()
+						.Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+						.Select(o => o.ToFullString())).Substring(0, triviaLengthDiff)));
+			}
+
 			var eol = result.EndOfLineTrivia.ToFullString();
 			// Add end of line for the close paren token if missing
 			if (!methodNode.ConstraintClauses.Any() && !methodNode.ParameterList.CloseParenToken.TrailingTrivia.ToFullString().Contains(eol))
@@ -211,7 +218,7 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode.ReplaceToken(methodNode.Body.OpenBraceToken,
 					methodNode.Body.OpenBraceToken.WithLeadingTrivia(result.LeadingWhitespaceTrivia));
 			}
-			var methodBody = methodNode.Body;
+			methodBody = methodNode.Body;
 			var getLineSpan = methodBody.GetLocation().GetLineSpan().Span;
 			// Add end of line tokens for open brace and statements when the whole block is written in one line (eg. { DoSomething(); })
 			if (getLineSpan.End.Line == getLineSpan.Start.Line)

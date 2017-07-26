@@ -7,15 +7,22 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class AnnotatedNode<T> where T : SyntaxNode
+	internal abstract class AnnotatedNode<T>: AnnotatedNode where T : SyntaxNode
 	{
-		public AnnotatedNode(T originalNode)
+		protected AnnotatedNode(T originalNode)
 		{
 			OriginalNode = originalNode;
 		}
 
 		public T OriginalNode { get; }
 
+		
+	}
+
+	internal abstract class AnnotatedNode
+	{
 		public string Annotation { get; } = Guid.NewGuid().ToString();
+
+		public abstract int OriginalStartSpan { get; }
 	}
 }
