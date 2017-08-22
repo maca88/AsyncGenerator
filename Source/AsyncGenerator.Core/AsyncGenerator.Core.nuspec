@@ -13,8 +13,8 @@
     <copyright>Copyright 2017</copyright>
     <tags>Async Generator Roslyn</tags>
     <dependencies>
-      <dependency id="Microsoft.CodeAnalysis.Workspaces.Common" version="2.1.0" />
-      <dependency id="Microsoft.CodeAnalysis.CSharp" version="2.1.0" />
+      <dependency id="Microsoft.CodeAnalysis.Workspaces.Common" version="2.3.1" />
+      <dependency id="Microsoft.CodeAnalysis.CSharp" version="2.3.1" />
     </dependencies>
   </metadata>
 </package>

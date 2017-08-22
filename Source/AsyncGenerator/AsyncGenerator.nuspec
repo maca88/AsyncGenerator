@@ -14,7 +14,7 @@
     <tags>Async Generator Roslyn</tags>
     <dependencies>
       <dependency id="CSharpAsyncGenerator.Core" version="$version$" />
-      <dependency id="Microsoft.CodeAnalysis.CSharp.Scripting" version="2.1.0" />
+      <dependency id="Microsoft.CodeAnalysis.CSharp.Scripting" version="2.3.1" />
       <dependency id="log4net" version="2.0.8" />
     </dependencies>
   </metadata>
