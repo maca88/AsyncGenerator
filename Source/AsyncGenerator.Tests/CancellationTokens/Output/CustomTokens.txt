@@ -165,4 +165,20 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 			}
 		}
 	}
+
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial class DerivedEmptyTestCase : TestCase
+	{
+		public override Task ReadAsync(CancellationToken cancellationToken)
+		{
+			return Task.CompletedTask;
+		}
+
+		public override Task<bool> ReadWriteAsync(string content, CancellationToken cancellationToken)
+		{
+			return Task.FromResult<bool>(false);
+		}
+	}
 }
