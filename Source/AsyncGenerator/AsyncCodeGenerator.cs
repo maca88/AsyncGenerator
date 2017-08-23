@@ -19,6 +19,7 @@ using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using log4net;
+using Microsoft.Build.Evaluation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -117,7 +118,92 @@ namespace AsyncGenerator
 				if (config.ApplyChanges)
 				{
 					Logger.Info($"Applying solution '{config.Path}' changes started");
-					solutionData.Workspace.TryApplyChanges(solutionData.Solution);
+					var changes = solutionData.Solution.GetChanges(solutionData.Workspace.CurrentSolution);
+
+					var newSolution = solutionData.Workspace.CurrentSolution;
+
+					// Apply changes manually as the AddDocument and RemoveDocument methods do not play well with the new csproj format
+					// Problems with AddDocument and RemoveDocument methods:
+					// - When an imported document is removed in a new csproj, TryApplyChanges will throw because the file was imported by a glob
+					// - When a document is added in a new csproj, the file will be explicitly added in the csproj even if there is a glob that could import it
+					foreach (var projectChanges in changes.GetProjectChanges())
+					{
+						var project = new Microsoft.Build.Evaluation.Project(projectChanges.NewProject.FilePath, null, null, new ProjectCollection());
+
+						var importedFiles = project.Items
+							.Where(o => o.IsImported)
+							.GroupBy(o => o.EvaluatedInclude)
+							.Where(o => o.All(g => g.IsImported))
+							.ToDictionary(o => o.Key, o => o.First());
+
+						var globs = project.GetAllGlobs();
+
+						var addedDocuments = projectChanges
+							.GetAddedDocuments()
+							.Select(o => projectChanges.NewProject.GetDocument(o))
+							.ToDictionary(o => o.FilePath.Replace(@"\\", @"\")); // For some reason the added documents have a dobule backslash at the last directory e.g "Folder\\MyFile.cs"
+						var removedDocuments = projectChanges
+							.GetRemovedDocuments()
+							.Select(o => projectChanges.OldProject.GetDocument(o))
+							.ToDictionary(o => o.FilePath);
+
+						// Add new documents or replace the document text if it was already there
+						foreach (var addedDocumentPair in addedDocuments)
+						{
+							var addedDocument = addedDocumentPair.Value;
+							if (removedDocuments.ContainsKey(addedDocumentPair.Key))
+							{
+								var removedDocument = removedDocuments[addedDocumentPair.Key];
+								newSolution = newSolution.GetDocument(removedDocument.Id)
+									.WithText(await addedDocument.GetTextAsync().ConfigureAwait(false))
+									.Project.Solution;
+								continue;
+							}
+							
+							var path = $@"{string.Join(@"\", addedDocument.Folders)}\{addedDocument.Name}";
+							var sourceText = await addedDocument.GetTextAsync().ConfigureAwait(false);
+							if (globs.Any(o => o.MsBuildGlob.IsMatch(path)))
+							{
+								using (var writer = new StreamWriter(addedDocument.FilePath, false, Encoding.UTF8))
+								{
+									sourceText.Write(writer);
+								}
+							}
+							else
+							{
+								var newProject = newSolution.GetProject(projectChanges.ProjectId);
+								newSolution = newProject.AddDocument(
+										addedDocument.Name,
+										sourceText,
+										addedDocument.Folders,
+										addedDocument.FilePath)
+									.Project.Solution;
+							}
+						}
+
+						// Remove documents that are not generated anymore
+						foreach (var removedDocumentPair in removedDocuments.Where(o => !addedDocuments.ContainsKey(o.Key)))
+						{
+							var removedDocument = removedDocumentPair.Value;
+							var path = $@"{string.Join(@"\", removedDocument.Folders)}\{removedDocument.Name}";
+							if (!importedFiles.ContainsKey(path))
+							{
+								newSolution = newSolution.RemoveDocument(removedDocument.Id);
+							}
+							File.Delete(removedDocument.FilePath);
+						}
+
+						// Update changed documents
+						foreach (var documentId in projectChanges.GetChangedDocuments())
+						{
+							var newDocument = projectChanges.NewProject.GetDocument(documentId);
+							newSolution = newSolution.GetDocument(documentId)
+								.WithText(await newDocument.GetTextAsync().ConfigureAwait(false))
+								.Project.Solution;
+						}
+					}
+
+					solutionData.Workspace.TryApplyChanges(newSolution);
 					Logger.Info($"Applying solution '{config.Path}' changes completed");
 				}
 			}
