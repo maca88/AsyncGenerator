@@ -164,6 +164,8 @@ namespace AsyncGenerator
 							var sourceText = await addedDocument.GetTextAsync().ConfigureAwait(false);
 							if (globs.Any(o => o.MsBuildGlob.IsMatch(path)))
 							{
+								var dirPath = Path.GetDirectoryName(addedDocument.FilePath);
+								Directory.CreateDirectory(dirPath); // Create all directories if not exist
 								using (var writer = new StreamWriter(addedDocument.FilePath, false, Encoding.UTF8))
 								{
 									sourceText.Write(writer);
