@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 using AsyncGenerator.Core.Configuration;
 
 namespace AsyncGenerator.Configuration.Internal
@@ -18,6 +20,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public bool ApplyChanges { get; private set; }
 
 		public bool ConcurrentRun { get; private set; }
+
+		public ImmutableArray<Predicate<string>> SuppressDiagnosticFaliuresPrediactes { get; private set; } = ImmutableArray<Predicate<string>>.Empty;
 
 		#region IFluentSolutionConfiguration
 
@@ -40,6 +44,37 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentSolutionConfiguration IFluentSolutionConfiguration.ApplyChanges(bool value)
 		{
 			ApplyChanges = value;
+			return this;
+		}
+
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.SuppressDiagnosticFaliures(params string[] patterns)
+		{
+			if (patterns == null)
+			{
+				throw new ArgumentNullException(nameof(patterns));
+			}
+			foreach (var pattern in patterns)
+			{
+				try
+				{
+					var regex = new Regex(pattern);
+					SuppressDiagnosticFaliuresPrediactes = SuppressDiagnosticFaliuresPrediactes.Add(o => regex.IsMatch(o));
+				}
+				catch (Exception)
+				{
+					throw new InvalidOperationException($"Invalid regex pattern: '{pattern}'");
+				}
+			}
+			return this;
+		}
+
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.SuppressDiagnosticFaliures(Predicate<string> predicate)
+		{
+			if (predicate == null)
+			{
+				throw new ArgumentNullException(nameof(predicate));
+			}
+			SuppressDiagnosticFaliuresPrediactes = SuppressDiagnosticFaliuresPrediactes.Add(predicate);
 			return this;
 		}
 

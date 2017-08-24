@@ -305,6 +305,17 @@
     <xs:all>
       <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
+      <xs:element name="SuppressDiagnosticFaliures">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Suppress" maxOccurs="unbounded" minOccurs="0">
+              <xs:complexType>
+                <xs:attribute name="pattern" type="xs:string" use="required" />
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="Projects">
         <xs:complexType>
           <xs:sequence>

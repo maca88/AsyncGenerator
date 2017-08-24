@@ -37,6 +37,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 				assembly = codeCompiler(configuration.CSharpScript);
 			}
 
+			foreach (var item in configuration.Solution.SuppressDiagnosticFaliures)
+			{
+				solutionConfiguration.SuppressDiagnosticFaliures(item.Pattern);
+			}
+
 			// Configure projects
 			foreach (var projectConfig in configuration.Solution.Projects)
 			{

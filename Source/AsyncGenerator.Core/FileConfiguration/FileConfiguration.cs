@@ -47,10 +47,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public bool? ApplyChanges { get; set; }
 		[XmlArrayItem(IsNullable = false)]
 		public List<Project> Projects { get; set; }
+		[XmlArrayItem("Suppress", IsNullable = false)]
+		public List<SuppressDiagnosticFaliure> SuppressDiagnosticFaliures { get; set; }
 
 		public Solution()
 		{
 			Projects = new List<Project>();
+			SuppressDiagnosticFaliures = new List<SuppressDiagnosticFaliure>();
 		}
 	}
 
@@ -448,5 +451,17 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string Type { get; set; }
 		[XmlAttribute(AttributeName = "assemblyName")]
 		public string AssemblyName { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("SuppressDiagnosticFaliure")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class SuppressDiagnosticFaliure
+	{
+		[XmlAttribute(AttributeName = "pattern")]
+		public string Pattern { get; set; }
 	}
 }

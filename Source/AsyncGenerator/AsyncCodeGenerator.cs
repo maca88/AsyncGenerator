@@ -128,6 +128,8 @@ namespace AsyncGenerator
 					// - When a document is added in a new csproj, the file will be explicitly added in the csproj even if there is a glob that could import it
 					foreach (var projectChanges in changes.GetProjectChanges())
 					{
+						Logger.Info($"Applying project '{projectChanges.NewProject.FilePath}' changes started");
+
 						var project = new Microsoft.Build.Evaluation.Project(projectChanges.NewProject.FilePath, null, null, new ProjectCollection());
 
 						var importedFiles = project.Items
@@ -203,6 +205,8 @@ namespace AsyncGenerator
 								.WithText(await newDocument.GetTextAsync().ConfigureAwait(false))
 								.Project.Solution;
 						}
+
+						Logger.Info($"Applying project '{projectChanges.NewProject.FilePath}' changes completed");
 					}
 
 					solutionData.Workspace.TryApplyChanges(newSolution);
@@ -257,6 +261,30 @@ namespace AsyncGenerator
 			};
 			var workspace = MSBuildWorkspace.Create(props);
 			var solution = await workspace.OpenSolutionAsync(configuration.Path).ConfigureAwait(false);
+
+			// Throw if any faliure
+			var faliures = workspace.Diagnostics
+				.Where(o => o.Kind == WorkspaceDiagnosticKind.Failure)
+				.Select(o => o.Message)
+				.Where(o => !configuration.SuppressDiagnosticFaliuresPrediactes.Any(p => p(o)))
+				.ToList();
+			if (faliures.Any())
+			{
+				var message =
+					$"One or more errors occurred while opening the solution:{Environment.NewLine}{string.Join(Environment.NewLine, faliures)}{Environment.NewLine}" +
+					"Hint: For suppressing errors use SuppressDiagnosticFaliures option.";
+				throw new InvalidOperationException(message);
+			}
+			var warnings = workspace.Diagnostics
+				.Where(o => o.Kind == WorkspaceDiagnosticKind.Warning)
+				.Select(o => o.Message)
+				.ToList();
+			if (warnings.Any())
+			{
+				Logger.Warn(
+					$"One or more warnings occurred while opening the solution:{Environment.NewLine}{string.Join(Environment.NewLine, warnings)}{Environment.NewLine}");
+			}
+
 			var solutionData = new SolutionData(solution, workspace, configuration);
 
 			var projects = solution.Projects.ToDictionary(o => o.Name);
