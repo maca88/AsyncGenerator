@@ -30,20 +30,33 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var resource = $"{GetType().Namespace}.Configuration.xml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
-				.ConfigureSolutionFromStream<XmlFileConfigurator>(stream);
+				.ConfigureFromStream<XmlFileConfigurator>(stream);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Explicit]
 		[Test]
-		public void TestYamlConfigurationAfterTransformation()
+		public void TestYamlSolutionConfigurationAfterTransformation()
 		{
 			var asm = Assembly.GetExecutingAssembly();
-			var resource = $"{GetType().Namespace}.Configuration.yaml";
+			var resource = $"{GetType().Namespace}.SolutionConfiguration.yml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
-				.ConfigureSolutionFromStream<YamlFileConfigurator>(stream);
+				.ConfigureFromStream<YamlFileConfigurator>(stream);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Explicit]
+		[Test]
+		public void TestYamlProjectConfigurationAfterTransformation()
+		{
+			var asm = Assembly.GetExecutingAssembly();
+			var resource = $"{GetType().Namespace}.ProjectConfiguration.yml";
+			var stream = asm.GetManifestResourceStream(resource);
+			var config = AsyncCodeConfiguration.Create()
+				.ConfigureFromStream<YamlFileConfigurator>(stream);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}

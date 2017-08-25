@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Configuration;
-using AsyncGenerator.Core.FileConfiguration;
 using AsyncGenerator.Internal;
 
 namespace AsyncGenerator.Configuration
@@ -20,6 +19,8 @@ namespace AsyncGenerator.Configuration
 		}
 
 		internal List<SolutionConfiguration> SolutionConfigurations { get; } = new List<SolutionConfiguration>();
+
+		internal List<ProjectConfiguration> ProjectConfigurations { get; } = new List<ProjectConfiguration>();
 
 		public AsyncCodeConfiguration ConfigureSolution(string solutionFilePath, Action<IFluentSolutionConfiguration> action)
 		{
@@ -45,17 +46,41 @@ namespace AsyncGenerator.Configuration
 			return this;
 		}
 
-		public AsyncCodeConfiguration ConfigureSolutionFromFile<T>(string filePath) where T : class, ISolutionFileConfigurator, new()
+		public AsyncCodeConfiguration ConfigureProject(string projectFilePath, Action<IFluentProjectConfiguration> action)
 		{
-			return ConfigureSolutionFromFile(filePath, new T());
+			if (projectFilePath == null)
+			{
+				throw new ArgumentNullException(nameof(projectFilePath));
+			}
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			if (!File.Exists(projectFilePath))
+			{
+				throw new FileNotFoundException($"Project not found. Path:'{projectFilePath}'");
+			}
+			var solutionConfig = ProjectConfigurations.FirstOrDefault(o => o.Path == projectFilePath);
+			if (solutionConfig == null)
+			{
+				solutionConfig = new ProjectConfiguration(projectFilePath);
+				ProjectConfigurations.Add(solutionConfig);
+			}
+			action(solutionConfig);
+			return this;
 		}
 
-		public AsyncCodeConfiguration ConfigureSolutionFromStream<T>(Stream stream, string basePath = null) where T : class, ISolutionFileConfigurator, new()
+		public AsyncCodeConfiguration ConfigureFromFile<T>(string filePath) where T : class, IFileConfigurator, new()
 		{
-			return ConfigureSolutionFromStream(stream, new T(), basePath);
+			return ConfigureFromFile(filePath, new T());
 		}
 
-		private AsyncCodeConfiguration ConfigureSolutionFromFile(string filePath, ISolutionFileConfigurator fileConfigurator)
+		public AsyncCodeConfiguration ConfigureFromStream<T>(Stream stream, string basePath = null) where T : class, IFileConfigurator, new()
+		{
+			return ConfigureFromStream(stream, new T(), basePath);
+		}
+
+		private AsyncCodeConfiguration ConfigureFromFile(string filePath, IFileConfigurator fileConfigurator)
 		{
 			if (filePath == null)
 			{
@@ -67,10 +92,10 @@ namespace AsyncGenerator.Configuration
 			{
 				throw new FileNotFoundException($"Configuration file not found. Path:'{filePath}'");
 			}
-			return ConfigureSolutionFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath) + @"\");
+			return ConfigureFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath) + @"\");
 		}
 
-		private AsyncCodeConfiguration ConfigureSolutionFromStream(Stream stream, ISolutionFileConfigurator fileConfigurator, string basePath = null)
+		private AsyncCodeConfiguration ConfigureFromStream(Stream stream, IFileConfigurator fileConfigurator, string basePath = null)
 		{
 			if (stream == null)
 			{
@@ -87,10 +112,24 @@ namespace AsyncGenerator.Configuration
 			{
 				configuration = fileConfigurator.Parse(reader.ReadToEnd());
 			}
-			var solutionFilePath = fileConfigurator.GetSolutionPath(configuration);
 
-			solutionFilePath = Path.GetFullPath(Path.Combine(basePath, solutionFilePath));
-			ConfigureSolution(solutionFilePath, o => fileConfigurator.Configure(configuration, o, SourceCodeCompiler.Compile));
+			Assembly assembly = null;
+			if (!string.IsNullOrEmpty(configuration.CSharpScript))
+			{
+				assembly = SourceCodeCompiler.Compile(configuration.CSharpScript);
+			}
+
+			if (!string.IsNullOrEmpty(configuration.Solution.FilePath))
+			{
+				var filePath = Path.GetFullPath(Path.Combine(basePath, configuration.Solution.FilePath));
+				ConfigureSolution(filePath, o => fileConfigurator.Configure(configuration, configuration.Solution, o, assembly));
+			}
+			foreach (var project in configuration.Projects)
+			{
+				var filePath = Path.GetFullPath(Path.Combine(basePath, project.FilePath));
+				ConfigureProject(filePath, o => fileConfigurator.Configure(configuration, project, o, assembly));
+			}
+
 			return this;
 		}
 

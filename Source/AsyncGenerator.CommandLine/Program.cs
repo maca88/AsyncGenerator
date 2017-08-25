@@ -90,7 +90,7 @@ namespace AsyncGenerator.CommandLine
 				using (var stream = xmlConfig.OpenRead())
 				{
 					return AsyncCodeConfiguration.Create()
-						.ConfigureSolutionFromStream<XmlFileConfigurator>(stream, Environment.CurrentDirectory);
+						.ConfigureFromStream<XmlFileConfigurator>(stream, Environment.CurrentDirectory);
 				}
 			}
 			var ymlConfig = new FileInfo("AsyncGenerator.yml");
@@ -99,7 +99,7 @@ namespace AsyncGenerator.CommandLine
 				using (var stream = ymlConfig.OpenRead())
 				{
 					return AsyncCodeConfiguration.Create()
-						.ConfigureSolutionFromStream<YamlFileConfigurator>(stream, Environment.CurrentDirectory);
+						.ConfigureFromStream<YamlFileConfigurator>(stream, Environment.CurrentDirectory);
 				}
 			}
 

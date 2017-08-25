@@ -11,50 +11,53 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.FileConfiguration
 {
-	public abstract class FileConfigurator : ISolutionFileConfigurator
+	public abstract class FileConfigurator : IFileConfigurator
 	{
 		public abstract AsyncGenerator Parse(string content);
 
-		public string GetSolutionPath(AsyncGenerator configuration)
+		public virtual void Configure(AsyncGenerator configuration, Solution solution, IFluentSolutionConfiguration solutionConfiguration, Assembly assembly)
 		{
-			return configuration.Solution.FilePath;
-		}
-
-		public virtual void Configure(AsyncGenerator configuration, IFluentSolutionConfiguration solutionConfiguration, Func<string, Assembly> codeCompiler)
-		{
-			if (configuration.Solution.ApplyChanges.HasValue)
+			if (solution.ApplyChanges.HasValue)
 			{
-				solutionConfiguration.ApplyChanges(configuration.Solution.ApplyChanges.Value);
+				solutionConfiguration.ApplyChanges(solution.ApplyChanges.Value);
 			}
-			if (configuration.Solution.ConcurrentRun.HasValue)
+			if (solution.ConcurrentRun.HasValue)
 			{
-				solutionConfiguration.ConcurrentRun(configuration.Solution.ConcurrentRun.Value);
+				solutionConfiguration.ConcurrentRun(solution.ConcurrentRun.Value);
 			}
 
-			Assembly assembly = null;
-			if (!string.IsNullOrEmpty(configuration.CSharpScript))
-			{
-				assembly = codeCompiler(configuration.CSharpScript);
-			}
-
-			foreach (var item in configuration.Solution.SuppressDiagnosticFailures)
+			foreach (var item in solution.SuppressDiagnosticFailures)
 			{
 				solutionConfiguration.SuppressDiagnosticFailures(item.Pattern);
 			}
 
 			// Configure projects
-			foreach (var projectConfig in configuration.Solution.Projects)
+			foreach (var projectConfig in solution.Projects)
 			{
 				solutionConfiguration.ConfigureProject(projectConfig.Name, o => Configure(configuration, projectConfig, o, assembly));
 			}
 		}
 
-		private static void Configure(AsyncGenerator globalConfig, Project config, IFluentProjectConfiguration fluentConfig, Assembly dynamicAssembly)
+		public virtual void Configure(AsyncGenerator configuration, Project project, IFluentProjectConfiguration projectConfiguration, Assembly assembly)
 		{
-			fluentConfig.ConfigureAnalyzation(o => Configure(globalConfig, config.Analyzation, o));
-			fluentConfig.ConfigureTransformation(o => Configure(globalConfig, config.Transformation, o));
+			if (project.ApplyChanges.HasValue)
+			{
+				projectConfiguration.ApplyChanges(project.ApplyChanges.Value);
+			}
+			if (project.ConcurrentRun.HasValue)
+			{
+				projectConfiguration.ConcurrentRun(project.ConcurrentRun.Value);
+			}
 
-			if (!config.RegisterPlugin.Any())
+			foreach (var item in project.SuppressDiagnosticFailures)
+			{
+				projectConfiguration.SuppressDiagnosticFailures(item.Pattern);
+			}
+
+			projectConfiguration.ConfigureAnalyzation(o => Configure(configuration, project.Analyzation, o));
+			projectConfiguration.ConfigureTransformation(o => Configure(configuration, project.Transformation, o));
+
+			if (!project.RegisterPlugin.Any())
 			{
 				return;
 			}
@@ -63,19 +66,19 @@ namespace AsyncGenerator.Core.FileConfiguration
 				.Distinct()
 				.ToDictionary(o => o.GetName().Name);
 
-			foreach (var plugin in config.RegisterPlugin)
+			foreach (var plugin in project.RegisterPlugin)
 			{
 				if (!string.IsNullOrEmpty(plugin.AssemblyName) && !assemblies.ContainsKey(plugin.AssemblyName))
 				{
 					assemblies[plugin.AssemblyName] = Assembly.Load(plugin.AssemblyName);
 				}
-				if (string.IsNullOrEmpty(plugin.AssemblyName) && dynamicAssembly == null)
+				if (string.IsNullOrEmpty(plugin.AssemblyName) && assembly == null)
 				{
 					throw new InvalidOperationException($"Assembly name must be provided for type {plugin.Type}.");
 				}
 
 				var type = string.IsNullOrEmpty(plugin.AssemblyName)
-					? dynamicAssembly.GetExportedTypes().FirstOrDefault(o => o.Name == plugin.Type)
+					? assembly.GetExportedTypes().FirstOrDefault(o => o.Name == plugin.Type)
 					: assemblies[plugin.AssemblyName].GetExportedTypes().FirstOrDefault(o => o.FullName == plugin.Type);
 				if (type == null)
 				{
@@ -86,11 +89,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					throw new InvalidOperationException($"Type {plugin.Type} from assembly {plugin.AssemblyName} does not implement IPlugin interaface");
 				}
-				fluentConfig.RegisterPlugin(pluginInstance);
+				projectConfiguration.RegisterPlugin(pluginInstance);
 			}
 		}
 
-		private static void Configure(AsyncGenerator globalConfig, Analyzation config, IFluentProjectAnalyzeConfiguration fluentConfig)
+		private static void Configure(AsyncGenerator configuration, Analyzation config, IFluentProjectAnalyzeConfiguration fluentConfig)
 		{
 			if (config.CallForwarding.HasValue)
 			{
@@ -106,9 +109,9 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.ScanForMissingAsyncMembers.Any())
 			{
-				fluentConfig.ScanForMissingAsyncMembers(CreateTypePredicate(globalConfig, config.ScanForMissingAsyncMembers));
+				fluentConfig.ScanForMissingAsyncMembers(CreateTypePredicate(configuration, config.ScanForMissingAsyncMembers));
 			}
-			fluentConfig.CancellationTokens(o => Configure(globalConfig, config.CancellationTokens, o));
+			fluentConfig.CancellationTokens(o => Configure(configuration, config.CancellationTokens, o));
 			fluentConfig.AsyncExtensionMethods(o => Configure(config.AsyncExtensionMethods, o));
 
 			if (config.IgnoreDocuments.Any())
@@ -117,19 +120,19 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.MethodConversion.Any())
 			{
-				fluentConfig.MethodConversion(CreateMethodConversionFunction(globalConfig, config.MethodConversion));
+				fluentConfig.MethodConversion(CreateMethodConversionFunction(configuration, config.MethodConversion));
 			}
 			if (config.PreserveReturnType.Any())
 			{
-				fluentConfig.PreserveReturnType(CreateMethodPredicate(globalConfig, config.PreserveReturnType, true));
+				fluentConfig.PreserveReturnType(CreateMethodPredicate(configuration, config.PreserveReturnType, true));
 			}
 			if (config.IgnoreSearchForAsyncCounterparts.Any())
 			{
-				fluentConfig.SearchForAsyncCounterparts(CreateMethodPredicate(globalConfig, config.IgnoreSearchForAsyncCounterparts, false));
+				fluentConfig.SearchForAsyncCounterparts(CreateMethodPredicate(configuration, config.IgnoreSearchForAsyncCounterparts, false));
 			}
 			if (config.TypeConversion.Any())
 			{
-				fluentConfig.TypeConversion(CreateTypeConversionFunction(globalConfig, config.TypeConversion));
+				fluentConfig.TypeConversion(CreateTypeConversionFunction(configuration, config.TypeConversion));
 			}
 		}
 
@@ -141,7 +144,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 		}
 
-		private static void Configure(AsyncGenerator globalConfig, CancellationTokens config, IFluentProjectCancellationTokenConfiguration fluentConfig)
+		private static void Configure(AsyncGenerator configuration, CancellationTokens config, IFluentProjectCancellationTokenConfiguration fluentConfig)
 		{
 			if (config.Guards.HasValue)
 			{
@@ -149,16 +152,16 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.MethodParameter.Any())
 			{
-				fluentConfig.ParameterGeneration(CreateParameterGenerationFunction(globalConfig, config.MethodParameter));
+				fluentConfig.ParameterGeneration(CreateParameterGenerationFunction(configuration, config.MethodParameter));
 			}
 			if (config.WithoutCancellationToken.Any() || config.RequiresCancellationToken.Any())
 			{
-				fluentConfig.RequiresCancellationToken(CreateMethodNullablePredicate(globalConfig, 
+				fluentConfig.RequiresCancellationToken(CreateMethodNullablePredicate(configuration, 
 					config.WithoutCancellationToken, config.RequiresCancellationToken));
 			}
 		}
 
-		private static void Configure(AsyncGenerator globalConfig, Transformation config, IFluentProjectTransformConfiguration fluentConfig)
+		private static void Configure(AsyncGenerator configuration, Transformation config, IFluentProjectTransformConfiguration fluentConfig)
 		{
 			if (config.LocalFunctions.HasValue)
 			{
@@ -180,27 +183,27 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.AsyncLock(config.AsyncLock.Type, config.AsyncLock.MethodName);
 			}
-			fluentConfig.DocumentationComments(o => Configure(globalConfig, config. DocumentationComments, o));
+			fluentConfig.DocumentationComments(o => Configure(configuration, config. DocumentationComments, o));
 		}
 
-		private static void Configure(AsyncGenerator globalConfig, DocumentationComments config, IFluentProjectDocumentationCommentConfiguration fluentConfig)
+		private static void Configure(AsyncGenerator configuration, DocumentationComments config, IFluentProjectDocumentationCommentConfiguration fluentConfig)
 		{
 			if (config.AddOrReplaceMethodRemarks.Any())
 			{
-				fluentConfig.AddOrReplaceMethodRemarks(CreateMethodContentFunction(globalConfig, config.AddOrReplaceMethodRemarks));
+				fluentConfig.AddOrReplaceMethodRemarks(CreateMethodContentFunction(configuration, config.AddOrReplaceMethodRemarks));
 			}
 			if (config.RemoveMethodRemarks.Any())
 			{
-				fluentConfig.RemoveMethodRemarks(CreateMethodPredicate(globalConfig, config.RemoveMethodRemarks, true));
+				fluentConfig.RemoveMethodRemarks(CreateMethodPredicate(configuration, config.RemoveMethodRemarks, true));
 			}
 
 			if (config.AddOrReplaceMethodSummary.Any())
 			{
-				fluentConfig.AddOrReplaceMethodSummary(CreateMethodContentFunction(globalConfig, config.AddOrReplaceMethodSummary));
+				fluentConfig.AddOrReplaceMethodSummary(CreateMethodContentFunction(configuration, config.AddOrReplaceMethodSummary));
 			}
 			if (config.RemoveMethodSummary.Any())
 			{
-				fluentConfig.RemoveMethodSummary(CreateMethodPredicate(globalConfig, config.RemoveMethodSummary, true));
+				fluentConfig.RemoveMethodSummary(CreateMethodPredicate(configuration, config.RemoveMethodSummary, true));
 			}
 		}
 

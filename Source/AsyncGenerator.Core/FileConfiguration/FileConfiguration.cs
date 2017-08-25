@@ -16,6 +16,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 	{
 		[XmlElement("Solution")]
 		public Solution Solution { get; set; }
+		[XmlArrayItem("Project", IsNullable = false)]
+		public List<Project> Projects { get; set; }
 		[XmlArrayItem(IsNullable = false)]
 		public List<MethodRule> MethodRules { get; set; }
 		[XmlArrayItem(IsNullable = false)]
@@ -28,6 +30,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			TypeRules = new List<TypeRule>();
 			MethodRules = new List<MethodRule>();
 			Solution = new Solution();
+			Projects = new List<Project>();
 		}
 	}
 
@@ -65,6 +68,12 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Project
 	{
+		[XmlAttribute(AttributeName = "filePath")]
+		public string FilePath { get; set; }
+		[XmlElement(IsNullable = true)]
+		public bool? ConcurrentRun { get; set; }
+		[XmlElement(IsNullable = true)]
+		public bool? ApplyChanges { get; set; }
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
 		[XmlElement("Analyzation")]
@@ -73,12 +82,15 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public Transformation Transformation { get; set; }
 		[XmlArrayItem("Plugin", IsNullable = false)]
 		public List<ProjectPlugin> RegisterPlugin { get; set; }
+		[XmlArrayItem("Suppress", IsNullable = false)]
+		public List<SuppressDiagnosticFailure> SuppressDiagnosticFailures { get; set; }
 
 		public Project()
 		{
 			Transformation = new Transformation();
 			Analyzation = new Analyzation();
 			RegisterPlugin = new List<ProjectPlugin>();
+			SuppressDiagnosticFailures = new List<SuppressDiagnosticFailure>();
 		}
 	}
 

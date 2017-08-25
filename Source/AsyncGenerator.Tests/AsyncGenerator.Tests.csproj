@@ -314,7 +314,8 @@
     <None Include="app.config">
       <SubType>Designer</SubType>
     </None>
-    <EmbeddedResource Include="ExternalProjects\NHibernate\Configuration.yaml" />
+    <EmbeddedResource Include="ExternalProjects\NHibernate\SolutionConfiguration.yml" />
+    <EmbeddedResource Include="ExternalProjects\NHibernate\ProjectConfiguration.yml" />
     <None Include="FileComments\TestCase.cs.xmldoc" />
     <None Include="FileComments\Input\TestCase.cs.xmldoc" />
     <EmbeddedResource Include="TaskConflict\Output\TestCase.txt" />

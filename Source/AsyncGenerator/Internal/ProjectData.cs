@@ -5,7 +5,6 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
@@ -18,12 +17,21 @@ namespace AsyncGenerator.Internal
 		private readonly SolutionData _solutionData;
 		private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, bool>> _typeNamespace =
 			new ConcurrentDictionary<string, ConcurrentDictionary<string, bool>>();
+		private Project _project;
 
 		public ProjectData(SolutionData solutionData, ProjectId projectId, ProjectConfiguration configuration)
 		{
 			_solutionData = solutionData;
 			Configuration = configuration;
 			ProjectId = projectId;
+			DirectoryPath = Path.GetDirectoryName(Project.FilePath) + @"\";
+		}
+
+		public ProjectData(Project project, ProjectConfiguration configuration)
+		{
+			_project = project;
+			Configuration = configuration;
+			ProjectId = project.Id;
 			DirectoryPath = Path.GetDirectoryName(Project.FilePath) + @"\";
 		}
 
@@ -35,8 +43,18 @@ namespace AsyncGenerator.Internal
 
 		public Project Project
 		{
-			get { return _solutionData.Solution.GetProject(ProjectId); }
-			set { _solutionData.Solution = value.Solution; }
+			get { return _project ?? _solutionData.Solution.GetProject(ProjectId); }
+			set
+			{
+				if (_project != null)
+				{
+					_project = value;
+				}
+				else
+				{
+					_solutionData.Solution = value.Solution;
+				}
+			}
 		}
 
 		public ConcurrentDictionary<string, DocumentData> Documents { get; } = new ConcurrentDictionary<string, DocumentData>();

@@ -283,6 +283,8 @@
   
   <xs:complexType name="Project">
       <xs:all>
+        <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
+        <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
         <xs:element name="Analyzation" type="Analyzation" minOccurs="0"/>
         <xs:element name="Transformation" type="Transformation" minOccurs="0"/>
         <xs:element name="RegisterPlugin" minOccurs="0">
@@ -298,7 +300,8 @@
           </xs:complexType>
         </xs:element>
       </xs:all>
-    <xs:attribute name="name" type="xs:string" use="required" />
+    <xs:attribute name="name" type="xs:string" /> <!--Required only if inside Solution-->
+    <xs:attribute name="filePath" type="xs:string" /> <!--Required only if inside Projects-->
   </xs:complexType>
 
   <xs:complexType name="Solution">
@@ -330,7 +333,14 @@
   <xs:element name="AsyncGenerator">
     <xs:complexType>
       <xs:all>
-        <xs:element name="Solution" type="Solution" />
+        <xs:element name="Solution" type="Solution" minOccurs="0"/>
+        <xs:element name="Projects" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Project" type="Project" maxOccurs="unbounded" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
         <xs:element name="MethodRules" minOccurs="0">
           <xs:complexType>
             <xs:sequence>

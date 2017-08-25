@@ -178,7 +178,7 @@
     <Compile Include="Configuration\ISolutionConfiguration.cs" />
     <Compile Include="FileConfiguration\Internal\XmlValidationResult.cs" />
     <Compile Include="FileConfiguration\Internal\XmlValidator.cs" />
-    <Compile Include="Configuration\ISolutionFileConfigurator.cs" />
+    <Compile Include="Configuration\IFileConfigurator.cs" />
     <Compile Include="Configuration\XmlFileConfigurator.cs" />
     <Compile Include="MethodCancellationToken.cs" />
     <Compile Include="MethodConversion.cs" />
