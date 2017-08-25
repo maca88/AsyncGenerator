@@ -262,17 +262,17 @@ namespace AsyncGenerator
 			var workspace = MSBuildWorkspace.Create(props);
 			var solution = await workspace.OpenSolutionAsync(configuration.Path).ConfigureAwait(false);
 
-			// Throw if any faliure
-			var faliures = workspace.Diagnostics
+			// Throw if any failure
+			var failures = workspace.Diagnostics
 				.Where(o => o.Kind == WorkspaceDiagnosticKind.Failure)
 				.Select(o => o.Message)
-				.Where(o => !configuration.SuppressDiagnosticFaliuresPrediactes.Any(p => p(o)))
+				.Where(o => !configuration.SuppressDiagnosticFailuresPrediactes.Any(p => p(o)))
 				.ToList();
-			if (faliures.Any())
+			if (failures.Any())
 			{
 				var message =
-					$"One or more errors occurred while opening the solution:{Environment.NewLine}{string.Join(Environment.NewLine, faliures)}{Environment.NewLine}" +
-					"Hint: For suppressing errors use SuppressDiagnosticFaliures option.";
+					$"One or more errors occurred while opening the solution:{Environment.NewLine}{string.Join(Environment.NewLine, failures)}{Environment.NewLine}" +
+					"Hint: For suppressing errors use SuppressDiagnosticFailures option.";
 				throw new InvalidOperationException(message);
 			}
 			var warnings = workspace.Diagnostics

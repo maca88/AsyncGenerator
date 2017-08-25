@@ -161,9 +161,9 @@
     </Projects>
     <ApplyChanges>true</ApplyChanges>
     <ConcurrentRun>true</ConcurrentRun>
-    <SuppressDiagnosticFaliures>
+    <SuppressDiagnosticFailures>
       <Suppress pattern="NHibernate.Test.VisualBasic.vbproj"/>
-    </SuppressDiagnosticFaliures>
+    </SuppressDiagnosticFailures>
   </Solution>
   <MethodRules>
     <MethodRule name="EventListener">

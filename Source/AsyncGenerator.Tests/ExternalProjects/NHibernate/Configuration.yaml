@@ -2,7 +2,7 @@
   filePath: ..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln
   concurrentRun: true
   applyChanges: true
-  suppressDiagnosticFaliures:
+  suppressDiagnosticFailures:
   - pattern: NHibernate.Test.VisualBasic.vbproj
   projects:
   - name: NHibernate

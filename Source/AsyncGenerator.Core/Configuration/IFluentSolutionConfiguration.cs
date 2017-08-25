@@ -18,13 +18,13 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentSolutionConfiguration ApplyChanges(bool value);
 
 		/// <summary>
-		/// Add one or more regex patterns to suppress faliures that occur while opening the solution. (e.g. faliure for opening a not supported project inside a solution)
+		/// Add one or more regex patterns to suppress failures that occur while opening the solution. (e.g. failure for opening a not supported project inside a solution)
 		/// </summary>
-		IFluentSolutionConfiguration SuppressDiagnosticFaliures(params string[] patterns);
+		IFluentSolutionConfiguration SuppressDiagnosticFailures(params string[] patterns);
 
 		/// <summary>
-		/// Add a predicate to suppress faliures that occur while opening the solution. (e.g. faliure for opening a not supported project inside a solution)
+		/// Add a predicate to suppress failures that occur while opening the solution. (e.g. failure for opening a not supported project inside a solution)
 		/// </summary>
-		IFluentSolutionConfiguration SuppressDiagnosticFaliures(Predicate<string> predicate);
+		IFluentSolutionConfiguration SuppressDiagnosticFailures(Predicate<string> predicate);
 	}
 }

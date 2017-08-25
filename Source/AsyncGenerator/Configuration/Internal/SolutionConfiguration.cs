@@ -21,7 +21,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ConcurrentRun { get; private set; }
 
-		public ImmutableArray<Predicate<string>> SuppressDiagnosticFaliuresPrediactes { get; private set; } = ImmutableArray<Predicate<string>>.Empty;
+		public ImmutableArray<Predicate<string>> SuppressDiagnosticFailuresPrediactes { get; private set; } = ImmutableArray<Predicate<string>>.Empty;
 
 		#region IFluentSolutionConfiguration
 
@@ -47,7 +47,7 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentSolutionConfiguration IFluentSolutionConfiguration.SuppressDiagnosticFaliures(params string[] patterns)
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.SuppressDiagnosticFailures(params string[] patterns)
 		{
 			if (patterns == null)
 			{
@@ -58,7 +58,7 @@ namespace AsyncGenerator.Configuration.Internal
 				try
 				{
 					var regex = new Regex(pattern);
-					SuppressDiagnosticFaliuresPrediactes = SuppressDiagnosticFaliuresPrediactes.Add(o => regex.IsMatch(o));
+					SuppressDiagnosticFailuresPrediactes = SuppressDiagnosticFailuresPrediactes.Add(o => regex.IsMatch(o));
 				}
 				catch (Exception)
 				{
@@ -68,13 +68,13 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentSolutionConfiguration IFluentSolutionConfiguration.SuppressDiagnosticFaliures(Predicate<string> predicate)
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.SuppressDiagnosticFailures(Predicate<string> predicate)
 		{
 			if (predicate == null)
 			{
 				throw new ArgumentNullException(nameof(predicate));
 			}
-			SuppressDiagnosticFaliuresPrediactes = SuppressDiagnosticFaliuresPrediactes.Add(predicate);
+			SuppressDiagnosticFailuresPrediactes = SuppressDiagnosticFailuresPrediactes.Add(predicate);
 			return this;
 		}
 

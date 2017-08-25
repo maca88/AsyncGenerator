@@ -48,12 +48,12 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem(IsNullable = false)]
 		public List<Project> Projects { get; set; }
 		[XmlArrayItem("Suppress", IsNullable = false)]
-		public List<SuppressDiagnosticFaliure> SuppressDiagnosticFaliures { get; set; }
+		public List<SuppressDiagnosticFailure> SuppressDiagnosticFailures { get; set; }
 
 		public Solution()
 		{
 			Projects = new List<Project>();
-			SuppressDiagnosticFaliures = new List<SuppressDiagnosticFaliure>();
+			SuppressDiagnosticFailures = new List<SuppressDiagnosticFailure>();
 		}
 	}
 
@@ -457,9 +457,9 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("SuppressDiagnosticFaliure")]
+	[XmlRoot("SuppressDiagnosticFailure")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public class SuppressDiagnosticFaliure
+	public class SuppressDiagnosticFailure
 	{
 		[XmlAttribute(AttributeName = "pattern")]
 		public string Pattern { get; set; }
