@@ -19,7 +19,9 @@ namespace AsyncGenerator.Tests.Exceptions.Input
 		public void InvalidOperationException()
 		{
 			throw new InvalidOperationException("Invalid");
+#pragma warning disable 162
 			SimpleFile.Read();
+#pragma warning restore 162
 		}
 
 		public void PreconditionOperationException(string name)

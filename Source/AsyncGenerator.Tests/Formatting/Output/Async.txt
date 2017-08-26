@@ -46,7 +46,9 @@ namespace AsyncGenerator.Tests.Formatting.Input
 					await (SimpleFile.ReadAsync());
 				});
 
+#pragma warning disable CS0168 // Variable is declared but never used
 			async void LocalDoubleRead()
+#pragma warning restore CS0168 // Variable is declared but never used
 			{
 				await (SimpleFile.ReadAsync());
 				await (SimpleFile.ReadAsync());

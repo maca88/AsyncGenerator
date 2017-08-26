@@ -32,7 +32,9 @@ namespace AsyncGenerator.Tests.Exceptions.Input
 		public Task InvalidOperationExceptionAsync()
 		{
 			throw new InvalidOperationException("Invalid");
+#pragma warning disable 162
 			return SimpleFile.ReadAsync();
+#pragma warning restore 162
 		}
 
 		public Task PreconditionOperationExceptionAsync(string name)
