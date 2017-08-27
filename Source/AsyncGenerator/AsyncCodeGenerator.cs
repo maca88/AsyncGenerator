@@ -39,14 +39,10 @@ namespace AsyncGenerator
 				throw new ArgumentNullException(nameof(configuration));
 			}
 			Logger.Info("Generating async code started");
-			var props = new Dictionary<string, string>
-			{
-				["CheckForSystemRuntimeDependency"] = "true" // needed in order that project references are loaded
-			};
-			var workspace = MSBuildWorkspace.Create(props);
 
 			foreach (var config in configuration.SolutionConfigurations)
 			{
+				var workspace = CreateWorkspace();
 				Logger.Info($"Configuring solution '{config.Path}' prior analyzation started");
 				var solutionData = await CreateSolutionData(workspace, config).ConfigureAwait(false);
 				Logger.Info($"Configuring solution '{config.Path}' prior analyzation completed");
@@ -59,10 +55,12 @@ namespace AsyncGenerator
 				{
 					await ApplyChanges(workspace, solutionData.Solution).ConfigureAwait(false);
 				}
+				workspace.Dispose();
 			}
 
 			foreach (var config in configuration.ProjectConfigurations)
 			{
+				var workspace = CreateWorkspace();
 				Logger.Info($"Configuring project '{config.Path}' prior analyzation started");
 				var projectData = await CreateProjectData(workspace, config).ConfigureAwait(false);
 				Logger.Info($"Configuring project '{config.Path}' prior analyzation completed");
@@ -73,9 +71,19 @@ namespace AsyncGenerator
 				{
 					await ApplyChanges(workspace, projectData.Project.Solution).ConfigureAwait(false);
 				}
+				workspace.Dispose();
 			}
 
 			Logger.Info("Generating async code completed");
+		}
+
+		private MSBuildWorkspace CreateWorkspace()
+		{
+			var props = new Dictionary<string, string>
+			{
+				["CheckForSystemRuntimeDependency"] = "true" // needed in order that project references are loaded
+			};
+			return MSBuildWorkspace.Create(props);
 		}
 
 		private async Task GenerateProject(ProjectData projectData)
