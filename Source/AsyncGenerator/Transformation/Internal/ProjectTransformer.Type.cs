@@ -103,6 +103,45 @@ namespace AsyncGenerator.Transformation.Internal
 						transformResult.TransformedNodes.Add(transformedNode);
 						rootTypeNode = rootTypeNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 					}
+					
+					foreach (var field in typeResult.Fields)
+					{
+						var fieldSpanStart = field.Node.SpanStart - startRootTypeSpan;
+						var fieldSpanLength = field.Node.Span.Length;
+						var fieldNode = rootTypeNode.DescendantNodes()
+							.OfType<BaseFieldDeclarationSyntax>()
+							.First(o => o.SpanStart == fieldSpanStart && o.Span.Length == fieldSpanLength);
+						// TODO: move to sepatate file
+						var transformedNode = new TransformationResult(fieldNode);
+						var newFieldNode = fieldNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation));
+						var startFieldSpan = fieldNode.SpanStart + startRootTypeSpan;
+						startFieldSpan -= newFieldNode.SpanStart;
+
+						SyntaxNode transformed;
+						if (field.Variables.All(v => v.Conversion == FieldVariableConversion.Ignore)) // Remove all unused fields
+						{
+							transformed = null;
+						}
+						else
+						{
+							foreach (var typeReference in field.TypeReferences)
+							{
+								var reference = typeReference.ReferenceLocation;
+								var refSpanStart = reference.Location.SourceSpan.Start - startFieldSpan;
+								var refSpanLength = reference.Location.SourceSpan.Length;
+								var nameNode = newFieldNode.GetSimpleName(refSpanStart, refSpanLength, typeReference.IsCref);
+
+								newFieldNode = newFieldNode.ReplaceNode(nameNode,
+									nameNode.WithIdentifier(
+										Identifier(nameNode.Identifier.ValueText + "Async").WithTriviaFrom(nameNode.Identifier)));
+							}
+							transformed = newFieldNode;
+						}
+						transformedNode.Transformed = transformed;
+
+						transformResult.TransformedNodes.Add(transformedNode);
+						rootTypeNode = rootTypeNode.ReplaceNode(fieldNode, fieldNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
+					}
 				}
 
 				// Annotate and save an empty method transformation result

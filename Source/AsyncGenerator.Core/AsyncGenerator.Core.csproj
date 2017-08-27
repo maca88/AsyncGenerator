@@ -140,6 +140,8 @@
     <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
     <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IFieldAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IFieldVariableDeclaratorResult.cs" />
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
@@ -168,6 +170,7 @@
     <Compile Include="Extensions\AnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\Internal\SymbolExtensions.cs" />
     <Compile Include="Extensions\SymbolExtensions.cs" />
+    <Compile Include="FieldVariableConversion.cs" />
     <Compile Include="FileConfiguration\FileConfiguration.cs" />
     <Compile Include="FileConfiguration\FileConfigurator.cs" />
     <Compile Include="Configuration\IProjectAnalyzeConfiguration.cs" />

@@ -23,7 +23,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 	/// </summary>
 	public class DerivedAsync : Inheritance
 	{
-		private Type _type = typeof(DerivedAsync);
 		private Type _baseType;
 
 		public DerivedAsync()

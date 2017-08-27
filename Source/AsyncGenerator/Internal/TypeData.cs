@@ -72,6 +72,8 @@ namespace AsyncGenerator.Internal
 
 		public ConcurrentDictionary<PropertyDeclarationSyntax, PropertyData> Properties { get; } = new ConcurrentDictionary<PropertyDeclarationSyntax, PropertyData>();
 
+		public ConcurrentDictionary<BaseFieldDeclarationSyntax, BaseFieldData> Fields { get; } = new ConcurrentDictionary<BaseFieldDeclarationSyntax, BaseFieldData>();
+
 		public ConcurrentDictionary<TypeDeclarationSyntax, TypeData> NestedTypes { get; } = new ConcurrentDictionary<TypeDeclarationSyntax, TypeData>();
 
 		public IEnumerable<MethodOrAccessorData> MethodsAndAccessors
@@ -175,6 +177,16 @@ namespace AsyncGenerator.Internal
 			return !create ? null : Properties.GetOrAdd(node, syntax => new PropertyData(this, symbol, node));
 		}
 
+		public BaseFieldData GetBaseFieldData(BaseFieldDeclarationSyntax node, SemanticModel semanticModel, bool create = false)
+		{
+			if (Fields.TryGetValue(node, out BaseFieldData data))
+			{
+				return data;
+			}
+			return !create ? null : Fields.GetOrAdd(node, syntax => new BaseFieldData(this, node, semanticModel));
+		}
+
+
 		#region ITypeAnalyzationResult
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
@@ -193,6 +205,9 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<IPropertyAnalyzationResult> _cachedProperties;
 		IReadOnlyList<IPropertyAnalyzationResult> ITypeAnalyzationResult.Properties => _cachedProperties ?? (_cachedProperties = Properties.Values.ToImmutableArray());
+
+		private IReadOnlyList<IFieldAnalyzationResult> _cachedFields;
+		IReadOnlyList<IFieldAnalyzationResult> ITypeAnalyzationResult.Fields => _cachedFields ?? (_cachedFields = Fields.Values.ToImmutableArray());
 
 		private IReadOnlyList<IFunctionAnalyzationResult> _cachedSpecialMethods;
 		IReadOnlyList<IFunctionAnalyzationResult> ITypeAnalyzationResult.SpecialMethods => _cachedSpecialMethods ?? (_cachedSpecialMethods = SpecialMethods.Values.ToImmutableArray());

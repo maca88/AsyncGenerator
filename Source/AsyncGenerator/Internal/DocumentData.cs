@@ -34,7 +34,9 @@ namespace AsyncGenerator.Internal
 			SyntaxKind.GetAccessorDeclaration,
 			SyntaxKind.SetAccessorDeclaration,
 			SyntaxKind.ArrowExpressionClause, // arrow expression getter
-			//SyntaxKind.FieldDeclaration,
+			// Field
+			SyntaxKind.FieldDeclaration,
+			SyntaxKind.EventFieldDeclaration,
 			//SyntaxKind.DelegateDeclaration,
 			// Type
 			SyntaxKind.ClassDeclaration,
@@ -122,6 +124,7 @@ namespace AsyncGenerator.Internal
 		{
 			FunctionData functionData = null;
 			PropertyData propertyData = null;
+			BaseFieldData fieldData = null;
 			SyntaxNode endNode;
 			if (baseMethodData != null)
 			{
@@ -240,6 +243,19 @@ namespace AsyncGenerator.Internal
 							return null;
 						}
 						break;
+					case SyntaxKind.FieldDeclaration:
+					case SyntaxKind.EventFieldDeclaration:
+						if (typeData == null)
+						{
+							throw new InvalidOperationException($"Field {n} is declared outside a {nameof(TypeDeclarationSyntax)}");
+						}
+						var fieldNode = (BaseFieldDeclarationSyntax)n;
+						fieldData = typeData.GetBaseFieldData(fieldNode, SemanticModel, create);
+						if (fieldData == null)
+						{
+							return null;
+						}
+						break;
 					case SyntaxKind.ClassDeclaration:
 					case SyntaxKind.InterfaceDeclaration:
 					case SyntaxKind.StructDeclaration:
@@ -293,6 +309,9 @@ namespace AsyncGenerator.Internal
 					return namespaceData;
 				case SyntaxKind.PropertyDeclaration:
 					return propertyData;
+				case SyntaxKind.FieldDeclaration:
+				case SyntaxKind.EventFieldDeclaration:
+					return fieldData;
 				default:
 					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
 			}
@@ -374,6 +393,11 @@ namespace AsyncGenerator.Internal
 		public PropertyData GetOrCreatePropertyData(PropertyDeclarationSyntax node, TypeData typeData = null)
 		{
 			return (PropertyData)GetNodeData(node, true, typeData: typeData);
+		}
+
+		public BaseFieldData GetOrCreateBaseFieldData(BaseFieldDeclarationSyntax node, TypeData typeData = null)
+		{
+			return (BaseFieldData)GetNodeData(node, true, typeData: typeData);
 		}
 
 		#endregion

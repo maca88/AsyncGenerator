@@ -180,6 +180,8 @@
     <Compile Include="Internal\Annotations.cs" />
     <Compile Include="Internal\BaseMethodData.cs" />
     <Compile Include="Internal\ChildFunctionData.cs" />
+    <Compile Include="Internal\FieldData.cs" />
+    <Compile Include="Internal\FieldVariableDeclaratorData.cs" />
     <Compile Include="Internal\FunctionArgumentData.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />

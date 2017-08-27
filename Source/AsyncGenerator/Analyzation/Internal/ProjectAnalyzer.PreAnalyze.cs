@@ -86,6 +86,18 @@ namespace AsyncGenerator.Analyzation.Internal
 							PreAnalyzePropertyData(propertyData, documentData.SemanticModel);
 						}
 					}
+					else if (memberNode is BaseFieldDeclarationSyntax fieldNode)
+					{
+						var fieldData = documentData.GetOrCreateBaseFieldData(fieldNode, typeData);
+						if (typeData.Conversion == TypeConversion.Ignore)
+						{
+							fieldData.Ignore("Ignored by TypeConversion function", true);
+						}
+						else
+						{
+							PreAnalyzeFieldData(fieldData, documentData.SemanticModel);
+						}
+					}
 				}
 			}
 		}
@@ -105,6 +117,19 @@ namespace AsyncGenerator.Analyzation.Internal
 
 
 			typeData.IsPartial = typeData.Node.IsPartial();
+		}
+
+		private void PreAnalyzeFieldData(BaseFieldData fieldData, SemanticModel semanticModel)
+		{
+			if (!fieldData.TypeData.Conversion.HasAnyFlag(TypeConversion.NewType, TypeConversion.Copy))
+			{
+				fieldData.Ignore(null);
+				return;
+			}
+			foreach (var variable in fieldData.Variables)
+			{
+				variable.Conversion = FieldVariableConversion.Smart;
+			}
 		}
 
 		private void PreAnalyzePropertyData(PropertyData propertyData, SemanticModel semanticModel)

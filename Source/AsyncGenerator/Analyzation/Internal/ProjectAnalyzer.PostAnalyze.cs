@@ -570,6 +570,37 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
+			// 5.1 Step - Ignore or copy private fields of new types whether they are used or not
+			foreach (var type in allTypeData.Where(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
+			{
+				var postopnedVariables = new List<FieldVariableDeclaratorData>();
+				foreach (var variable in type.Fields.Values.SelectMany(o => o.Variables))
+				{
+					if (!variable.FieldData.Node.Modifiers.Any(m => m.IsKind(SyntaxKind.PrivateKeyword)))
+					{
+						variable.Conversion = FieldVariableConversion.Copy;
+						continue;
+					}
+					
+					variable.Conversion = variable.UsedBy.OfType<BaseMethodData>()
+						                      .Any(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Copy)) ||
+					                      variable.UsedBy.OfType<AccessorData>()
+						                      .Any(o => o.PropertyData.Conversion == PropertyConversion.Copy)
+						? FieldVariableConversion.Copy
+						: FieldVariableConversion.Ignore;
+					if (variable.Conversion == FieldVariableConversion.Ignore && variable.UsedBy.OfType<BaseFieldData>().Any())
+					{
+						postopnedVariables.Add(variable);
+					}
+				}
+				foreach (var variable in postopnedVariables)
+				{
+					variable.Conversion = variable.UsedBy.OfType<BaseFieldData>().Any(o => o.Variables.All(v => v.Conversion == FieldVariableConversion.Copy))
+						? FieldVariableConversion.Copy
+						: FieldVariableConversion.Ignore;
+				}
+			}
+
 			// 5. Step - Calculate the final namespace conversion
 			foreach (var namespaceData in allNamespaceData)
 			{

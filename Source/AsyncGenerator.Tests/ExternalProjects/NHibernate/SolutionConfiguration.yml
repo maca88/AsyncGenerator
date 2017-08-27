@@ -118,7 +118,7 @@
       - name: IsDBNull
       - name: WriteLine
       callForwarding: true
-      propertyConversion: true
+      propertyConversion: false
       cancellationTokens:
         guards: true
         methodParameter:

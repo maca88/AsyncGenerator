@@ -30,6 +30,7 @@
     <DefineConstants>TRACE;DEBUG;ASYNC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -38,6 +39,7 @@
     <DefineConstants>TRACE;ASYNC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Esent.Interop, Version=1.9.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -232,6 +234,9 @@
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
+    <Compile Include="Fields\Fixture.cs" />
+    <Compile Include="Fields\Input\UnusedField.cs" />
+    <EmbeddedResource Include="Fields\Output\UnusedField.txt" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="Formatting\Fixture.cs" />

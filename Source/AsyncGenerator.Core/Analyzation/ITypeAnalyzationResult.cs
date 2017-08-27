@@ -19,6 +19,8 @@ namespace AsyncGenerator.Core.Analyzation
 		/// </summary>
 		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 
+		IReadOnlyList<IFieldAnalyzationResult> Fields { get; }
+
 		/// <summary>
 		/// References of itself
 		/// </summary>

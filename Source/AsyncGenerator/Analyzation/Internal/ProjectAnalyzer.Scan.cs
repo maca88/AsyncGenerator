@@ -37,6 +37,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					await ScanMethodData(methodOrAccessorData).ConfigureAwait(false);
 				}
+				foreach (var fieldVariableData in typeData.Fields.Values.SelectMany(o => o.Variables)
+					.Where(o => o.Conversion == FieldVariableConversion.Smart))
+				{
+					await ScanFieldVariable(fieldVariableData).ConfigureAwait(false);
+				}
 			}
 		}
 
@@ -253,6 +258,22 @@ namespace AsyncGenerator.Analyzation.Internal
 			foreach (var methodToScan in referenceScanMethods)
 			{
 				await ScanAllMethodReferenceLocations(methodToScan, depth).ConfigureAwait(false);
+			}
+		}
+
+		private async Task ScanFieldVariable(FieldVariableDeclaratorData fieldVariableData)
+		{
+			var references = await SymbolFinder.FindReferencesAsync(fieldVariableData.Symbol, _solution).ConfigureAwait(false);
+			foreach (var refLocation in references.SelectMany(o => o.Locations))
+			{
+				var documentData = ProjectData.GetDocumentData(refLocation.Document);
+				// We need to find the type where the reference location is
+				var node = documentData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
+				var dataNode = documentData.GetNearestNodeData(node.Parent);
+				if (dataNode != null)
+				{
+					fieldVariableData.UsedBy.Add(dataNode);
+				}
 			}
 		}
 
