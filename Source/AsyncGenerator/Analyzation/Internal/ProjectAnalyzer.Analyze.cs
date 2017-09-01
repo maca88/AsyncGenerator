@@ -209,6 +209,10 @@ namespace AsyncGenerator.Analyzation.Internal
 						refData.Ignore($"Cannot attach an async method to an event (void async is not an option as cannot be awaited):\r\n{nameNode.Parent}\r\n");
 						Logger.Warn(refData.IgnoredReason);
 						break;
+					case SyntaxKind.SubtractAssignmentExpression:
+						refData.Ignore($"Cannot detach an async method to an event:\r\n{nameNode.Parent}\r\n");
+						Logger.Warn(refData.IgnoredReason);
+						break;
 					case SyntaxKind.VariableDeclaration:
 						refData.Ignore($"Assigning async method to a variable is not supported:\r\n{nameNode.Parent}\r\n");
 						Logger.Warn(refData.IgnoredReason);

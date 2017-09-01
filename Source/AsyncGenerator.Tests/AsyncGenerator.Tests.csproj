@@ -231,6 +231,8 @@
     <Compile Include="DocumentationComments\RemarksFixture.cs" />
     <Compile Include="DocumentationComments\Input\Remarks.cs" />
     <Compile Include="DocumentationComments\Input\Summary.cs" />
+    <Compile Include="Events\Fixture.cs" />
+    <Compile Include="Events\Input\AddRemoveEvent.cs" />
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
@@ -673,6 +675,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AsyncProperites\Output\AbstractInterfaceSetterWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Events\Output\AddRemoveEvent.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
