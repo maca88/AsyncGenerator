@@ -19,7 +19,9 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	partial class ProjectTransformer
 	{
-		private T TransformFunctionReference<T>(T node, IFunctionAnalyzationResult funcResult, FunctionReferenceTransformationResult transfromReference, INamespaceTransformationMetadata namespaceMetadata)
+		private T TransformFunctionReference<T>(T node, IFunctionAnalyzationResult funcResult, FunctionReferenceTransformationResult transfromReference, 
+			ITypeTransformationMetadata typeMetadata,
+			INamespaceTransformationMetadata namespaceMetadata)
 			where T : SyntaxNode
 		{
 			var nameNode = node.GetAnnotatedNodes(transfromReference.Annotation).OfType<SimpleNameSyntax>().First();
@@ -188,7 +190,106 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				invokeNode = node.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
-				node = node.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
+
+				var conditionalAccessNode = invokeNode.Ancestors()
+					.TakeWhile(o => !(o is StatementSyntax))
+					.OfType<ConditionalAccessExpressionSyntax>()
+					.FirstOrDefault();
+				if (conditionalAccessNode != null) // ?. syntax
+				{
+					var statement = (StatementSyntax)invokeNode.Ancestors().FirstOrDefault(o => o is StatementSyntax);
+					var block = statement?.Parent as BlockSyntax;
+					if (statement == null || block == null)
+					{
+						// TODO: convert arrow method/property/function to a normal one
+						// TODO: convert to block if there is no block
+						node = node.ReplaceNode(conditionalAccessNode,
+							conditionalAccessNode.AddAwait(_configuration.ConfigureAwaitArgument));
+					}
+					else
+					{
+						var fnName = nameNode.Identifier.ValueText;
+						// TODO: handle name collisions
+						var variableName = $"{char.ToLowerInvariant(fnName[0])}{fnName.Substring(1)}Task";
+						var leadingTrivia = statement.GetLeadingTrivia();
+						var newConditionalAccessNode = ConditionalAccessExpression(
+								conditionalAccessNode.Expression,
+								invokeNode)
+							.WithTriviaFrom(conditionalAccessNode);
+						var localVar = LocalDeclarationStatement(
+							VariableDeclaration(
+								IdentifierName(Identifier(leadingTrivia, "var", TriviaList(Space))),
+								SingletonSeparatedList(
+									VariableDeclarator(
+											Identifier(TriviaList(), variableName, TriviaList(Space)))
+										.WithInitializer(
+											EqualsValueClause(newConditionalAccessNode.WithoutTrivia())
+												.WithEqualsToken(Token(TriviaList(), SyntaxKind.EqualsToken, TriviaList(Space)))
+										)
+								)))
+								.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(typeMetadata.EndOfLineTrivia)));
+						var index = block.Statements.IndexOf(statement);
+
+						var lastReturnNode = block.DescendantNodes()
+							.Where(o => o.SpanStart >= statement.SpanStart)
+							.OfType<ReturnStatementSyntax>()
+							.LastOrDefault();
+
+						var variableAnnotation = Guid.NewGuid().ToString();
+						var newBlock = block.ReplaceNode(conditionalAccessNode,
+							conditionalAccessNode.WhenNotNull.ReplaceNode(invokeNode,
+								IdentifierName(variableName)
+									.WithAdditionalAnnotations(new SyntaxAnnotation(variableAnnotation))
+									.WithLeadingTrivia(conditionalAccessNode.GetLeadingTrivia())
+									.WithTrailingTrivia(conditionalAccessNode.GetTrailingTrivia())
+							));
+
+						var variable = newBlock.GetAnnotatedNodes(variableAnnotation).OfType<IdentifierNameSyntax>().First();
+						newBlock = newBlock.ReplaceNode(variable, variable.AddAwait(_configuration.ConfigureAwaitArgument));
+
+						var ifBlock = Block()
+							.WithOpenBraceToken(
+								Token(TriviaList(leadingTrivia), SyntaxKind.OpenBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
+							.WithCloseBraceToken(
+								Token(TriviaList(leadingTrivia), SyntaxKind.CloseBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
+							.WithStatements(new SyntaxList<StatementSyntax>()
+								.AddRange(newBlock.AppendIndent(typeMetadata.IndentTrivia.ToFullString()).Statements.Skip(index)));
+
+						var ifStatement = IfStatement(
+								BinaryExpression(
+										SyntaxKind.NotEqualsExpression,
+										IdentifierName(Identifier(TriviaList(), variableName, TriviaList(Space))),
+										LiteralExpression(SyntaxKind.NullLiteralExpression))
+									.WithOperatorToken(
+										Token(TriviaList(), SyntaxKind.ExclamationEqualsToken, TriviaList(Space))),
+								ifBlock
+							)
+							.WithIfKeyword(
+								Token(TriviaList(leadingTrivia), SyntaxKind.IfKeyword, TriviaList(Space)))
+							.WithCloseParenToken(
+								Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(typeMetadata.EndOfLineTrivia)));
+
+						var statements = new SyntaxList<StatementSyntax>()
+							.AddRange(newBlock.Statements.Take(index))
+							.Add(localVar)
+							.Add(ifStatement);
+						if (lastReturnNode?.Expression != null)
+						{
+							// Check if the variable is defined otherwise return default return type value
+							if (lastReturnNode.Expression is IdentifierNameSyntax idNode &&
+							    statements.OfType<VariableDeclaratorSyntax>().All(o => o.Identifier.ToString() != idNode.Identifier.ValueText))
+							{
+								lastReturnNode = lastReturnNode.WithExpression(DefaultExpression(funcResult.GetNode().GetReturnType().WithoutTrivia()));
+							}
+							statements = statements.Add(lastReturnNode);
+						}
+						node = node.ReplaceNode(block, newBlock.WithStatements(statements));
+					}
+				}
+				else
+				{
+					node = node.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
+				}
 			}
 
 			return node;

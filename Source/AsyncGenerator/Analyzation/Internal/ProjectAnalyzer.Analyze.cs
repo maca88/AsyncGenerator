@@ -229,6 +229,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					case SyntaxKind.SimpleMemberAccessExpression:
 					case SyntaxKind.ArgumentList:
 					case SyntaxKind.ObjectCreationExpression:
+					case SyntaxKind.MemberBindingExpression: // ?.
 						ascend = true;
 						break;
 					default:

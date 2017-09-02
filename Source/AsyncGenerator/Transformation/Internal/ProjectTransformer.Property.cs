@@ -170,7 +170,7 @@ namespace AsyncGenerator.Transformation.Internal
 			// We have to order by OriginalStartSpan in order to have consistent formatting when adding awaits
 			foreach (var transfromReference in result.TransformedFunctionReferences.OrderByDescending(o => o.OriginalStartSpan))
 			{
-				node = TransformFunctionReference(node, methodResult, transfromReference, namespaceMetadata);
+				node = TransformFunctionReference(node, methodResult, transfromReference, typeMetadata, namespaceMetadata);
 			}
 
 			if (methodResult.Symbol.MethodKind == MethodKind.PropertySet)

@@ -158,7 +158,7 @@ namespace AsyncGenerator.Transformation.Internal
 			// We have to order by OriginalStartSpan in order to have consistent formatting when adding awaits
 			foreach (var transfromReference in result.TransformedFunctionReferences.OrderByDescending(o => o.OriginalStartSpan))
 			{
-				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, namespaceMetadata);
+				methodNode = TransformFunctionReference(methodNode, methodResult, transfromReference, typeMetadata, namespaceMetadata);
 			}
 
 			result.Transformed = methodNode;

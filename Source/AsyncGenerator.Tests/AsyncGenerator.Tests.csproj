@@ -226,6 +226,8 @@
     <Compile Include="CastOmitAsync\Fixture.cs" />
     <Compile Include="Cref\Fixture.cs" />
     <Compile Include="Cref\Input\TestCase.cs" />
+    <Compile Include="CSharpFeatures\Fixture.cs" />
+    <Compile Include="CSharpFeatures\Input\MethodConditionalAccessExpression.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
     <Compile Include="DocumentationComments\SummaryFixture.cs" />
     <Compile Include="DocumentationComments\RemarksFixture.cs" />
@@ -682,6 +684,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PartialCompilation\Output\GenericCtorMultiOverloads.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CSharpFeatures\Output\MethodConditionalAccessExpression.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
