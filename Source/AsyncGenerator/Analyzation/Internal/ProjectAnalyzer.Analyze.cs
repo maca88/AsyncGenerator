@@ -232,7 +232,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						ascend = true;
 						break;
 					default:
-						throw new NotSupportedException($"Unknown node kind: {currNode.Kind()}");
+						throw new NotSupportedException(
+							$"Unknown node kind: {currNode.Kind()} at {currNode?.SyntaxTree.GetLineSpan(currNode.Span)}. Node:{Environment.NewLine}{currNode}");
 				}
 
 				if (ascend)
