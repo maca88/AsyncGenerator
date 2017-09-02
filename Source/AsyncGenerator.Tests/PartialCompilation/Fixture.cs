@@ -61,5 +61,30 @@ namespace AsyncGenerator.Tests.PartialCompilation
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestGenericCtorMultiOverloadsAfterTransformation()
+		{
+			var config = Configure("GenericCtorMultiOverloads", o => o
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("GenericCtorMultiOverloads"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
 	}
 }

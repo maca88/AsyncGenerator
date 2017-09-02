@@ -604,20 +604,46 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 			var parentSymbolInfo = semanticModel.GetSymbolInfo(currNode);
-			if (parentSymbolInfo.CandidateSymbols.Length == 1 && argumentIndex.HasValue)
+
+			if (!argumentIndex.HasValue)
 			{
-				var parameter = parentSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
+				return null;
+			}
+			IParameterSymbol parameterSymbol = null;
+			if (parentSymbolInfo.CandidateSymbols.Length == 0)
+			{
+				// In certain cases we can get no candidate symbols for the parent node (e.g. generic types), when this happen try to get the parameter manually with all the available information
+				if (currNode is ObjectCreationExpressionSyntax objCreationNode)
+				{
+					var typeSymbol = (INamedTypeSymbol) semanticModel.GetSymbolInfo(objCreationNode.Type).Symbol;
+					var ctors = typeSymbol?.Constructors
+						.Where(o => o.Parameters.Length == objCreationNode.ArgumentList.Arguments.Count)
+						.ToList();
+					if (ctors?.Count == 1)
+					{
+						parameterSymbol = ctors[0].Parameters[argumentIndex.Value];
+					}
+				}
+			}
+			else if (parentSymbolInfo.CandidateSymbols.Length == 1)
+			{
+				parameterSymbol = parentSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
 					.First()
 					.Parameters[argumentIndex.Value];
-				var parameterTypeSymbol = parameter.Type as INamedTypeSymbol;
-				var parameterDelegate = parameterTypeSymbol?.DelegateInvokeMethod;
-
-				return parameterDelegate != null 
-					? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
-					.FirstOrDefault(o => o.MatchesDefinition(parameterDelegate))
-					: null;
 			}
-			return null;
+			if (parameterSymbol == null)
+			{
+				return null;
+			}
+			var parameterTypeSymbol = parameterSymbol.Type as INamedTypeSymbol;
+			var parameterDelegate = parameterTypeSymbol?.DelegateInvokeMethod;
+
+			return parameterDelegate != null
+				? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
+					.FirstOrDefault(o => o.MatchesDefinition(parameterDelegate))
+				: null;
+			
+
 			// TODO: analyze if we need an option for the consumer to select the correct candidate
 		}
 
