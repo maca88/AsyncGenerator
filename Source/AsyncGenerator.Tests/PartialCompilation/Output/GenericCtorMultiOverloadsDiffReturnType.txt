@@ -22,7 +22,7 @@ namespace AsyncGenerator.Tests.PartialCompilation.Input
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class GenericCtorMultiOverloads
+	public partial class GenericCtorMultiOverloadsDiffReturnType
 	{
 
 		#if TEST

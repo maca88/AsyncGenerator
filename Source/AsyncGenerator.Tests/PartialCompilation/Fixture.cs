@@ -65,7 +65,7 @@ namespace AsyncGenerator.Tests.PartialCompilation
 		[Test]
 		public void TestGenericCtorMultiOverloadsAfterTransformation()
 		{
-			var config = Configure("GenericCtorMultiOverloads", o => o
+			var config = Configure(nameof(GenericCtorMultiOverloads), o => o
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -79,7 +79,32 @@ namespace AsyncGenerator.Tests.PartialCompilation
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("GenericCtorMultiOverloads"), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile(nameof(GenericCtorMultiOverloads)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestGenericCtorMultiOverloadsDiffReturnTypeAfterTransformation()
+		{
+			var config = Configure(nameof(GenericCtorMultiOverloadsDiffReturnType), o => o
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(GenericCtorMultiOverloadsDiffReturnType)), document.Transformed.ToFullString());
 					})
 				)
 			);

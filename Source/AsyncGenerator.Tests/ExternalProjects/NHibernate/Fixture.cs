@@ -68,7 +68,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln");
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, s => s
-					.ConcurrentRun()
+					//.ConcurrentRun()
+					.SuppressDiagnosticFailures("NHibernate.Test.VisualBasic.vbproj")
 					.ConfigureProject("NHibernate", p => p
 						.ConfigureAnalyzation(a => a
 							.MethodConversion(GetMethodConversion)
@@ -117,76 +118,76 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 						.RegisterPlugin<EmptyRegionRemover>()
 						.RegisterPlugin<TransactionScopeAsyncFlowAdder>() // Rewrite TransactionScope in AdoNetWithDistributedTransactionFactory
 					)
-					.ConfigureProject("NHibernate.DomainModel", p => p
-						.ConfigureAnalyzation(a => a
-							.ScanForMissingAsyncMembers(true)
-							.ScanMethodBody(true)
-						)
-					)
-					.ConfigureProject("NHibernate.Test", p => p
-						.ConfigureAnalyzation(a => a
-							.MethodConversion(symbol =>
-								{
-									if (symbol.GetAttributes().Any(o => o.AttributeClass.Name == "IgnoreAttribute"))
-									{
-										return MethodConversion.Ignore;
-									}
-									if (symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
-									{
-										return MethodConversion.Smart;
-									}
-									return MethodConversion.Unknown;
-								})
-							.AsyncExtensionMethods(e => e
-								.ProjectFile("NHibernate", "LinqExtensionMethods.cs")
-							)
-							.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
-							.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
-							.CancellationTokens(t => t
-								.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
-							.ScanMethodBody(true)
-							.DocumentSelection(doc =>
-							{
-								return
-									// AsQueryable method is called on a retrieved list from db and the result is used elsewhere in code
-									!doc.FilePath.EndsWith(@"Linq\MathTests.cs")
-									// It looks like that GC.Collect works differently with async.
-									// if "await Task.Yield();" is added after DoLinqInSeparateSessionAsync then the test runs successfully (TODO: discover why)
-									&& !doc.FilePath.EndsWith(@"Linq\ExpressionSessionLeakTest.cs")
-									;
-							})
-							.TypeConversion(type =>
-								{
-									if (type.Name == "NorthwindDbCreator" || // Ignored for performance reasons
-										type.Name == "ObjectAssert" ||  // Has a TestFixture attribute but is not a test
-										type.Name == "LinqReadonlyTestsContext") // SetUpFixture
-									{
-										return TypeConversion.Ignore;
-									}
-									if (type.GetAttributes().Any(o => o.AttributeClass.Name == "IgnoreAttribute"))
-									{
-										return TypeConversion.Ignore;
-									}
-									if (type.GetAttributes().Any(o => o.AttributeClass.Name == "TestFixtureAttribute"))
-									{
-										return TypeConversion.NewType;
-									}
-									var currentType = type;
-									while (currentType != null)
-									{
-										if (currentType.Name == "TestCase")
-										{
-											return TypeConversion.Ignore;
-										}
-										currentType = currentType.BaseType;
-									}
-									return TypeConversion.Unknown;
-								})
-						)
-						.RegisterPlugin<TransactionScopeAsyncFlowAdder>()
-						.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
-					)
-					.ApplyChanges(true)
+					//.ConfigureProject("NHibernate.DomainModel", p => p
+					//	.ConfigureAnalyzation(a => a
+					//		.ScanForMissingAsyncMembers(true)
+					//		.ScanMethodBody(true)
+					//	)
+					//)
+					//.ConfigureProject("NHibernate.Test", p => p
+					//	.ConfigureAnalyzation(a => a
+					//		.MethodConversion(symbol =>
+					//			{
+					//				if (symbol.GetAttributes().Any(o => o.AttributeClass.Name == "IgnoreAttribute"))
+					//				{
+					//					return MethodConversion.Ignore;
+					//				}
+					//				if (symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
+					//				{
+					//					return MethodConversion.Smart;
+					//				}
+					//				return MethodConversion.Unknown;
+					//			})
+					//		.AsyncExtensionMethods(e => e
+					//			.ProjectFile("NHibernate", "LinqExtensionMethods.cs")
+					//		)
+					//		.PreserveReturnType(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute"))
+					//		.ScanForMissingAsyncMembers(o => o.AllInterfaces.Any(i => i.ContainingAssembly.Name == "NHibernate"))
+					//		.CancellationTokens(t => t
+					//			.RequiresCancellationToken(symbol => symbol.GetAttributes().Any(o => o.AttributeClass.Name == "TestAttribute") ? (bool?)false : null))
+					//		.ScanMethodBody(true)
+					//		.DocumentSelection(doc =>
+					//		{
+					//			return
+					//				// AsQueryable method is called on a retrieved list from db and the result is used elsewhere in code
+					//				!doc.FilePath.EndsWith(@"Linq\MathTests.cs")
+					//				// It looks like that GC.Collect works differently with async.
+					//				// if "await Task.Yield();" is added after DoLinqInSeparateSessionAsync then the test runs successfully (TODO: discover why)
+					//				&& !doc.FilePath.EndsWith(@"Linq\ExpressionSessionLeakTest.cs")
+					//				;
+					//		})
+					//		.TypeConversion(type =>
+					//			{
+					//				if (type.Name == "NorthwindDbCreator" || // Ignored for performance reasons
+					//					type.Name == "ObjectAssert" ||  // Has a TestFixture attribute but is not a test
+					//					type.Name == "LinqReadonlyTestsContext") // SetUpFixture
+					//				{
+					//					return TypeConversion.Ignore;
+					//				}
+					//				if (type.GetAttributes().Any(o => o.AttributeClass.Name == "IgnoreAttribute"))
+					//				{
+					//					return TypeConversion.Ignore;
+					//				}
+					//				if (type.GetAttributes().Any(o => o.AttributeClass.Name == "TestFixtureAttribute"))
+					//				{
+					//					return TypeConversion.NewType;
+					//				}
+					//				var currentType = type;
+					//				while (currentType != null)
+					//				{
+					//					if (currentType.Name == "TestCase")
+					//					{
+					//						return TypeConversion.Ignore;
+					//					}
+					//					currentType = currentType.BaseType;
+					//				}
+					//				return TypeConversion.Unknown;
+					//			})
+					//	)
+					//	.RegisterPlugin<TransactionScopeAsyncFlowAdder>()
+					//	.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+					//)
+					//.ApplyChanges(true)
 				);
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));

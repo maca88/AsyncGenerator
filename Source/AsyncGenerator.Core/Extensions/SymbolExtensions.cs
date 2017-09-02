@@ -22,26 +22,14 @@ namespace AsyncGenerator.Core.Extensions
 				method = method.ReducedFrom ?? method;
 			}
 			if (method.Parameters.Length != toMatch.Parameters.Length ||
-			    method.TypeParameters.Length != toMatch.TypeParameters.Length ||
-				!method.ReturnType.AreEqual(toMatch.ReturnType))
+				!method.ReturnType.AreEqual(toMatch.ReturnType, method.ReturnType.OriginalDefinition)) // Here the generic arguments will be checked if any.
+																									   // The return type of the toMatch parameter can be a base type of the return type
+																									   // of the method parameter
 			{
 				return false;
 			}
-			for (var i = 0; i < method.TypeParameters.Length; i++)
-			{
-				var param = method.TypeParameters[i];
-				var candidateParam = toMatch.TypeParameters[i];
-				if (param.Variance != candidateParam.Variance ||
-				    param.TypeParameterKind != candidateParam.TypeParameterKind ||
-				    param.ConstraintTypes.Length != candidateParam.ConstraintTypes.Length)
-				{
-					return false;
-				}
-				if (param.ConstraintTypes.Where((t, j) => !t.Equals(candidateParam.ConstraintTypes[j])).Any())
-				{
-					return false;
-				}
-			}
+			// Do not check the method type parameters as toMatch method may have the type parameters from the type
+			// (the generic arguments will be checked for the return type and parameters separately)
 			for (var i = 0; i < method.Parameters.Length; i++)
 			{
 				var param = method.Parameters[i];
@@ -52,7 +40,7 @@ namespace AsyncGenerator.Core.Extensions
 				{
 					return false;
 				}
-				if (!param.Type.AreEqual(candidateParam.Type))
+				if (!param.Type.AreEqual(candidateParam.Type)) // Here the generic arguments will be checked if any
 				{
 					return false;
 				}

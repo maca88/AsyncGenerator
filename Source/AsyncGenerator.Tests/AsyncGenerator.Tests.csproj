@@ -279,6 +279,7 @@
     <Compile Include="OutsideMethodFunction\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Fixture.cs" />
     <Compile Include="PartialCompilation\Fixture.cs" />
+    <Compile Include="PartialCompilation\Input\GenericCtorMultiOverloadsDiffReturnType.cs" />
     <Compile Include="PartialCompilation\Input\GenericCtorMultiOverloads.cs" />
     <Compile Include="PartialCompilation\Input\CtorMultiOverloads.cs" />
     <Compile Include="PartialCompilation\Input\Ctor.cs" />
@@ -687,6 +688,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CSharpFeatures\Output\MethodConditionalAccessExpression.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PartialCompilation\Output\GenericCtorMultiOverloadsDiffReturnType.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

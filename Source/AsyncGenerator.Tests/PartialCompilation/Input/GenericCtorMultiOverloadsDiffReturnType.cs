@@ -8,12 +8,12 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.PartialCompilation.Input
 {
-	public class FakeClass<T>
+	public class FakeClass2<T>
 	{
-		private readonly Func<IList<T>> _getList;
-		private readonly Func<Task<IList<T>>> _getListAsync;
+		private readonly Func<IEnumerable<T>> _getList;
+		private readonly Func<Task<IEnumerable<T>>> _getListAsync;
 
-		private FakeClass(Func<IList<T>> getList, Func<Task<IList<T>>> getListAsync)
+		private FakeClass2(Func<IEnumerable<T>> getList, Func<Task<IEnumerable<T>>> getListAsync)
 		{
 			_getList = getList;
 			_getListAsync = getListAsync;
@@ -23,13 +23,13 @@ namespace AsyncGenerator.Tests.PartialCompilation.Input
 	/// <summary>
 	/// Github Issue 40
 	/// </summary>
-	public class GenericCtorMultiOverloads
+	public class GenericCtorMultiOverloadsDiffReturnType
 	{
 		#if TEST
 
 		public static Ctor Create()
 		{
-			return new FakeClass<T>(List<T>, ListAsync<T>);
+			return new FakeClass2<T>(List<T>, ListAsync<T>);
 		}
 
 		#endif
