@@ -124,7 +124,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 				var funcNode = rootFuncNode.GetAnnotatedNodes(transformResult.Annotation).First();
 				var newFuncNode = funcNode;
-				if (!transformResult.AnalyzationResult.OmitAsync)
+				// The async keyword may be added only for functions marked as ToAsync 
+				if (transformResult.AnalyzationResult.Conversion.HasAnyFlag(MethodConversion.ToAsync) && !transformResult.AnalyzationResult.OmitAsync)
 				{
 					newFuncNode = newFuncNode.AddAsync();
 				}

@@ -193,6 +193,8 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="Github\Issue44\Fixture.cs" />
+    <Compile Include="Github\Issue44\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Input\TestCase.cs" />
     <Compile Include="AsyncMethodFinder\Fixture.cs" />
     <Compile Include="AsyncMethodFinder\Input\CustomLinqExtensions.cs" />
@@ -716,6 +718,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\SubNestedClass.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue44\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
