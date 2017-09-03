@@ -90,7 +90,7 @@ namespace AsyncGenerator.Transformation.Internal
 				// TypeReferences can be changes only if we create a new type
 				if (typeResult.Conversion == TypeConversion.NewType || typeResult.Conversion == TypeConversion.Copy)
 				{
-					foreach (var typeReference in typeResult.TypeReferences)
+					foreach (var typeReference in typeResult.TypeReferences.Where(o => o.TypeAnalyzationResult.Conversion == TypeConversion.NewType))
 					{
 						var reference = typeReference.ReferenceLocation;
 						var refSpanStart = reference.Location.SourceSpan.Start - startRootTypeSpan;
@@ -124,7 +124,7 @@ namespace AsyncGenerator.Transformation.Internal
 						}
 						else
 						{
-							foreach (var typeReference in field.TypeReferences)
+							foreach (var typeReference in field.TypeReferences.Where(o => o.TypeAnalyzationResult.Conversion == TypeConversion.NewType))
 							{
 								var reference = typeReference.ReferenceLocation;
 								var refSpanStart = reference.Location.SourceSpan.Start - startFieldSpan;

@@ -309,7 +309,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
 				// We need to find the type where the reference location is
 				var node = documentData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
-				var typeReference = new TypeReferenceData(refLocation, node, typeData.Symbol)
+				var typeReference = new TypeReferenceData(typeData, refLocation, node, typeData.Symbol)
 				{
 					IsCref = node.Parent.IsKind(SyntaxKind.NameMemberCref)
 				};

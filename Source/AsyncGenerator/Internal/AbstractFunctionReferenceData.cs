@@ -9,9 +9,9 @@ namespace AsyncGenerator.Internal
 {
 	internal abstract class AbstractFunctionReferenceData : AbstractReferenceData<IMethodSymbol>, IFunctionReferenceAnalyzationResult
 	{
-		protected AbstractFunctionReferenceData(ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
+		protected AbstractFunctionReferenceData(ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
-			: base(reference, referenceNameNode, referenceSymbol)
+			: base(referenceLocation, referenceNameNode, referenceSymbol)
 		{
 			ReferenceFunctionData = referenceFunctionData;
 		}

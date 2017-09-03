@@ -1,4 +1,5 @@
-﻿using AsyncGenerator.Analyzation;
+﻿using System;
+using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -8,9 +9,9 @@ namespace AsyncGenerator.Internal
 {
 	internal abstract class AbstractReferenceData<TSymbol> : IReferenceAnalyzationResult<TSymbol> where TSymbol : ISymbol
 	{
-		protected AbstractReferenceData(ReferenceLocation reference, SimpleNameSyntax referenceNameNode, TSymbol referenceSymbol)
+		protected AbstractReferenceData(ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode, TSymbol referenceSymbol)
 		{
-			ReferenceLocation = reference;
+			ReferenceLocation = referenceLocation;
 			ReferenceNameNode = referenceNameNode;
 			ReferenceSymbol = referenceSymbol;
 		}

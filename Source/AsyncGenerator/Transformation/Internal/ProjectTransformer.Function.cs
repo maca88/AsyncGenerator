@@ -84,7 +84,7 @@ namespace AsyncGenerator.Transformation.Internal
 						rootFuncNode = rootFuncNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 					}
 				}
-				foreach (var typeReference in funcResult.TypeReferences)
+				foreach (var typeReference in funcResult.TypeReferences.Where(o => o.TypeAnalyzationResult.Conversion == TypeConversion.NewType))
 				{
 					var reference = typeReference.ReferenceLocation;
 					var refSpanStart = reference.Location.SourceSpan.Start - startRootFuncSpan;

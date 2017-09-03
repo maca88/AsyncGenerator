@@ -363,5 +363,28 @@ namespace AsyncGenerator.Tests.NewTypes
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestDerivedAsyncClassAfterTransformation()
+		{
+			var config = Configure(nameof(DerivedAsyncClass), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => TypeConversion.NewType)
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(DerivedAsyncClass)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
 	}
 }

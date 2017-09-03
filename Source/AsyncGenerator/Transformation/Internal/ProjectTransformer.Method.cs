@@ -69,7 +69,7 @@ namespace AsyncGenerator.Transformation.Internal
 			// First we need to annotate nodes that will be modified in order to find them later on. 
 			// We cannot rely on spans after the first modification as they will change
 			var typeReferencesAnnotations = new List<string>();
-			foreach (var typeReference in methodResult.TypeReferences)
+			foreach (var typeReference in methodResult.TypeReferences.Where(o => o.TypeAnalyzationResult.Conversion == TypeConversion.NewType))
 			{
 				var reference = typeReference.ReferenceLocation;
 				var startSpan = reference.Location.SourceSpan.Start - startMethodSpan;
