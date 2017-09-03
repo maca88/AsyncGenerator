@@ -428,7 +428,7 @@ namespace AsyncGenerator.Extensions.Internal
 			return node
 				.DescendantNodes(descendIntoTrivia: descendIntoTrivia)
 				.OfType<SimpleNameSyntax>()
-				.First(
+				.FirstOrDefault(
 					o =>
 					{
 						if (o.IsKind(SyntaxKind.GenericName))

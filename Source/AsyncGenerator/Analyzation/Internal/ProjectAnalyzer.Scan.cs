@@ -515,6 +515,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Find the real method on that reference as FindReferencesAsync will also find references to base and interface methods
 				// Save the reference as it can be made async
 				var nameNode = baseMethodData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
+				if (nameNode == null)
+				{
+					continue; // Can happen for a foreach token
+				}
 				var referenceSymbolInfo = documentData.SemanticModel.GetSymbolInfo(nameNode);
 				var referenceSymbol = referenceSymbolInfo.Symbol;
 				var methodReferenceSymbol = referenceSymbol as IMethodSymbol;

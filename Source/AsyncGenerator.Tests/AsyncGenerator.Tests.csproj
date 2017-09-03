@@ -227,6 +227,7 @@
     <Compile Include="Cref\Fixture.cs" />
     <Compile Include="Cref\Input\TestCase.cs" />
     <Compile Include="CSharpFeatures\Fixture.cs" />
+    <Compile Include="CSharpFeatures\Input\CustomEnumerable.cs" />
     <Compile Include="CSharpFeatures\Input\MethodConditionalAccessExpression.cs" />
     <Compile Include="CustomReturnType\Fixture.cs" />
     <Compile Include="DocumentationComments\SummaryFixture.cs" />
@@ -691,6 +692,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PartialCompilation\Output\GenericCtorMultiOverloadsDiffReturnType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="CSharpFeatures\Output\CustomEnumerable.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
