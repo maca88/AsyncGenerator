@@ -318,7 +318,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				// A method may be already calculated to be async, but we will ignore it if the method does not have any dependency and was not explicitly set to be async
 				var methodData = functionData as MethodOrAccessorData;
-				if (methodData == null || (!methodData.Missing && !methodData.Dependencies.Any() && !asyncMethodDatas.Contains(methodData)))
+				if (methodData == null || (!methodData.Missing && methodData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) && !asyncMethodDatas.Contains(methodData)))
 				{
 					functionData.Ignore("Does not have any async invocations");
 				}
@@ -358,6 +358,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.ExplicitlyIgnored))
 				)
 			{
+				// Correct if the user ignored a method that is used by other methods
+				if (methodData.TypeData.Conversion == TypeConversion.NewType &&
+				    methodData.Dependencies.Any(o => o.Conversion.HasAnyFlag(MethodConversion.Copy, MethodConversion.ToAsync)))
+				{
+					methodData.Copy();
+					Logger.Warn($"Explicitly ignored method {methodData.Symbol} will be copied as it is used in one or many methods that will be generated");
+				}
+
 				// If an abstract method is ignored we have to ignore also the overrides otherwise we may break the functionality and the code from compiling (eg. base.Call())
 				if (methodData.Symbol.IsAbstract || methodData.Symbol.IsVirtual)
 				{
@@ -498,7 +506,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 				{
 					// For smart methods we will have filled dependencies so we can ignore it if is not used
-					if (methodData.Conversion.HasFlag(MethodConversion.Smart) && !methodData.Dependencies.Any())
+					if (methodData.Conversion.HasFlag(MethodConversion.Smart) && methodData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)))
 					{
 						methodData.Ignore("Method is never used.");
 					}

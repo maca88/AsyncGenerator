@@ -17,6 +17,7 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.NewTypes.Input
 {
+	using System.Threading;
 	public class NestedClassesAsync
 	{
 		private readonly NestedClass _nestedClass;
@@ -37,9 +38,9 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public void Nop() { }
 
-			public Task ReadAsync()
+			public Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 			{
-				return SimpleFile.ReadAsync();
+				return SimpleFile.ReadAsync(cancellationToken);
 			}
 
 			public void Read()

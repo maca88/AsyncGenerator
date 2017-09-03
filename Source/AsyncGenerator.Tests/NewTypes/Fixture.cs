@@ -70,6 +70,36 @@ namespace AsyncGenerator.Tests.NewTypes
 		}
 
 		[Test]
+		public void TestNestedClassesWithTokensForNestedClassAfterTransformation()
+		{
+			var config = Configure(nameof(NestedClasses), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(NestedClasses) ? TypeConversion.NewType : TypeConversion.Unknown)
+					.CancellationTokens(t => t
+						.RequiresCancellationToken(o => o.ContainingType.Name != nameof(NestedClasses)))
+					.MethodConversion(symbol =>
+					{
+						return symbol.GetAttributes().Any(o => o.AttributeClass.Name == "CustomAttribute")
+							? MethodConversion.Smart
+							: MethodConversion.Unknown;
+					})
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("NestedClassesWithTokensForNestedClass"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
 		public void TestNonAsyncNewTypeAfterTransformation()
 		{
 			var config = Configure(nameof(NonAsync), p => p
@@ -213,6 +243,52 @@ namespace AsyncGenerator.Tests.NewTypes
 						var document = result.Documents[0];
 						Assert.Null(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(NestedCopy)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestNestedCopyIgnoreReadMethodAfterTransformation()
+		{
+			var config = Configure(nameof(NestedCopy), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(AbstractNestedCopy) ? TypeConversion.Ignore : TypeConversion.NewType)
+					.MethodConversion(symbol => symbol.Name == "Read" ? MethodConversion.Ignore : MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("NestedCopyIgnoreRead"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestNestedCopyCopyReadMethodAfterTransformation()
+		{
+			var config = Configure(nameof(NestedCopy), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(AbstractNestedCopy) ? TypeConversion.Ignore : TypeConversion.NewType)
+					.MethodConversion(symbol => symbol.Name == "Read" ? MethodConversion.Copy : MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("NestedCopyIgnoreRead"), document.Transformed.ToFullString());
 					})
 				)
 			);

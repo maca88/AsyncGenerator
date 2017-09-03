@@ -38,6 +38,11 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 			public void Nop() { }
 
+			public Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
+			{
+				return SimpleFile.ReadAsync(cancellationToken);
+			}
+
 			public void Read()
 			{
 				SimpleFile.Read();
@@ -74,10 +79,22 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			return ReadAsync(cancellationToken);
 		}
 
-		public void Read3()
+		public Task Read3Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			_nestedClass.Read();
+			return _nestedClass.ReadAsync(cancellationToken);
 		}
 
+		public Task Read4Async(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			try
+			{
+				var cls = new NestedClass();
+				return cls.ReadAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
 	}
 }

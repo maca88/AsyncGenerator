@@ -87,10 +87,12 @@ namespace AsyncGenerator.Internal
 			return ChildFunctions.Values.SelectMany(o => o.GetSelfAndDescendantsFunctionsRecursively(o, predicate));
 		}
 
+		/// <summary>
+		/// Copy the method with the possibility to have it also async
+		/// </summary>
 		public void SoftCopy()
 		{
 			Conversion &= ~MethodConversion.Ignore;
-			Conversion &= ~MethodConversion.Unknown;
 			Conversion |= MethodConversion.Copy;
 		}
 
@@ -119,7 +121,7 @@ namespace AsyncGenerator.Internal
 
 		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{
-			if (Conversion != MethodConversion.Ignore)
+			if (Conversion != MethodConversion.Ignore || IgnoredReason == null)
 			{
 				IgnoredReason = reason;
 			}
@@ -140,6 +142,10 @@ namespace AsyncGenerator.Internal
 			if (Conversion.HasFlag(MethodConversion.Smart))
 			{
 				Conversion &= ~MethodConversion.Smart;
+			}
+			if (Conversion.HasFlag(MethodConversion.Unknown))
+			{
+				Conversion &= ~MethodConversion.Unknown;
 			}
 			if (Conversion.HasFlag(MethodConversion.Copy))
 			{

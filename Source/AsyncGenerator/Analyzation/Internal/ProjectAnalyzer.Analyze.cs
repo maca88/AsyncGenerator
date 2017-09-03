@@ -41,7 +41,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					var invokedMethodData = bodyReference.ReferenceFunctionData;
 					if (invokedMethodData.Conversion != MethodConversion.Ignore)
 					{
-						invokedMethodData.Copy(); // TODO: do we need to do this recursively?
+						// Soft copy as the method may be also converted to async
+						invokedMethodData.SoftCopy(); // TODO: do we need to do this recursively?
 					}
 				}
 				return; // We do not want to analyze method that will be only copied
@@ -113,7 +114,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Methods with Unknown may not have InvokedBy populated so we cannot ignore them here
 			// Do not ignore methods that are inside a type with conversion NewType as ExternalRelatedMethods may not be populated
 			if (
-				!methodAccessorData.Dependencies.Any() && 
+				methodAccessorData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) && 
 				methodAccessorData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
 				methodAccessorData.Conversion.HasFlag(MethodConversion.Smart) &&
 			    methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&

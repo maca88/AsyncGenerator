@@ -694,7 +694,13 @@
     <EmbeddedResource Include="PartialCompilation\Output\GenericCtorMultiOverloadsDiffReturnType.txt" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\NestedCopyIgnoreRead.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="CSharpFeatures\Output\CustomEnumerable.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\NestedClassesWithTokensForNestedClass.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

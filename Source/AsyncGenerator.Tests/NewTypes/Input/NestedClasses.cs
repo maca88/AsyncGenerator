@@ -61,5 +61,10 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			_nestedClass.Read();
 		}
 
+		public void Read4()
+		{
+			var cls = new NestedClass();
+			cls.Read();
+		}
 	}
 }

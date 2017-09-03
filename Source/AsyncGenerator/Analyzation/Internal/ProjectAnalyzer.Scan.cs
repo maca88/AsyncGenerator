@@ -32,8 +32,13 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
+				// Scan also explicitly ignored methods in order to fix the conversion  if the user applies an invalid
+				// conversion. (e.g. ignored a method that is used in a method that will be genereated)
 				foreach (var methodOrAccessorData in typeData.MethodsAndAccessors
-					.Where(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart)))
+					.Where(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart) ||
+					            (o.ExplicitlyIgnored && (o.TypeData.Conversion == TypeConversion.NewType || o.TypeData.Conversion == TypeConversion.Copy))
+					)
+				)
 				{
 					await ScanMethodData(methodOrAccessorData).ConfigureAwait(false);
 				}
