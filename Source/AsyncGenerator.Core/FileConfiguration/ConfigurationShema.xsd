@@ -7,6 +7,7 @@
       <xs:enumeration value="Unknown"/>
       <xs:enumeration value="Smart"/>
       <xs:enumeration value="ToAsync"/>
+      <xs:enumeration value="Copy"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -16,6 +17,7 @@
       <xs:enumeration value="Unknown"/>
       <xs:enumeration value="Partial"/>
       <xs:enumeration value="NewType"/>
+      <xs:enumeration value="Copy"/>
     </xs:restriction>
   </xs:simpleType>
 
