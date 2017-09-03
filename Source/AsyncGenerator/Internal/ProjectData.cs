@@ -119,6 +119,17 @@ namespace AsyncGenerator.Internal
 			return documentData.GetFunctionData(methodSymbol);
 		}
 
+		public IEnumerable<TypeData> GetAllTypeData(INamedTypeSymbol typeSymbol)
+		{
+			foreach (var syntaxReference in typeSymbol.DeclaringSyntaxReferences)
+			{
+				if (Documents.TryGetValue(syntaxReference.SyntaxTree.FilePath, out var documentData))
+				{
+					yield return documentData.GetTypeData(syntaxReference);
+				}
+			}
+		}
+
 		public DocumentData GetDocumentData(Document document)
 		{
 			DocumentData documentData;

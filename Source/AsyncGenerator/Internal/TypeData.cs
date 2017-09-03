@@ -29,6 +29,11 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public ConcurrentSet<TypeReferenceData> SelfReferences { get; } = new ConcurrentSet<TypeReferenceData>();
 
+		/// <summary>
+		/// Base types
+		/// </summary>
+		public ConcurrentSet<TypeData> BaseTypes { get; } = new ConcurrentSet<TypeData>();
+
 		public TypeData ParentTypeData { get; }
 
 		public NamespaceData NamespaceData { get; }

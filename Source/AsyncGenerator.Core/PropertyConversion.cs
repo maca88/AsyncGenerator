@@ -5,6 +5,10 @@ namespace AsyncGenerator.Core
 	public enum PropertyConversion
 	{
 		/// <summary>
+		/// The conversion will be decided by the analyzer.
+		/// </summary>
+		Unknown = 0,
+		/// <summary>
 		/// The property will not be modified
 		/// </summary>
 		Ignore = 1,

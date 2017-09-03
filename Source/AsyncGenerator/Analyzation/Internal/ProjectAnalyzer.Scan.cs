@@ -27,6 +27,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					await ScanForTypeReferences(typeData).ConfigureAwait(false);
 				}
+				FillBaseTypes(typeData, documentData.ProjectData);
 
 				if (_configuration.ScanForMissingAsyncMembers != null && _configuration.ScanForMissingAsyncMembers(typeData.Symbol))
 				{
@@ -279,6 +280,19 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					fieldVariableData.UsedBy.Add(dataNode);
 				}
+			}
+		}
+
+		private void FillBaseTypes(TypeData typeData, ProjectData projectData)
+		{
+			var currType = typeData.Symbol.BaseType;
+			while (currType != null)
+			{
+				foreach (var baseTypeData in projectData.GetAllTypeData(currType))
+				{
+					typeData.BaseTypes.TryAdd(baseTypeData);
+				}
+				currType = currType.BaseType;
 			}
 		}
 

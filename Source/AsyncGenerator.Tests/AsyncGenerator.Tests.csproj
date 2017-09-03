@@ -268,6 +268,7 @@
     <Compile Include="NestedTypes\Fixture.cs" />
     <Compile Include="NestedTypes\Input\TestCase.cs" />
     <Compile Include="NewTypes\Fixture.cs" />
+    <Compile Include="NewTypes\Input\DerivedClasses.cs" />
     <Compile Include="NewTypes\Input\Inheritance.cs" />
     <Compile Include="NewTypes\Input\MissingMembers.cs" />
     <Compile Include="NewTypes\Input\NestedCopy.cs" />
@@ -701,6 +702,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\NestedClassesWithTokensForNestedClass.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\DerivedClasses.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\PartialDerivedClasses.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

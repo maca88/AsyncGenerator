@@ -295,5 +295,73 @@ namespace AsyncGenerator.Tests.NewTypes
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestDerivedClassesAfterTransformation()
+		{
+			var config = Configure(nameof(DerivedClasses), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => TypeConversion.NewType)
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(DerivedClasses)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestDerivedClassesBaseNewTypeAfterTransformation()
+		{
+			var config = Configure(nameof(DerivedClasses), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(BaseClass) ? TypeConversion.NewType : TypeConversion.Unknown)
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.Null(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(DerivedClasses)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestPartialDerivedClassesAfterTransformation()
+		{
+			var config = Configure(nameof(DerivedClasses), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("PartialDerivedClasses"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
 	}
 }

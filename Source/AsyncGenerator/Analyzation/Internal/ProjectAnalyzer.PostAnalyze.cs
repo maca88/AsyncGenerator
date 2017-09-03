@@ -560,6 +560,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					continue;
 				}
+
+				// If any of the base types will be generated as a new type and have at least one async member, create the derived type even 
+				// if it has no async memebers or was not marked to be a new type
+				if ((typeData.Conversion == TypeConversion.NewType || typeData.Conversion == TypeConversion.Unknown) && 
+					typeData.BaseTypes.Any(t => t.Conversion == TypeConversion.NewType && t.MethodsAndAccessors.Any(o => o.Conversion.HasFlag(MethodConversion.ToAsync))))
+				{
+					typeData.Conversion = TypeConversion.NewType;
+					continue;
+				}
+
 				// A type can be ignored only if it has no async methods that will get converted
 				if (typeData.GetSelfAndDescendantsTypeData().All(t => t.MethodsAndAccessors.All(o => o.Conversion == MethodConversion.Ignore || o.Conversion == MethodConversion.Copy)))
 				{
@@ -578,18 +588,24 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-			// 5.1 Step - Ignore or copy private fields of new types whether they are used or not
-			foreach (var type in allTypeData.Where(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
+			foreach (var type in allTypeData)
 			{
+				// 5.1 Step - Ignore or copy private fields of new types whether they are used or not
 				var postopnedVariables = new List<FieldVariableDeclaratorData>();
-				foreach (var variable in type.Fields.Values.SelectMany(o => o.Variables))
+				foreach (var variable in type.Fields.Values.SelectMany(o => o.Variables).Where(o => o.Conversion != FieldVariableConversion.Ignore))
 				{
+					if (type.Conversion == TypeConversion.Partial)
+					{
+						variable.Conversion = FieldVariableConversion.Ignore;
+						continue;
+					}
+					// From here on the type can be or a new one or copied
 					if (!variable.FieldData.Node.Modifiers.Any(m => m.IsKind(SyntaxKind.PrivateKeyword)))
 					{
 						variable.Conversion = FieldVariableConversion.Copy;
 						continue;
 					}
-					
+
 					variable.Conversion = variable.UsedBy.OfType<BaseMethodData>()
 						                      .Any(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Copy)) ||
 					                      variable.UsedBy.OfType<AccessorData>()
@@ -606,6 +622,16 @@ namespace AsyncGenerator.Analyzation.Internal
 					variable.Conversion = variable.UsedBy.OfType<BaseFieldData>().Any(o => o.Variables.All(v => v.Conversion == FieldVariableConversion.Copy))
 						? FieldVariableConversion.Copy
 						: FieldVariableConversion.Ignore;
+				}
+
+				// 5.2 Step - Ignore or copy properties of new types
+				var conversion = type.Conversion == TypeConversion.NewType || type.Conversion == TypeConversion.Copy
+					? PropertyConversion.Copy 
+					: PropertyConversion.Ignore;
+
+				foreach (var property in type.Properties.Values)
+				{
+					property.Conversion = conversion; // TODO: copy only if needed
 				}
 			}
 

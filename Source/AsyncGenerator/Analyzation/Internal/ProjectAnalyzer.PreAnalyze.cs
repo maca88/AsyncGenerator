@@ -121,14 +121,22 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzeFieldData(BaseFieldData fieldData, SemanticModel semanticModel)
 		{
-			if (!fieldData.TypeData.Conversion.HasAnyFlag(TypeConversion.NewType, TypeConversion.Copy))
+			if (fieldData.TypeData.Conversion == TypeConversion.Partial)
 			{
-				fieldData.Ignore(null);
+				fieldData.Ignore("The containing type is partial.");
 				return;
 			}
-			foreach (var variable in fieldData.Variables)
+			if (fieldData.TypeData.Conversion == TypeConversion.Ignore)
 			{
-				variable.Conversion = FieldVariableConversion.Smart;
+				fieldData.Ignore("Cascade ignored.");
+				return;
+			}
+			if (fieldData.TypeData.Conversion.HasAnyFlag(TypeConversion.NewType, TypeConversion.Copy))
+			{
+				foreach (var variable in fieldData.Variables)
+				{
+					variable.Conversion = FieldVariableConversion.Smart;
+				}
 			}
 		}
 
@@ -138,13 +146,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (!_configuration.PropertyConversion)
 			{
 				// Ignore getter and setter accessors and copy the property if needed
-				propertyData.Ignore("Ignored by PropertyConversion function");
+				propertyData.IgnoreAccessors("Ignored by PropertyConversion function");
 			}
 			if (newType)
 			{
 				propertyData.Copy();  // TODO: copy only if needed
 			}
-			else
+			else if(propertyData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.Partial || o.Conversion == TypeConversion.Ignore))
 			{
 				propertyData.Conversion = PropertyConversion.Ignore; // For partial types we do not want to copy the property
 			}

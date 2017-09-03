@@ -75,16 +75,6 @@ namespace AsyncGenerator.Internal
 		} 
 
 		/// <summary>
-		/// Iterate through all type data from top to bottom
-		/// </summary>
-		public IEnumerable<TypeData> GetAllTypeDatas(Func<TypeData, bool> predicate = null)
-		{
-			return GetAllNamespaceDatas()
-				.SelectMany(o => o.Types.Values)
-				.SelectMany(o => o.GetSelfAndDescendantsTypeData(predicate));
-		}
-
-		/// <summary>
 		/// Iterate through all namespace data from top to bottom
 		/// </summary>
 		public IEnumerable<NamespaceData> GetAllNamespaceDatas(Func<NamespaceData, bool> predicate = null)
@@ -404,6 +394,16 @@ namespace AsyncGenerator.Internal
 
 		#region TypeData
 
+		/// <summary>
+		/// Iterate through all type data from top to bottom
+		/// </summary>
+		public IEnumerable<TypeData> GetAllTypeDatas(Func<TypeData, bool> predicate = null)
+		{
+			return GetAllNamespaceDatas()
+				.SelectMany(o => o.Types.Values)
+				.SelectMany(o => o.GetSelfAndDescendantsTypeData(predicate));
+		}
+
 		public TypeData GetOrCreateTypeData(TypeDeclarationSyntax node)
 		{
 			return (TypeData)GetNodeData(node, true);
@@ -412,6 +412,11 @@ namespace AsyncGenerator.Internal
 		public TypeData GetTypeData(TypeDeclarationSyntax node)
 		{
 			return (TypeData)GetNodeData(node);
+		}
+
+		public TypeData GetTypeData(SyntaxReference syntaxReference)
+		{
+			return GetAllTypeDatas().First(o => o.Node.Span.Equals(syntaxReference.Span));
 		}
 
 		#endregion

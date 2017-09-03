@@ -75,8 +75,13 @@ namespace AsyncGenerator.Internal
 			Conversion = PropertyConversion.Ignore;
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
-			GetAccessorData?.Ignore("Cascade ignored.");
-			SetAccessorData?.Ignore("Cascade ignored.");
+			IgnoreAccessors("Cascade ignored.");
+		}
+
+		public void IgnoreAccessors(string reason)
+		{
+			GetAccessorData?.Ignore(reason);
+			SetAccessorData?.Ignore(reason);
 		}
 
 		public void Copy()
