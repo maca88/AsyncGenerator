@@ -10,12 +10,12 @@ using AsyncGenerator.Tests.NestedTypes.Input;
 namespace AsyncGenerator.Tests.NestedTypes
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<TestCase>
+	public class Fixture : BaseFixture
 	{
 		[Test]
 		public void TestAfterAnalyzation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AfterAnalyzation(result =>
@@ -34,7 +34,7 @@ namespace AsyncGenerator.Tests.NestedTypes
 		[Test]
 		public void TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -47,6 +47,29 @@ namespace AsyncGenerator.Tests.NestedTypes
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile("TestCaseOriginal"), document.OriginalModified.ToFullString());
 						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test, Repeat(5)]
+		public void TestMultipleNestedAfterTransformation()
+		{
+			var config = Configure(nameof(MultipleNested), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == "Nested1" ? TypeConversion.Ignore : TypeConversion.Unknown)
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(MultipleNested)), document.Transformed.ToFullString());
 					})
 				)
 			);

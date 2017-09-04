@@ -28,10 +28,6 @@ namespace AsyncGenerator.Core.Extensions
 				}
 				foreach (var td in GetSelfAndDescendantsNamespacesRecursively(subNamespace, predicate))
 				{
-					if (predicate?.Invoke(td) == false)
-					{
-						continue;
-					}
 					yield return td;
 				}
 			}
@@ -57,10 +53,6 @@ namespace AsyncGenerator.Core.Extensions
 				}
 				foreach (var td in GetSelfAndDescendantsTypesRecursively(subTypeData, predicate))
 				{
-					if (predicate?.Invoke(td) == false)
-					{
-						continue;
-					}
 					yield return td;
 				}
 			}
@@ -86,10 +78,6 @@ namespace AsyncGenerator.Core.Extensions
 				}
 				foreach (var td in GetSelfAndDescendantsFunctionsRecursively(subFuncData, predicate))
 				{
-					if (predicate?.Invoke(td) == false)
-					{
-						continue;
-					}
 					yield return td;
 				}
 			}

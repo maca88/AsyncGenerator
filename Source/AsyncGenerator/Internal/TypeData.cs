@@ -129,14 +129,10 @@ namespace AsyncGenerator.Internal
 			{
 				if (predicate?.Invoke(subTypeData) == false)
 				{
-					yield break;
+					continue; // We shall never retrun here in order to be always consistent
 				}
 				foreach (var td in GetSelfAndDescendantsTypeDataRecursively(subTypeData, predicate))
 				{
-					if (predicate?.Invoke(td) == false)
-					{
-						yield break;
-					}
 					yield return td;
 				}
 			}
