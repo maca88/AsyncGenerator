@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Extensions;
@@ -13,6 +14,8 @@ namespace AsyncGenerator.Analyzation.Internal
 {
 	internal partial class ProjectAnalyzer
 	{
+		private AsyncCounterpartsSearchOptions _searchOptions;
+
 		/// <summary>
 		/// Set the method conversion to Ignore for all method data that are inside the given document and can not be
 		/// converted due to the language limitations or an already existing async counterpart.
@@ -20,6 +23,14 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// <param name="documentData">The document data to be pre-analyzed</param>
 		private void PreAnalyzeDocumentData(DocumentData documentData)
 		{
+			_searchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
+			// When searhing for missing async member we have to search also for overloads with a cancellation token
+			var searchWithTokens = _configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null;
+			if (searchWithTokens)
+			{
+				_searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
+			}
+
 			foreach (var typeNode in documentData.Node
 				.DescendantNodes()
 				.OfType<TypeDeclarationSyntax>())
@@ -239,22 +250,16 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				foreach (var interfaceMember in methodSymbol.ExplicitInterfaceImplementations)
 				{
+					// Check if the interface member has an async counterpart
+					var asyncConterparts = FillRelatedAsyncMethods(methodData, interfaceMember);
 					if (methodSymbol.ContainingAssembly.Name != interfaceMember.ContainingAssembly.Name)
 					{
 						methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
-
-						// Check if the interface member has an async counterpart
-						var asyncConterPart = interfaceMember.ContainingType.GetMembers()
-							.OfType<IMethodSymbol>()
-							.Where(o => o.Name == methodSymbol.GetAsyncName())
-							.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
-
-						if (asyncConterPart == null)
+						if (!asyncConterparts.Any())
 						{
 							IgnoreOrCopy($"Explicity implements an external interface {interfaceMember} that has not an async counterpart");
 							return;
 						}
-						methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
 					}
 					else
 					{
@@ -265,12 +270,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						methodData.Conversion |= MethodConversion.Copy;
 					}
-					//var syntax = interfaceMember.DeclaringSyntaxReferences.FirstOrDefault();
-					//if (!CanProcessSyntaxReference(syntax))
-					//{
-					//	continue;
-					//}
-
 				}
 			}
 
@@ -278,35 +277,21 @@ namespace AsyncGenerator.Analyzation.Internal
 			var overridenMethod = methodSymbol.OverriddenMethod;
 			while (overridenMethod != null)
 			{
+				// Check if the member has an async counterpart that is not implemented in the current type (missing member)
+				var asyncConterparts = FillRelatedAsyncMethods(methodData, overridenMethod);
 				if (methodSymbol.ContainingAssembly.Name != overridenMethod.ContainingAssembly.Name)
 				{
 					methodData.ExternalRelatedMethods.TryAdd(overridenMethod);
-					// Check if the external member has an async counterpart that is not implemented in the current type (missing member)
-					var asyncConterPart = overridenMethod.ContainingType.GetMembers()
-						.OfType<IMethodSymbol>()
-						.Where(o => o.Name == methodSymbol.GetAsyncName() && !o.IsSealed && (o.IsVirtual || o.IsAbstract || o.IsOverride))
-						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
-					if (asyncConterPart == null)
+					if (!asyncConterparts.Any())
 					{
 						IgnoreOrCopy($"Overrides an external method {overridenMethod} that has not an async counterpart");
 						return;
-						//if (!asyncMethods.Any() || (asyncMethods.Any() && !overridenMethod.IsOverride && !overridenMethod.IsVirtual))
-						//{
-						//	Logger.Warn($"Method {methodSymbol} overrides an external method {overridenMethod} and cannot be made async");
-						//	return MethodSymbolAnalyzeResult.Invalid;
-						//}
 					}
-					methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
 				}
 				else
 				{
 					methodData.OverridenMethods.TryAdd(overridenMethod);
 				}
-				//var syntax = overridenMethod.DeclaringSyntaxReferences.SingleOrDefault();
-				//else if (CanProcessSyntaxReference(syntax))
-				//{
-				//	methodData.OverridenMethods.TryAdd(overridenMethod);
-				//}
 				if (overridenMethod.OverriddenMethod != null)
 				{
 					overridenMethod = overridenMethod.OverriddenMethod;
@@ -335,21 +320,16 @@ namespace AsyncGenerator.Analyzation.Internal
 															))
 														  .OfType<IMethodSymbol>())
 			{
+				// Check if the member has an async counterpart that is not implemented in the current type (missing member)
+				var asyncConterparts = FillRelatedAsyncMethods(methodData, interfaceMember);
 				if (methodSymbol.ContainingAssembly.Name != interfaceMember.ContainingAssembly.Name)
 				{
 					methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
-
-					// Check if the member has an async counterpart that is not implemented in the current type (missing member)
-					var asyncConterPart = interfaceMember.ContainingType.GetMembers()
-						.OfType<IMethodSymbol>()
-						.Where(o => o.Name == methodSymbol.GetAsyncName())
-						.SingleOrDefault(o => methodSymbol.IsAsyncCounterpart(null, o, true, false, false));
-					if (asyncConterPart == null)
+					if (!asyncConterparts.Any())
 					{
 						IgnoreOrCopy($"Implements an external interface {interfaceMember} that has not an async counterpart");
 						return;
 					}
-					methodData.ExternalAsyncMethods.TryAdd(asyncConterPart);
 				}
 				else
 				{
@@ -360,33 +340,20 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					methodData.Conversion |= MethodConversion.Copy;
 				}
-				//var syntax = interfaceMember.DeclaringSyntaxReferences.SingleOrDefault();
-				//if (!CanProcessSyntaxReference(syntax))
-				//{
-				//	continue;
-				//}
-
 			}
 
 			// Verify if there is already an async counterpart for this method
 			//TODO: this is not correct when generating methods with a cancellation token as here we do not know
 			// if the generated method will have the cancellation token parameter or not
-			var searchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
-			// When searhing for missing async member we have to search also for overloads with a cancellation token
-			var searchWithTokens = _configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null;
-			if (searchWithTokens)
-			{
-				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
-			}
-			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, searchOptions).ToList();
+			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, _searchOptions).ToList();
 			if (asyncCounterparts.Any())
 			{
-				if (!searchWithTokens && asyncCounterparts.Count > 1)
+				if (!_searchOptions.HasFlag(AsyncCounterpartsSearchOptions.HasCancellationToken) && asyncCounterparts.Count > 1)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than one async counterpart");
 				}
 				// We shall get a maximum of two async counterparts when the HasCancellationToken flag is used
-				if (searchWithTokens && asyncCounterparts.Count > 2)
+				if (_searchOptions.HasFlag(AsyncCounterpartsSearchOptions.HasCancellationToken) && asyncCounterparts.Count > 2)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than two async counterparts");
 				}
@@ -413,6 +380,19 @@ namespace AsyncGenerator.Analyzation.Internal
 					return;
 				}
 			}
+		}
+
+		private List<IMethodSymbol> FillRelatedAsyncMethods(MethodOrAccessorData methodOrAccessorData, IMethodSymbol symbol)
+		{
+			var asyncConterparts = GetAsyncCounterparts(symbol, _searchOptions).ToList();
+			if (asyncConterparts.Any())
+			{
+				foreach (var asyncConterpart in asyncConterparts)
+				{
+					methodOrAccessorData.RelatedAsyncMethods.TryAdd(asyncConterpart);
+				}
+			}
+			return asyncConterparts;
 		}
 
 		private void PreAnalyzeAnonymousFunction(AnonymousFunctionData functionData, SemanticModel semanticModel)

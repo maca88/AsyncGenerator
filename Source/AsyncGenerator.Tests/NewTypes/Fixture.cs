@@ -409,5 +409,54 @@ namespace AsyncGenerator.Tests.NewTypes
 			var generator = new AsyncCodeGenerator();
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
+
+		[Test]
+		public void TestNestedDerivedAsyncAfterTransformation()
+		{
+			var config = Configure(nameof(NestedDerivedAsync), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(NestedDerivedAsync) ? TypeConversion.NewType : TypeConversion.Unknown)
+					.MethodConversion(symbol => symbol.Name == "Write" ? MethodConversion.Smart : MethodConversion.Unknown)
+					.ScanForMissingAsyncMembers(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(NestedDerivedAsync)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestNestedDerivedAsyncWithTokenAfterTransformation()
+		{
+			var config = Configure(nameof(NestedDerivedAsyncWithToken), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(NestedDerivedAsyncWithToken) ? TypeConversion.NewType : TypeConversion.Unknown)
+					.MethodConversion(symbol => symbol.Name == "Write" ? MethodConversion.Smart : MethodConversion.Unknown)
+					.CancellationTokens(true)
+					.ScanForMissingAsyncMembers(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(NestedDerivedAsyncWithToken)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
 	}
 }

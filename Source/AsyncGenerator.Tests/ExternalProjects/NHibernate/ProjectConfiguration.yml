@@ -157,8 +157,6 @@
   applyChanges: true
   analyzation:
     methodConversion:
-    - conversion: Ignore
-      hasAttributeName: IgnoreAttribute
     - conversion: Smart
       hasAttributeName: TestAttribute
     - conversion: Smart
@@ -181,6 +179,8 @@
       hasAttributeName: IgnoreAttribute
     - conversion: NewType
       hasAttributeName: TestFixtureAttribute
+    - conversion: NewType
+      anyBaseTypeRule: HasTestFixtureAttribute
     - conversion: Ignore
       rule: IsTestCase
     - conversion: Ignore
@@ -247,3 +247,6 @@ typeRules:
 - filters:
   - name: TestCase
   name: IsTestCase
+- filters:
+  - hasAttributeName: TestFixtureAttribute
+  name: HasTestFixtureAttribute

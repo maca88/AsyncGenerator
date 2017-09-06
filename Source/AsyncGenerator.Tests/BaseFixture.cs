@@ -50,19 +50,16 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-
-			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.sln");
+			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\AsyncGenerator.Tests.csproj");
 			return AsyncCodeConfiguration.Create()
-				.ConfigureSolution(slnFilePath, c => c
-					.ConfigureProject("AsyncGenerator.Tests", p =>
-					{
-						p.ConfigureAnalyzation(a => a
-							.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath)
-						);
-						action?.Invoke(p);
-					})
-
-				);
+				.ConfigureProject(filePath, p =>
+				{
+					p.ConfigureAnalyzation(a => a
+						.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath)
+					);
+					action?.Invoke(p);
+				})
+				;
 		}
 
 		public AsyncCodeConfiguration Configure(string fileName, Action<IFluentProjectConfiguration> action = null)

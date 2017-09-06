@@ -216,7 +216,11 @@ namespace AsyncGenerator.Transformation.Internal
 					var typeNode = rootTransformResult.OriginalModified.GetAnnotatedNodes(transformResult.Annotation).OfType<TypeDeclarationSyntax>().First();
 					rootTransformResult.OriginalModified = rootTransformResult.OriginalModified.ReplaceNode(typeNode, typeNode.AddPartial());
 				}
-				if (typeResult.Conversion == TypeConversion.Ignore)
+				if (typeResult.Conversion == TypeConversion.Ignore || 
+					(
+						onlyMissingMembers &&
+						!typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.MethodsAndAccessors).Any(o => o.Missing)
+					))
 				{
 					rootTypeNode = rootTypeNode.RemoveNodeKeepDirectives(transformResult.Annotation, transformResult.LeadingWhitespaceTrivia);
 					continue;
@@ -309,7 +313,8 @@ namespace AsyncGenerator.Transformation.Internal
 			TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult,
 			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
 		{
-			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore)
+			// Constructors must not be copied on a partial class (missing members)
+			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || onlyMissingMembers)
 			{
 				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
 				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);

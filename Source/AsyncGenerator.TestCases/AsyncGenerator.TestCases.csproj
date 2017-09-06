@@ -42,6 +42,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncProperties.cs" />
+    <Compile Include="ExternalReaderWithToken.cs" />
+    <Compile Include="ExternalReader.cs" />
     <Compile Include="IExternalInterface.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runner.cs" />

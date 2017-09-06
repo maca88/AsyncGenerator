@@ -19,7 +19,10 @@ namespace AsyncGenerator.Internal
 
 		public bool InterfaceMethod { get; }
 
-		public ConcurrentSet<IMethodSymbol> ExternalAsyncMethods { get; } = new ConcurrentSet<IMethodSymbol>();
+		/// <summary>
+		/// Async counterparts of external or internal related (overriden/interface) methods
+		/// </summary>
+		public ConcurrentSet<IMethodSymbol> RelatedAsyncMethods { get; } = new ConcurrentSet<IMethodSymbol>();
 
 		/// <summary>
 		/// Interface members within project that the method implements
@@ -62,6 +65,8 @@ namespace AsyncGenerator.Internal
 		public IMethodSymbol AsyncCounterpartWithTokenSymbol { get; set; }
 
 		public bool CancellationTokenRequired { get; set; }
+
+		public bool HasAsyncCounterpart => AsyncCounterpartWithTokenSymbol != null || AsyncCounterpartSymbol != null;
 
 		#region Analyzation step
 

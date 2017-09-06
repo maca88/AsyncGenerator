@@ -49,7 +49,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			
 			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
-			var baseMethods = methodAccessorData.RelatedMethods.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
+			// Skip methods that were ignored because having an async counterpart in order to have overrides generated
+			var baseMethods = methodAccessorData.RelatedMethods
+				.Where(o => !o.HasAsyncCounterpart || o.ExplicitlyIgnored)
+				.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
 			if (!methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
 			{
 				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData()
@@ -105,6 +108,31 @@ namespace AsyncGenerator.Analyzation.Internal
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
+			// Create an override async method if any of the related async methods is virtual or abstract
+			if (methodAccessorData.RelatedAsyncMethods.Any(o => o.IsVirtual || o.IsAbstract) && 
+				_configuration.ScanForMissingAsyncMembers?.Invoke(methodAccessorData.TypeData.Symbol) == true)
+			{
+				methodAccessorData.Missing = true;
+				methodAccessorData.ToAsync();
+				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+				{
+					methodAccessorData.SoftCopy();
+				}
+
+				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
+				var asyncMember = methodAccessorData.RelatedAsyncMethods
+					.Where(o => o.IsVirtual || o.IsAbstract)
+					.FirstOrDefault(o => o.Parameters.Length > methodAccessorData.Symbol.Parameters.Length);
+				if (asyncMember != null)
+				{
+					methodAccessorData.CancellationTokenRequired = true;
+					// We suppose that the cancellation token is the last parameter
+					methodAccessorData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
+						? MethodCancellationToken.Optional
+						: MethodCancellationToken.Required;
+				}
+			}
+
 			if (methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return;
@@ -113,8 +141,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			// If a method is never invoked and there is no invocations inside the method body that can be async and there is no related methods we can ignore it.
 			// Methods with Unknown may not have InvokedBy populated so we cannot ignore them here
 			// Do not ignore methods that are inside a type with conversion NewType as ExternalRelatedMethods may not be populated
+			// Do not ignore a method if any of its related methods has an async counterpart that was not ignored by user so that we can gnerate (e.g. async override)
 			if (
-				methodAccessorData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) && 
+				methodAccessorData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) &&
+				methodAccessorData.RelatedMethods.All(o => !o.HasAsyncCounterpart || o.ExplicitlyIgnored) &&
 				methodAccessorData.BodyMethodReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
 				methodAccessorData.Conversion.HasFlag(MethodConversion.Smart) &&
 			    methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&

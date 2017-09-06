@@ -193,6 +193,9 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="Github\Issue46\Fixture.cs" />
+    <Compile Include="Github\Issue46\Input\TestCaseWithToken.cs" />
+    <Compile Include="Github\Issue46\Input\TestCase.cs" />
     <Compile Include="Github\Issue44\Fixture.cs" />
     <Compile Include="Github\Issue44\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Input\TestCase.cs" />
@@ -269,6 +272,8 @@
     <Compile Include="NestedNamespaces\Input\TestCase.cs" />
     <Compile Include="NestedTypes\Fixture.cs" />
     <Compile Include="NestedTypes\Input\MultipleNested.cs" />
+    <Compile Include="NewTypes\Input\NestedDerivedAsyncWithToken.cs" />
+    <Compile Include="NewTypes\Input\NestedDerivedAsync.cs" />
     <Compile Include="NestedTypes\Input\TestCase.cs" />
     <Compile Include="NewTypes\Fixture.cs" />
     <Compile Include="NewTypes\Input\DerivedAsyncClass.cs" />
@@ -725,6 +730,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NestedTypes\Output\MultipleNested.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue46\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\NestedDerivedAsync.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue46\Output\TestCaseWithToken.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\NestedDerivedAsyncWithToken.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
