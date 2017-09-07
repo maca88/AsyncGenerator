@@ -59,6 +59,38 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
+		public class NestedBaseCall : InternalReader
+		{
+			private readonly bool _test;
+
+			public NestedBaseCall()
+			{
+				_test = false;
+			}
+
+			public override bool Read()
+			{
+				base.Read();
+				return _test;
+			}
+		}
+
+		public class Nested2BaseCall : ExternalReader
+		{
+			private bool Test { get; set; }
+
+			public Nested2BaseCall()
+			{
+				Test = false;
+			}
+
+			public override bool Read()
+			{
+				base.Read();
+				return Test;
+			}
+		}
+
 		public class Dummy
 		{
 			

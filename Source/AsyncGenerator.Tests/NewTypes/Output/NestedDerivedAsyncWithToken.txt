@@ -49,6 +49,34 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 				return false;
 			}
 		}
+
+		public class NestedBaseCall : InternalReaderWithToken
+		{
+			public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+			{
+				await (base.ReadAsync());
+				return false;
+			}
+			public override bool Read()
+			{
+				base.Read();
+				return false;
+			}
+		}
+
+		public class Nested2BaseCall : ExternalReaderWithToken
+		{
+			public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+			{
+				await (base.ReadAsync(cancellationToken));
+				return false;
+			}
+			public override bool Read()
+			{
+				base.Read();
+				return false;
+			}
+		}
 	}
 
 	/// <content>
@@ -76,6 +104,30 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			public override Task<bool> ReadAsync(CancellationToken cancellationToken)
 			{
 				return Task.FromResult<bool>(false);
+			}
+		}
+
+		/// <content>
+		/// Contains generated async methods
+		/// </content>
+		public partial class NestedBaseCall : InternalReaderWithToken
+		{
+			public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+			{
+				await (base.ReadAsync());
+				return false;
+			}
+		}
+
+		/// <content>
+		/// Contains generated async methods
+		/// </content>
+		public partial class Nested2BaseCall : ExternalReaderWithToken
+		{
+			public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+			{
+				await (base.ReadAsync(cancellationToken));
+				return false;
 			}
 		}
 	}

@@ -108,31 +108,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
-			// Create an override async method if any of the related async methods is virtual or abstract
-			if (methodAccessorData.RelatedAsyncMethods.Any(o => o.IsVirtual || o.IsAbstract) && 
-				_configuration.ScanForMissingAsyncMembers?.Invoke(methodAccessorData.TypeData.Symbol) == true)
-			{
-				methodAccessorData.Missing = true;
-				methodAccessorData.ToAsync();
-				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
-				{
-					methodAccessorData.SoftCopy();
-				}
-
-				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
-				var asyncMember = methodAccessorData.RelatedAsyncMethods
-					.Where(o => o.IsVirtual || o.IsAbstract)
-					.FirstOrDefault(o => o.Parameters.Length > methodAccessorData.Symbol.Parameters.Length);
-				if (asyncMember != null)
-				{
-					methodAccessorData.CancellationTokenRequired = true;
-					// We suppose that the cancellation token is the last parameter
-					methodAccessorData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
-						? MethodCancellationToken.Optional
-						: MethodCancellationToken.Required;
-				}
-			}
-
 			if (methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return;

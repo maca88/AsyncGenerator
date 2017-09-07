@@ -38,4 +38,28 @@ namespace AsyncGenerator.Tests.Github.Issue46.Input
 			return Task.FromResult<bool>(false);
 		}
 	}
+
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial class TestCaseBaseCall : InternalReader
+	{
+		public override async Task<bool> ReadAsync()
+		{
+			await (base.ReadAsync());
+			return false;
+		}
+	}
+
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial class TestCaseBaseCallWithExternal : ExternalReader
+	{
+		public override async Task<bool> ReadAsync()
+		{
+			await (base.ReadAsync());
+			return false;
+		}
+	}
 }

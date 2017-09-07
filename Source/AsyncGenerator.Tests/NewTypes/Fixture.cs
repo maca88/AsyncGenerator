@@ -435,6 +435,27 @@ namespace AsyncGenerator.Tests.NewTypes
 		}
 
 		[Test]
+		public void TestNestedDerivedAsyncIgnoreAfterTransformation()
+		{
+			var config = Configure(nameof(NestedDerivedAsync), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => symbol.Name == nameof(NestedDerivedAsync) ? TypeConversion.Ignore : TypeConversion.Unknown)
+					.MethodConversion(symbol => symbol.Name == "Write" ? MethodConversion.Smart : MethodConversion.Unknown)
+					.ScanForMissingAsyncMembers(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(0, result.Documents.Count);
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
 		public void TestNestedDerivedAsyncWithTokenAfterTransformation()
 		{
 			var config = Configure(nameof(NestedDerivedAsyncWithToken), p => p

@@ -39,13 +39,15 @@ namespace AsyncGenerator.Analyzation.Internal
 				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
 				PreAnalyzeType(typeData);
 
+				var typeIgnored = typeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.Ignore);
+
 				// TODO: fields can have anonymous functions that have async calls
 				foreach (var memberNode in typeNode.Members)
 				{
 					if (memberNode is BaseMethodDeclarationSyntax methodNode)
 					{
 						var methodData = documentData.GetOrCreateBaseMethodData(methodNode, typeData);
-						if (typeData.Conversion == TypeConversion.Ignore)
+						if (typeIgnored)
 						{
 							methodData.Ignore("Ignored by TypeConversion function", true);
 						}
@@ -88,7 +90,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					else if (memberNode is PropertyDeclarationSyntax propertyNode)
 					{
 						var propertyData = documentData.GetOrCreatePropertyData(propertyNode, typeData);
-						if (typeData.Conversion == TypeConversion.Ignore)
+						if (typeIgnored)
 						{
 							propertyData.Ignore("Ignored by TypeConversion function", true);
 						}
@@ -100,7 +102,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					else if (memberNode is BaseFieldDeclarationSyntax fieldNode)
 					{
 						var fieldData = documentData.GetOrCreateBaseFieldData(fieldNode, typeData);
-						if (typeData.Conversion == TypeConversion.Ignore)
+						if (typeIgnored)
 						{
 							fieldData.Ignore("Ignored by TypeConversion function", true);
 						}
@@ -378,6 +380,32 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					IgnoreOrCopy($"Has already an async counterpart {asyncCounterparts.First()}");
 					return;
+				}
+			}
+
+			// Create an override async method if any of the related async methods is virtual or abstract
+			// We need to do this here so that the method body will get scanned for async counterparts
+			if (methodData.RelatedAsyncMethods.Any(o => o.IsVirtual || o.IsAbstract) &&
+			    _configuration.ScanForMissingAsyncMembers?.Invoke(methodData.TypeData.Symbol) == true)
+			{
+				methodData.Missing = true;
+				methodData.ToAsync();
+				if (methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+				{
+					methodData.SoftCopy();
+				}
+
+				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
+				var asyncMember = methodData.RelatedAsyncMethods
+					.Where(o => o.IsVirtual || o.IsAbstract)
+					.FirstOrDefault(o => o.Parameters.Length > methodData.Symbol.Parameters.Length);
+				if (asyncMember != null)
+				{
+					methodData.CancellationTokenRequired = true;
+					// We suppose that the cancellation token is the last parameter
+					methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
+						? MethodCancellationToken.Optional
+						: MethodCancellationToken.Required;
 				}
 			}
 		}

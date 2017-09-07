@@ -79,6 +79,50 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
+		public class NestedBaseCall : InternalReader
+		{
+			private readonly bool _test;
+
+			public NestedBaseCall()
+			{
+				_test = false;
+			}
+
+			public override async Task<bool> ReadAsync()
+			{
+				await (base.ReadAsync());
+				return _test;
+			}
+
+			public override bool Read()
+			{
+				base.Read();
+				return _test;
+			}
+		}
+
+		public class Nested2BaseCall : ExternalReader
+		{
+			private bool Test { get; set; }
+
+			public Nested2BaseCall()
+			{
+				Test = false;
+			}
+
+			public override async Task<bool> ReadAsync()
+			{
+				await (base.ReadAsync());
+				return Test;
+			}
+
+			public override bool Read()
+			{
+				base.Read();
+				return Test;
+			}
+		}
+
 		public class Dummy
 		{
 			
@@ -126,6 +170,32 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 				{
 					return Task.FromException<bool>(ex);
 				}
+			}
+		}
+
+		/// <content>
+		/// Contains generated async methods
+		/// </content>
+		public partial class NestedBaseCall : InternalReader
+		{
+
+			public override async Task<bool> ReadAsync()
+			{
+				await (base.ReadAsync());
+				return _test;
+			}
+		}
+
+		/// <content>
+		/// Contains generated async methods
+		/// </content>
+		public partial class Nested2BaseCall : ExternalReader
+		{
+
+			public override async Task<bool> ReadAsync()
+			{
+				await (base.ReadAsync());
+				return Test;
 			}
 		}
 	}

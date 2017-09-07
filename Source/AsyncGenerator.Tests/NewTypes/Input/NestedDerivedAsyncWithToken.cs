@@ -45,5 +45,23 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 				return false;
 			}
 		}
+
+		public class NestedBaseCall : InternalReaderWithToken
+		{
+			public override bool Read()
+			{
+				base.Read();
+				return false;
+			}
+		}
+
+		public class Nested2BaseCall : ExternalReaderWithToken
+		{
+			public override bool Read()
+			{
+				base.Read();
+				return false;
+			}
+		}
 	}
 }

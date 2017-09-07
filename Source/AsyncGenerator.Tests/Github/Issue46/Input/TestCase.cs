@@ -36,4 +36,22 @@ namespace AsyncGenerator.Tests.Github.Issue46.Input
 			return false;
 		}
 	}
+
+	public class TestCaseBaseCall : InternalReader
+	{
+		public override bool Read()
+		{
+			base.Read();
+			return false;
+		}
+	}
+
+	public class TestCaseBaseCallWithExternal : ExternalReader
+	{
+		public override bool Read()
+		{
+			base.Read();
+			return false;
+		}
+	}
 }
