@@ -408,35 +408,12 @@ namespace AsyncGenerator.Extensions.Internal
 
 		internal static SimpleNameSyntax GetSimpleName(this SyntaxNode node, int spanStart, int spanLength, bool descendIntoTrivia = false)
 		{
-			return node
-				.DescendantNodes(descendIntoTrivia: descendIntoTrivia)
-				.OfType<SimpleNameSyntax>()
-				.First(
-					o =>
-					{
-						if (!o.IsKind(SyntaxKind.GenericName))
-						{
-							return o.Span.Start == spanStart && o.Span.Length == spanLength;
-						}
-						var token = o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken));
-						return token.Span.Start == spanStart && token.Span.Length == spanLength;
-					});
+			return (SimpleNameSyntax)node.FindToken(spanStart, descendIntoTrivia).Parent;
 		}
 
 		internal static SimpleNameSyntax GetSimpleName(this SyntaxNode node, TextSpan sourceSpan, bool descendIntoTrivia = false)
 		{
-			return node
-				.DescendantNodes(descendIntoTrivia: descendIntoTrivia)
-				.OfType<SimpleNameSyntax>()
-				.FirstOrDefault(
-					o =>
-					{
-						if (o.IsKind(SyntaxKind.GenericName))
-						{
-							return o.ChildTokens().First(t => t.IsKind(SyntaxKind.IdentifierToken)).Span == sourceSpan;
-						}
-						return o.Span == sourceSpan;
-					});
+			return node.FindNode(sourceSpan, descendIntoTrivia, true) as SimpleNameSyntax;
 		}
 
 		internal static bool HasUsing(this NamespaceDeclarationSyntax node, string usingFullName)
