@@ -19,6 +19,7 @@ using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using log4net;
+using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -174,15 +175,8 @@ namespace AsyncGenerator
 			{
 				Logger.Info($"Applying project '{projectChanges.NewProject.FilePath}' changes started");
 
-				var project = new Microsoft.Build.Evaluation.Project(projectChanges.NewProject.FilePath, null, null, new ProjectCollection());
-
-				var importedFiles = project.Items
-					.Where(o => o.IsImported)
-					.GroupBy(o => o.EvaluatedInclude)
-					.Where(o => o.All(g => g.IsImported))
-					.ToDictionary(o => o.Key, o => o.First());
-
-				var globs = project.GetAllGlobs();
+				var xml = ProjectRootElement.Open(projectChanges.NewProject.FilePath);
+				var isNewCsproj = xml?.Sdk == "Microsoft.NET.Sdk";
 
 				var addedDocuments = projectChanges
 					.GetAddedDocuments()
@@ -206,9 +200,9 @@ namespace AsyncGenerator
 						continue;
 					}
 
-					var path = $@"{string.Join(@"\", addedDocument.Folders)}\{addedDocument.Name}";
 					var sourceText = await addedDocument.GetTextAsync().ConfigureAwait(false);
-					if (globs.Any(o => o.MsBuildGlob.IsMatch(path)))
+					// For new csproj format we don't want to explicitly add the document as they are imported by default
+					if (isNewCsproj)
 					{
 						var dirPath = Path.GetDirectoryName(addedDocument.FilePath);
 						Directory.CreateDirectory(dirPath); // Create all directories if not exist
@@ -233,8 +227,8 @@ namespace AsyncGenerator
 				foreach (var removedDocumentPair in removedDocuments.Where(o => !addedDocuments.ContainsKey(o.Key)))
 				{
 					var removedDocument = removedDocumentPair.Value;
-					var path = $@"{string.Join(@"\", removedDocument.Folders)}\{removedDocument.Name}";
-					if (!importedFiles.ContainsKey(path))
+					// For new csproj format we cannot remove a document as they are imported by globs (RemoveDocument throws an exception for new csproj format)
+					if (!isNewCsproj)
 					{
 						newSolution = newSolution.RemoveDocument(removedDocument.Id);
 					}
