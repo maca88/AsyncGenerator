@@ -193,6 +193,10 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="Github\Issue50\Fixture.cs" />
+    <Compile Include="Github\Issue50\Input\Abstract.cs" />
+    <Compile Include="Github\Issue50\Input\IInterface.cs" />
+    <Compile Include="Github\Issue50\Input\TestCase.cs" />
     <Compile Include="Github\Issue49\Fixture.cs" />
     <Compile Include="Github\Issue49\Input\TestCase.cs" />
     <Compile Include="Github\Issue46\Fixture.cs" />
@@ -748,6 +752,16 @@
   <ItemGroup>
     <EmbeddedResource Include="Github\Issue49\Output\TestCase.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue50\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue50\Output\Abstract.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue50\Output\IInterface.txt" />
+  </ItemGroup>
+  <ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

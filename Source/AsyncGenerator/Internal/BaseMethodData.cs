@@ -37,7 +37,7 @@ namespace AsyncGenerator.Internal
 		}
 
 		/// <summary>
-		/// Implementation/derived/base/interface methods
+		/// Implementation/derived/base/interface methods inside the same project
 		/// </summary>
 		public ConcurrentSet<MethodOrAccessorData> RelatedMethods { get; } = new ConcurrentSet<MethodOrAccessorData>();
 

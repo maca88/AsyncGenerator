@@ -97,6 +97,10 @@ namespace AsyncGenerator.Internal
 		private IReadOnlyList<IFunctionAnalyzationResult> _cachedInvokedBy;
 		IReadOnlyList<IFunctionAnalyzationResult> IMethodOrAccessorAnalyzationResult.InvokedBy => _cachedInvokedBy ?? (_cachedInvokedBy = InvokedBy.ToImmutableArray());
 
+		private IReadOnlyList<IMethodOrAccessorAnalyzationResult> _cachedRelatedMethods;
+		IReadOnlyList<IMethodOrAccessorAnalyzationResult> IMethodOrAccessorAnalyzationResult.RelatedMethods =>
+			_cachedRelatedMethods ?? (_cachedRelatedMethods = RelatedMethods.ToImmutableArray());
+
 		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodCrefReferences;
 		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodOrAccessorAnalyzationResult.CrefMethodReferences =>
 			_cachedMethodCrefReferences ?? (_cachedMethodCrefReferences = CrefMethodReferences.ToImmutableArray());

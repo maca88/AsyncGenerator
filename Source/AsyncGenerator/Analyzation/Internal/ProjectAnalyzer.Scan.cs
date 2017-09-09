@@ -231,22 +231,26 @@ namespace AsyncGenerator.Analyzation.Internal
 					bodyScanMethodDatas.Add(baseMethodData);
 				}
 
-				await FindOverrides(baseMethodSymbol, (overrideMethod, overrideMethodData) =>
+				// Check if the overrides will be found in the FindImplementations callback, if so we must skip this call otherwise a race condition may happen
+				if (baseMethodData?.ImplementedInterfaces.All(o => !interfaceMethods.Contains(o)) == true)
 				{
-					if (baseMethodData != null)
+					await FindOverrides(baseMethodSymbol, (overrideMethod, overrideMethodData) =>
 					{
-						overrideMethodData.RelatedMethods.TryAdd(baseMethodData);
-						baseMethodData.RelatedMethods.TryAdd(overrideMethodData);
-					}
-					else
-					{
-						overrideMethodData.ExternalRelatedMethods.TryAdd(baseMethodSymbol);
-					}
-					if (!overrideMethod.IsAbstract && (_configuration.ScanMethodBody || overrideMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync)))
-					{
-						bodyScanMethodDatas.Add(overrideMethodData);
-					}
-				}).ConfigureAwait(false);
+						if (baseMethodData != null)
+						{
+							overrideMethodData.RelatedMethods.TryAdd(baseMethodData);
+							baseMethodData.RelatedMethods.TryAdd(overrideMethodData);
+						}
+						else
+						{
+							overrideMethodData.ExternalRelatedMethods.TryAdd(baseMethodSymbol);
+						}
+						if (!overrideMethod.IsAbstract && (_configuration.ScanMethodBody || overrideMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync)))
+						{
+							bodyScanMethodDatas.Add(overrideMethodData);
+						}
+					}).ConfigureAwait(false);
+				}
 			}
 
 			if (baseMethodSymbol == null && !interfaceMethods.Any()) //TODO: what about hiding methods

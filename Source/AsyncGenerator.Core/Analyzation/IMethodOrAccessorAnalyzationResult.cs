@@ -16,6 +16,11 @@ namespace AsyncGenerator.Core.Analyzation
 		IReadOnlyList<IFunctionAnalyzationResult> InvokedBy { get; }
 
 		/// <summary>
+		/// Implementation/derived/base/interface methods inside the same project
+		/// </summary>
+		IReadOnlyList<IMethodOrAccessorAnalyzationResult> RelatedMethods { get; }
+
+		/// <summary>
 		/// The base method that is overriden
 		/// </summary>
 		IMethodSymbol BaseOverriddenMethod { get; }
