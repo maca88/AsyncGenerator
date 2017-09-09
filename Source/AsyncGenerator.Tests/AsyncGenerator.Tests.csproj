@@ -193,6 +193,8 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="Github\Issue49\Fixture.cs" />
+    <Compile Include="Github\Issue49\Input\TestCase.cs" />
     <Compile Include="Github\Issue46\Fixture.cs" />
     <Compile Include="Github\Issue46\Input\TestCaseWithToken.cs" />
     <Compile Include="Github\Issue46\Input\TestCase.cs" />
@@ -742,6 +744,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NewTypes\Output\NestedDerivedAsyncWithToken.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Github\Issue49\Output\TestCase.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

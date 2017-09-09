@@ -283,7 +283,6 @@ namespace AsyncGenerator.Internal
 				case SyntaxKind.LocalFunctionStatement:
 				case SyntaxKind.GetAccessorDeclaration: // Property getter
 				case SyntaxKind.SetAccessorDeclaration: // Property setter
-				case SyntaxKind.ArrowExpressionClause: // Arrow expression property getter
 					return functionData;
 				case SyntaxKind.MethodDeclaration:
 				case SyntaxKind.DestructorDeclaration:
@@ -302,6 +301,8 @@ namespace AsyncGenerator.Internal
 				case SyntaxKind.FieldDeclaration:
 				case SyntaxKind.EventFieldDeclaration:
 					return fieldData;
+				case SyntaxKind.ArrowExpressionClause: // Arrow expression of a property getter or method
+					return functionData ?? baseMethodData;
 				default:
 					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
 			}
