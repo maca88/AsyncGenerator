@@ -68,6 +68,7 @@ namespace AsyncGenerator.Internal
 				IgnoredReason = reason;
 			}
 			Conversion = ReferenceConversion.Ignore;
+			PassCancellationToken = false;
 			if (FunctionArguments == null)
 			{
 				return;
