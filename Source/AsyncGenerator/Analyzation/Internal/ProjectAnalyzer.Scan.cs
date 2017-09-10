@@ -131,13 +131,14 @@ namespace AsyncGenerator.Analyzation.Internal
 			return Find();
 		}
 
+		private readonly ConcurrentSet<MethodOrAccessorData> _scannedMethodOrAccessors = new ConcurrentSet<MethodOrAccessorData>();
+
 		private async Task ScanMethodData(MethodOrAccessorData methodOrAccessorData, int depth = 0)
 		{
-			if (methodOrAccessorData.Scanned)
+			if (!_scannedMethodOrAccessors.TryAdd(methodOrAccessorData))
 			{
 				return;
 			}
-			methodOrAccessorData.Scanned = true;
 
 			SyntaxReference syntax;
 			var bodyScanMethodDatas = new HashSet<MethodOrAccessorData>();
@@ -437,22 +438,28 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		#region ScanAllMethodReferenceLocations
 
-		private readonly ConcurrentSet<IMethodSymbol> _scannedMethodReferenceSymbols = new ConcurrentSet<IMethodSymbol>();
+		private readonly ConcurrentSet<IMethodSymbol> _searchedMethodReferences = new ConcurrentSet<IMethodSymbol>();
 
 		private readonly ConcurrentSet<ReferenceLocation> _scannedLocationsSymbols = new ConcurrentSet<ReferenceLocation>();
 
+		private int _maxScanningDepth;
+
 		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth)
 		{
-			if (_scannedMethodReferenceSymbols.Contains(methodSymbol.OriginalDefinition))
+			if (_searchedMethodReferences.Contains(methodSymbol.OriginalDefinition))
 			{
 				return;
 			}
-			_scannedMethodReferenceSymbols.TryAdd(methodSymbol.OriginalDefinition);
+			_searchedMethodReferences.TryAdd(methodSymbol.OriginalDefinition);
 
 			var references = await SymbolFinder.FindReferencesAsync(methodSymbol.OriginalDefinition,
 				_solution, _analyzeDocuments).ConfigureAwait(false);
 
 			depth++;
+			if (depth > _maxScanningDepth)
+			{
+				_maxScanningDepth = depth;
+			}
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
 				if (_scannedLocationsSymbols.Contains(refLocation))
@@ -587,7 +594,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 
 				var methodData = baseMethodData as MethodOrAccessorData;
-				if (methodData != null && !methodData.Scanned)
+				if (methodData != null && !_scannedMethodOrAccessors.Contains(methodData))
 				{
 					await ScanMethodData(methodData, depth).ConfigureAwait(false);
 				}

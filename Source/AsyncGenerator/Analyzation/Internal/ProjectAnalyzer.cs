@@ -96,6 +96,18 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			Logger.Info("Scanning references completed");
 
+			Logger.Info(
+						$"Scanning statistics:{Environment.NewLine}" +
+						$"Total scanned documents: {documentData.Length}{Environment.NewLine}" +
+						$"Total scanned methods: {_scannedMethodOrAccessors.Count}{Environment.NewLine}" +
+						$"Total method implementations searched: {_searchedImplementations.Count}{Environment.NewLine}" +
+						$"Total method overrides searched: {_searchedOverrides.Count}{Environment.NewLine}" +
+						$"Total method references searched: {_searchedMethodReferences.Count}{Environment.NewLine}" +
+						$"Total method reference locations scanned: {_scannedLocationsSymbols.Count}{Environment.NewLine}" +
+						$"Total method bodies scanned: {_scannedMethodBodies.Count}{Environment.NewLine}" +
+						$"Max scanned depth: {_maxScanningDepth}"
+				);
+
 			// 4. Step - Analyze all references found in the previous step
 			Logger.Info("Analyzing documents started");
 			if (_configuration.ConcurrentRun)
@@ -164,6 +176,9 @@ namespace AsyncGenerator.Analyzation.Internal
 				});
 		}
 
+
+		private readonly ConcurrentSet<FunctionData> _scannedMethodBodies = new ConcurrentSet<FunctionData>();
+
 		/// <summary>
 		/// Find all invoked methods that have an async counterpart and have not been discovered yet.
 		/// </summary>
@@ -171,6 +186,11 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// <returns>Collection of invoked methods that have an async counterpart</returns>
 		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(FunctionData methodData)
 		{
+			if (!_scannedMethodBodies.TryAdd(methodData))
+			{
+				return Enumerable.Empty<IMethodSymbol>();
+			}
+
 			var result = new HashSet<IMethodSymbol>();
 			var methodDataBody = methodData.GetBodyNode();
 			if (methodDataBody == null)
@@ -204,6 +224,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else if (node is IdentifierNameSyntax identifier)
 				{
+					if (identifier.Identifier.ToString() == "var")
+					{
+						continue;
+					}
 					var propertySymbol = semanticModel.GetSymbolInfo(identifier).Symbol as IPropertySymbol;
 					if (propertySymbol == null)
 					{

@@ -76,8 +76,6 @@ namespace AsyncGenerator.Internal
 
 		#region Scanning step
 
-		internal bool Scanned { get; set; }
-
 		public bool Missing { get; set; }
 
 		#endregion
