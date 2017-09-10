@@ -17,6 +17,7 @@ namespace AsyncGenerator.Internal
 		{
 			TypeData = typeData;
 			Node = node;
+			Symbol = semanticModel.GetSymbolInfo(node.Declaration.Type).Symbol ?? throw new InvalidOperationException($"symbol for field type {node.Declaration.Type} was not found");
 			var list = new List<FieldVariableDeclaratorData>();
 			foreach (var variable in node.Declaration.Variables)
 			{
@@ -28,7 +29,10 @@ namespace AsyncGenerator.Internal
 
 		public IReadOnlyList<FieldVariableDeclaratorData> Variables { get; }
 
-		//public PropertyConversion Conversion { get; set; }
+		/// <summary>
+		/// Represent the field type symbol
+		/// </summary>
+		public ISymbol Symbol { get; }
 
 		public TypeData TypeData { get; }
 
@@ -39,7 +43,8 @@ namespace AsyncGenerator.Internal
 		IReadOnlyList<IFieldVariableDeclaratorResult> IFieldAnalyzationResult.Variables => Variables;
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> IFieldAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
+		IReadOnlyList<ITypeReferenceAnalyzationResult> IFieldAnalyzationResult.TypeReferences => 
+			_cachedTypeReferences ?? (_cachedTypeReferences = ReferencedMembers.OfType<ReferenceTypeData>().ToImmutableArray());
 
 		#endregion
 
@@ -50,15 +55,16 @@ namespace AsyncGenerator.Internal
 
 		public override ISymbol GetSymbol()
 		{
-			return null;
+			return Symbol;
 		}
 
 		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{
 			foreach (var variable in Variables)
 			{
-				variable.Conversion = FieldVariableConversion.Ignore;
+				variable.Ignore("Cascade ignored.", explicitlyIgnored);
 			}
+			base.Ignore(reason, explicitlyIgnored);
 		}
 	}
 }

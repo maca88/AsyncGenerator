@@ -506,7 +506,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 				{
 					// For smart methods we will have filled dependencies so we can ignore it if is not used
-					if (methodData.Conversion.HasFlag(MethodConversion.Smart) && methodData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)))
+					if (
+						methodData.Conversion.HasFlag(MethodConversion.Smart) && 
+						methodData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) &&
+						!methodData.IsAnyActiveReference()
+						)
 					{
 						methodData.Ignore("Method is never used.");
 					}
@@ -606,20 +610,17 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 
-					variable.Conversion = variable.UsedBy.OfType<BaseMethodData>()
-						                      .Any(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Copy)) ||
-					                      variable.UsedBy.OfType<AccessorData>()
-						                      .Any(o => o.PropertyData.Conversion == PropertyConversion.Copy)
+					variable.Conversion = variable.IsAnyActiveReference()
 						? FieldVariableConversion.Copy
 						: FieldVariableConversion.Ignore;
-					if (variable.Conversion == FieldVariableConversion.Ignore && variable.UsedBy.OfType<BaseFieldData>().Any())
+					if (variable.Conversion == FieldVariableConversion.Ignore && variable.ReferencedBy.OfType<BaseFieldData>().Any())
 					{
 						postopnedVariables.Add(variable);
 					}
 				}
 				foreach (var variable in postopnedVariables)
 				{
-					variable.Conversion = variable.UsedBy.OfType<BaseFieldData>().Any(o => o.Variables.All(v => v.Conversion == FieldVariableConversion.Copy))
+					variable.Conversion = variable.ReferencedBy.OfType<BaseFieldData>().Any(o => o.Variables.All(v => v.Conversion == FieldVariableConversion.Copy))
 						? FieldVariableConversion.Copy
 						: FieldVariableConversion.Ignore;
 				}
@@ -716,7 +717,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						break;
 					}
 
-					var referenceFunctionData = methodReference.FunctionData;
+					var referenceFunctionData = methodReference.Data;
 
 					if (methodReference.LastInvocation && referenceFunctionData.Symbol.ReturnsVoid && (
 						    (methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||

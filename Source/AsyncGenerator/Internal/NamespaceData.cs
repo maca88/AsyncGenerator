@@ -241,7 +241,7 @@ namespace AsyncGenerator.Internal
 		#region INamespaceAnalyzationResult
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> INamespaceAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
+		IReadOnlyList<ITypeReferenceAnalyzationResult> INamespaceAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = ReferencedMembers.OfType<ReferenceTypeData>().ToImmutableArray());
 
 		private IReadOnlyList<ITypeAnalyzationResult> _cachedTypes;
 		IReadOnlyList<ITypeAnalyzationResult> INamespaceAnalyzationResult.Types => _cachedTypes ?? (_cachedTypes = Types.Values.ToImmutableArray());

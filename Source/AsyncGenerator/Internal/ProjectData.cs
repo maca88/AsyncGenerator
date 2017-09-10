@@ -105,6 +105,20 @@ namespace AsyncGenerator.Internal
 			return (MethodOrAccessorData)GetFunctionData(symbol);
 		}
 
+		public AbstractData GetAbstractData(ISymbol symbol)
+		{
+			var syntaxReference = symbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntaxReference == null)
+			{
+				return null;
+			}
+			if (!Documents.TryGetValue(syntaxReference.SyntaxTree.FilePath, out var documentData))
+			{
+				return null;
+			}
+			return documentData.GetAbstractData(symbol);
+		}
+
 		public FunctionData GetFunctionData(IMethodSymbol methodSymbol)
 		{
 			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();

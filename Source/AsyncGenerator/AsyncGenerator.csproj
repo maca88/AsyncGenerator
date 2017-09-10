@@ -170,8 +170,8 @@
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.Async.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.Await.cs" />
     <Compile Include="Internal\AbstractData.cs" />
-    <Compile Include="Internal\AbstractFunctionReferenceData.cs" />
-    <Compile Include="Internal\AbstractReferenceData.cs" />
+    <Compile Include="Internal\AbstractReferenceFunctionData.cs" />
+    <Compile Include="Internal\AbstractReference.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.Analyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PostAnalyze.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.PreAnalyze.cs" />
@@ -183,6 +183,7 @@
     <Compile Include="Internal\FieldData.cs" />
     <Compile Include="Internal\FieldVariableDeclaratorData.cs" />
     <Compile Include="Internal\FunctionArgumentData.cs" />
+    <Compile Include="Internal\IAbstractReference.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />
@@ -192,7 +193,7 @@
     <Compile Include="Configuration\Internal\ProjectConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\Internal\SolutionConfiguration.cs" />
-    <Compile Include="Internal\CrefFunctionReferenceData.cs" />
+    <Compile Include="Internal\CrefReferenceFunctionData.cs" />
     <Compile Include="Internal\DocumentData.cs" />
     <Compile Include="Extensions\Internal\MethodKindExtensions.cs" />
     <Compile Include="Extensions\Internal\SyntaxNodeExtensions.cs" />
@@ -204,11 +205,14 @@
     <Compile Include="Internal\DelegatePreconditionChecker.cs" />
     <Compile Include="Internal\LockData.cs" />
     <Compile Include="Internal\MethodData.cs" />
-    <Compile Include="Internal\BodyFunctionReferenceData.cs" />
+    <Compile Include="Internal\BodyReferenceFunctionData.cs" />
     <Compile Include="Internal\MethodOrAccessorData.cs" />
+    <Compile Include="Internal\NameofReferenceFunctionData.cs" />
     <Compile Include="Internal\NamespaceData.cs" />
     <Compile Include="Analyzation\Internal\ProjectAnalyzer.cs" />
     <Compile Include="Internal\PropertyData.cs" />
+    <Compile Include="Internal\Reference.cs" />
+    <Compile Include="Internal\ReferenceFieldVariableData.cs" />
     <Compile Include="Internal\SourceCodeCompiler.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
     <Compile Include="Internal\ProjectData.cs" />
@@ -243,7 +247,7 @@
     <Compile Include="Transformation\Internal\YieldRewriter.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.cs" />
     <Compile Include="Internal\TypeData.cs" />
-    <Compile Include="Internal\TypeReferenceData.cs" />
+    <Compile Include="Internal\ReferenceTypeData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

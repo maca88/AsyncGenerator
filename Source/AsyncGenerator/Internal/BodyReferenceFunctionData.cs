@@ -11,16 +11,13 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class BodyFunctionReferenceData : AbstractFunctionReferenceData, IBodyFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
+	internal class BodyReferenceFunctionData : AbstractReferenceFunctionData<FunctionData>, IBodyFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
 	{
-		public BodyFunctionReferenceData(FunctionData functionData, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
+		public BodyReferenceFunctionData(FunctionData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
-			: base(reference, referenceNameNode, referenceSymbol, referenceFunctionData)
+			: base(data, reference, referenceNameNode, referenceSymbol, referenceFunctionData)
 		{
-			FunctionData = functionData;
 		}
-
-		public FunctionData FunctionData { get; }
 
 		public HashSet<IMethodSymbol> ReferenceAsyncSymbols { get; set; }
 
@@ -48,7 +45,7 @@ namespace AsyncGenerator.Internal
 
 		public IMethodSymbol AsyncDelegateArgument { get; set; }
 
-		public BodyFunctionReferenceData ArgumentOfFunctionInvocation { get; set; }
+		public BodyReferenceFunctionData ArgumentOfFunctionInvocation { get; set; }
 
 		/// <summary>
 		/// Functions passed as arguments
@@ -149,6 +146,8 @@ namespace AsyncGenerator.Internal
 		public override IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
 		public override FunctionData AsyncCounterpartFunction { get; set; }
+
+		public override bool IsCref => false;
 
 		#endregion
 	}

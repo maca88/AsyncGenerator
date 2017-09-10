@@ -36,9 +36,9 @@ namespace AsyncGenerator.Internal
 		/// <summary>
 		/// References to other methods that are referenced/invoked inside this function/method and are candidates to be async
 		/// </summary>
-		public ConcurrentSet<BodyFunctionReferenceData> BodyMethodReferences { get; } = new ConcurrentSet<BodyFunctionReferenceData>();
+		public ConcurrentSet<BodyReferenceFunctionData> BodyMethodReferences { get; } = new ConcurrentSet<BodyReferenceFunctionData>();
 
-		public ConcurrentSet<CrefFunctionReferenceData> CrefMethodReferences { get; } = new ConcurrentSet<CrefFunctionReferenceData>();
+		public IEnumerable<CrefReferenceFunctionData> CrefMethodReferences => ReferencedMembers.OfType<CrefReferenceFunctionData>();
 
 		public ConcurrentDictionary<SyntaxNode, ChildFunctionData> ChildFunctions { get; } = new ConcurrentDictionary<SyntaxNode, ChildFunctionData>();
 
@@ -182,7 +182,7 @@ namespace AsyncGenerator.Internal
 
 		public bool RewriteYields { get; set; }
 
-		public BodyFunctionReferenceData ArgumentOfFunctionInvocation { get; set; }
+		public BodyReferenceFunctionData ArgumentOfFunctionInvocation { get; set; }
 
 		#endregion
 
@@ -208,7 +208,8 @@ namespace AsyncGenerator.Internal
 		IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> IFunctionAnalyzationResult.MethodReferences => _cachedMethodReferences ?? (_cachedMethodReferences = BodyMethodReferences.ToImmutableArray());
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> IFunctionAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
+		IReadOnlyList<ITypeReferenceAnalyzationResult> IFunctionAnalyzationResult.TypeReferences => 
+			_cachedTypeReferences ?? (_cachedTypeReferences = ReferencedMembers.OfType<ReferenceTypeData>().ToImmutableArray());
 
 		private IReadOnlyList<StatementSyntax> _cachedPreconditions;
 		IReadOnlyList<StatementSyntax> IFunctionAnalyzationResult.Preconditions => _cachedPreconditions ?? (_cachedPreconditions = Preconditions.ToImmutableArray());

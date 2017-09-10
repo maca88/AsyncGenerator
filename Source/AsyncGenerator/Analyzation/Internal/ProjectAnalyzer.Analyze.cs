@@ -174,13 +174,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			functionData.RewriteYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
-		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodOrAccessorData methoData, CrefFunctionReferenceData crefData)
+		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodOrAccessorData methoData, CrefReferenceFunctionData crefData)
 		{
 			crefData.RelatedBodyFunctionReferences.AddRange(
 				methoData.BodyMethodReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
 		}
 
-		private void AnalyzeMethodReference(DocumentData documentData, BodyFunctionReferenceData refData)
+		private void AnalyzeMethodReference(DocumentData documentData, BodyReferenceFunctionData refData)
 		{
 			var nameNode = refData.ReferenceNameNode;
 
@@ -255,9 +255,9 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeAccessor(DocumentData documentData, SimpleNameSyntax node, BodyFunctionReferenceData functionReferenceData)
+		private void AnalyzeAccessor(DocumentData documentData, SimpleNameSyntax node, BodyReferenceFunctionData functionReferenceData)
 		{
-			var functionData = functionReferenceData.FunctionData;
+			var functionData = functionReferenceData.Data;
 			var functionNode = functionData.GetNode();
 
 			if (IgnoreIfInsideQueryExpression(node, functionNode, functionReferenceData))
@@ -271,7 +271,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			PropagateCancellationToken(functionReferenceData);
 		}
 
-		private bool IgnoreIfInsideQueryExpression(SyntaxNode node, SyntaxNode endNode, BodyFunctionReferenceData functionReferenceData)
+		private bool IgnoreIfInsideQueryExpression(SyntaxNode node, SyntaxNode endNode, BodyReferenceFunctionData functionReferenceData)
 		{
 			var queryExpression = node.Ancestors()
 				.TakeWhile(o => o != endNode)
@@ -286,9 +286,9 @@ namespace AsyncGenerator.Analyzation.Internal
 			return false;
 		}
 
-		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, BodyFunctionReferenceData functionReferenceData)
+		private void AnalyzeInvocationExpression(DocumentData documentData, InvocationExpressionSyntax node, BodyReferenceFunctionData functionReferenceData)
 		{
-			var functionData = functionReferenceData.FunctionData;
+			var functionData = functionReferenceData.Data;
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionNode = functionData.GetNode();
 
@@ -439,12 +439,12 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// <summary>
 		/// Propagate CancellationTokenRequired to the method data only if the invocation can be async and the method does not have any external related methods (eg. external interface)
 		/// </summary>
-		private void PropagateCancellationToken(BodyFunctionReferenceData functionReferenceData)
+		private void PropagateCancellationToken(BodyReferenceFunctionData functionReferenceData)
 		{
-			var methodData = functionReferenceData.FunctionData.GetMethodOrAccessorData();
+			var methodData = functionReferenceData.Data.GetMethodOrAccessorData();
 			// We will set CancellationTokenRequired to true only for the method that contains this invocation
 			if (functionReferenceData.Conversion != ReferenceConversion.ToAsync || 
-				methodData != functionReferenceData.FunctionData || 
+				methodData != functionReferenceData.Data || 
 				methodData.ExternalRelatedMethods.Any())
 			{
 				return;
@@ -463,9 +463,9 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void CalculateLastInvocation(SyntaxNode node, BodyFunctionReferenceData functionReferenceData)
+		private void CalculateLastInvocation(SyntaxNode node, BodyReferenceFunctionData functionReferenceData)
 		{
-			var functionData = functionReferenceData.FunctionData;
+			var functionData = functionReferenceData.Data;
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionBodyNode = functionData.GetBodyNode();
 			if (functionBodyNode == null)
@@ -547,9 +547,9 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void AnalyzeArgumentExpression(ArgumentSyntax node, SimpleNameSyntax nameNode, BodyFunctionReferenceData result)
+		private void AnalyzeArgumentExpression(ArgumentSyntax node, SimpleNameSyntax nameNode, BodyReferenceFunctionData result)
 		{
-			var documentData = result.FunctionData.TypeData.NamespaceData.DocumentData;
+			var documentData = result.Data.TypeData.NamespaceData.DocumentData;
 			var methodArgTypeInfo = documentData.SemanticModel.GetTypeInfo(nameNode);
 			if (methodArgTypeInfo.ConvertedType?.TypeKind != TypeKind.Delegate)
 			{
@@ -599,7 +599,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private void FindAsyncCounterparts(BodyFunctionReferenceData functionReferenceData)
+		private void FindAsyncCounterparts(BodyReferenceFunctionData functionReferenceData)
 		{
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			methodSymbol = methodSymbol.ReducedFrom ?? methodSymbol; // System.Linq extensions
@@ -614,7 +614,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				functionReferenceData.InvokedFromType, searchOptions));
 		}
 
-		private bool SetAsyncCounterpart(BodyFunctionReferenceData functionReferenceData)
+		private bool SetAsyncCounterpart(BodyReferenceFunctionData functionReferenceData)
 		{
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			methodSymbol = methodSymbol.ReducedFrom ?? methodSymbol; // System.Linq extensions
@@ -677,7 +677,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		}
 
 
-		private IMethodSymbol FindAsyncCandidate(BodyFunctionReferenceData functionReferenceData, IList<IMethodSymbol> asyncCandidates)
+		private IMethodSymbol FindAsyncCandidate(BodyReferenceFunctionData functionReferenceData, IList<IMethodSymbol> asyncCandidates)
 		{
 			if (asyncCandidates.Count == 0)
 			{

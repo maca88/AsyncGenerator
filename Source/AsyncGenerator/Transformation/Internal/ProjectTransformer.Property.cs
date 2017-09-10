@@ -130,7 +130,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
 			{
 				var transfromReference = new FunctionReferenceTransformationResult(referenceResult);
-				var isCref = referenceResult is CrefFunctionReferenceData;
+				var isCref = referenceResult is CrefReferenceFunctionData;
 				var reference = referenceResult.ReferenceLocation;
 				var startSpan = reference.Location.SourceSpan.Start - startMethodSpan;
 				var nameNode = node.GetSimpleName(startSpan, reference.Location.SourceSpan.Length, isCref);

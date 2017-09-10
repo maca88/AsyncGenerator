@@ -16,13 +16,13 @@ namespace AsyncGenerator.Internal
 			FunctionData = functionData;
 		}
 
-		public FunctionArgumentData(BodyFunctionReferenceData functionReference, int index)
+		public FunctionArgumentData(BodyReferenceFunctionData functionReference, int index)
 		{
 			FunctionReference = functionReference;
 			Index = index;
 		}
 
-		public BodyFunctionReferenceData FunctionReference { get; }
+		public BodyReferenceFunctionData FunctionReference { get; }
 
 		public FunctionData FunctionData { get; }
 

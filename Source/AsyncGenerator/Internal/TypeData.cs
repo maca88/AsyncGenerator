@@ -9,6 +9,7 @@ using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
@@ -22,12 +23,7 @@ namespace AsyncGenerator.Internal
 			Node = node;
 		}
 
-		public ConcurrentSet<CrefFunctionReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefFunctionReferenceData>();
-
-		/// <summary>
-		/// Contains references of itself
-		/// </summary>
-		public ConcurrentSet<TypeReferenceData> SelfReferences { get; } = new ConcurrentSet<TypeReferenceData>();
+		public ConcurrentSet<CrefReferenceFunctionData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceFunctionData>();
 
 		/// <summary>
 		/// Base types
@@ -191,10 +187,7 @@ namespace AsyncGenerator.Internal
 		#region ITypeAnalyzationResult
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
-
-		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedSelfReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
+		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = ReferencedMembers.OfType<ReferenceTypeData>().ToImmutableArray());
 
 		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
 		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = Methods.Values.ToImmutableArray());
