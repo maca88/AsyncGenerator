@@ -444,15 +444,64 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private int _maxScanningDepth;
 
+		private IEnumerable<IMethodSymbol> GetAllRelatedMethods(IMethodSymbol methodSymbol)
+		{
+			var methodData = ProjectData.GetMethodOrAccessorData(methodSymbol);
+			if (methodData != null)
+			{
+				return methodData.AllRelatedMethods;
+			}
+
+			var relatedSymbols = new List<IMethodSymbol>();
+			relatedSymbols.AddRange(methodSymbol.ExplicitInterfaceImplementations);
+
+			var overrideMethod = methodSymbol.OverriddenMethod;
+			while (overrideMethod != null)
+			{
+				relatedSymbols.Add(overrideMethod);
+				overrideMethod = overrideMethod.OverriddenMethod;
+			}
+			var type = methodSymbol.ContainingType;
+			foreach (var interfaceMethod in type.AllInterfaces
+				.SelectMany(o => o.GetMembers(methodSymbol.Name)
+					.Where(m =>
+					{
+						// Find out if the method implements the interface member or an override 
+						// method that implements it
+						var impl = type.FindImplementationForInterfaceMember(m);
+						return methodSymbol.Equals(impl) || relatedSymbols.Any(ov => ov.Equals(impl));
+					}))
+				.OfType<IMethodSymbol>())
+			{
+				relatedSymbols.Add(interfaceMethod);
+			}
+			return relatedSymbols;
+		}
+
 		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth)
 		{
-			if (_searchedMethodReferences.Contains(methodSymbol.OriginalDefinition))
+			methodSymbol = methodSymbol.OriginalDefinition;
+			if (!_searchedMethodReferences.TryAdd(methodSymbol))
 			{
 				return;
 			}
-			_searchedMethodReferences.TryAdd(methodSymbol.OriginalDefinition);
+			// FindReferencesAsync will not search just for the passed method symbol but also for all its overrides, interfaces and external interfaces
+			// so we need to add all related symbols to the searched list in order to avoid scanning those related members in the future calls
+			// If any of the related symbols was already searched then we know that all references of the current method were already found
+			var alreadyScanned = false;
+			foreach (var relatedMethod in GetAllRelatedMethods(methodSymbol))
+			{
+				if (!_searchedMethodReferences.TryAdd(relatedMethod))
+				{
+					alreadyScanned = true;
+				}
+			}
+			if (alreadyScanned)
+			{
+				return;
+			}
 
-			var references = await SymbolFinder.FindReferencesAsync(methodSymbol.OriginalDefinition,
+			var references = await SymbolFinder.FindReferencesAsync(methodSymbol,
 				_solution, _analyzeDocuments).ConfigureAwait(false);
 
 			depth++;

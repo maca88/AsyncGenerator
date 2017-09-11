@@ -50,6 +50,11 @@ namespace AsyncGenerator.Internal
 		public IEnumerable<FunctionData> Dependencies => InvokedBy.Union(RelatedMethods);
 
 		/// <summary>
+		/// Contains all (internal/external) implemented or explicitly implemented interfaces and all overrides
+		/// </summary>
+		public IEnumerable<IMethodSymbol> AllRelatedMethods => ImplementedInterfaces.Union(OverridenMethods).Union(ExternalRelatedMethods);
+
+		/// <summary>
 		/// The base method that is overriden
 		/// </summary>
 		public IMethodSymbol BaseOverriddenMethod { get; set; }

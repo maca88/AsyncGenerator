@@ -351,7 +351,30 @@ namespace AsyncGenerator.Internal
 
 		public MethodData GetMethodData(IMethodSymbol symbol)
 		{
-			return (MethodData)GetFunctionData(symbol);
+			var syntaxReference = symbol.DeclaringSyntaxReferences.SingleOrDefault();
+			return GetMethodData(syntaxReference);
+		}
+
+		public MethodData GetMethodData(SyntaxReference syntaxReference)
+		{
+			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
+			{
+				return null;
+			}
+			return GetAllTypeDatas()
+				.SelectMany(o => o.Methods.Values)
+				.FirstOrDefault(o => o.Node.Span.Equals(syntaxReference.Span));
+		}
+
+		public MethodOrAccessorData GetMethodOrAccessorData(SyntaxReference syntaxReference)
+		{
+			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
+			{
+				return null;
+			}
+			return GetAllTypeDatas()
+				.SelectMany(o => o.MethodsAndAccessors)
+				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
 		}
 		/*
 		public async Task<MethodData> GetMethodData(IMethodSymbol symbol)
