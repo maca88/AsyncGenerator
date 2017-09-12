@@ -100,9 +100,18 @@ namespace AsyncGenerator.Internal
 			return documentData.GetMethodData(node);
 		}*/
 
-		public MethodOrAccessorData GetMethodOrAccessorData(IMethodSymbol symbol)
+		public MethodOrAccessorData GetMethodOrAccessorData(IMethodSymbol methodSymbol)
 		{
-			return (MethodOrAccessorData)GetFunctionData(symbol);
+			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntaxReference == null)
+			{
+				return null;
+			}
+			if (!Documents.TryGetValue(syntaxReference.SyntaxTree.FilePath, out var documentData))
+			{
+				return null;
+			}
+			return documentData.GetMethodOrAccessorData(syntaxReference);
 		}
 
 		public AbstractData GetAbstractData(ISymbol symbol)
