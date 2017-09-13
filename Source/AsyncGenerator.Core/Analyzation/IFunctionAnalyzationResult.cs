@@ -31,9 +31,14 @@ namespace AsyncGenerator.Core.Analyzation
 		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 
 		/// <summary>
+		/// References to other methods that are referenced inside this function
+		/// </summary>
+		IReadOnlyList<IFunctionReferenceAnalyzationResult> FunctionReferences { get; }
+
+		/// <summary>
 		/// References to other methods that are referenced/invoked inside this function and are candidates to be async
 		/// </summary>
-		IReadOnlyList<IBodyFunctionReferenceAnalyzationResult> MethodReferences { get; }
+		IEnumerable<IBodyFunctionReferenceAnalyzationResult> BodyFunctionReferences { get; }
 
 		/// <summary>
 		/// Statements inside the function that were qualified as preconditions. Preconditions may be filled only for functions that 

@@ -111,19 +111,18 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode.ReplaceNode(funcNode, funcNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformFuncResult.Annotation)));
 			}
 
-			foreach (var referenceResult in methodResult.CrefMethodReferences
-				.Union(methodResult.MethodReferences)
+			foreach (var referenceResult in methodResult.FunctionReferences
 				.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
 			{
 				var transfromReference = new FunctionReferenceTransformationResult(referenceResult);
-				var isCref = referenceResult is CrefReferenceFunctionData;
+				var isCref = referenceResult.IsCref;
 				var reference = referenceResult.ReferenceLocation;
 				var startSpan = reference.Location.SourceSpan.Start - startMethodSpan;
 				var nameNode = methodNode.GetSimpleName(startSpan, reference.Location.SourceSpan.Length, isCref);
 				methodNode = methodNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transfromReference.Annotation)));
 				result.TransformedFunctionReferences.Add(transfromReference);
 
-				if (isCref || !methodResult.OmitAsync)
+				if (isCref || referenceResult.IsNameOf || !methodResult.OmitAsync)
 				{
 					continue;
 				}

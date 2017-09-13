@@ -23,8 +23,6 @@ namespace AsyncGenerator.Internal
 			Node = node;
 		}
 
-		public ConcurrentSet<CrefReferenceFunctionData> CrefReferences { get; } = new ConcurrentSet<CrefReferenceFunctionData>();
-
 		/// <summary>
 		/// Base types
 		/// </summary>
@@ -86,18 +84,6 @@ namespace AsyncGenerator.Internal
 		{
 			return Node;
 		}
-
-		//public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
-		//{
-		//	foreach (var typeInfo in NestedTypeData.Values)
-		//	{
-		//		foreach (var subTypeInfo in typeInfo.GetDescendantTypeInfosAndSelf())
-		//		{
-		//			yield return subTypeInfo;
-		//		}
-		//	}
-		//	yield return this;
-		//}
 
 		public IEnumerable<TypeData> GetSelfAndAncestorsTypeData()
 		{
@@ -187,7 +173,7 @@ namespace AsyncGenerator.Internal
 		#region ITypeAnalyzationResult
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = ReferencedMembers.OfType<ReferenceTypeData>().ToImmutableArray());
+		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = References.OfType<TypeDataReference>().ToImmutableArray());
 
 		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
 		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = Methods.Values.ToImmutableArray());
@@ -205,37 +191,6 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<IFunctionAnalyzationResult> _cachedSpecialMethods;
 		IReadOnlyList<IFunctionAnalyzationResult> ITypeAnalyzationResult.SpecialMethods => _cachedSpecialMethods ?? (_cachedSpecialMethods = SpecialMethods.Values.ToImmutableArray());
-
-		#endregion
-
-		#region IMemberAnalyzationResult
-
-		public IMemberAnalyzationResult GetNext()
-		{
-			// Try to find the next sibling that can be a type or a namespace
-			var sibling = NamespaceData.NestedNamespaces.Values
-				.Cast<IMemberAnalyzationResult>()
-				.Union(NamespaceData.Types.Values.Where(o => o != this))
-				.OrderBy(o => o.GetNode().SpanStart)
-				.FirstOrDefault(o => o.GetNode().SpanStart > Node.Span.End);
-			return (sibling ?? ParentTypeData) ?? NamespaceData;
-		}
-
-		public IMemberAnalyzationResult GetPrevious()
-		{
-			// Try to find the previous sibling that can be a type or a namespace
-			var sibling = NamespaceData.NestedNamespaces.Values
-				.Cast<IMemberAnalyzationResult>()
-				.Union(NamespaceData.Types.Values.Where(o => o != this))
-				.OrderByDescending(o => o.GetNode().Span.End)
-				.FirstOrDefault(o => o.GetNode().Span.End < Node.SpanStart);
-			return (sibling ?? ParentTypeData) ?? NamespaceData;
-		}
-
-		public bool IsParent(IAnalyzationResult analyzationResult)
-		{
-			return ParentTypeData == analyzationResult || NamespaceData == analyzationResult;
-		}
 
 		#endregion
 	}

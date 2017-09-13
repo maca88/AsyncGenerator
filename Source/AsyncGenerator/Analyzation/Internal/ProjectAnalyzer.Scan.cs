@@ -27,7 +27,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (typeData.Conversion == TypeConversion.NewType)
 				{
 					await ScanForReferences(typeData, typeData.Symbol,
-							(data, location, nameNode) => new ReferenceTypeData(data, location, nameNode, typeData.Symbol, typeData))
+							(data, location, nameNode) => new TypeDataReference(data, location, nameNode, typeData.Symbol, typeData))
 						.ConfigureAwait(false);
 				}
 				FillBaseTypes(typeData, documentData.ProjectData);
@@ -51,7 +51,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					await ScanForReferences(fieldVariableData, fieldVariableData.Symbol,
 							(data, location, nameNode) =>
-								new ReferenceFieldVariableData(data, location, nameNode, fieldVariableData.Symbol, fieldVariableData))
+								new FieldVariableDataReference(data, location, nameNode, fieldVariableData.Symbol, fieldVariableData))
 						.ConfigureAwait(false);
 				}
 			}
@@ -292,7 +292,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		}
 
 		private async Task ScanForReferences<TReferenceSymbol, TReferenceData>(TReferenceData data, TReferenceSymbol symbol, 
-			Func<AbstractData, ReferenceLocation, SimpleNameSyntax, IAbstractReference> createRefFunc)
+			Func<AbstractData, ReferenceLocation, SimpleNameSyntax, IDataReference> createRefFunc)
 			where TReferenceData : AbstractData
 			where TReferenceSymbol : ISymbol
 		{
@@ -310,7 +310,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				var reference = createRefFunc(referenceData, refLocation, node);
 
-				referenceData.ReferencedMembers.TryAdd(reference);
+				referenceData.References.TryAdd(reference);
 				if (!data.SelfReferences.TryAdd(reference))
 				{
 					Logger.Debug($"Performance hit: Self reference for type {symbol} already exists");
@@ -490,8 +490,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			var references = await SymbolFinder.FindReferencesAsync(methodSymbol,
-				_solution, _analyzeDocuments).ConfigureAwait(false);
+			var references = await SymbolFinder.FindReferencesAsync(methodSymbol, _solution, _analyzeDocuments).ConfigureAwait(false);
 
 			depth++;
 			if (depth > _maxScanningDepth)
@@ -563,17 +562,23 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				if (methodReferenceSymbol == null)
 				{
+					// Check if the node is inside a nameof keyword as GetSymbolInfo will never return a symbol for it only candidates
 					if (nameNode.IsInsideNameOf())
 					{
+						var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>();
 						foreach (var candidateSymbol in referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
 						{
 							var nameofReferenceData = ProjectData.GetFunctionData(candidateSymbol);
-							var nameofReference = new NameofReferenceFunctionData(baseMethodData, refLocation, nameNode, candidateSymbol, ProjectData.GetFunctionData(candidateSymbol));
-							if (!baseMethodData.ReferencedMembers.TryAdd(nameofReference))
-							{
-								Logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
-							}
-							nameofReferenceData?.SelfReferences.TryAdd(nameofReference);
+							referencedFuncs.Add(candidateSymbol, nameofReferenceData);
+						}
+						var nameofReference = new NameofFunctionDataReference(baseMethodData, refLocation, nameNode, referencedFuncs, true);
+						if (!baseMethodData.References.TryAdd(nameofReference))
+						{
+							Logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
+						}
+						foreach (var referencedFun in referencedFuncs.Values.Where(o => o != null))
+						{
+							referencedFun.SelfReferences.TryAdd(nameofReference);
 						}
 						continue;
 					}
@@ -589,21 +594,21 @@ namespace AsyncGenerator.Analyzation.Internal
 				// Check if the reference is a cref reference or a nameof
 				if (nameNode.IsInsideCref())
 				{
-					var crefReference = new CrefReferenceFunctionData(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
-					if (!baseMethodData.ReferencedMembers.TryAdd(crefReference))
+					var crefReference = new CrefFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData, true);
+					if (!baseMethodData.References.TryAdd(crefReference))
 					{
 						Logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
 					}
 					referenceMethodData?.SelfReferences.TryAdd(crefReference);
 					continue; // No need to further scan a cref reference
 				}
-				referenceMethodData?.InvokedBy.Add(baseMethodData);
-				var methodReferenceData = new BodyReferenceFunctionData(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
-				if (!baseMethodData.BodyMethodReferences.TryAdd(methodReferenceData))
+				var methodReferenceData = new BodyFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
+				if (!baseMethodData.References.TryAdd(methodReferenceData))
 				{
 					Logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
 					continue; // Reference already processed
 				}
+				referenceMethodData?.SelfReferences.TryAdd(methodReferenceData);
 
 				if (baseMethodData.Conversion == MethodConversion.Ignore)
 				{
@@ -636,34 +641,31 @@ namespace AsyncGenerator.Analyzation.Internal
 			var referenceSymbolInfo = documentData.SemanticModel.GetSymbolInfo(referenceNameNode);
 			var data = documentData.GetNearestNodeData(referenceNameNode.Parent, referenceNameNode.IsInsideCref());
 
-			var methodSymbols = new List<IMethodSymbol>();
-			if (referenceSymbolInfo.Symbol is IMethodSymbol mSymbol)
+			if (referenceSymbolInfo.Symbol is IMethodSymbol methodSymbol)
 			{
-				methodSymbols.Add(mSymbol);
+				if (!referenceNameNode.IsInsideCref())
+				{
+					return;
+				}
+				var referenceData = ProjectData.GetFunctionData(methodSymbol);
+				var reference = new CrefFunctionDataReference(data, refLocation, referenceNameNode, methodSymbol, referenceData, false);
+				data.References.TryAdd(reference);
+				referenceData?.SelfReferences.TryAdd(reference);
 			}
 			else if(referenceNameNode.IsInsideNameOf()) // GetSymbolInfo will never return a concrete symbol for nameof only candidates
 			{
-				methodSymbols.AddRange(referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>());
-			}
-
-			foreach (var methodSymbol in methodSymbols)
-			{
-				var referenceData = ProjectData.GetFunctionData(methodSymbol);
-				IAbstractReference reference;
-				if (referenceNameNode.IsInsideCref())
+				var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>();
+				foreach (var candidateSymbol in referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
 				{
-					reference = new CrefReferenceFunctionData(data, refLocation, referenceNameNode, methodSymbol, referenceData);
+					var nameofReferenceData = ProjectData.GetFunctionData(candidateSymbol);
+					referencedFuncs.Add(candidateSymbol, nameofReferenceData);
 				}
-				else if (referenceNameNode.IsInsideNameOf())
+				var nameofReference = new NameofFunctionDataReference(data, refLocation, referenceNameNode, referencedFuncs, false);
+				data.References.TryAdd(nameofReference);
+				foreach (var referencedFun in referencedFuncs.Values.Where(o => o != null))
 				{
-					reference = new NameofReferenceFunctionData(data, refLocation, referenceNameNode, methodSymbol, referenceData);
+					referencedFun.SelfReferences.TryAdd(nameofReference);
 				}
-				else
-				{
-					continue;
-				}
-				data.ReferencedMembers.TryAdd(reference);
-				referenceData?.SelfReferences.TryAdd(reference);
 			}
 		}
 

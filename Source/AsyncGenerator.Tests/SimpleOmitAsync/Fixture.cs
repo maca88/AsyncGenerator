@@ -37,10 +37,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(13, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(13, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				IBodyFunctionReferenceAnalyzationResult methodReference;
 				IMethodAnalyzationResult method;
@@ -48,8 +48,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				method = methods[simpleReturn];
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				methodReference = method.MethodReferences[0];
+				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -59,8 +59,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsFalse(method.OmitAsync);
 				Assert.IsFalse(method.SplitTail);
 				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.AreEqual(2, method.MethodReferences.Count);
-				var methodReferences = method.MethodReferences.ToLookup(o => o.ReferenceSymbol.Name);
+				Assert.AreEqual(2, method.BodyFunctionReferences.Count());
+				var methodReferences = method.BodyFunctionReferences.ToLookup(o => o.ReferenceSymbol.Name);
 				methodReference = methodReferences[write].First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsTrue(methodReference.AwaitInvocation);
@@ -77,8 +77,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsTrue(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				methodReference = method.MethodReferences.First();
+				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.Ignore, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -89,8 +89,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				methodReference = method.MethodReferences.First();
+				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -100,8 +100,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.SplitTail);
 				Assert.IsTrue(method.WrapInTryCatch);
-				Assert.AreEqual(2, method.MethodReferences.Count);
-				methodReferences = method.MethodReferences.ToLookup(o => o.ReferenceSymbol.Name);
+				Assert.AreEqual(2, method.BodyFunctionReferences.Count());
+				methodReferences = method.BodyFunctionReferences.ToLookup(o => o.ReferenceSymbol.Name);
 				methodReference = methodReferences[read].First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
@@ -118,8 +118,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				methodReference = method.MethodReferences.First();
+				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -130,8 +130,8 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				methodReference = method.MethodReferences.First();
+				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -142,28 +142,28 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.MethodReferences.Count);
+				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
 
 				method = methods[returnDefaultString];
 				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.MethodReferences.Count);
+				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
 
 				method = methods[returnDecimal];
 				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.MethodReferences.Count);
+				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
 
 				method = methods[returnDecimalConstructor];
 				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsTrue(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.MethodReferences.Count);
+				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
 			}
 
 			var config = Configure(p => p

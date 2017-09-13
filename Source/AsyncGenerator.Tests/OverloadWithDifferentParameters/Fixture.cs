@@ -27,10 +27,10 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(3, result.Documents[0].Namespaces[0].Types.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
 
-				var types = result.Documents[0].Namespaces[0].Types.ToDictionary(o => o.Symbol.Name);
+				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
 				var type = types[overloadWithDiffParams];
 				Assert.AreEqual(2, type.Methods.Count);
@@ -40,7 +40,7 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
-				var methodReference = method.MethodReferences.First();
+				var methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);

@@ -7,12 +7,12 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal abstract class AbstractReference<TData, TReferenceSymbol, TReferenceData> : IReferenceAnalyzationResult<TReferenceSymbol>, IAbstractReference
+	internal abstract class AbstractDataReference<TData, TReferenceSymbol, TReferenceData> : IReferenceAnalyzationResult<TReferenceSymbol>, IDataReference
 		where TReferenceSymbol : ISymbol
 		where TData : AbstractData
 		where TReferenceData : AbstractData
 	{
-		protected AbstractReference(TData data, ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode,
+		protected AbstractDataReference(TData data, ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode,
 			TReferenceSymbol referenceSymbol, TReferenceData referenceData = null)
 		{
 			Data = data ?? throw new ArgumentNullException(nameof(data));
@@ -42,9 +42,9 @@ namespace AsyncGenerator.Internal
 
 		#region IAbstractReference
 
-		AbstractData IAbstractReference.Data => Data;
+		AbstractData IDataReference.Data => Data;
 
-		AbstractData IAbstractReference.ReferenceData => ReferenceData;
+		AbstractData IDataReference.ReferenceData => ReferenceData;
 
 		#endregion
 

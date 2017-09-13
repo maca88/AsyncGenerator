@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
@@ -13,21 +14,23 @@ namespace AsyncGenerator.Internal
 	internal abstract class AbstractData : IAnalyzationResult
 	{
 		/// <summary>
-		/// References of members that are used inside this data (eg. variable declaration, typeof, cref, nameof)
+		/// References that are used inside this data (eg. variable declaration, typeof, cref, nameof, method invocation)
 		/// </summary>
-		public ConcurrentSet<IAbstractReference> ReferencedMembers { get; } = new ConcurrentSet<IAbstractReference>();
+		public ConcurrentSet<IDataReference> References { get; } = new ConcurrentSet<IDataReference>();
 
 		/// <summary>
 		/// References to other members that are using this data (eg. variable declaration, typeof, cref, nameof)
 		/// </summary>
-		public ConcurrentSet<IAbstractReference> SelfReferences { get; } = new ConcurrentSet<IAbstractReference>();
+		public ConcurrentSet<IDataReference> SelfReferences { get; } = new ConcurrentSet<IDataReference>();
 
 		/// <summary>
 		/// An enumerable of all members inside the project that are referencing this data. This can be used only when references of this data were scanned.
 		/// </summary>
 		public IEnumerable<AbstractData> ReferencedBy => SelfReferences.Select(o => o.Data);
 
-		public bool IsAnyActiveReference()
+		public IEnumerable<FunctionData> ReferencedByFunctions => ReferencedBy.OfType<FunctionData>();
+
+		public bool HasAnyActiveReference()
 		{
 			foreach (var data in ReferencedBy)
 			{
@@ -80,5 +83,18 @@ namespace AsyncGenerator.Internal
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
 		}
+
+		#region IAnalyzationResult
+
+
+		private IReadOnlyList<IReferenceAnalyzationResult> _cachedReferences;
+		IReadOnlyList<IReferenceAnalyzationResult> IAnalyzationResult.References => _cachedReferences ?? (_cachedReferences = References.ToImmutableArray());
+
+		private IReadOnlyList<IReferenceAnalyzationResult> _cachedSelfReferences;
+		IReadOnlyList<IReferenceAnalyzationResult> IAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
+
+		IEnumerable<IAnalyzationResult> IAnalyzationResult.ReferencedBy => ReferencedBy;
+
+		#endregion
 	}
 }

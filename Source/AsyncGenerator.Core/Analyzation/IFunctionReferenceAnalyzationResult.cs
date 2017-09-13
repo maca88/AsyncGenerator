@@ -15,5 +15,7 @@ namespace AsyncGenerator.Core.Analyzation
 		IMethodSymbol AsyncCounterpartSymbol { get; }
 
 		IFunctionAnalyzationResult AsyncCounterpartFunction { get; }
+
+		bool InsideMethodBody { get; }
 	}
 }

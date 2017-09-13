@@ -37,33 +37,42 @@ namespace AsyncGenerator.Transformation.Internal
 			// If we have a cref change the name to the async counterpart and add/update arguments
 			if (bodyFuncReferenceResult == null)
 			{
-				var crefNode = (NameMemberCrefSyntax)nameNode.Parent;
-				var paramList = new List<CrefParameterSyntax>();
-				// If the cref has already the parameters set then use them
-				if (crefNode.Parameters != null)
+				if (funReferenceResult.IsCref)
 				{
-					paramList.AddRange(crefNode.Parameters.Parameters);
-				}
-				else
-				{
-					// We have to add the parameters to avoid ambiguity
-					var asyncSymbol = funReferenceResult.AsyncCounterpartSymbol;
-					paramList.AddRange(asyncSymbol.Parameters
-						.Select(o => CrefParameter(o.Type
-							.CreateTypeSyntax(true, namespaceMetadata.AnalyzationResult.IsIncluded(o.Type.ContainingNamespace?.ToString())))));
-				}
+					var crefNode = (NameMemberCrefSyntax)nameNode.Parent;
+					var paramList = new List<CrefParameterSyntax>();
+					// If the cref has already the parameters set then use them
+					if (crefNode.Parameters != null)
+					{
+						paramList.AddRange(crefNode.Parameters.Parameters);
+					}
+					else
+					{
+						// We have to add the parameters to avoid ambiguity
+						var asyncSymbol = funReferenceResult.AsyncCounterpartSymbol;
+						paramList.AddRange(asyncSymbol.Parameters
+							.Select(o => CrefParameter(o.Type
+								.CreateTypeSyntax(true, namespaceMetadata.AnalyzationResult.IsIncluded(o.Type.ContainingNamespace?.ToString())))));
+					}
 
-				// If the async counterpart is internal and a token is required add a token parameter
-				if (funReferenceResult.AsyncCounterpartFunction?.GetMethodOrAccessor()?.CancellationTokenRequired == true)
-				{
-					paramList.Add(CrefParameter(IdentifierName(nameof(CancellationToken))));
+					// If the async counterpart is internal and a token is required add a token parameter
+					if (funReferenceResult.AsyncCounterpartFunction?.GetMethodOrAccessor()?.CancellationTokenRequired == true)
+					{
+						paramList.Add(CrefParameter(IdentifierName(nameof(CancellationToken))));
+					}
+					node = node
+							.ReplaceNode(crefNode, crefNode
+								.ReplaceNode(nameNode, newNameNode)
+								.WithParameters(CrefParameterList(SeparatedList(paramList))))
+						;
 				}
-				node = node
-						.ReplaceNode(crefNode, crefNode
-							.ReplaceNode(nameNode, newNameNode)
-							.WithParameters(CrefParameterList(SeparatedList(paramList))))
-					;
+				else if (funReferenceResult.IsNameOf)
+				{
+					node = node
+						.ReplaceNode(nameNode, newNameNode);
+				}
 				return node;
+
 			}
 			// If we have a method passed as an argument we need to check if we have to wrap it inside a function
 			if (bodyFuncReferenceResult.AsyncDelegateArgument != null)

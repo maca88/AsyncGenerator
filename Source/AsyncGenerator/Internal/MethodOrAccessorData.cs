@@ -40,14 +40,9 @@ namespace AsyncGenerator.Internal
 		public ConcurrentSet<IMethodSymbol> OverridenMethods { get; } = new ConcurrentSet<IMethodSymbol>();
 
 		/// <summary>
-		/// Method datas that invokes this method
-		/// </summary>
-		public ConcurrentSet<FunctionData> InvokedBy { get; } = new ConcurrentSet<FunctionData>();
-
-		/// <summary>
 		/// Related and invoked by methods
 		/// </summary>
-		public IEnumerable<FunctionData> Dependencies => InvokedBy.Union(RelatedMethods);
+		public IEnumerable<FunctionData> Dependencies => ReferencedByFunctions.Union(RelatedMethods);
 
 		/// <summary>
 		/// Contains all (internal/external) implemented or explicitly implemented interfaces and all overrides
@@ -97,16 +92,9 @@ namespace AsyncGenerator.Internal
 
 		#region IMethodOrAccessorAnalyzationResult
 
-		private IReadOnlyList<IFunctionAnalyzationResult> _cachedInvokedBy;
-		IReadOnlyList<IFunctionAnalyzationResult> IMethodOrAccessorAnalyzationResult.InvokedBy => _cachedInvokedBy ?? (_cachedInvokedBy = InvokedBy.ToImmutableArray());
-
 		private IReadOnlyList<IMethodOrAccessorAnalyzationResult> _cachedRelatedMethods;
 		IReadOnlyList<IMethodOrAccessorAnalyzationResult> IMethodOrAccessorAnalyzationResult.RelatedMethods =>
 			_cachedRelatedMethods ?? (_cachedRelatedMethods = RelatedMethods.ToImmutableArray());
-
-		private IReadOnlyList<IFunctionReferenceAnalyzationResult> _cachedMethodCrefReferences;
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> IMethodOrAccessorAnalyzationResult.CrefMethodReferences =>
-			_cachedMethodCrefReferences ?? (_cachedMethodCrefReferences = CrefMethodReferences.ToImmutableArray());
 
 		#endregion
 
@@ -156,11 +144,11 @@ namespace AsyncGenerator.Internal
 			return result;
 		}
 
-		public IEnumerable<FunctionData> GetAllInvokedBy()
+		public IEnumerable<FunctionData> GetAllReferencedByFunctions()
 		{
 			var result = new HashSet<FunctionData>();
 			var deps = new HashSet<FunctionData>();
-			var depsQueue = new Queue<FunctionData>(InvokedBy);
+			var depsQueue = new Queue<FunctionData>(ReferencedByFunctions);
 			while (depsQueue.Count > 0)
 			{
 				var dependency = depsQueue.Dequeue();
@@ -171,7 +159,7 @@ namespace AsyncGenerator.Internal
 				deps.Add(dependency);
 				if (dependency is MethodOrAccessorData methodOrAccessorData)
 				{
-					foreach (var subDependency in methodOrAccessorData.InvokedBy)
+					foreach (var subDependency in methodOrAccessorData.ReferencedByFunctions)
 					{
 						if (!deps.Contains(subDependency))
 						{

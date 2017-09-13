@@ -8,9 +8,9 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class ReferenceTypeData : Reference<AbstractData, INamedTypeSymbol, TypeData>, ITypeReferenceAnalyzationResult
+	internal class TypeDataReference : DataReference<AbstractData, INamedTypeSymbol, TypeData>, ITypeReferenceAnalyzationResult
 	{
-		public ReferenceTypeData(AbstractData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode, INamedTypeSymbol referenceSymbol, TypeData referenceData)
+		public TypeDataReference(AbstractData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode, INamedTypeSymbol referenceSymbol, TypeData referenceData)
 			: base(data, reference, referenceNameNode, referenceSymbol, referenceData)
 		{
 		}

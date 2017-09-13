@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Analyzation;
+using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Internal
 {
-	internal interface IAbstractReference : IReferenceAnalyzationResult
+	internal interface IDataReference : IReferenceAnalyzationResult
 	{
 		AbstractData Data { get; }
 

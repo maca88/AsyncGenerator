@@ -44,19 +44,13 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
 		IReadOnlyList<ITypeReferenceAnalyzationResult> IFieldAnalyzationResult.TypeReferences => 
-			_cachedTypeReferences ?? (_cachedTypeReferences = ReferencedMembers.OfType<ReferenceTypeData>().ToImmutableArray());
+			_cachedTypeReferences ?? (_cachedTypeReferences = References.OfType<TypeDataReference>().ToImmutableArray());
 
 		#endregion
 
-		public override SyntaxNode GetNode()
-		{
-			return Node;
-		}
+		public override SyntaxNode GetNode() => Node;
 
-		public override ISymbol GetSymbol()
-		{
-			return Symbol;
-		}
+		public override ISymbol GetSymbol() => Symbol;
 
 		public override void Ignore(string reason, bool explicitlyIgnored = false)
 		{

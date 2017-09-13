@@ -8,17 +8,16 @@
 //------------------------------------------------------------------------------
 
 
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
-using System.Linq.Expressions;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Github.Issue52.Input
+namespace AsyncGenerator.Tests.Nameof.Input
 {
 	using System.Threading.Tasks;
-	public class TestCaseAsync
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial class Method
 	{
 		[DefaultValue(nameof(WriteAsync))]
 		public Task WriteAsync()
@@ -27,48 +26,16 @@ namespace AsyncGenerator.Tests.Github.Issue52.Input
 			{
 				return SimpleFile.WriteAsync(nameof(DoSomething));
 			}
-			catch (Exception ex)
+			catch (System.Exception ex)
 			{
 				return Task.FromException<object>(ex);
 			}
-		}
-
-		private void DoSomething()
-		{
-			
 		}
 
 		[DefaultValue(nameof(DoSomething2))]
 		public Task ReadAsync()
 		{
 			return SimpleFile.ReadAsync();
-		}
-
-		private void DoSomething2()
-		{
-
-		}
-
-		[DefaultValue(nameof(DoSomething3))]
-		public bool Property
-		{
-			get => SimpleFile.Write("");
-		}
-
-		private void DoSomething3()
-		{
-
-		}
-
-		public bool Accessor
-		{
-			[DefaultValue(nameof(DoSomething4))]
-			get => SimpleFile.Write("");
-		}
-
-		private void DoSomething4()
-		{
-
 		}
 	}
 }

@@ -52,7 +52,7 @@ namespace AsyncGenerator.Internal
 			Document = document;
 			Node = node;
 			SemanticModel = semanticModel;
-			GlobalNamespaceData = new NamespaceData(this, SemanticModel.Compilation.GlobalNamespace, null);
+			GlobalNamespace = new NamespaceData(this, SemanticModel.Compilation.GlobalNamespace, null);
 		}
 
 		public Document Document { get; }
@@ -65,9 +65,7 @@ namespace AsyncGenerator.Internal
 
 		public SemanticModel SemanticModel { get; }
 
-		public NamespaceData GlobalNamespaceData { get; }
-
-		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> Namespaces { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
+		public NamespaceData GlobalNamespace { get; }
 
 		public SyntaxNode GetNode()
 		{
@@ -79,9 +77,7 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public IEnumerable<NamespaceData> GetAllNamespaceDatas(Func<NamespaceData, bool> predicate = null)
 		{
-			return new[] {GlobalNamespaceData}
-				.Union(Namespaces.Values
-					.SelectMany(o => o.GetSelfAndDescendantsNamespaceData(predicate)));
+			return GlobalNamespace.GetSelfAndDescendantsNamespaceData(predicate);
 		}
 
 		public AbstractData GetNearestNodeData(SyntaxNode node, bool isCref = false)
@@ -251,7 +247,7 @@ namespace AsyncGenerator.Internal
 					case SyntaxKind.StructDeclaration:
 						if (namespaceData == null)
 						{
-							namespaceData = GlobalNamespaceData;
+							namespaceData = GlobalNamespace;
 						}
 						var typeNode = (TypeDeclarationSyntax)n;
 						typeData = typeData != null 
@@ -508,12 +504,12 @@ namespace AsyncGenerator.Internal
 		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, bool create)
 		{
 			NamespaceData namespaceData;
-			if (Namespaces.TryGetValue(namespaceNode, out namespaceData))
+			if (GlobalNamespace.NestedNamespaces.TryGetValue(namespaceNode, out namespaceData))
 			{
 				return namespaceData;
 			}
 			var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
-			return !create ? null : Namespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
+			return !create ? null : GlobalNamespace.NestedNamespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
 		}
 
 		public ISymbol GetEnclosingSymbol(ReferenceLocation reference)
@@ -536,13 +532,11 @@ namespace AsyncGenerator.Internal
 
 		#region IDocumentAnalyzationResult
 
-		private IReadOnlyList<INamespaceAnalyzationResult> _cachedNamespaces;
-		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => _cachedNamespaces ?? (_cachedNamespaces = Namespaces.Values.ToImmutableArray());
+		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespace;
 
+		IEnumerable<ITypeAnalyzationResult> IDocumentAnalyzationResult.AllTypes => GetAllTypeDatas();
 
-		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;
-
-		IEnumerable<ITypeAnalyzationResult> IDocumentAnalyzationResult.GetAllTypes() => GetAllTypeDatas();
+		IEnumerable<INamespaceAnalyzationResult> IDocumentAnalyzationResult.AllNamespaces => GetAllNamespaceDatas();
 
 		#endregion
 	}

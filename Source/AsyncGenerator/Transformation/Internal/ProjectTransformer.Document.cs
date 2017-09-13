@@ -41,7 +41,7 @@ namespace AsyncGenerator.Transformation.Internal
 				rootNode = rootNode.ReplaceNode(typeNode, typeNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 			}
 
-			foreach (var namespaceResult in documentResult.Namespaces.OrderBy(o => o.Node.SpanStart))
+			foreach (var namespaceResult in documentResult.GlobalNamespace.NestedNamespaces.OrderBy(o => o.Node.SpanStart))
 			{
 				var namespaceSpanStart = namespaceResult.Node.SpanStart;
 				var namespaceSpanLength = namespaceResult.Node.Span.Length;

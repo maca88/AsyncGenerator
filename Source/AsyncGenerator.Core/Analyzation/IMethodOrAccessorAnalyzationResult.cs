@@ -11,11 +11,6 @@ namespace AsyncGenerator.Core.Analyzation
 	public interface IMethodOrAccessorAnalyzationResult : IFunctionAnalyzationResult, IMemberAnalyzationResult
 	{
 		/// <summary>
-		/// Methods that invokes this method
-		/// </summary>
-		IReadOnlyList<IFunctionAnalyzationResult> InvokedBy { get; }
-
-		/// <summary>
 		/// Implementation/derived/base/interface methods inside the same project
 		/// </summary>
 		IReadOnlyList<IMethodOrAccessorAnalyzationResult> RelatedMethods { get; }
@@ -29,11 +24,6 @@ namespace AsyncGenerator.Core.Analyzation
 		/// Reference to the async counterpart for this method
 		/// </summary>
 		IMethodSymbol AsyncCounterpartSymbol { get; }
-
-		/// <summary>
-		/// References to other methods that are referenced in trivias
-		/// </summary>
-		IReadOnlyList<IFunctionReferenceAnalyzationResult> CrefMethodReferences { get; }
 
 		/// <summary>
 		/// When true, the method has at least one invocation that needs a <see cref="System.Threading.CancellationToken"/> as a parameter.
