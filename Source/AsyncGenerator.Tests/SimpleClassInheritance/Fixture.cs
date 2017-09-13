@@ -25,9 +25,9 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(4, result.Documents[0].Namespaces[0].Types.Count);
-				var types = result.Documents[0].Namespaces[0].Types.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(4, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
 				Assert.AreEqual(1, types[nameof(DerivedClass)].Methods.Count);
 				Assert.AreEqual(MethodConversion.ToAsync, types[nameof(DerivedClass)].Methods[0].Conversion);

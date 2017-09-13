@@ -21,9 +21,9 @@ namespace AsyncGenerator.Tests.NestedNamespaces
 					.AfterAnalyzation(result =>
 					{
 						Assert.AreEqual(1, result.Documents.Count);
-						Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-						Assert.AreEqual(2, result.Documents[0].Namespaces[0].NestedNamespaces.Count);
-						Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
+						Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+						Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].NestedNamespaces.Count);
+						Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
 					})
 				)
 			);

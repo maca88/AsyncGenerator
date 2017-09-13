@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
-	internal class FieldVariableDeclaratorData : IFieldVariableDeclaratorResult
+	internal class FieldVariableDeclaratorData : AbstractData, IFieldVariableDeclaratorResult
 	{
 		public FieldVariableDeclaratorData(BaseFieldData fieldData, ISymbol symbol, VariableDeclaratorSyntax node)
 		{
@@ -30,7 +30,25 @@ namespace AsyncGenerator.Internal
 
 		public FieldVariableConversion Conversion { get; internal set; }
 
-		public HashSet<AbstractData> UsedBy { get; set; } = new HashSet<AbstractData>();
+		public override SyntaxNode GetNode()
+		{
+			return Node;
+		}
+
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
+
+		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		{
+			if (Conversion == FieldVariableConversion.Ignore)
+			{
+				return;
+			}
+			Conversion = FieldVariableConversion.Ignore;
+			base.Ignore(reason, explicitlyIgnored);
+		}
 	}
 
 }

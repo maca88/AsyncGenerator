@@ -21,11 +21,6 @@ namespace AsyncGenerator.Core.Analyzation
 
 		IReadOnlyList<IFieldAnalyzationResult> Fields { get; }
 
-		/// <summary>
-		/// References of itself
-		/// </summary>
-		IReadOnlyList<ITypeReferenceAnalyzationResult> SelfReferences { get; }
-
 		IReadOnlyList<ITypeAnalyzationResult> NestedTypes { get; }
 
 		IReadOnlyList<IMethodAnalyzationResult> Methods { get; }

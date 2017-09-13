@@ -25,10 +25,10 @@ namespace AsyncGenerator.Tests.Preconditions
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(2, result.Documents[0].Namespaces[0].Types.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
 
-				var types = result.Documents[0].Namespaces[0].Types.ToDictionary(o => o.Symbol.Name);
+				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
 				Assert.AreEqual(3, types[nameof(TestCase)].Methods.Count);
 				var methods = types[nameof(TestCase)].Methods.ToDictionary(o => o.Symbol.Name);
@@ -112,10 +112,10 @@ namespace AsyncGenerator.Tests.Preconditions
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(2, result.Documents[0].Namespaces[0].Types.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
 
-				var types = result.Documents[0].Namespaces[0].Types.ToDictionary(o => o.Symbol.Name);
+				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
 				Assert.AreEqual(3, types[nameof(Input.TestCase)].Methods.Count);
 				var methods = types[nameof(Input.TestCase)].Methods.ToDictionary(o => o.Symbol.Name);

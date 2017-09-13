@@ -328,6 +328,24 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 		}
 
+		internal static bool IsInsideCref(this SimpleNameSyntax node)
+		{
+			return node.Parent.IsKind(SyntaxKind.NameMemberCref);
+		}
+
+		internal static bool IsInsideTypeOf(this SimpleNameSyntax node)
+		{
+			return node.Parent.IsKind(SyntaxKind.TypeOfExpression);
+		}
+
+		internal static bool IsInsideNameOf(this SimpleNameSyntax node)
+		{
+			var parent = node.Parent;
+			return parent.IsKind(SyntaxKind.Argument) &&
+			       parent.Parent.Parent is InvocationExpressionSyntax invocation &&
+			       invocation.Expression.ToString() == "nameof";
+		}
+
 		internal static bool IsAssigned(this SimpleNameSyntax identifier)
 		{
 			var statement = identifier.Ancestors()

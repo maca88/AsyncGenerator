@@ -38,7 +38,7 @@ namespace AsyncGenerator.Tests.Github.Issue50
 						foreach (var name in names)
 						{
 							var document = documents[name];
-							var readMethod = document.AnalyzationResult.GetAllTypes()
+							var readMethod = document.AnalyzationResult.AllTypes
 								.SelectMany(o => o.Methods.Where(m => m.Symbol.Name == read))
 								.Single();
 							Assert.AreEqual(2, readMethod.RelatedMethods.Count);

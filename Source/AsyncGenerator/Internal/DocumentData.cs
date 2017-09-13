@@ -52,7 +52,7 @@ namespace AsyncGenerator.Internal
 			Document = document;
 			Node = node;
 			SemanticModel = semanticModel;
-			GlobalNamespaceData = new NamespaceData(this, SemanticModel.Compilation.GlobalNamespace, null);
+			GlobalNamespace = new NamespaceData(this, SemanticModel.Compilation.GlobalNamespace, null);
 		}
 
 		public Document Document { get; }
@@ -65,9 +65,7 @@ namespace AsyncGenerator.Internal
 
 		public SemanticModel SemanticModel { get; }
 
-		public NamespaceData GlobalNamespaceData { get; }
-
-		public ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData> Namespaces { get; } = new ConcurrentDictionary<NamespaceDeclarationSyntax, NamespaceData>();
+		public NamespaceData GlobalNamespace { get; }
 
 		public SyntaxNode GetNode()
 		{
@@ -79,9 +77,7 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public IEnumerable<NamespaceData> GetAllNamespaceDatas(Func<NamespaceData, bool> predicate = null)
 		{
-			return new[] {GlobalNamespaceData}
-				.Union(Namespaces.Values
-					.SelectMany(o => o.GetSelfAndDescendantsNamespaceData(predicate)));
+			return GlobalNamespace.GetSelfAndDescendantsNamespaceData(predicate);
 		}
 
 		public AbstractData GetNearestNodeData(SyntaxNode node, bool isCref = false)
@@ -251,7 +247,7 @@ namespace AsyncGenerator.Internal
 					case SyntaxKind.StructDeclaration:
 						if (namespaceData == null)
 						{
-							namespaceData = GlobalNamespaceData;
+							namespaceData = GlobalNamespace;
 						}
 						var typeNode = (TypeDeclarationSyntax)n;
 						typeData = typeData != null 
@@ -307,17 +303,15 @@ namespace AsyncGenerator.Internal
 					throw new InvalidOperationException($"Invalid node kind {Enum.GetName(typeof(SyntaxKind), node.Kind())}");
 			}
 		}
-		/*
-		public async Task<FunctionData> GetFunctionData(IMethodSymbol symbol)
-		{
-			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
-			var node = await syntax.GetSyntaxAsync().ConfigureAwait(false);
-			return (FunctionData)GetNodeData(node);
-		}
-		*/
+
 		public FunctionData GetFunctionData(ISymbol methodSymbol)
 		{
 			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			return GetFunctionData(syntaxReference);
+		}
+
+		public FunctionData GetFunctionData(SyntaxReference syntaxReference)
+		{
 			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
 			{
 				return null;
@@ -328,12 +322,72 @@ namespace AsyncGenerator.Internal
 				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
 		}
 
-		#region AnonymousFunctionData
-
-		public AnonymousFunctionData GetAnonymousFunctionData(AnonymousFunctionExpressionSyntax node)
+		public PropertyData GetPropertyData(IPropertySymbol propertySymbol)
 		{
-			return (AnonymousFunctionData)GetNodeData(node);
+			var syntaxReference = propertySymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			return GetPropertyData(syntaxReference);
 		}
+
+		public PropertyData GetPropertyData(SyntaxReference syntaxReference)
+		{
+			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
+			{
+				return null;
+			}
+			return GetAllTypeDatas()
+				.SelectMany(o => o.Properties.Values)
+				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
+		}
+
+		public FieldVariableDeclaratorData GetFieldVariableDeclaratorData(ISymbol methodSymbol)
+		{
+			var syntaxReference = methodSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			return GetFieldVariableDeclaratorData(syntaxReference);
+		}
+
+		public FieldVariableDeclaratorData GetFieldVariableDeclaratorData(SyntaxReference syntaxReference)
+		{
+			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
+			{
+				return null;
+			}
+			return GetAllTypeDatas()
+				.SelectMany(o => o.Fields.Values)
+				.SelectMany(o => o.Variables)
+				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
+		}
+
+		public AbstractData GetAbstractData(ISymbol symbol)
+		{
+			var syntaxReference = symbol.DeclaringSyntaxReferences.SingleOrDefault();
+			if (syntaxReference == null || syntaxReference.SyntaxTree.FilePath != FilePath)
+			{
+				return null;
+			}
+			if (symbol is IMethodSymbol)
+			{
+				return GetFunctionData(syntaxReference);
+			}
+			if (symbol is INamedTypeSymbol)
+			{
+				return GetTypeData(syntaxReference);
+			}
+			if (symbol is IPropertySymbol)
+			{
+				return GetPropertyData(syntaxReference);
+			}
+			if (symbol is IFieldSymbol || symbol is IEventSymbol)
+			{
+				return GetFieldVariableDeclaratorData(syntaxReference);
+			}
+			if (symbol is INamespaceSymbol)
+			{
+				return GetNamespaceData(syntaxReference);
+			}
+			return null;
+		}
+
+		#region AnonymousFunctionData
 
 		public AnonymousFunctionData GetOrCreateAnonymousFunctionData(AnonymousFunctionExpressionSyntax node, BaseMethodData methodData = null)
 		{
@@ -375,18 +429,6 @@ namespace AsyncGenerator.Internal
 			return GetAllTypeDatas()
 				.SelectMany(o => o.MethodsAndAccessors)
 				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
-		}
-		/*
-		public async Task<MethodData> GetMethodData(IMethodSymbol symbol)
-		{
-			var syntax = symbol.DeclaringSyntaxReferences.Single(o => o.SyntaxTree.FilePath == FilePath);
-			var node = (MethodDeclarationSyntax)await syntax.GetSyntaxAsync().ConfigureAwait(false);
-			return (MethodData)GetNodeData(node);
-		}*/
-
-		public MethodData GetMethodData(MethodDeclarationSyntax node)
-		{
-			return (MethodData)GetNodeData(node);
 		}
 
 		public MethodOrAccessorData GetMethodOrAccessorData(SyntaxNode node)
@@ -452,9 +494,9 @@ namespace AsyncGenerator.Internal
 			return (NamespaceData)GetNodeData(node, true);
 		}
 
-		public NamespaceData GetNamespaceData(NamespaceDeclarationSyntax node)
+		public NamespaceData GetNamespaceData(SyntaxReference syntaxReference)
 		{
-			return (NamespaceData)GetNodeData(node);
+			return GetAllNamespaceDatas().FirstOrDefault(o => o.Node.Span.Equals(syntaxReference.Span));
 		}
 
 		#endregion
@@ -462,12 +504,12 @@ namespace AsyncGenerator.Internal
 		private NamespaceData GetNamespaceData(NamespaceDeclarationSyntax namespaceNode, bool create)
 		{
 			NamespaceData namespaceData;
-			if (Namespaces.TryGetValue(namespaceNode, out namespaceData))
+			if (GlobalNamespace.NestedNamespaces.TryGetValue(namespaceNode, out namespaceData))
 			{
 				return namespaceData;
 			}
 			var namespaceSymbol = SemanticModel.GetDeclaredSymbol(namespaceNode);
-			return !create ? null : Namespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
+			return !create ? null : GlobalNamespace.NestedNamespaces.GetOrAdd(namespaceNode, syntax => new NamespaceData(this, namespaceSymbol, namespaceNode));
 		}
 
 		public ISymbol GetEnclosingSymbol(ReferenceLocation reference)
@@ -490,13 +532,11 @@ namespace AsyncGenerator.Internal
 
 		#region IDocumentAnalyzationResult
 
-		private IReadOnlyList<INamespaceAnalyzationResult> _cachedNamespaces;
-		IReadOnlyList<INamespaceAnalyzationResult> IDocumentAnalyzationResult.Namespaces => _cachedNamespaces ?? (_cachedNamespaces = Namespaces.Values.ToImmutableArray());
+		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespace;
 
+		IEnumerable<ITypeAnalyzationResult> IDocumentAnalyzationResult.AllTypes => GetAllTypeDatas();
 
-		INamespaceAnalyzationResult IDocumentAnalyzationResult.GlobalNamespace => GlobalNamespaceData;
-
-		IEnumerable<ITypeAnalyzationResult> IDocumentAnalyzationResult.GetAllTypes() => GetAllTypeDatas();
+		IEnumerable<INamespaceAnalyzationResult> IDocumentAnalyzationResult.AllNamespaces => GetAllNamespaceDatas();
 
 		#endregion
 	}

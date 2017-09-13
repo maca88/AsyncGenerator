@@ -4,17 +4,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Core.Analyzation
 {
-	public interface IDocumentAnalyzationResult : IAnalyzationResult
+	public interface IDocumentAnalyzationResult
 	{
 		Document Document { get; }
 
 		CompilationUnitSyntax Node { get; }
 
-		IReadOnlyList<INamespaceAnalyzationResult> Namespaces { get; }
-
-		// TODO: global namespace cannot have NestedNamespaces
 		INamespaceAnalyzationResult GlobalNamespace { get; }
 
-		IEnumerable<ITypeAnalyzationResult> GetAllTypes();
+		IEnumerable<ITypeAnalyzationResult> AllTypes { get; }
+
+		IEnumerable<INamespaceAnalyzationResult> AllNamespaces { get; }
 	}
 }

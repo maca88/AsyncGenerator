@@ -26,10 +26,10 @@ namespace AsyncGenerator.Tests.Github.Issue51
 						AssertValidAnnotations(result);
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
-						foreach (var method in document.AnalyzationResult.GetAllTypes().SelectMany(o => o.Methods))
+						foreach (var method in document.AnalyzationResult.AllTypes.SelectMany(o => o.Methods))
 						{
 							Assert.IsFalse(method.CancellationTokenRequired, method.Symbol.ToString());
-							foreach (var reference in method.MethodReferences)
+							foreach (var reference in method.BodyFunctionReferences)
 							{
 								Assert.IsFalse(reference.PassCancellationToken, reference.ReferenceLocation.Location.ToString());
 							}

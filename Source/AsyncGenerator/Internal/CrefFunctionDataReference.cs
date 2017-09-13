@@ -8,15 +8,15 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class CrefFunctionReferenceData : AbstractFunctionReferenceData
+	internal class CrefFunctionDataReference : AbstractFunctionDataReference<AbstractData>
 	{
-		public CrefFunctionReferenceData(ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
-			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
-			: base(reference, referenceNameNode, referenceSymbol, referenceFunctionData)
+		public CrefFunctionDataReference(AbstractData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
+			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData, bool insideMethodBody)
+			: base(data, reference, referenceNameNode, referenceSymbol, referenceFunctionData, insideMethodBody)
 		{
 		}
 
-		public List<BodyFunctionReferenceData> RelatedBodyFunctionReferences { get; } = new List<BodyFunctionReferenceData>();
+		public List<BodyFunctionDataReference> RelatedBodyFunctionReferences { get; } = new List<BodyFunctionDataReference>();
 
 		public override ReferenceConversion GetConversion()
 		{
@@ -32,7 +32,7 @@ namespace AsyncGenerator.Internal
 			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceFunctionData.AsyncCounterpartName
 				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartName;
-			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartName)} for {nameof(CrefFunctionReferenceData)} is not supported");
+			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartName)} for {nameof(CrefFunctionDataReference)} is not supported");
 		}
 
 		public override IMethodSymbol AsyncCounterpartSymbol
@@ -40,7 +40,7 @@ namespace AsyncGenerator.Internal
 			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceFunctionData.Symbol
 				: RelatedBodyFunctionReferences.FirstOrDefault()?.AsyncCounterpartSymbol;
-			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartSymbol)} for {nameof(CrefFunctionReferenceData)} is not supported");
+			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartSymbol)} for {nameof(CrefFunctionDataReference)} is not supported");
 		}
 
 		public override FunctionData AsyncCounterpartFunction
@@ -48,7 +48,11 @@ namespace AsyncGenerator.Internal
 			get => ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceFunctionData
 				: null;
-			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartFunction)} for {nameof(CrefFunctionReferenceData)} is not supported");
+			set => throw new NotSupportedException($"Setting {nameof(AsyncCounterpartFunction)} for {nameof(CrefFunctionDataReference)} is not supported");
 		}
+
+		public override bool IsCref => true;
+
+		public override bool IsNameOf => false;
 	}
 }

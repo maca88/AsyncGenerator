@@ -21,9 +21,9 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(4, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(4, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				Assert.IsTrue(methods[noOptimizationSynhronized].MustRunSynchronized);
 				Assert.IsTrue(methods[synhronized].MustRunSynchronized);

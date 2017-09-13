@@ -7,13 +7,15 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal abstract class AbstractFunctionReferenceData : AbstractReferenceData<IMethodSymbol>, IFunctionReferenceAnalyzationResult
+	internal abstract class AbstractFunctionDataReference<TData> : AbstractDataReference<TData, IMethodSymbol, FunctionData>, IFunctionReferenceAnalyzationResult
+		where TData : AbstractData
 	{
-		protected AbstractFunctionReferenceData(ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode,
-			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
-			: base(referenceLocation, referenceNameNode, referenceSymbol)
+		protected AbstractFunctionDataReference(TData data, ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode,
+			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData, bool insideMethodBody)
+			: base(data, referenceLocation, referenceNameNode, referenceSymbol, referenceFunctionData)
 		{
 			ReferenceFunctionData = referenceFunctionData;
+			InsideMethodBody = insideMethodBody;
 		}
 
 		public FunctionData ReferenceFunctionData { get; }
@@ -37,5 +39,9 @@ namespace AsyncGenerator.Internal
 		IFunctionAnalyzationResult IFunctionReferenceAnalyzationResult.AsyncCounterpartFunction => AsyncCounterpartFunction;
 
 		#endregion
+
+		public override bool IsTypeOf => false;
+
+		public bool InsideMethodBody { get; }
 	}
 }

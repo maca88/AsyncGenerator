@@ -41,15 +41,15 @@ namespace AsyncGenerator.Core.Plugins
 
 		public CompilationUnitSyntax Transform(IDocumentTransformationResult transformationResult)
 		{
-			var requiredNamespaces = transformationResult.AnalyzationResult.GetAllTypes()
+			var requiredNamespaces = transformationResult.AnalyzationResult.AllTypes
 				.SelectMany(o => o.GetSelfAndDescendantsTypes())
-				.SelectMany(o => o.MethodsAndAccessors.SelectMany(m => m.MethodReferences.Where(r => _linqMethods.Contains(r.AsyncCounterpartSymbol))))
+				.SelectMany(o => o.MethodsAndAccessors.SelectMany(m => m.FunctionReferences.Where(r => _linqMethods.Contains(r.AsyncCounterpartSymbol))))
 				.Select(o => o.AsyncCounterpartSymbol.ContainingNamespace.ToString())
 				.Distinct()
 				.ToList();
 
 			if (!requiredNamespaces.Any() || requiredNamespaces.All(o => 
-				transformationResult.AnalyzationResult.Namespaces.Any(n => n.Symbol.ToString().StartsWith(o)) || 
+				transformationResult.AnalyzationResult.GlobalNamespace.NestedNamespaces.Any(n => n.Symbol.ToString().StartsWith(o)) || 
 				transformationResult.Transformed.Usings.Any(u => u.Name.ToString() == o)))
 			{
 				return null;

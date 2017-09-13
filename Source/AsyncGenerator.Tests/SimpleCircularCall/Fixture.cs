@@ -23,12 +23,12 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(3, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(1, methods[readFile].InvokedBy.Count);
+				Assert.AreEqual(1, methods[readFile].ReferencedBy.Count());
 
 				var circularMethods = new[]
 				{
@@ -110,27 +110,27 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(3, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				var method = methods[readFile];
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				Assert.IsTrue(method.MethodReferences[0].PassCancellationToken);
+				Assert.AreEqual(1, method.FunctionReferences.Count);
+				Assert.IsTrue(method.BodyFunctionReferences.First().PassCancellationToken);
 				Assert.IsTrue(method.CancellationTokenRequired);
 
 				method = methods[method2];
-				Assert.AreEqual(2, method.MethodReferences.Count);
-				foreach (var reference in method.MethodReferences)
+				Assert.AreEqual(2, method.FunctionReferences.Count);
+				foreach (var reference in method.BodyFunctionReferences)
 				{
 					Assert.IsTrue(reference.PassCancellationToken);
 				}
 				Assert.IsTrue(method.CancellationTokenRequired);
 
 				method = methods[method1];
-				Assert.AreEqual(1, method.MethodReferences.Count);
-				Assert.IsTrue(method.MethodReferences[0].PassCancellationToken);
+				Assert.AreEqual(1, method.FunctionReferences.Count);
+				Assert.IsTrue(method.BodyFunctionReferences.First().PassCancellationToken);
 				Assert.IsTrue(method.CancellationTokenRequired);
 			}
 

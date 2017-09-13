@@ -9,6 +9,12 @@ namespace AsyncGenerator.Core.Analyzation
 		SimpleNameSyntax ReferenceNameNode { get; }
 
 		ReferenceLocation ReferenceLocation { get; }
+
+		bool IsCref { get; }
+
+		bool IsTypeOf { get; }
+
+		bool IsNameOf { get; }
 	}
 
 	public interface IReferenceAnalyzationResult<out TSymbol> : IReferenceAnalyzationResult where TSymbol : ISymbol

@@ -44,7 +44,7 @@ namespace AsyncGenerator.Transformation.Internal
 			foreach (var lockResult in result.TransformedLocks)
 			{
 				var lockNode = node.GetAnnotatedNodes(lockResult.Annotation).OfType<LockStatementSyntax>().First();
-				if (result.AnalyzationResult.MethodReferences
+				if (result.AnalyzationResult.FunctionReferences
 					.Where(r => lockResult.AnalyzationResult.Node.Span.Contains(r.ReferenceNameNode.Span))
 					.All(r => r.GetConversion() != ReferenceConversion.ToAsync))
 				{

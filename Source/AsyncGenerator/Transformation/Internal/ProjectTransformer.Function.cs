@@ -62,7 +62,7 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				// TODO: unify with method in order to avoid duplicate code
-				foreach (var referenceResult in funcResult.MethodReferences.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
+				foreach (var referenceResult in funcResult.FunctionReferences.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
 				{
 					var transfromReference = new FunctionReferenceTransformationResult(referenceResult);
 					var reference = referenceResult.ReferenceLocation;
@@ -71,13 +71,14 @@ namespace AsyncGenerator.Transformation.Internal
 					rootFuncNode = rootFuncNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transfromReference.Annotation)));
 					transformResult.TransformedFunctionReferences.Add(transfromReference);
 
-					if (!funcResult.OmitAsync)
+					var bodyRef = referenceResult as IBodyFunctionReferenceAnalyzationResult;
+					if (!funcResult.OmitAsync || bodyRef == null)
 					{
 						continue;
 					}
 					// We need to annotate the reference node (InvocationExpression, IdentifierName) in order to know if we need to wrap the node in a Task.FromResult
 					var refNode = referenceResult.ReferenceNode;
-					if (referenceResult.UseAsReturnValue || refNode.IsReturned())
+					if (bodyRef.UseAsReturnValue || refNode.IsReturned())
 					{
 						startSpan = refNode.SpanStart - startRootFuncSpan;
 						var referenceNode = rootFuncNode.DescendantNodes().First(o => o.SpanStart == startSpan && o.Span.Length == refNode.Span.Length);

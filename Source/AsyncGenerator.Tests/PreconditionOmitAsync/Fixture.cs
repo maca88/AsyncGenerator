@@ -26,21 +26,21 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(6, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(6, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				CheckMethodsConversion(methods.Values);
 
-				Assert.AreEqual(1, methods[readFile].InvokedBy.Count);
+				Assert.AreEqual(1, methods[readFile].ReferencedBy.Count());
 
 				var method = methods[preconditionReturn];
 				Assert.AreEqual(1, method.Preconditions.Count);
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				var methodReference = method.MethodReferences.First();
+				var methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -52,7 +52,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				methodReference = method.MethodReferences.First();
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsFalse(methodReference.AwaitInvocation);
 				Assert.IsTrue(methodReference.UseAsReturnValue);
@@ -64,7 +64,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsFalse(method.WrapInTryCatch);
 				Assert.IsTrue(method.SplitTail);
-				methodReference = method.MethodReferences.First();
+				methodReference = method.BodyFunctionReferences.First();
 				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
 				Assert.IsTrue(methodReference.AwaitInvocation);
 				Assert.IsFalse(methodReference.UseAsReturnValue);
@@ -76,7 +76,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.IsTrue(method.OmitAsync);
 				Assert.IsTrue(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.MethodReferences.Count);
+				Assert.AreEqual(0, method.FunctionReferences.Count);
 			}
 
 			var config = Configure(p => p

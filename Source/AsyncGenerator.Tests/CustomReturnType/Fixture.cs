@@ -22,11 +22,11 @@ namespace AsyncGenerator.Tests.CustomReturnType
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(2, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
 
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				Assert.AreEqual(MethodConversion.Ignore, methods[getData].Conversion);
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
@@ -55,11 +55,11 @@ namespace AsyncGenerator.Tests.CustomReturnType
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(2, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
 
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				Assert.AreEqual(MethodConversion.Ignore, methods[getData].Conversion);
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);

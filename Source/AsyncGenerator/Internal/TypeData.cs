@@ -9,6 +9,7 @@ using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
@@ -21,13 +22,6 @@ namespace AsyncGenerator.Internal
 			Symbol = symbol;
 			Node = node;
 		}
-
-		public ConcurrentSet<CrefFunctionReferenceData> CrefReferences { get; } = new ConcurrentSet<CrefFunctionReferenceData>();
-
-		/// <summary>
-		/// Contains references of itself
-		/// </summary>
-		public ConcurrentSet<TypeReferenceData> SelfReferences { get; } = new ConcurrentSet<TypeReferenceData>();
 
 		/// <summary>
 		/// Base types
@@ -90,18 +84,6 @@ namespace AsyncGenerator.Internal
 		{
 			return Node;
 		}
-
-		//public IEnumerable<TypeData> GetDescendantTypeInfosAndSelf()
-		//{
-		//	foreach (var typeInfo in NestedTypeData.Values)
-		//	{
-		//		foreach (var subTypeInfo in typeInfo.GetDescendantTypeInfosAndSelf())
-		//		{
-		//			yield return subTypeInfo;
-		//		}
-		//	}
-		//	yield return this;
-		//}
 
 		public IEnumerable<TypeData> GetSelfAndAncestorsTypeData()
 		{
@@ -191,10 +173,7 @@ namespace AsyncGenerator.Internal
 		#region ITypeAnalyzationResult
 
 		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedTypeReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = TypeReferences.ToImmutableArray());
-
-		private IReadOnlyList<ITypeReferenceAnalyzationResult> _cachedSelfReferences;
-		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.SelfReferences => _cachedSelfReferences ?? (_cachedSelfReferences = SelfReferences.ToImmutableArray());
+		IReadOnlyList<ITypeReferenceAnalyzationResult> ITypeAnalyzationResult.TypeReferences => _cachedTypeReferences ?? (_cachedTypeReferences = References.OfType<TypeDataReference>().ToImmutableArray());
 
 		private IReadOnlyList<IMethodAnalyzationResult> _cachedMethods;
 		IReadOnlyList<IMethodAnalyzationResult> ITypeAnalyzationResult.Methods => _cachedMethods ?? (_cachedMethods = Methods.Values.ToImmutableArray());
@@ -212,37 +191,6 @@ namespace AsyncGenerator.Internal
 
 		private IReadOnlyList<IFunctionAnalyzationResult> _cachedSpecialMethods;
 		IReadOnlyList<IFunctionAnalyzationResult> ITypeAnalyzationResult.SpecialMethods => _cachedSpecialMethods ?? (_cachedSpecialMethods = SpecialMethods.Values.ToImmutableArray());
-
-		#endregion
-
-		#region IMemberAnalyzationResult
-
-		public IMemberAnalyzationResult GetNext()
-		{
-			// Try to find the next sibling that can be a type or a namespace
-			var sibling = NamespaceData.NestedNamespaces.Values
-				.Cast<IMemberAnalyzationResult>()
-				.Union(NamespaceData.Types.Values.Where(o => o != this))
-				.OrderBy(o => o.GetNode().SpanStart)
-				.FirstOrDefault(o => o.GetNode().SpanStart > Node.Span.End);
-			return (sibling ?? ParentTypeData) ?? NamespaceData;
-		}
-
-		public IMemberAnalyzationResult GetPrevious()
-		{
-			// Try to find the previous sibling that can be a type or a namespace
-			var sibling = NamespaceData.NestedNamespaces.Values
-				.Cast<IMemberAnalyzationResult>()
-				.Union(NamespaceData.Types.Values.Where(o => o != this))
-				.OrderByDescending(o => o.GetNode().Span.End)
-				.FirstOrDefault(o => o.GetNode().Span.End < Node.SpanStart);
-			return (sibling ?? ParentTypeData) ?? NamespaceData;
-		}
-
-		public bool IsParent(IAnalyzationResult analyzationResult)
-		{
-			return ParentTypeData == analyzationResult || NamespaceData == analyzationResult;
-		}
 
 		#endregion
 	}

@@ -25,13 +25,13 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
 				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].Namespaces[0].Types.Count);
-				Assert.AreEqual(TypeConversion.Partial, result.Documents[0].Namespaces[0].Types[0].Conversion);
-				Assert.AreEqual(6, result.Documents[0].Namespaces[0].Types[0].Methods.Count);
-				var methods = result.Documents[0].Namespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
+				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.AreEqual(TypeConversion.Partial, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Conversion);
+				Assert.AreEqual(6, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(5, methods[readFile].InvokedBy.Count);
+				Assert.AreEqual(5, methods[readFile].ReferencedBy.Count());
 
 				var readFileMethod = methods[readFile];
 
@@ -46,16 +46,16 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 					Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
 					Assert.AreEqual(1, method.ChildFunctions.Count);
 					Assert.AreEqual(MethodConversion.Ignore, method.ChildFunctions[0].Conversion);
-					Assert.AreEqual(1, method.ChildFunctions[0].MethodReferences.Count);
-					Assert.IsTrue(readFileMethod.InvokedBy.Any(o => o == method.ChildFunctions[0]));
+					Assert.AreEqual(1, method.ChildFunctions[0].FunctionReferences.Count);
+					Assert.IsTrue(readFileMethod.ReferencedBy.Any(o => o == method.ChildFunctions[0]));
 				}
 
 				method = methods[argumentAction];
 				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
 				Assert.AreEqual(1, method.ChildFunctions.Count);
 				Assert.AreEqual(MethodConversion.ToAsync, method.ChildFunctions[0].Conversion);
-				Assert.AreEqual(1, method.ChildFunctions[0].MethodReferences.Count);
-				Assert.IsTrue(readFileMethod.InvokedBy.Any(o => o == method.ChildFunctions[0]));
+				Assert.AreEqual(1, method.ChildFunctions[0].FunctionReferences.Count);
+				Assert.IsTrue(readFileMethod.ReferencedBy.Any(o => o == method.ChildFunctions[0]));
 			}
 
 			var config = Configure(p => p
