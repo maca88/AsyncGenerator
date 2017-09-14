@@ -219,6 +219,13 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
+      <xs:element name="IgnoreSearchForMethodReferences" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="CallForwarding" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="CancellationTokens" type="CancellationTokens" minOccurs="0" />
       <xs:element name="ScanMethodBody" type="xs:boolean" nillable="true" minOccurs="0"/>

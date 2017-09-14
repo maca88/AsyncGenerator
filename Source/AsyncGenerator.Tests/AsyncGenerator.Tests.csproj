@@ -193,6 +193,8 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="MethodReferences\Fixture.cs" />
+    <Compile Include="MethodReferences\Input\ForwardCall.cs" />
     <Compile Include="Nameof\Fixture.cs" />
     <Compile Include="Nameof\Input\Method.cs" />
     <Compile Include="Github\Issue51\Fixture.cs" />
@@ -773,6 +775,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Nameof\Output\MethodNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MethodReferences\Output\ForwardCall.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

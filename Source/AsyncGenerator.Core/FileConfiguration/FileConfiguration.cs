@@ -131,6 +131,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public List<DocumentFilter> IgnoreDocuments { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> IgnoreSearchForAsyncCounterparts { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodFilter> IgnoreSearchForMethodReferences { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? CallForwarding { get; set; }
 		[XmlElement(IsNullable = true)]
@@ -147,6 +149,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			AsyncExtensionMethods = new AsyncExtensionMethods();
 			CancellationTokens = new CancellationTokens();
 			IgnoreSearchForAsyncCounterparts = new List<MethodFilter>();
+			IgnoreSearchForMethodReferences = new List<MethodFilter>();
 			IgnoreDocuments = new List<DocumentFilter>();
 			TypeConversion = new List<TypeConversionFilter>();
 			PreserveReturnType = new List<MethodFilter>();

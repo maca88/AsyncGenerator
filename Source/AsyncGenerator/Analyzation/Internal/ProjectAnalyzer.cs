@@ -179,12 +179,15 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<FunctionData> _scannedMethodBodies = new ConcurrentSet<FunctionData>();
 
+		private readonly ConcurrentSet<IMethodSymbol> _mustScanForMethodReferences = new ConcurrentSet<IMethodSymbol>();
+
 		/// <summary>
 		/// Find all invoked methods that have an async counterpart and have not been discovered yet.
 		/// </summary>
 		/// <param name="methodData">The method data to be searched</param>
+		/// <param name="searchReferences">A set where the methods that had an invalid SearchForMethodReferences setting will be added</param>
 		/// <returns>Collection of invoked methods that have an async counterpart</returns>
-		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(FunctionData methodData)
+		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(FunctionData methodData, ISet<IMethodSymbol> searchReferences)
 		{
 			if (!_scannedMethodBodies.TryAdd(methodData))
 			{
@@ -245,6 +248,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (result.Contains(methodSymbol))
 				{
 					continue;
+				}
+				// If an internal method was ignored from searching its references but we found out that it is used inside the project,
+				// we must override the user setting and search for its references in order to prevent generating an invalid code
+				if (!_configuration.SearchForMethodReferences(methodSymbol) && ProjectData.Contains(methodSymbol) &&
+					_mustScanForMethodReferences.TryAdd(methodSymbol))
+				{
+					searchReferences.Add(methodSymbol);
+					Logger.Warn($"Overriding SearchForMethodReferences user setting for method {methodSymbol} as we found a reference to it");
 				}
 
 				if (!_configuration.SearchForAsyncCounterparts(methodSymbol))

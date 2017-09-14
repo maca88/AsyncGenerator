@@ -97,6 +97,15 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration SearchForAsyncCounterparts(Predicate<IMethodSymbol> predicate);
 
 		/// <summary>
+		/// Set the predicate that will decide whether to search references for the given method.
+		/// This option can be useful for unit test methods.
+		/// The predicate result will be ignored for an internal method when a reference to it is found.
+		/// <para>Default true is choosen for all methods.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration SearchForMethodReferences(Predicate<IMethodSymbol> predicate);
+
+
+		/// <summary>
 		/// Enable or disable scanning for missing async counterparts.
 		/// <para>Default is set to false.</para>
 		/// </summary>

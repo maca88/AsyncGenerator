@@ -267,7 +267,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			foreach (var mData in bodyScanMethodDatas)
 			{
-				foreach (var method in FindNewlyInvokedMethodsWithAsyncCounterpart(mData))
+				foreach (var method in FindNewlyInvokedMethodsWithAsyncCounterpart(mData, referenceScanMethods))
 				{
 					await ScanAllMethodReferenceLocations(method, depth).ConfigureAwait(false);
 				}
@@ -470,7 +470,8 @@ namespace AsyncGenerator.Analyzation.Internal
 		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth)
 		{
 			methodSymbol = methodSymbol.OriginalDefinition;
-			if (!_searchedMethodReferences.TryAdd(methodSymbol))
+			if ((!_configuration.SearchForMethodReferences(methodSymbol) && !_mustScanForMethodReferences.Contains(methodSymbol)) || 
+				!_searchedMethodReferences.TryAdd(methodSymbol))
 			{
 				return;
 			}

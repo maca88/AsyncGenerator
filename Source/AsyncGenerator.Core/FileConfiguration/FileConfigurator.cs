@@ -130,6 +130,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.SearchForAsyncCounterparts(CreateMethodPredicate(configuration, config.IgnoreSearchForAsyncCounterparts, false));
 			}
+			if (config.IgnoreSearchForMethodReferences.Any())
+			{
+				fluentConfig.SearchForMethodReferences(CreateMethodPredicate(configuration, config.IgnoreSearchForMethodReferences, false));
+			}
 			if (config.TypeConversion.Any())
 			{
 				fluentConfig.TypeConversion(CreateTypeConversionFunction(configuration, config.TypeConversion));
