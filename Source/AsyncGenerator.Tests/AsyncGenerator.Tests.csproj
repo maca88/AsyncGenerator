@@ -193,6 +193,9 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
+    <Compile Include="DocumentationComments\Input\Comments.cs" />
+    <Compile Include="DocumentationComments\CommentsFixture.cs" />
     <Compile Include="MethodReferences\Fixture.cs" />
     <Compile Include="MethodReferences\Input\ForwardCall.cs" />
     <Compile Include="Nameof\Fixture.cs" />
@@ -778,6 +781,24 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MethodReferences\Output\ForwardCall.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\CommentsPartialType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\CommentsPartialTypeReplace.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\CommentsNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\CommentsNewTypeRemove.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\CommentsNewTypeReplace.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationComments\Output\CommentsNewTypeAddMissing.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

@@ -239,9 +239,7 @@ namespace AsyncGenerator.Transformation.Internal
 					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => 
 						!(o is BaseMethodDeclarationSyntax || o is TypeDeclarationSyntax || o is PropertyDeclarationSyntax), memberWhitespace);
 					newTypeNode = TransformMethodsAndProperties(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
-
-					// Add the <content> instead of <summary> tag
-					newTypeNode = newTypeNode.WithXmlContentTrivia(transformResult.EndOfLineTrivia, transformResult.LeadingWhitespaceTrivia);
+					newTypeNode = RunTypeTransformers(newTypeNode, transformResult, namespaceMetadata, onlyMissingMembers);
 					transformResult.Transformed = newTypeNode;
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 				}
@@ -274,6 +272,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 
 					newTypeNode = TransformMethodsAndProperties(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, false);
+					newTypeNode = RunTypeTransformers(newTypeNode, transformResult, namespaceMetadata, onlyMissingMembers);
 					transformResult.Transformed = newTypeNode;
 					rootTypeNode = rootTypeNode.ReplaceNode(typeNode, newTypeNode);
 				}
@@ -437,8 +436,18 @@ namespace AsyncGenerator.Transformation.Internal
 			return newTypeNode;
 		}
 
-
-
-		
+		private TypeDeclarationSyntax RunTypeTransformers(TypeDeclarationSyntax transformedNode, ITypeTransformationResult transfromResult,
+			INamespaceTransformationMetadata namespaceMetadata, bool missingMembers)
+		{
+			if (transformedNode == null)
+			{
+				return null;
+			}
+			foreach (var transformer in _configuration.TypeTransformers)
+			{
+				transformedNode = transformer.Transform(transformedNode, transfromResult, namespaceMetadata, missingMembers) ?? transformedNode;
+			}
+			return transformedNode;
+		}
 	}
 }

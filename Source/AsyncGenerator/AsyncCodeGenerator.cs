@@ -394,6 +394,9 @@ namespace AsyncGenerator
 			// Document transformers
 			configuration.RegisterPlugin(new IncludeFilePathTransformer()); // TODO: remove - make it optional
 
+			// Type transformers
+			configuration.RegisterPlugin(new DocumentCommentTypeTransformer());
+
 			// Method transformers
 			configuration.RegisterPlugin(new YieldMethodTransformer());
 			configuration.RegisterPlugin(new ReturnTaskMethodTransformer());

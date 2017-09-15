@@ -222,6 +222,7 @@
     <Compile Include="Transformation\Internal\AsyncLockMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\CancellationTokenMethodTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentationCommentMethodTransformer.cs" />
+    <Compile Include="Transformation\Internal\DocumentCommentTypeTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
     <Compile Include="Transformation\Internal\FunctionReferenceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />

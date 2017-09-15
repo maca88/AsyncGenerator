@@ -192,6 +192,24 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		private static void Configure(AsyncGenerator configuration, DocumentationComments config, IFluentProjectDocumentationCommentConfiguration fluentConfig)
 		{
+			if (config.AddOrReplacePartialTypeComments.Any())
+			{
+				fluentConfig.AddOrReplacePartialTypeComments(CreateTypeContentFunction(configuration, config.AddOrReplacePartialTypeComments));
+			}
+			if (config.RemovePartialTypeComments.Any())
+			{
+				fluentConfig.RemovePartialTypeComments(CreateTypePredicate(configuration, config.RemovePartialTypeComments));
+			}
+
+			if (config.AddOrReplaceNewTypeComments.Any())
+			{
+				fluentConfig.AddOrReplaceNewTypeComments(CreateTypeContentFunction(configuration, config.AddOrReplaceNewTypeComments));
+			}
+			if (config.RemoveNewTypeComments.Any())
+			{
+				fluentConfig.RemoveNewTypeComments(CreateTypePredicate(configuration, config.RemoveNewTypeComments));
+			}
+
 			if (config.AddOrReplaceMethodRemarks.Any())
 			{
 				fluentConfig.AddOrReplaceMethodRemarks(CreateMethodContentFunction(configuration, config.AddOrReplaceMethodRemarks));
@@ -209,6 +227,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.RemoveMethodSummary(CreateMethodPredicate(configuration, config.RemoveMethodSummary, true));
 			}
+		}
+
+		private static Func<INamedTypeSymbol, string> CreateTypeContentFunction(AsyncGenerator globalConfig, List<TypeContentFilter> filters)
+		{
+			var rules = globalConfig.TypeRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.Content;
+					}
+				}
+				return null;
+			};
 		}
 
 		private static Func<IMethodSymbol, string> CreateMethodContentFunction(AsyncGenerator globalConfig, List<MethodContentFilter> filters)
@@ -429,6 +463,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 				return false;
 			}
 			if (!string.IsNullOrEmpty(filter.HasAttributeName) && !symbol.GetAttributes().Any(o => o.AttributeClass.Name == filter.HasAttributeName))
+			{
+				return false;
+			}
+			if (filter.HasDocumentationComment.HasValue && filter.HasDocumentationComment.Value == string.IsNullOrEmpty(symbol.GetDocumentationCommentXml()))
 			{
 				return false;
 			}

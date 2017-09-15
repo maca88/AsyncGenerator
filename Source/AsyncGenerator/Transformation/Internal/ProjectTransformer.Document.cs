@@ -58,7 +58,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			// TODO: use the same pattern as in namespace and type transformation
 			var transformResults = result.TransformedNamespaces
-				.Cast<TransformationResult>()
+				.Cast<ITransformationResult>()
 				.Union(result.TransformedTypes)
 				.ToList();
 

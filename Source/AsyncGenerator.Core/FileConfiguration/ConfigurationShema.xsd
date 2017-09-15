@@ -35,6 +35,7 @@
     <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="hasAttribute" type="xs:string" />
     <xs:attribute name="hasAttributeName" type="xs:string" />
+    <xs:attribute name="hasDocumentationComment" type="xs:boolean" />
     <xs:attribute name="containingNamespace" type="xs:string" />
     <xs:attribute name="containingType" type="xs:string" />
     <xs:attribute name="containingTypeName" type="xs:string" />
@@ -129,6 +130,16 @@
   <xs:complexType name="MethodContentFilter">
     <xs:complexContent>
       <xs:extension base="MethodFilter">
+        <xs:all>
+          <xs:element type="xs:string" name="Content"/>
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TypeContentFilter">
+    <xs:complexContent>
+      <xs:extension base="TypeFilter">
         <xs:all>
           <xs:element type="xs:string" name="Content"/>
         </xs:all>
@@ -241,6 +252,36 @@
 
   <xs:complexType name="DocumentationComments">
     <xs:all>
+      <xs:element name="AddOrReplacePartialTypeComments" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeContentFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="RemovePartialTypeComments" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+
+      <xs:element name="AddOrReplaceNewTypeComments" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeContentFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="RemoveNewTypeComments" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypeFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+
       <xs:element name="AddOrReplaceMethodSummary" minOccurs="0">
         <xs:complexType>
           <xs:sequence>

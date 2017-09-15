@@ -194,6 +194,7 @@
     <Compile Include="Plugins\IMethodOrAccessorTransformer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPreconditionChecker.cs" />
+    <Compile Include="Plugins\ITypeTransformer.cs" />
     <Compile Include="Plugins\MethodTransformerResult.cs" />
     <Compile Include="Plugins\NUnitAsyncCountepartFinder.cs" />
     <Compile Include="Plugins\TransactionScopeAsyncFlowAdder.cs" />

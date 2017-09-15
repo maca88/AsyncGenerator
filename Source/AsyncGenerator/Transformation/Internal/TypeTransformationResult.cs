@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class TypeTransformationResult : TransformationResult, ITypeTransformationResult, ITypeTransformationMetadata
+	internal class TypeTransformationResult : TransformationResult<TypeDeclarationSyntax>, ITypeTransformationResult, ITypeTransformationMetadata
 	{
 		public TypeTransformationResult(ITypeAnalyzationResult analyzationResult) : base(analyzationResult.Node)
 		{

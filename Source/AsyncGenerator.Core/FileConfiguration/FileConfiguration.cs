@@ -204,6 +204,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string HasAttribute { get; set; }
 		[XmlAttribute(AttributeName = "hasAttributeName")]
 		public string HasAttributeName { get; set; }
+		[XmlAttribute(AttributeName = "hasDocumentationComment")]
+		public bool? HasDocumentationComment { get; set; }
 		[XmlAttribute(AttributeName = "containingNamespace")]
 		public string ContainingNamespace { get; set; }
 		[XmlAttribute(AttributeName = "containingType")]
@@ -393,6 +395,16 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class DocumentationComments
 	{
+		[XmlArrayItem("Type", IsNullable = false)]
+		public List<TypeContentFilter> AddOrReplacePartialTypeComments { get; set; }
+		[XmlArrayItem("Type", IsNullable = false)]
+		public List<TypeFilter> RemovePartialTypeComments { get; set; }
+
+		[XmlArrayItem("Type", IsNullable = false)]
+		public List<TypeContentFilter> AddOrReplaceNewTypeComments { get; set; }
+		[XmlArrayItem("Type", IsNullable = false)]
+		public List<TypeFilter> RemoveNewTypeComments { get; set; }
+
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodContentFilter> AddOrReplaceMethodSummary { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
@@ -433,6 +445,18 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[XmlRoot("MethodContentFilter")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodContentFilter : MethodFilter
+	{
+		[XmlElement("Content")]
+		public string Content { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("TypeContentFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class TypeContentFilter : TypeFilter
 	{
 		[XmlElement("Content")]
 		public string Content { get; set; }

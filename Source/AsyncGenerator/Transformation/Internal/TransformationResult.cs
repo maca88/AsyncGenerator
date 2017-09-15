@@ -7,6 +7,19 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Transformation.Internal
 {
+	internal interface ITransformationResult
+	{
+		SyntaxNode Transformed { get; }
+
+		SyntaxNode OriginalModified { get; }
+
+		int OriginalStartSpan { get; }
+
+		IEnumerable<SyntaxNode> GetTransformedNodes();
+
+		string Annotation { get; }
+	}
+
 	internal class TransformationResult : TransformationResult<SyntaxNode>
 	{
 		public TransformationResult(SyntaxNode originalNode) : base(originalNode)
@@ -21,7 +34,7 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 	}
 
-	internal class TransformationResult<TOriginal, TTransformed> : AnnotatedNode<TOriginal> 
+	internal class TransformationResult<TOriginal, TTransformed> : AnnotatedNode<TOriginal> , ITransformationResult
 		where TOriginal : SyntaxNode 
 		where TTransformed : SyntaxNode
 	{
@@ -42,5 +55,9 @@ namespace AsyncGenerator.Transformation.Internal
 				yield return Transformed;
 			}
 		}
+
+		SyntaxNode ITransformationResult.Transformed => Transformed;
+
+		SyntaxNode ITransformationResult.OriginalModified => OriginalModified;
 	}
 }

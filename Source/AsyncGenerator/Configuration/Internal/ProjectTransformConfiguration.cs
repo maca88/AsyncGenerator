@@ -42,6 +42,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<IMethodOrAccessorTransformer> MethodTransformers { get; } = new List<IMethodOrAccessorTransformer>();
 
+		public List<ITypeTransformer> TypeTransformers { get; } = new List<ITypeTransformer>();
+
 		public List<IDocumentTransformer> DocumentTransformers { get; } = new List<IDocumentTransformer>();
 
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();

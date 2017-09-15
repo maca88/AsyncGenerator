@@ -984,69 +984,123 @@ namespace AsyncGenerator.Extensions.Internal
 			return TriviaList(triviaList);
 		}
 
-		internal static TypeDeclarationSyntax WithXmlContentTrivia(this TypeDeclarationSyntax node, SyntaxTrivia endOfLineTrivia, SyntaxTrivia leadingSyntaxTrivia)
+
+		internal static TypeDeclarationSyntax RemoveCommentTrivias(this TypeDeclarationSyntax node)
+		{
+			var leadingTrivia = node.GetLeadingTrivia();
+			var triviaIndexes = GetCommentTriviaIndexes(leadingTrivia);
+			foreach (var index in triviaIndexes.OrderByDescending(o => o))
+			{
+				leadingTrivia = leadingTrivia.RemoveAt(index);
+			}
+			return node.WithLeadingTrivia(leadingTrivia);
+		}
+
+		internal static IEnumerable<SyntaxTrivia> CreateCommentTrivias(string comment, SyntaxTrivia leadingSyntaxTrivia,
+			SyntaxTrivia endOfLineTrivia)
 		{
 			var endOfLine = endOfLineTrivia.ToFullString();
 			var leadingSpace = leadingSyntaxTrivia.ToFullString();
-			var comment = DocumentationCommentTrivia(
-				SyntaxKind.SingleLineDocumentationCommentTrivia,
-				List(
-					new XmlNodeSyntax[]
-					{
-						XmlText()
-							.WithTextTokens(
-								TokenList(XmlTextLiteral(TriviaList(DocumentationCommentExterior("///")), " ", " ", TriviaList()))),
-						XmlExampleElement(
-								SingletonList<XmlNodeSyntax>(
-									XmlText()
-										.WithTextTokens(
-											TokenList(
-												XmlTextNewLine(TriviaList(), endOfLine, endOfLine, TriviaList()),
-												XmlTextLiteral(
-													TriviaList(DocumentationCommentExterior($"{leadingSpace}///")),
-													" Contains generated async methods",
-													" Contains generated async methods",
-													TriviaList()),
-												XmlTextNewLine(
-													TriviaList(),
-													endOfLine,
-													endOfLine,
-													TriviaList()),
-												XmlTextLiteral(
-													TriviaList(DocumentationCommentExterior($"{leadingSpace}///")),
-													" ",
-													" ",
-													TriviaList())))))
-							.WithStartTag(XmlElementStartTag(XmlName(Identifier("content"))))
-							.WithEndTag(XmlElementEndTag(XmlName(Identifier("content")))),
-						XmlText()
-							.WithTextTokens(TokenList(XmlTextNewLine(TriviaList(), endOfLine, endOfLine, TriviaList())))
-					}));
+			var lines = comment
+				.Replace("\r\n", "\r")
+				.Replace("\n\r", "\r")
+				.Split('\r', '\n')
+				.Select(o => o.Trim())
+				.Where(o => !string.IsNullOrEmpty(o))
+				.ToList();
 
+			for (var i = 0; i < lines.Count; i++)
+			{
+				lines[i] = leadingSpace + lines[i];
+			}
+			comment = lines.Aggregate("", (current, line) => current + line + endOfLine);
+
+			return CSharpSyntaxTree.ParseText(comment)
+				.GetRoot()
+				.DescendantTrivia()
+				;
+		}
+
+		internal static T WithCommentTrivias<T>(this T node, string comment, SyntaxTrivia leadingSyntaxTrivia, SyntaxTrivia endOfLineTrivia)
+			where T : SyntaxNode
+		{
+			var commentTrivias = CreateCommentTrivias(comment, leadingSyntaxTrivia, endOfLineTrivia);
+			return WithCommentTrivias(node, commentTrivias);
+		}
+
+		internal static T WithCommentTrivias<T>(this T node, IEnumerable<SyntaxTrivia> commentTrivias)
+			where T : SyntaxNode
+		{
 			// We have to preserve directives, so we need to modify the existing leading trivia
 			var leadingTrivia = node.GetLeadingTrivia();
-			var trivias = leadingTrivia
-				.Where(o => o.IsKind(SyntaxKind.SingleLineCommentTrivia) || // double slash
-				            o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia)) // triple slash
-				.ToList();
-			if (trivias.Any())
+			var triviaIndexes = GetCommentTriviaIndexes(leadingTrivia);
+			if (triviaIndexes.Any())
 			{
-				// We have to replace the last comment with ours and remove other if they exist
-				var indexes = trivias.Select(o => leadingTrivia.IndexOf(o)).OrderByDescending(o => o).ToList();
-				leadingTrivia = leadingTrivia.Replace(leadingTrivia.ElementAt(indexes[0]), Trivia(comment));
-				foreach (var index in indexes.Skip(1))
+				// We have to replace the last comment with ours and remove others
+				var indexes = triviaIndexes
+					.OrderByDescending(o => o)
+					.ToList();
+				foreach (var commentTrivia in commentTrivias.Reverse())
+				{
+					leadingTrivia = leadingTrivia.Insert(indexes[0] + 1, commentTrivia);
+				}
+				foreach (var index in indexes)
 				{
 					leadingTrivia = leadingTrivia.RemoveAt(index);
 				}
 			}
 			else
 			{
-				leadingTrivia = leadingTrivia.AddRange(TriviaList(
-					Trivia(comment),
-					leadingSyntaxTrivia
-				));
+				int? lastWhitespaceIndex = null;
+				// We need to insert before the last whitespace trivia if exists otherwise on the last position
+				for (var i = leadingTrivia.Count - 1; i >= 0; i--)
+				{
+					if (leadingTrivia[i].IsKind(SyntaxKind.WhitespaceTrivia))
+					{
+						lastWhitespaceIndex = i;
+						break;
+					}
+				}
+				leadingTrivia = lastWhitespaceIndex.HasValue 
+					? leadingTrivia.InsertRange(lastWhitespaceIndex.Value, commentTrivias)
+					: leadingTrivia.AddRange(commentTrivias);
+				
 			}
 			return node.WithLeadingTrivia(leadingTrivia);
+		}
+
+		private static List<int> GetCommentTriviaIndexes(SyntaxTriviaList triviaList)
+		{
+			int? lastWhitespaceTrivia = null;
+			var lastKind = SyntaxKind.None;
+			var triviaIndexes = new List<int>();
+			for (var i = 0; i < triviaList.Count; i++)
+			{
+				var item = triviaList[i];
+				// Comment will have and end of line at the end that we have to remove
+				if (item.IsKind(SyntaxKind.EndOfLineTrivia) && lastKind == SyntaxKind.SingleLineCommentTrivia)
+				{
+					triviaIndexes.Add(i);
+				}
+				lastKind = item.Kind();
+				if (item.IsKind(SyntaxKind.WhitespaceTrivia))
+				{
+					lastWhitespaceTrivia = i;
+					continue;
+				}
+				if (!item.IsKind(SyntaxKind.SingleLineCommentTrivia) && // double slash
+					!item.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia)) // triple slash
+				{
+					continue;
+				}
+				if (lastWhitespaceTrivia.HasValue)
+				{
+					triviaIndexes.Add(lastWhitespaceTrivia.Value);
+					lastWhitespaceTrivia = null;
+				}
+				triviaIndexes.Add(i);
+			}
+			return triviaIndexes;
 		}
 
 		internal static InvocationExpressionSyntax Invoke(this IdentifierNameSyntax identifier, ParameterListSyntax parameterList)

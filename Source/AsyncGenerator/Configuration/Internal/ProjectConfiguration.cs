@@ -196,6 +196,7 @@ namespace AsyncGenerator.Configuration.Internal
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
 			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
 			TryAdd(plugin, TransformConfiguration.MethodTransformers);
+			TryAdd(plugin, TransformConfiguration.TypeTransformers);
 			RegisteredPlugins.Add(plugin);
 		}
 
