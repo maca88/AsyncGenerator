@@ -141,6 +141,12 @@
       type: NHibernate.Util.AsyncLock
       methodName: LockAsync
     documentationComments:
+      addOrReplacePartialTypeComments:
+        - all: true
+          content: |
+              /// <content>
+              /// Contains generated async methods
+              /// </content>
       addOrReplaceMethodSummary:
         - name: Commit
           containingTypeName: AdoTransaction
@@ -159,6 +165,14 @@
     scanMethodBody: true
     scanForMissingAsyncMembers:
     - all: true
+  transformation:
+    documentationComments:
+      addOrReplacePartialTypeComments:
+        - all: true
+          content: |
+              /// <content>
+              /// Contains generated async methods
+              /// </content>
 - filePath: ..\..\ExternalProjects\NHibernate\Source\src\NHibernate.Test\NHibernate.Test.csproj
   concurrentRun: true
   applyChanges: true
@@ -212,6 +226,14 @@
     scanMethodBody: true
     scanForMissingAsyncMembers:
     - all: true
+  transformation:
+    documentationComments:
+      addOrReplacePartialTypeComments:
+        - all: true
+          content: |
+              /// <content>
+              /// Contains generated async methods
+              /// </content>
   registerPlugin:
   - type: AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder
     assemblyName: AsyncGenerator.Core
