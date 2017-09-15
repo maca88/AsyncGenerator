@@ -417,6 +417,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		public DocumentationComments()
 		{
+			AddOrReplacePartialTypeComments = new List<TypeContentFilter>();
+			RemovePartialTypeComments = new List<TypeFilter>();
+			AddOrReplaceNewTypeComments = new List<TypeContentFilter>();
+			RemoveNewTypeComments = new List<TypeFilter>();
 			AddOrReplaceMethodSummary = new List<MethodContentFilter>();
 			RemoveMethodSummary = new List<MethodFilter>();
 			AddOrReplaceMethodRemarks = new List<MethodContentFilter>();
