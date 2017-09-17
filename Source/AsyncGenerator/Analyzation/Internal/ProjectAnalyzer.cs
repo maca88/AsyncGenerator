@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
@@ -42,8 +43,12 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		public ProjectData ProjectData { get; }
 
-		public async Task<IProjectAnalyzationResult> Analyze()
+		public async Task<IProjectAnalyzationResult> Analyze(CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			Setup();
 
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
@@ -51,7 +56,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			DocumentData[] documentData;
 			if (_configuration.ConcurrentRun)
 			{
-				documentData = await Task.WhenAll(_analyzeDocuments.Select(o => ProjectData.CreateDocumentData(o)))
+				documentData = await Task.WhenAll(_analyzeDocuments.Select(o => ProjectData.CreateDocumentData(o, cancellationToken)))
 					.ConfigureAwait(false);
 			}
 			else
@@ -60,7 +65,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				var i = 0;
 				foreach (var analyzeDocument in _analyzeDocuments)
 				{
-					documentData[i] = await ProjectData.CreateDocumentData(analyzeDocument).ConfigureAwait(false);
+					documentData[i] = await ProjectData.CreateDocumentData(analyzeDocument, cancellationToken).ConfigureAwait(false);
 					i++;
 				}
 			}
@@ -85,13 +90,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			Logger.Info("Scanning references started");
 			if (_configuration.ConcurrentRun)
 			{
-				await Task.WhenAll(documentData.Select(ScanDocumentData)).ConfigureAwait(false);
+				await Task.WhenAll(documentData.Select(o => ScanDocumentData(o, cancellationToken))).ConfigureAwait(false);
 			}
 			else
 			{
 				foreach (var item in documentData)
 				{
-					await ScanDocumentData(item).ConfigureAwait(false);
+					await ScanDocumentData(item, cancellationToken).ConfigureAwait(false);
 				}
 			}
 			Logger.Info("Scanning references completed");

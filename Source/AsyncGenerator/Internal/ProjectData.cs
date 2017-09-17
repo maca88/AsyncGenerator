@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Analyzation;
@@ -163,14 +164,14 @@ namespace AsyncGenerator.Internal
 			return documentData;
 		}
 
-		public async Task<DocumentData> CreateDocumentData(Document document)
+		public async Task<DocumentData> CreateDocumentData(Document document, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (document.Project != Project)
 			{
 				throw new InvalidOperationException($"Document {document.FilePath} does not belong to project {Project.Name}");
 			}
-			var rootNode = (CompilationUnitSyntax)await document.GetSyntaxRootAsync().ConfigureAwait(false);
-			var semanticModel = await document.GetSemanticModelAsync().ConfigureAwait(false);
+			var rootNode = (CompilationUnitSyntax)await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+			var semanticModel = await document.GetSemanticModelAsync(cancellationToken).ConfigureAwait(false);
 			var documentData = new DocumentData(this, document, rootNode, semanticModel);
 			return Documents.AddOrUpdate(document.FilePath, documentData, (s, data) => documentData);
 		}

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core.Configuration;
+using log4net;
 using log4net.Config;
 using Microsoft.VisualStudio.Setup.Configuration;
 
@@ -10,28 +12,33 @@ namespace AsyncGenerator.CommandLine
 {
 	static class Program
 	{
+		private static readonly ILog Logger = LogManager.GetLogger(typeof(Program));
+
 		public static int Main(string[] args)
 		{
 			XmlConfigurator.Configure();
-			Console.WriteLine("AsyncGenerator");
-			Console.WriteLine();
+			Logger.Info($"AsyncGenerator{Environment.NewLine}");
+			var cancellationSource = new CancellationTokenSource();
+			Console.CancelKeyPress += (sender, e) =>
+			{
+				Logger.Warn("Canceling operations...");
+				cancellationSource.Cancel();
+			};
 			try
 			{
 				ConfigureMSBuild();
 				var configuration = Configure();
 				if (configuration == null)
 				{
-					Console.WriteLine("Could not find configuration file:");
-					Console.WriteLine("\t - please make sure that your working directory contains either AsyncGenerator.xml or AsyncGenerator.yml");
-					Console.WriteLine();
-					Console.WriteLine("Working directory:");
-					Console.WriteLine("\t- {0}", Environment.CurrentDirectory);
-					Console.WriteLine();
+					Logger.Info("Could not find configuration file:");
+					Logger.Info($"\t - please make sure that your working directory contains either AsyncGenerator.xml or AsyncGenerator.yml{Environment.NewLine}");
+					Logger.Info("Working directory:");
+					Logger.Info($"\t- {Environment.CurrentDirectory}{Environment.NewLine}");
 					return 1;
 				}
 
 				var generator = new AsyncCodeGenerator();
-				generator.GenerateAsync(configuration)
+				generator.GenerateAsync(configuration, cancellationSource.Token)
 					.GetAwaiter()
 					.GetResult();
 
@@ -39,7 +46,7 @@ namespace AsyncGenerator.CommandLine
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine(e);
+				Logger.Fatal(e);
 				return -1;
 			}
 		}

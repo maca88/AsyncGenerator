@@ -2,24 +2,27 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Extensions;
-using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
-using Document = System.Reflection.Metadata.Document;
 
 namespace AsyncGenerator.Analyzation.Internal
 {
 	internal partial class ProjectAnalyzer
 	{
-		private async Task ScanDocumentData(DocumentData documentData)
+		private async Task ScanDocumentData(DocumentData documentData, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
 				// If the type have to be defined as a new type then we need to find all references to that type. 
@@ -27,7 +30,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (typeData.Conversion == TypeConversion.NewType)
 				{
 					await ScanForReferences(typeData, typeData.Symbol,
-							(data, location, nameNode) => new TypeDataReference(data, location, nameNode, typeData.Symbol, typeData))
+							(data, location, nameNode) => new TypeDataReference(data, location, nameNode, typeData.Symbol, typeData),
+							cancellationToken)
 						.ConfigureAwait(false);
 				}
 				FillBaseTypes(typeData, documentData.ProjectData);
@@ -44,14 +48,15 @@ namespace AsyncGenerator.Analyzation.Internal
 					)
 				)
 				{
-					await ScanMethodData(methodOrAccessorData).ConfigureAwait(false);
+					await ScanMethodData(methodOrAccessorData, 0, cancellationToken).ConfigureAwait(false);
 				}
 				foreach (var fieldVariableData in typeData.Fields.Values.SelectMany(o => o.Variables)
 					.Where(o => o.Conversion == FieldVariableConversion.Smart))
 				{
 					await ScanForReferences(fieldVariableData, fieldVariableData.Symbol,
 							(data, location, nameNode) =>
-								new FieldVariableDataReference(data, location, nameNode, fieldVariableData.Symbol, fieldVariableData))
+								new FieldVariableDataReference(data, location, nameNode, fieldVariableData.Symbol, fieldVariableData),
+							cancellationToken)
 						.ConfigureAwait(false);
 				}
 			}
@@ -59,8 +64,12 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<IMethodSymbol> _searchedOverrides = new ConcurrentSet<IMethodSymbol>();
 
-		private Task FindOverrides(IMethodSymbol methodSymbol, Action<IMethodSymbol, MethodOrAccessorData> action)
+		private Task FindOverrides(IMethodSymbol methodSymbol, Action<IMethodSymbol, MethodOrAccessorData> action, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			methodSymbol = methodSymbol.OriginalDefinition;
 			if (!_searchedOverrides.TryAdd(methodSymbol))
 			{
@@ -69,7 +78,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			async Task Find()
 			{
-				var overrides = await SymbolFinder.FindOverridesAsync(methodSymbol, _solution, _analyzeProjects)
+				var overrides = await SymbolFinder.FindOverridesAsync(methodSymbol, _solution, _analyzeProjects, cancellationToken)
 					.ConfigureAwait(false);
 				foreach (var overrideMethod in overrides.OfType<IMethodSymbol>())
 				{
@@ -80,7 +89,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					var overrideDocumentData = ProjectData.GetDocumentData(overrideDocument);
-					var overrideMethodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+					var overrideMethodNode = await syntax.GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
 					var overrideMethodData = overrideDocumentData.GetMethodOrAccessorData(overrideMethodNode);
 
 					action(overrideMethod, overrideMethodData);
@@ -91,8 +100,13 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<IMethodSymbol> _searchedImplementations = new ConcurrentSet<IMethodSymbol>();
 
-		private Task FindImplementations(IMethodSymbol methodSymbol, Func<IMethodSymbol, MethodOrAccessorData, Task> action)
+		private Task FindImplementations(IMethodSymbol methodSymbol, Func<IMethodSymbol, MethodOrAccessorData, Task> action,
+			CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			methodSymbol = methodSymbol.OriginalDefinition;
 			if (!_searchedImplementations.TryAdd(methodSymbol))
 			{
@@ -107,7 +121,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet)
 				{
 					implementations = (await SymbolFinder
-							.FindImplementationsAsync(methodSymbol.AssociatedSymbol /* Property symbol */, _solution, _analyzeProjects)
+							.FindImplementationsAsync(methodSymbol.AssociatedSymbol /* Property symbol */, _solution, _analyzeProjects, cancellationToken)
 							.ConfigureAwait(false))
 						.OfType<IPropertySymbol>()
 						.Select(o => methodSymbol.MethodKind == MethodKind.PropertyGet ? o.GetMethod : o.SetMethod)
@@ -115,7 +129,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
-					implementations = (await SymbolFinder.FindImplementationsAsync(methodSymbol, _solution, _analyzeProjects)
+					implementations = (await SymbolFinder.FindImplementationsAsync(methodSymbol, _solution, _analyzeProjects, cancellationToken)
 							.ConfigureAwait(false))
 						.OfType<IMethodSymbol>();
 				}
@@ -128,7 +142,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					var documentData = ProjectData.GetDocumentData(syntax);
-					var methodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+					var methodNode = await syntax.GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
 					var implMethodData = documentData.GetMethodOrAccessorData(methodNode);
 
 					await action(implMethod, implMethodData).ConfigureAwait(false);
@@ -139,8 +153,12 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<MethodOrAccessorData> _scannedMethodOrAccessors = new ConcurrentSet<MethodOrAccessorData>();
 
-		private async Task ScanMethodData(MethodOrAccessorData methodOrAccessorData, int depth = 0)
+		private async Task ScanMethodData(MethodOrAccessorData methodOrAccessorData, int depth = 0, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			if (!_scannedMethodOrAccessors.TryAdd(methodOrAccessorData))
 			{
 				return;
@@ -172,7 +190,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 				var documentData = ProjectData.GetDocumentData(document);
-				var methodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+				var methodNode = await syntax.GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
 				var interfaceMethodData = documentData.GetMethodOrAccessorData(methodNode);
 
 				// NOTE: FindImplementationsAsync will not find all implementations when we have an abstract/virtual implementation of the interface.
@@ -201,8 +219,8 @@ namespace AsyncGenerator.Analyzation.Internal
 						{
 							bodyScanMethodDatas.Add(overrideMethodData);
 						}
-					}).ConfigureAwait(false);
-				}).ConfigureAwait(false);
+					}, cancellationToken).ConfigureAwait(false);
+				}, cancellationToken).ConfigureAwait(false);
 			}
 
 			MethodOrAccessorData baseMethodData = null;
@@ -228,7 +246,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					var document = _solution.GetDocument(syntax.SyntaxTree);
 					if (CanProcessDocument(document))
 					{
-						var methodNode = await syntax.GetSyntaxAsync().ConfigureAwait(false);
+						var methodNode = await syntax.GetSyntaxAsync(cancellationToken).ConfigureAwait(false);
 						baseMethodData = ProjectData.GetDocumentData(document).GetMethodOrAccessorData(methodNode);
 					}
 				}
@@ -256,7 +274,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						{
 							bodyScanMethodDatas.Add(overrideMethodData);
 						}
-					}).ConfigureAwait(false);
+					}, cancellationToken).ConfigureAwait(false);
 				}
 			}
 
@@ -269,12 +287,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				foreach (var method in FindNewlyInvokedMethodsWithAsyncCounterpart(mData, referenceScanMethods))
 				{
-					await ScanAllMethodReferenceLocations(method, depth).ConfigureAwait(false);
+					await ScanAllMethodReferenceLocations(method, depth, cancellationToken).ConfigureAwait(false);
 				}
 			}
 			foreach (var methodToScan in referenceScanMethods)
 			{
-				await ScanAllMethodReferenceLocations(methodToScan, depth).ConfigureAwait(false);
+				await ScanAllMethodReferenceLocations(methodToScan, depth, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
@@ -292,12 +310,16 @@ namespace AsyncGenerator.Analyzation.Internal
 		}
 
 		private async Task ScanForReferences<TReferenceSymbol, TReferenceData>(TReferenceData data, TReferenceSymbol symbol, 
-			Func<AbstractData, ReferenceLocation, SimpleNameSyntax, IDataReference> createRefFunc)
+			Func<AbstractData, ReferenceLocation, SimpleNameSyntax, IDataReference> createRefFunc, CancellationToken cancellationToken = default(CancellationToken))
 			where TReferenceData : AbstractData
 			where TReferenceSymbol : ISymbol
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			// References for ctor of the type and the type itself wont have any locations
-			var references = await SymbolFinder.FindReferencesAsync(symbol, _solution, _analyzeDocuments).ConfigureAwait(false);
+			var references = await SymbolFinder.FindReferencesAsync(symbol, _solution, _analyzeDocuments, cancellationToken).ConfigureAwait(false);
 			foreach (var refLocation in references.SelectMany(o => o.Locations))
 			{
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
@@ -467,8 +489,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			return relatedSymbols;
 		}
 
-		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth)
+		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			methodSymbol = methodSymbol.OriginalDefinition;
 			if ((!_configuration.SearchForMethodReferences(methodSymbol) && !_mustScanForMethodReferences.Contains(methodSymbol)) || 
 				!_searchedMethodReferences.TryAdd(methodSymbol))
@@ -491,7 +517,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			var references = await SymbolFinder.FindReferencesAsync(methodSymbol, _solution, _analyzeDocuments).ConfigureAwait(false);
+			var references = await SymbolFinder.FindReferencesAsync(methodSymbol, _solution, _analyzeDocuments, cancellationToken).ConfigureAwait(false);
 
 			depth++;
 			if (depth > _maxScanningDepth)
@@ -620,7 +646,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				var methodData = baseMethodData as MethodOrAccessorData;
 				if (methodData != null && !_scannedMethodOrAccessors.Contains(methodData))
 				{
-					await ScanMethodData(methodData, depth).ConfigureAwait(false);
+					await ScanMethodData(methodData, depth, cancellationToken).ConfigureAwait(false);
 				}
 			}
 		}

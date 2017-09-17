@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Analyzation.Internal;
@@ -33,11 +34,15 @@ namespace AsyncGenerator
 	{
 		private static readonly ILog Logger = LogManager.GetLogger(typeof(AsyncCodeGenerator));
 
-		public async Task GenerateAsync(AsyncCodeConfiguration configuration)
+		public async Task GenerateAsync(AsyncCodeConfiguration configuration, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (configuration == null)
 			{
 				throw new ArgumentNullException(nameof(configuration));
+			}
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
 			}
 			Logger.Info("Generating async code started");
 
@@ -45,16 +50,16 @@ namespace AsyncGenerator
 			{
 				var workspace = CreateWorkspace();
 				Logger.Info($"Configuring solution '{config.Path}' prior analyzation started");
-				var solutionData = await CreateSolutionData(workspace, config).ConfigureAwait(false);
+				var solutionData = await CreateSolutionData(workspace, config, cancellationToken).ConfigureAwait(false);
 				Logger.Info($"Configuring solution '{config.Path}' prior analyzation completed");
 
 				foreach (var projectData in solutionData.GetProjects())
 				{
-					await GenerateProject(projectData).ConfigureAwait(false);
+					await GenerateProject(projectData, cancellationToken).ConfigureAwait(false);
 				}
 				if (config.ApplyChanges)
 				{
-					await ApplyChanges(workspace, solutionData.Solution).ConfigureAwait(false);
+					await ApplyChanges(workspace, solutionData.Solution, cancellationToken).ConfigureAwait(false);
 				}
 				workspace.Dispose();
 			}
@@ -63,14 +68,14 @@ namespace AsyncGenerator
 			{
 				var workspace = CreateWorkspace();
 				Logger.Info($"Configuring project '{config.Path}' prior analyzation started");
-				var projectData = await CreateProjectData(workspace, config).ConfigureAwait(false);
+				var projectData = await CreateProjectData(workspace, config, cancellationToken).ConfigureAwait(false);
 				Logger.Info($"Configuring project '{config.Path}' prior analyzation completed");
 
-				await GenerateProject(projectData).ConfigureAwait(false);
+				await GenerateProject(projectData, cancellationToken).ConfigureAwait(false);
 
 				if (config.ApplyChanges)
 				{
-					await ApplyChanges(workspace, projectData.Project.Solution).ConfigureAwait(false);
+					await ApplyChanges(workspace, projectData.Project.Solution, cancellationToken).ConfigureAwait(false);
 				}
 				workspace.Dispose();
 			}
@@ -87,8 +92,12 @@ namespace AsyncGenerator
 			return MSBuildWorkspace.Create(props);
 		}
 
-		private async Task GenerateProject(ProjectData projectData)
+		private async Task GenerateProject(ProjectData projectData, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			var analyzeConfig = projectData.Configuration.AnalyzeConfiguration;
 
 			// Register internal plugins
@@ -107,6 +116,10 @@ namespace AsyncGenerator
 			Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' started");
 			foreach (var registeredPlugin in projectData.Configuration.RegisteredPlugins)
 			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					cancellationToken.ThrowIfCancellationRequested();
+				}
 				await registeredPlugin.Initialize(projectData.Project, projectData.Configuration).ConfigureAwait(false);
 			}
 			Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' completed");
@@ -117,7 +130,7 @@ namespace AsyncGenerator
 			// Analyze project
 			Logger.Info($"Analyzing project '{projectData.Project.Name}' started");
 
-			var analyzationResult = await AnalyzeProject(projectData).ConfigureAwait(false);
+			var analyzationResult = await AnalyzeProject(projectData, cancellationToken).ConfigureAwait(false);
 			foreach (var action in analyzeConfig.AfterAnalyzation)
 			{
 				action(analyzationResult);
@@ -143,7 +156,7 @@ namespace AsyncGenerator
 			if (compileConfig != null)
 			{
 				Logger.Info($"Compiling project '{projectData.Project.Name}' started");
-				var compilation = await projectData.Project.GetCompilationAsync();
+				var compilation = await projectData.Project.GetCompilationAsync(cancellationToken);
 				var emit = compilation.Emit(compileConfig.OutputPath, compileConfig.SymbolsPath, compileConfig.XmlDocumentationPath);
 				if (!emit.Success)
 				{
@@ -157,8 +170,12 @@ namespace AsyncGenerator
 			}
 		}
 
-		private async Task ApplyChanges(Workspace workspace, Solution solution)
+		private async Task ApplyChanges(Workspace workspace, Solution solution, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
 			var changes = solution.GetChanges(workspace.CurrentSolution);
 			var newSolution = workspace.CurrentSolution;
 
@@ -195,12 +212,12 @@ namespace AsyncGenerator
 					{
 						var removedDocument = removedDocuments[addedDocumentPair.Key];
 						newSolution = newSolution.GetDocument(removedDocument.Id)
-							.WithText(await addedDocument.GetTextAsync().ConfigureAwait(false))
+							.WithText(await addedDocument.GetTextAsync(cancellationToken).ConfigureAwait(false))
 							.Project.Solution;
 						continue;
 					}
 
-					var sourceText = await addedDocument.GetTextAsync().ConfigureAwait(false);
+					var sourceText = await addedDocument.GetTextAsync(cancellationToken).ConfigureAwait(false);
 					// For new csproj format we don't want to explicitly add the document as they are imported by default
 					if (isNewCsproj)
 					{
@@ -208,7 +225,7 @@ namespace AsyncGenerator
 						Directory.CreateDirectory(dirPath); // Create all directories if not exist
 						using (var writer = new StreamWriter(addedDocument.FilePath, false, Encoding.UTF8))
 						{
-							sourceText.Write(writer);
+							sourceText.Write(writer, cancellationToken);
 						}
 					}
 					else
@@ -240,7 +257,7 @@ namespace AsyncGenerator
 				{
 					var newDocument = projectChanges.NewProject.GetDocument(documentId);
 					newSolution = newSolution.GetDocument(documentId)
-						.WithText(await newDocument.GetTextAsync().ConfigureAwait(false))
+						.WithText(await newDocument.GetTextAsync(cancellationToken).ConfigureAwait(false))
 						.Project.Solution;
 				}
 
@@ -279,10 +296,10 @@ namespace AsyncGenerator
 			projectData.Project = projectData.Project.WithParseOptions(newParseOptions);
 		}
 
-		private Task<IProjectAnalyzationResult> AnalyzeProject(ProjectData projectData)
+		private Task<IProjectAnalyzationResult> AnalyzeProject(ProjectData projectData, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			var analyzer = new ProjectAnalyzer(projectData);
-			return analyzer.Analyze();
+			return analyzer.Analyze(cancellationToken);
 		}
 
 		private IProjectTransformationResult TransformProject(IProjectAnalyzationResult analyzationResult, ProjectTransformConfiguration configuration)
@@ -291,9 +308,9 @@ namespace AsyncGenerator
 			return transformer.Transform(analyzationResult);
 		}
 
-		private async Task<ProjectData> CreateProjectData(MSBuildWorkspace workspace, ProjectConfiguration configuration)
+		private async Task<ProjectData> CreateProjectData(MSBuildWorkspace workspace, ProjectConfiguration configuration, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			var project = await workspace.OpenProjectAsync(configuration.Path).ConfigureAwait(false);
+			var project = await workspace.OpenProjectAsync(configuration.Path, cancellationToken).ConfigureAwait(false);
 
 			// Throw if any failure
 			var failures = workspace.Diagnostics
@@ -324,9 +341,13 @@ namespace AsyncGenerator
 			return projectData;
 		}
 
-		private async Task<SolutionData> CreateSolutionData(MSBuildWorkspace workspace, SolutionConfiguration configuration)
+		private async Task<SolutionData> CreateSolutionData(MSBuildWorkspace workspace, SolutionConfiguration configuration, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			var solution = await workspace.OpenSolutionAsync(configuration.Path).ConfigureAwait(false);
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
+			var solution = await workspace.OpenSolutionAsync(configuration.Path, cancellationToken).ConfigureAwait(false);
 
 			// Throw if any failure
 			var failures = workspace.Diagnostics
