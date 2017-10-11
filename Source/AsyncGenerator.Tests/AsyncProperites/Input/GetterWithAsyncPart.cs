@@ -24,7 +24,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 			return SimpleFile.Write("");
 		}
 
-		private void CheckSuccess()
+		protected void CheckSuccess()
 		{
 			if (WriteSuccess)
 			{

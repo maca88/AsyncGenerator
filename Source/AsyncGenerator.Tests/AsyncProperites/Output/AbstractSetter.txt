@@ -33,7 +33,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 			return SimpleFile.WriteAsync(value);
 		}
 
-		private async Task SetSuccessAsync()
+		protected async Task SetSuccessAsync()
 		{
 			if (IsSuccess)
 			{

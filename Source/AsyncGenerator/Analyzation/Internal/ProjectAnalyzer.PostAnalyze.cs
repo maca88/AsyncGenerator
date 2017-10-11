@@ -435,6 +435,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						break;
 					}
+					if (IsUnused(tokenMethodData) == true)
+					{
+						tokenMethodData.Ignore("Method is not used.");
+						continue;
+					}
 					tokenMethodData.ToAsync();
 					PostAnalyzeAsyncMethodData(tokenMethodData, toProcessMethodData);
 				}
@@ -470,6 +475,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodData.Conversion == MethodConversion.Ignore)
 				{
 					Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
+					continue;
+				}
+				if (IsUnused(methodData) == true)
+				{
+					methodData.Ignore("Method is not used.");
 					continue;
 				}
 				methodData.ToAsync();
@@ -663,6 +673,40 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
+		/// <summary>
+		/// Determines whether a method or accessor is un-used or not
+		/// </summary>
+		private bool? IsUnused(MethodOrAccessorData methodOrAccessorData)
+		{
+			if (methodOrAccessorData.Symbol.ExplicitInterfaceImplementations.Length > 0)
+			{
+				return false;
+			}
+
+			// If the method was not scanned we don't know if is used or not
+			if (!_scannedMethodOrAccessors.Contains(methodOrAccessorData))
+			{
+				return null;
+			}
+			if (methodOrAccessorData is MethodData methodData)
+			{
+				// A method is un-used when is private and never used
+				return (
+							!methodData.Node.Modifiers.Any() ||
+							methodData.Node.Modifiers.Any(SyntaxKind.PrivateKeyword)
+						) &&
+						methodData.SelfReferences.OfType<BodyFunctionDataReference>()
+							.All(o => 
+								o.Conversion == ReferenceConversion.Ignore &&
+								(
+									o.Data == null ||
+									// A reference may be ignored because will get copied
+									!o.Data.Conversion.HasAnyFlag(MethodConversion.Copy)
+								)
+							);
+			}
+			return null;
+		}
 
 		private void CalculateFinalFlags(FunctionData functionData)
 		{

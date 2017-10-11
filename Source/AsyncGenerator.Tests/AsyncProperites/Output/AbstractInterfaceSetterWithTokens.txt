@@ -23,7 +23,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// </content>
 	public partial class TestAbstractInterfaceSetter
 	{
-		Task TestAsync(CancellationToken cancellationToken = default(CancellationToken))
+		protected Task TestAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return SimpleFile.ReadAsync(cancellationToken);
 		}

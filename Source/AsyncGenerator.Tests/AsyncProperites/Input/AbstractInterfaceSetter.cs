@@ -9,7 +9,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
 	public class TestAbstractInterfaceSetter
 	{
-		void Test()
+		protected void Test()
 		{
 			SimpleFile.Read();
 		}

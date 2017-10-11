@@ -13,7 +13,7 @@ namespace AsyncGenerator.Tests.PartialCompilation.Input
 		private readonly Func<IList> _getList;
 		private readonly Func<IList, Task> _getListAsync;
 
-		private  Ctor(Func<IList> getList, Func<IList, Task> getListAsync)
+		protected Ctor(Func<IList> getList, Func<IList, Task> getListAsync)
 		{
 			_getList = getList;
 			_getListAsync = getListAsync;
@@ -28,7 +28,7 @@ namespace AsyncGenerator.Tests.PartialCompilation.Input
 
 		#endif
 
-		private static IList GetList()
+		protected static IList GetList()
 		{
 			SimpleFile.Read();
 			return null;

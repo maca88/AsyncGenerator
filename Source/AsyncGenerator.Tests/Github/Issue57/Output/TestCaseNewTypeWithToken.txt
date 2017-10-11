@@ -10,30 +10,26 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AsyncProperites.Input
+namespace AsyncGenerator.Tests.Github.Issue57.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
-	public partial class GetterWithAsyncPart
+	using System.Threading.Tasks;
+	using System.Threading;
+	public class TestCaseAsync
 	{
+		public event Action Event = () => { };
 
-		private Task<bool> WriteAsync()
+		public async Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.WriteAsync("");
+			await (SimpleFile.ReadAsync(cancellationToken));
+			Event += ReadInternal;
 		}
 
-		protected async Task CheckSuccessAsync()
+		private void ReadInternal()
 		{
-			if (await (GetWriteSuccessAsync()))
-			{
-				return;
-			}
+			SimpleFile.Read();
 		}
 	}
 }

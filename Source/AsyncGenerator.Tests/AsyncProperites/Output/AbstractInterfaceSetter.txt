@@ -22,7 +22,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 	/// </content>
 	public partial class TestAbstractInterfaceSetter
 	{
-		Task TestAsync()
+		protected Task TestAsync()
 		{
 			return SimpleFile.ReadAsync();
 		}

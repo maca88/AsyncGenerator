@@ -10,43 +10,28 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AsyncProperites.Input
+namespace AsyncGenerator.Tests.Github.Issue57.Input
 {
+	using System.Threading.Tasks;
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class AbstractGetter : BaseAbstractGetter
+	public partial interface IInterface
 	{
-
-		public override Task<bool> GetWriteSuccessAsync()
-		{
-			return WriteAsync();
-		}
-
-		private Task<bool> WriteAsync()
-		{
-			return SimpleFile.WriteAsync("");
-		}
-
-		protected async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()) && IsSuccess)
-			{
-				return;
-			}
-		}
+		Task ReadAsync();
 	}
 
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public abstract partial class BaseAbstractGetter
+	public partial class ExplicitInterface : IInterface
 	{
-		public abstract Task<bool> GetWriteSuccessAsync();
+		Task IInterface.ReadAsync()
+		{
+			return SimpleFile.ReadAsync();
+		}
 	}
 }

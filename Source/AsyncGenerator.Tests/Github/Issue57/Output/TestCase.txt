@@ -10,30 +10,22 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AsyncProperites.Input
+namespace AsyncGenerator.Tests.Github.Issue57.Input
 {
+	using System.Threading.Tasks;
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class GetterWithAsyncPart
+	public partial class TestCase
 	{
 
-		private Task<bool> WriteAsync()
+		public async Task ReadAsync()
 		{
-			return SimpleFile.WriteAsync("");
-		}
-
-		protected async Task CheckSuccessAsync()
-		{
-			if (await (GetWriteSuccessAsync()))
-			{
-				return;
-			}
+			await (SimpleFile.ReadAsync());
+			Event += ReadInternal;
 		}
 	}
 }

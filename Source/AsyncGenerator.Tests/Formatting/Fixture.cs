@@ -41,7 +41,7 @@ namespace AsyncGenerator.Tests.Formatting
 		{
 			var config = Configure(nameof(Async), p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => MethodConversion.Smart)
+					.MethodConversion(symbol => MethodConversion.ToAsync)
 					.PreserveReturnType(symbol => true)
 				)
 				.ConfigureTransformation(t => t

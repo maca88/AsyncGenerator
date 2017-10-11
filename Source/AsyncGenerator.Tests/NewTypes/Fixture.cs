@@ -250,7 +250,7 @@ namespace AsyncGenerator.Tests.NewTypes
 			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
-		[Test]
+		[Test, Repeat(10)]
 		public void TestNestedCopyIgnoreReadMethodAfterTransformation()
 		{
 			var config = Configure(nameof(NestedCopy), p => p

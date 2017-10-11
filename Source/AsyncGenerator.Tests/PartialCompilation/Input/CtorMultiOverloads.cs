@@ -30,7 +30,7 @@ namespace AsyncGenerator.Tests.PartialCompilation.Input
 
 		#endif
 
-		private static IList GetList()
+		protected static IList GetList()
 		{
 			SimpleFile.Read();
 			return null;

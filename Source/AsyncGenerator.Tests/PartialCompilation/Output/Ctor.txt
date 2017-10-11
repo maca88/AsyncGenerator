@@ -28,7 +28,7 @@ namespace AsyncGenerator.Tests.PartialCompilation.Input
 
 		#endif
 
-		private static async Task<IList> GetListAsync()
+		protected static async Task<IList> GetListAsync()
 		{
 			await (SimpleFile.ReadAsync());
 			return null;

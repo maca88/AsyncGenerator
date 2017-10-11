@@ -29,7 +29,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 			return SimpleFile.WriteAsync("");
 		}
 
-		private async Task CheckSuccessAsync()
+		protected async Task CheckSuccessAsync()
 		{
 			if (await (GetWriteSuccessAsync()))
 			{
