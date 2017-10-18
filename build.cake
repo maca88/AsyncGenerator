@@ -50,18 +50,8 @@ Task("Build")
     .IsDependentOn("Restore-NuGet-Packages")
     .Does(() =>
 {
-    if(IsRunningOnWindows())
-    {
-      // Use MSBuild
-      MSBuild("./Source/AsyncGenerator.sln", settings =>
+    MSBuild("./Source/AsyncGenerator.sln", settings =>
         settings.SetConfiguration(configuration));
-    }
-    else
-    {
-      // Use XBuild
-      XBuild("./Source/AsyncGenerator.sln", settings =>
-        settings.SetConfiguration(configuration));
-    }
 });
 
 Task("Run-Unit-Tests")
