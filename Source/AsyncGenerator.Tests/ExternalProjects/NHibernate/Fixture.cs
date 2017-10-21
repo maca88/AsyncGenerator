@@ -65,7 +65,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		[Test]
 		public void TestYamlAfterTransformation()
 		{
-			var configPath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\AsyncGenerator.yml");
+			var configPath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\ExternalProjects\NHibernate\Source\src\AsyncGenerator.yml");
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromFile<YamlFileConfigurator>(configPath);
 			var generator = new AsyncCodeGenerator();

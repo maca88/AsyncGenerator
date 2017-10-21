@@ -14,22 +14,32 @@ using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Transformation;
+using log4net;
 using log4net.Config;
-using Microsoft.VisualStudio.Setup.Configuration;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
 {
 	public abstract class BaseFixture
 	{
-		static BaseFixture()
-		{
-			ConfigureMSBuild();
-		}
-
 		protected BaseFixture(string folderPath = null)
 		{
-			XmlConfigurator.Configure();
+#if NETCORE2
+			// .NET Core
+			Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH",
+				@"C:\Program Files\dotnet\sdk\2.0.0\MSBuild.dll"
+				//@"C:\Workspace\Git\AsyncGenerator\Source\AsyncGenerator.Tests\bin\Debug\netcoreapp2.0\MSBuild.dll"
+			);
+			// Needed in order to debug
+			Environment.SetEnvironmentVariable("VsInstallRoot", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community");
+#endif
+#if NET461
+			Environment.SetEnvironmentVariable("VSINSTALLDIR", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community");
+			Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+#endif
+
+			/*
+			XmlConfigurator.Configure(logRepository, File.OpenRead("app.config"));*/
 			var ns = GetType().Namespace ?? "";
 			InputFolderPath = folderPath ?? $"{string.Join("/", ns.Split('.').Skip(2))}/Input";
 		}
@@ -50,7 +60,11 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\AsyncGenerator.Tests.csproj");
+#if NETCORE2
+			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\..\AsyncGenerator.Tests\AsyncGenerator.Tests.csproj");
+#else
+			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.Tests.csproj");
+#endif
 			return AsyncCodeConfiguration.Create()
 				.ConfigureProject(filePath, p =>
 				{
@@ -187,41 +201,41 @@ namespace AsyncGenerator.Tests
 
 		// Copied from here: https://github.com/T4MVC/R4MVC/commit/ae2fd5d8f3ab60708419d37c8a42d237d86d3061#diff-89dd7d1659695edb3702bfe879b34b09R61
 		// in order to fix the issue https://github.com/Microsoft/msbuild/issues/2369 -> https://github.com/Microsoft/msbuild/issues/2030
-		private static void ConfigureMSBuild()
-		{
-			var query = new SetupConfiguration();
-			var query2 = (ISetupConfiguration2)query;
+		//private static void ConfigureMSBuild()
+		//{
+		//	var query = new SetupConfiguration();
+		//	var query2 = (ISetupConfiguration2)query;
 
-			try
-			{
-				if (query2.GetInstanceForCurrentProcess() is ISetupInstance2 instance)
-				{
-					Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-					Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-					return;
-				}
-			}
-			catch { }
+		//	try
+		//	{
+		//		if (query2.GetInstanceForCurrentProcess() is ISetupInstance2 instance)
+		//		{
+		//			Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
+		//			Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+		//			return;
+		//		}
+		//	}
+		//	catch { }
 
-			var instances = new ISetupInstance[1];
-			var e = query2.EnumAllInstances();
-			int fetched;
-			do
-			{
-				e.Next(1, instances, out fetched);
-				if (fetched > 0)
-				{
-					var instance = instances[0] as ISetupInstance2;
-					if (instance.GetInstallationVersion().StartsWith("15."))
-					{
-						Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-						Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-						return;
-					}
-				}
-			}
-			while (fetched > 0);
-		}
+		//	var instances = new ISetupInstance[1];
+		//	var e = query2.EnumAllInstances();
+		//	int fetched;
+		//	do
+		//	{
+		//		e.Next(1, instances, out fetched);
+		//		if (fetched > 0)
+		//		{
+		//			var instance = instances[0] as ISetupInstance2;
+		//			if (instance.GetInstallationVersion().StartsWith("15."))
+		//			{
+		//				Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
+		//				Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+		//				return;
+		//			}
+		//		}
+		//	}
+		//	while (fetched > 0);
+		//}
 	}
 
 	public abstract class BaseFixture<T> : BaseFixture

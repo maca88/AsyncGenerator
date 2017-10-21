@@ -6,7 +6,6 @@ using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core.Configuration;
 using log4net;
 using log4net.Config;
-using Microsoft.VisualStudio.Setup.Configuration;
 
 namespace AsyncGenerator.CommandLine
 {
@@ -16,7 +15,7 @@ namespace AsyncGenerator.CommandLine
 
 		public static int Main(string[] args)
 		{
-			XmlConfigurator.Configure();
+			//XmlConfigurator.Configure();
 			Logger.Info($"AsyncGenerator{Environment.NewLine}");
 			var cancellationSource = new CancellationTokenSource();
 			Console.CancelKeyPress += (sender, e) =>
@@ -55,41 +54,54 @@ namespace AsyncGenerator.CommandLine
 		// in order to fix the issue https://github.com/Microsoft/msbuild/issues/2369 -> https://github.com/Microsoft/msbuild/issues/2030
 		private static void ConfigureMSBuild()
 		{
-			var query = new SetupConfiguration();
-			var query2 = (ISetupConfiguration2)query;
+#if NETCORE2
+			Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH",
+				@"C:\Program Files\dotnet\sdk\2.0.0\MSBuild.dll"
+				//@"C:\Workspace\Git\AsyncGenerator\Source\AsyncGenerator.Tests\bin\Debug\netcoreapp2.0\MSBuild.dll"
+			);
+			// Needed in order to debug
+			Environment.SetEnvironmentVariable("VsInstallRoot", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community");
+#endif
+#if NET461
+				Environment.SetEnvironmentVariable("VSINSTALLDIR", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community");
+				Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+#endif
 
-			try
-			{
-				if (query2.GetInstanceForCurrentProcess() is ISetupInstance2 instance)
-				{
-					Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-					Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-					return;
-				}
+				//var query = new SetupConfiguration();
+				//var query2 = (ISetupConfiguration2)query;
+
+				//try
+				//{
+				//	if (query2.GetInstanceForCurrentProcess() is ISetupInstance2 instance)
+				//	{
+				//		Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
+				//		Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+				//		return;
+				//	}
+				//}
+				//catch { }
+
+				//var instances = new ISetupInstance[1];
+				//var e = query2.EnumAllInstances();
+				//int fetched;
+				//do
+				//{
+				//	e.Next(1, instances, out fetched);
+				//	if (fetched > 0)
+				//	{
+				//		var instance = instances[0] as ISetupInstance2;
+				//		if (instance.GetInstallationVersion().StartsWith("15."))
+				//		{
+				//			Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
+				//			Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+				//			return;
+				//		}
+				//	}
+				//}
+				//while (fetched > 0);
 			}
-			catch { }
 
-			var instances = new ISetupInstance[1];
-			var e = query2.EnumAllInstances();
-			int fetched;
-			do
-			{
-				e.Next(1, instances, out fetched);
-				if (fetched > 0)
-				{
-					var instance = instances[0] as ISetupInstance2;
-					if (instance.GetInstallationVersion().StartsWith("15."))
-					{
-						Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-						Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-						return;
-					}
-				}
-			}
-			while (fetched > 0);
-		}
-
-		static AsyncCodeConfiguration Configure()
+			static AsyncCodeConfiguration Configure()
 		{
 			var xmlConfig = new FileInfo("AsyncGenerator.xml");
 			if (xmlConfig.Exists)

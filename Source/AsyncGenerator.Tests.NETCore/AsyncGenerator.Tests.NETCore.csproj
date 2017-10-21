@@ -1,19 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <DefaultItemExcludes>ExternalProjects\NHibernate\Source\**\*</DefaultItemExcludes>
-    <DefineConstants>NET461</DefineConstants>
-  </PropertyGroup>
-  
-  <PropertyGroup>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <DefineConstants>NETCORE2</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.Transactions" />
     <PackageReference Include="Microsoft.Build" Version="15.3.409" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.3.409" />
     <PackageReference Include="Microsoft.Net.Compilers" Version="2.6.0" />
@@ -32,7 +25,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="**\*.txt;**\*.yml;**\*.xml" Exclude="bin\**\*.*" />
+    <Compile Include="..\AsyncGenerator.Tests\**\*.cs" Exclude="**\ExternalProjects\NHibernate\Source\**\*;**\obj\**\*;**\bin\**\*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
   </ItemGroup>
-
+  <ItemGroup>
+    <EmbeddedResource Include="..\AsyncGenerator.Tests\**\*.txt;..\AsyncGenerator.Tests\**\*.xml;..\AsyncGenerator.Tests\**\*.yml" Exclude="**\ExternalProjects\NHibernate\Source\**\*;**\obj\**\*;**\bin\**\*">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  
 </Project>

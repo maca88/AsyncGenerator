@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator", "AsyncGenerator\AsyncGenerator.csproj", "{9D321EA8-54AE-4741-86A8-12198551AD67}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Configuration.Yaml", "AsyncGenerator.Configuration.Yaml\AsyncGenerator.Configuration.Yaml.csproj", "{C130CF5A-6543-4396-99C3-E223FF3C5EEE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.CommandLine", "AsyncGenerator.CommandLine\AsyncGenerator.CommandLine.csproj", "{BF73EAAC-697E-456C-A323-3DF13A00EC64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Tests.NETCore", "AsyncGenerator.Tests.NETCore\AsyncGenerator.Tests.NETCore.csproj", "{9011BC7A-3669-40A3-BDD2-71519BE746DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,8 +47,15 @@ Global
 		{BF73EAAC-697E-456C-A323-3DF13A00EC64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF73EAAC-697E-456C-A323-3DF13A00EC64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF73EAAC-697E-456C-A323-3DF13A00EC64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9011BC7A-3669-40A3-BDD2-71519BE746DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9011BC7A-3669-40A3-BDD2-71519BE746DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9011BC7A-3669-40A3-BDD2-71519BE746DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9011BC7A-3669-40A3-BDD2-71519BE746DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BBAFF3C6-49BD-4AE1-82D0-D1447203C8D5}
 	EndGlobalSection
 EndGlobal
