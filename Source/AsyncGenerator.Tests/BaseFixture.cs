@@ -38,19 +38,13 @@ namespace AsyncGenerator.Tests
 
 		public string GetBaseDirectory()
 		{
-			// BaseDirectory ends with a backslash when running with Visual Studio (Test Explorer), but when running with 
-			// Reshaper (Unit Test Session) there is no backslash at the end
-			var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-			if (!baseDirectory.EndsWith(@"\"))
-			{
-				baseDirectory += @"\";
-			}
-			return baseDirectory;
+			return AppDomain.CurrentDomain.BaseDirectory;
 		}
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\AsyncGenerator.Tests.csproj");
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
+			
 			return AsyncCodeConfiguration.Create()
 				.ConfigureProject(filePath, p =>
 				{
@@ -71,7 +65,7 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(string fileName, Action<IFluentProjectConfiguration> action = null)
 		{
-			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.sln");
+			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.sln"));
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
 					.ConfigureProject("AsyncGenerator.Tests", p =>

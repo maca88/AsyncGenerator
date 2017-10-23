@@ -65,7 +65,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		[Test]
 		public void TestYamlAfterTransformation()
 		{
-			var configPath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\AsyncGenerator.yml");
+			var configPath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate","Source","src","AsyncGenerator.yml"));
+			
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromFile<YamlFileConfigurator>(configPath);
 			var generator = new AsyncCodeGenerator();
@@ -76,7 +77,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		[Test]
 		public void TestAfterTransformation()
 		{
-			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln");
+			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate", "Source", "src", "NHibernate.sln"));
+			
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, s => s
 					.ConcurrentRun()
