@@ -55,6 +55,9 @@ namespace AsyncGenerator.CommandLine
 		// in order to fix the issue https://github.com/Microsoft/msbuild/issues/2369 -> https://github.com/Microsoft/msbuild/issues/2030
 		private static void ConfigureMSBuild()
 		{
+			if (Type.GetType("Mono.Runtime") != null)
+				return;
+			
 			var query = new SetupConfiguration();
 			var query2 = (ISetupConfiguration2)query;
 
