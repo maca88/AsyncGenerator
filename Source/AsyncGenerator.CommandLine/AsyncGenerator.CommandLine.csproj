@@ -38,10 +38,20 @@
     <PackageReference Include="System.Net.Primitives" Version="4.3.0" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+    <PackageReference Include="Microsoft.Build.MSBuildLocator" Version="1.0.1-preview-g6cd9a57801" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.Configuration.Yaml\AsyncGenerator.Configuration.Yaml.csproj" />
     <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj" />
     <ProjectReference Include="..\AsyncGenerator\AsyncGenerator.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
+      <Link>EnvironmentHelper.cs</Link>
+    </Compile>
   </ItemGroup>
 
 </Project>

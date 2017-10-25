@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
@@ -13,9 +14,13 @@ using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Transformation;
+using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation;
 using log4net;
 using log4net.Config;
+#if NET461
+using Microsoft.Build.MSBuildLocator;
+#endif
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
@@ -24,22 +29,14 @@ namespace AsyncGenerator.Tests
 	{
 		protected BaseFixture(string folderPath = null)
 		{
+			EnvironmentHelper.Setup();
 #if NETCORE2
-			// .NET Core
-			Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH",
-				@"C:\Program Files\dotnet\sdk\2.0.0\MSBuild.dll"
-				//@"C:\Workspace\Git\AsyncGenerator\Source\AsyncGenerator.Tests\bin\Debug\netcoreapp2.0\MSBuild.dll"
-			);
-			// Needed in order to debug
-			Environment.SetEnvironmentVariable("VsInstallRoot", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community");
+			var logRepository = LogManager.GetRepository(typeof(BaseFixture).Assembly);
+			XmlConfigurator.Configure(logRepository, File.OpenRead(EnvironmentHelper.GetConfigurationFilePath()));
 #endif
 #if NET461
-			Environment.SetEnvironmentVariable("VSINSTALLDIR", @"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community");
-			Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
+			XmlConfigurator.Configure();
 #endif
-
-			/*
-			XmlConfigurator.Configure(logRepository, File.OpenRead("app.config"));*/
 			var ns = GetType().Namespace ?? "";
 			InputFolderPath = folderPath ?? $"{string.Join("/", ns.Split('.').Skip(2))}/Input";
 		}
@@ -55,7 +52,7 @@ namespace AsyncGenerator.Tests
 			{
 				baseDirectory += @"\";
 			}
-			return baseDirectory;
+			return baseDirectory.Replace(".NETCore", "");
 		}
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
@@ -109,7 +106,11 @@ namespace AsyncGenerator.Tests
 		public string GetOutputFile(string fileName)
 		{
 			var asm = Assembly.GetExecutingAssembly();
+#if NETCORE2
+			var resource = $"{GetType().Namespace.Replace("AsyncGenerator.Tests", "AsyncGenerator.Tests.NETCore")}.Output.{fileName}.txt";
+#else
 			var resource = $"{GetType().Namespace}.Output.{fileName}.txt";
+#endif
 			using (var stream = asm.GetManifestResourceStream(resource))
 			{
 				if (stream == null) return string.Empty;
@@ -179,63 +180,22 @@ namespace AsyncGenerator.Tests
 
 		protected string GetMethodName(LambdaExpression expression)
 		{
-			var methodCallExpression = expression.Body as MethodCallExpression;
-			if (methodCallExpression != null)
+			if (expression.Body is MethodCallExpression methodCallExpression)
 			{
 				return methodCallExpression.Method.Name;
 			}
-			var unaryExpression = expression.Body as UnaryExpression;
-			if (unaryExpression == null)
+			if (!(expression.Body is UnaryExpression unaryExpression))
 			{
 				throw new NotSupportedException();
 			}
 			methodCallExpression = (MethodCallExpression)unaryExpression.Operand;
-			var constantExpression = methodCallExpression.Object as ConstantExpression;
-			if (constantExpression == null)
+			if (!(methodCallExpression.Object is ConstantExpression constantExpression))
 			{
 				return methodCallExpression.Method.Name;
 			}
 			var methodInfo = (MethodInfo)constantExpression.Value;
 			return methodInfo.Name;
 		}
-
-		// Copied from here: https://github.com/T4MVC/R4MVC/commit/ae2fd5d8f3ab60708419d37c8a42d237d86d3061#diff-89dd7d1659695edb3702bfe879b34b09R61
-		// in order to fix the issue https://github.com/Microsoft/msbuild/issues/2369 -> https://github.com/Microsoft/msbuild/issues/2030
-		//private static void ConfigureMSBuild()
-		//{
-		//	var query = new SetupConfiguration();
-		//	var query2 = (ISetupConfiguration2)query;
-
-		//	try
-		//	{
-		//		if (query2.GetInstanceForCurrentProcess() is ISetupInstance2 instance)
-		//		{
-		//			Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-		//			Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-		//			return;
-		//		}
-		//	}
-		//	catch { }
-
-		//	var instances = new ISetupInstance[1];
-		//	var e = query2.EnumAllInstances();
-		//	int fetched;
-		//	do
-		//	{
-		//		e.Next(1, instances, out fetched);
-		//		if (fetched > 0)
-		//		{
-		//			var instance = instances[0] as ISetupInstance2;
-		//			if (instance.GetInstallationVersion().StartsWith("15."))
-		//			{
-		//				Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-		//				Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-		//				return;
-		//			}
-		//		}
-		//	}
-		//	while (fetched > 0);
-		//}
 	}
 
 	public abstract class BaseFixture<T> : BaseFixture

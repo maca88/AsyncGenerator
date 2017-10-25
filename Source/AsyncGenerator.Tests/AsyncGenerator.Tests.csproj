@@ -15,6 +15,7 @@
   <ItemGroup>
     <Reference Include="System.Transactions" />
     <PackageReference Include="Microsoft.Build" Version="15.3.409" />
+    <PackageReference Include="Microsoft.Build.MSBuildLocator" Version="1.0.1-preview-g6cd9a57801" />
     <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.3.409" />
     <PackageReference Include="Microsoft.Net.Compilers" Version="2.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
@@ -33,6 +34,12 @@
 
   <ItemGroup>
     <EmbeddedResource Include="**\*.txt;**\*.yml;**\*.xml" Exclude="bin\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
+      <Link>EnvironmentHelper.cs</Link>
+    </Compile>
   </ItemGroup>
 
 </Project>

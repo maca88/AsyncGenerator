@@ -34,5 +34,11 @@
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
     </EmbeddedResource>
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
+      <Link>EnvironmentHelper.cs</Link>
+    </Compile>
+  </ItemGroup>
   
 </Project>
