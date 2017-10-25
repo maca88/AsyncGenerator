@@ -47,18 +47,16 @@ namespace AsyncGenerator.Tests
 
 		public string InputFolderPath { get; }
 
+		public string AssemblyName => typeof(BaseFixture).Assembly.GetName().Name;
+
 		public string GetBaseDirectory()
 		{
-			return AppDomain.CurrentDomain.BaseDirectory.Replace(".NETCore", "");
+			return AppDomain.CurrentDomain.BaseDirectory;
 		}
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-#if NETCORE2
-			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\..\AsyncGenerator.Tests\AsyncGenerator.Tests.csproj");
-#else
-			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.Tests.csproj"));
-#endif
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", $"{AssemblyName}.csproj"));
 			return AsyncCodeConfiguration.Create()
 				.ConfigureProject(filePath, p =>
 				{
@@ -82,7 +80,7 @@ namespace AsyncGenerator.Tests
 			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "AsyncGenerator.sln"));
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
-					.ConfigureProject("AsyncGenerator.Tests", p =>
+					.ConfigureProject(AssemblyName, p =>
 					{
 						p.ConfigureAnalyzation(a => a
 							.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath && o.Name == fileName + ".cs")
@@ -96,18 +94,17 @@ namespace AsyncGenerator.Tests
 						);
 						action?.Invoke(p);
 					})
-
+					.SuppressDiagnosticFailures("MSBuildWorkspace can only build projects which contain Compile and CoreCompile targets")
+#if NETCORE2
+					.SuppressDiagnosticFailures(".*NET Framework.*")
+#endif
 				);
 		}
 
 		public string GetOutputFile(string fileName)
 		{
 			var asm = Assembly.GetExecutingAssembly();
-#if NETCORE2
-			var resource = $"{GetType().Namespace.Replace("AsyncGenerator.Tests", "AsyncGenerator.Tests.NETCore")}.Output.{fileName}.txt";
-#else
-			var resource = $"{GetType().Namespace}.Output.{fileName}.txt";
-#endif
+			var resource = $"{GetType().Namespace?.Replace("AsyncGenerator.Tests", AssemblyName)}.Output.{fileName}.txt";
 			using (var stream = asm.GetManifestResourceStream(resource))
 			{
 				if (stream == null) return string.Empty;
