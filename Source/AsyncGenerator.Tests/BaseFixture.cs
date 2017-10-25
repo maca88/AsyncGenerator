@@ -96,7 +96,7 @@ namespace AsyncGenerator.Tests
 					})
 					.SuppressDiagnosticFailures("MSBuildWorkspace can only build projects which contain Compile and CoreCompile targets")
 #if NETCORE2
-					.SuppressDiagnosticFailures(".*NET Framework.*")
+					.SuppressDiagnosticFailures(".*NETFramework.*")
 #endif
 				);
 		}
