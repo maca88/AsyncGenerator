@@ -17,8 +17,12 @@ namespace AsyncGenerator.CommandLine
 		public static int Main(string[] args)
 		{
 #if NETCORE2
-			var logRepository = LogManager.GetRepository(typeof(Program).Assembly);
-			XmlConfigurator.Configure(logRepository, File.OpenRead(EnvironmentHelper.GetConfigurationFilePath()));
+			var configPath = EnvironmentHelper.GetConfigurationFilePath();
+			if (!string.IsNullOrEmpty(configPath))
+			{
+				var logRepository = LogManager.GetRepository(typeof(Program).Assembly);
+				XmlConfigurator.Configure(logRepository, File.OpenRead(configPath));
+			}
 #endif
 #if NET461
 			XmlConfigurator.Configure();
