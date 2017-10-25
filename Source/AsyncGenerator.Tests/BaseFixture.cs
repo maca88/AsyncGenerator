@@ -45,14 +45,7 @@ namespace AsyncGenerator.Tests
 
 		public string GetBaseDirectory()
 		{
-			// BaseDirectory ends with a backslash when running with Visual Studio (Test Explorer), but when running with 
-			// Reshaper (Unit Test Session) there is no backslash at the end
-			var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-			if (!baseDirectory.EndsWith(@"\"))
-			{
-				baseDirectory += @"\";
-			}
-			return baseDirectory.Replace(".NETCore", "");
+			return AppDomain.CurrentDomain.BaseDirectory.Replace(".NETCore", "");
 		}
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
@@ -60,7 +53,7 @@ namespace AsyncGenerator.Tests
 #if NETCORE2
 			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\..\AsyncGenerator.Tests\AsyncGenerator.Tests.csproj");
 #else
-			var filePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.Tests.csproj");
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.Tests.csproj"));
 #endif
 			return AsyncCodeConfiguration.Create()
 				.ConfigureProject(filePath, p =>
@@ -82,7 +75,7 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(string fileName, Action<IFluentProjectConfiguration> action = null)
 		{
-			var slnFilePath = Path.GetFullPath(GetBaseDirectory() + @"..\..\..\AsyncGenerator.sln");
+			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "AsyncGenerator.sln"));
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
 					.ConfigureProject("AsyncGenerator.Tests", p =>
