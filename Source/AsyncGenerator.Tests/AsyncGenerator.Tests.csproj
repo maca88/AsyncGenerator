@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Build.MSBuildLocator.1.0.1-preview-g6cd9a57801\build\Microsoft.Build.MSBuildLocator.props" Condition="Exists('..\packages\Microsoft.Build.MSBuildLocator.1.0.1-preview-g6cd9a57801\build\Microsoft.Build.MSBuildLocator.props')" />
   <Import Project="..\packages\NUnit3TestAdapter.3.8.0\build\net35\NUnit3TestAdapter.props" Condition="Exists('..\packages\NUnit3TestAdapter.3.8.0\build\net35\NUnit3TestAdapter.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -27,7 +28,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;ASYNC</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ASYNC;NET46</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -36,7 +37,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;ASYNC</DefineConstants>
+    <DefineConstants>TRACE;ASYNC;NET46</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -48,20 +49,23 @@
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Build, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Build.15.3.409\lib\net46\Microsoft.Build.dll</HintPath>
+    <Reference Include="Microsoft.Build">
+      <HintPath>..\packages\Microsoft.Build.15.5.0-preview-000170-1090113\lib\net46\Microsoft.Build.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Build.Framework, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Build.Framework.15.3.409\lib\net46\Microsoft.Build.Framework.dll</HintPath>
+    <Reference Include="Microsoft.Build.Framework">
+      <HintPath>..\packages\Microsoft.Build.Framework.15.5.0-preview-000170-1090113\lib\net46\Microsoft.Build.Framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Build.Tasks.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Build.Tasks.Core.15.3.409\lib\net46\Microsoft.Build.Tasks.Core.dll</HintPath>
+    <Reference Include="Microsoft.Build.MSBuildLocator, Version=1.0.0.0, Culture=neutral, PublicKeyToken=9dff12846e04bfbd, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Build.MSBuildLocator.1.0.1-preview-g6cd9a57801\lib\net46\Microsoft.Build.MSBuildLocator.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Build.Tasks.Core">
+      <HintPath>..\packages\Microsoft.Build.Tasks.Core.15.5.0-preview-000170-1090113\lib\net46\Microsoft.Build.Tasks.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Build.Utilities.Core, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Build.Utilities.Core.15.3.409\lib\net46\Microsoft.Build.Utilities.Core.dll</HintPath>
+    <Reference Include="Microsoft.Build.Utilities.Core">
+      <HintPath>..\packages\Microsoft.Build.Utilities.Core.15.5.0-preview-000170-1090113\lib\net46\Microsoft.Build.Utilities.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=2.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -821,6 +825,11 @@
   <ItemGroup>
     <EmbeddedResource Include="Github\Issue57\Output\ExplicitInterface.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
+      <Link>EnvironmentHelper.cs</Link>
+    </Compile>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
@@ -846,6 +855,7 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\NUnit3TestAdapter.3.8.0\build\net35\NUnit3TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit3TestAdapter.3.8.0\build\net35\NUnit3TestAdapter.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Build.MSBuildLocator.1.0.1-preview-g6cd9a57801\build\Microsoft.Build.MSBuildLocator.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Build.MSBuildLocator.1.0.1-preview-g6cd9a57801\build\Microsoft.Build.MSBuildLocator.props'))" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
