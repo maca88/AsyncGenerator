@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
+
 #if NET461
 using Microsoft.Build.MSBuildLocator;
 #endif
@@ -17,7 +19,7 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public static void Setup()
 		{
-#if NETCORE2
+#if NETCOREAPP2_0
 			SetupMsBuildPath(GetNetCoreMsBuildPath);
 #endif
 
@@ -28,7 +30,7 @@ namespace AsyncGenerator.Internal
 				{
 					return GetMonoMsBuildPath(monoDir =>
 					{
-						Environment.SetEnvironmentVariable("MSBuildExtensionsPath", Path.Combine(monoDir, "msbuild"));
+						Environment.SetEnvironmentVariable("MSBuildExtensionsPath", Path.Combine(monoDir, "xbuild"));
 					});
 				});
 				return;
@@ -80,17 +82,16 @@ namespace AsyncGenerator.Internal
 		{
 			// Get the sdk path by using the .NET Core runtime assembly location
 			// Default locations:
-			// Windows -> file:///C:/Program Files/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dllz
-			// Linux -> file:///usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dll
-			// OSX -> file:///usr/local/share/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dll
+			// Windows -> C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.0\System.Private.CoreLib.dllz
+			// Linux -> /usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dll
+			// OSX -> /usr/local/share/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dll
 			// MSBuild.dll is then located:
-			// Windows -> file:///C:/Program Files/dotnet/sdk/2.0.0/MSBuild.dll
+			// Windows -> C:\Program Files\dotnet\sdk\2.0.0\MSBuild.dll
 			// Linux -> /usr/share/dotnet/sdk/2.0.0/MSBuild.dll
 			// OSX -> /usr/local/share/dotnet/sdk/2.0.0/MSBuild.dll
 
 			var assembly = typeof(System.Runtime.GCSettings).Assembly;
-			// Remove file:// on Unix or file:/// on Windows
-			var assemblyDirectory = Path.GetDirectoryName(assembly.CodeBase.Substring(IsWindows ? 8 : 7));
+			var assemblyDirectory = Path.GetDirectoryName(assembly.Location);
 			var directoryInfo = new DirectoryInfo(assemblyDirectory);
 			var netCoreVersion = directoryInfo.Name; // e.g. 2.0.0
 			// Get the dotnet folder
@@ -104,17 +105,16 @@ namespace AsyncGenerator.Internal
 		{
 			// Get the sdk path by using the Mono runtime assembly location
 			// Default locations:
-			// Windows -> file:///C:/Program Files (x86)/Mono/lib/mono/4.5/mscorlib.dll
-			// Linux -> file:///usr/lib/mono/4.5/mscorlib.dll
-			// OSX -> file:///Library/Frameworks/Mono.framework/Versions/5.2.0/lib/mono/4.5/mscorlib.dll
+			// Windows -> C:\Program Files (x86)\Mono\lib\mono\4.5\mscorlib.dll
+			// Linux -> /usr/lib/mono/4.5/mscorlib.dll
+			// OSX -> /Library/Frameworks/Mono.framework/Versions/5.2.0/lib/mono/4.5/mscorlib.dll
 			// MSBuild.dll is then located:
-			// Windows -> C:/Program Files (x86)/Mono/lib/mono/msbuild/15.0/bin/MSBuild.dll
+			// Windows -> C:\Program Files (x86)\Mono\lib\mono\msbuild\15.0\bin\MSBuild.dll
 			// Linux -> /usr/lib/mono/msbuild/15.0/bin/MSBuild.dll
 			// OSX -> /Library/Frameworks/Mono.framework/Versions/5.2.0/lib/mono/msbuild/15.0/bin/MSBuild.dll
 
 			var assembly = typeof(System.Runtime.GCSettings).Assembly;
-			// Remove file:// on Unix or file:/// on Windows
-			var assemblyDirectory = Path.GetDirectoryName(assembly.CodeBase.Substring(IsWindows ? 8 : 7));
+			var assemblyDirectory = Path.GetDirectoryName(assembly.Location);
 			var directoryInfo = new DirectoryInfo(assemblyDirectory).Parent; // get mono directory
 			monoDirectoryAction?.Invoke(directoryInfo.FullName);
 			var msBuildPath = Path.Combine(directoryInfo.FullName, "msbuild", "15.0", "bin", "MSBuild.dll");

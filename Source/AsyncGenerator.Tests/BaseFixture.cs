@@ -30,7 +30,7 @@ namespace AsyncGenerator.Tests
 		protected BaseFixture(string folderPath = null)
 		{
 			EnvironmentHelper.Setup();
-#if NETCORE2
+#if NETCOREAPP2_0
 			var configPath = EnvironmentHelper.GetConfigurationFilePath();
 			if (!string.IsNullOrEmpty(configPath))
 			{
@@ -95,7 +95,7 @@ namespace AsyncGenerator.Tests
 						action?.Invoke(p);
 					})
 					.SuppressDiagnosticFailures("MSBuildWorkspace can only build projects which contain Compile and CoreCompile targets")
-#if NETCORE2
+#if NETCOREAPP2_0
 					.SuppressDiagnosticFailures(".*NETFramework.*")
 #endif
 				);

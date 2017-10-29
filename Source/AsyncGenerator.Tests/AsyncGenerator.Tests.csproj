@@ -3,8 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
     <IsPackable>false</IsPackable>
-    <DefaultItemExcludes>ExternalProjects\NHibernate\Source\**\*</DefaultItemExcludes>
-    <DefineConstants>NET461</DefineConstants>
+    <DefaultItemExcludes>ExternalProjects\NHibernate\Source\**</DefaultItemExcludes>
   </PropertyGroup>
   
   <PropertyGroup>
@@ -14,9 +13,9 @@
 
   <ItemGroup>
     <Reference Include="System.Transactions" />
-    <PackageReference Include="Microsoft.Build" Version="15.3.409" />
+    <PackageReference Include="Microsoft.Build" Version="15.5.0-preview-000170-1090113" />
     <PackageReference Include="Microsoft.Build.MSBuildLocator" Version="1.0.1-preview-g6cd9a57801" />
-    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.3.409" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.5.0-preview-000170-1090113" />
     <PackageReference Include="Microsoft.Net.Compilers" Version="2.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
     <PackageReference Include="NUnit" Version="3.8.1" />
@@ -34,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="**\*.txt;**\*.yml;**\*.xml" Exclude="bin\**\*.*" />
+    <EmbeddedResource Include="**\*.txt;**\*.yml;**\*.xml" Exclude="bin\**\*.*;ExternalProjects\NHibernate\Source\**" />
   </ItemGroup>
 
   <ItemGroup>

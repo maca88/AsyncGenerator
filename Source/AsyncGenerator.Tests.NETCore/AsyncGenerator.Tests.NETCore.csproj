@@ -3,12 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <DefineConstants>NETCORE2</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build" Version="15.3.409" />
-    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.3.409" />
+    <PackageReference Include="Microsoft.Build" Version="15.5.0-preview-000170-1090113" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="15.5.0-preview-000170-1090113" />
     <PackageReference Include="Microsoft.Net.Compilers" Version="2.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.3.0" />
     <PackageReference Include="NUnit" Version="3.8.1" />
@@ -25,12 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AsyncGenerator.Tests\**\*.cs" Exclude="**\ExternalProjects\NHibernate\Source\**\*;**\obj\**\*;**\bin\**\*">
+    <Compile Include="..\AsyncGenerator.Tests\**\*.cs" Exclude="..\AsyncGenerator.Tests\ExternalProjects\NHibernate\Source\**;**\obj\**\*;**\bin\**\*">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\AsyncGenerator.Tests\**\*.txt;..\AsyncGenerator.Tests\**\*.xml;..\AsyncGenerator.Tests\**\*.yml" Exclude="**\ExternalProjects\NHibernate\Source\**\*;**\obj\**\*;**\bin\**\*">
+    <EmbeddedResource Include="..\AsyncGenerator.Tests\**\*.txt;..\AsyncGenerator.Tests\**\*.xml;..\AsyncGenerator.Tests\**\*.yml" Exclude="..\AsyncGenerator.Tests\ExternalProjects\NHibernate\Source\**;**\obj\**\*;**\bin\**\*">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
     </EmbeddedResource>
   </ItemGroup>

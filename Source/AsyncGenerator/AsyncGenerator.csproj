@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>CSharpAsyncGenerator</PackageId>
@@ -13,17 +12,14 @@
     <PackageProjectUrl>https://github.com/maca88/AsyncGenerator</PackageProjectUrl>
     <PackageTags>Async Generator Roslyn</PackageTags>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="Microsoft.Build" Version="15.3.409" />
+    <PackageReference Include="Microsoft.Build" Version="15.5.0-preview-000170-1090113" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.6.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.6.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="2.6.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj" />
   </ItemGroup>
-
 </Project>

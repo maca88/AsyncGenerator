@@ -16,7 +16,7 @@ namespace AsyncGenerator.CommandLine
 
 		public static int Main(string[] args)
 		{
-#if NETCORE2
+#if NETCOREAPP2_0
 			var configPath = EnvironmentHelper.GetConfigurationFilePath();
 			if (!string.IsNullOrEmpty(configPath))
 			{
