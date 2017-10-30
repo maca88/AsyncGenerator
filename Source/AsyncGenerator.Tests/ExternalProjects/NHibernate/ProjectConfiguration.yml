@@ -216,9 +216,9 @@
     - hasAttributeName: TheoryAttribute
     - hasAttributeName: TestAttribute
     ignoreDocuments:
-    - filePathEndsWith: Linq\MathTests.cs
-    - filePathEndsWith: Linq\ExpressionSessionLeakTest.cs
-    - filePathEndsWith: Linq\NorthwindDbCreator.cs
+    - filePathEndsWith: Linq/MathTests.cs
+    - filePathEndsWith: Linq/ExpressionSessionLeakTest.cs
+    - filePathEndsWith: Linq/NorthwindDbCreator.cs
     cancellationTokens:
       withoutCancellationToken:
       - hasAttributeName: TestAttribute

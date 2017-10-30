@@ -198,7 +198,7 @@ namespace AsyncGenerator
 				var addedDocuments = projectChanges
 					.GetAddedDocuments()
 					.Select(o => projectChanges.NewProject.GetDocument(o))
-					.ToDictionary(o => o.FilePath.Replace(@"\\", @"\")); // For some reason the added documents have a dobule backslash at the last directory e.g "Folder\\MyFile.cs"
+					.ToDictionary(o => o.FilePath);
 				var removedDocuments = projectChanges
 					.GetRemovedDocuments()
 					.Select(o => projectChanges.OldProject.GetDocument(o))
@@ -397,7 +397,7 @@ namespace AsyncGenerator
 			{
 				return;
 			}
-			var asyncProjectFolder = Path.Combine(projectData.DirectoryPath, asyncFolder) + @"\";
+			var asyncProjectFolder = Path.Combine(projectData.DirectoryPath, asyncFolder) + Path.DirectorySeparatorChar;
 			// Remove all generated documents
 			var toRemove = project.Documents.Where(o => o.FilePath.StartsWith(asyncProjectFolder)).Select(doc => doc.Id).ToList();
 			foreach (var docId in toRemove)

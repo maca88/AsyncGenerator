@@ -186,8 +186,8 @@
       - conversion: Ignore
         anyBaseTypeRule: IsTestCase
       ignoreDocuments:
-      - filePathEndsWith: Linq\MathTests.cs
-      - filePathEndsWith: Linq\ExpressionSessionLeakTest.cs
+      - filePathEndsWith: Linq/MathTests.cs
+      - filePathEndsWith: Linq/ExpressionSessionLeakTest.cs
       cancellationTokens:
         withoutCancellationToken:
         - hasAttributeName: TestAttribute

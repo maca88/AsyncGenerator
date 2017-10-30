@@ -135,8 +135,8 @@
           </CancellationTokens>
           <ScanMethodBody>true</ScanMethodBody>
           <IgnoreDocuments>
-            <Document filePathEndsWith="Linq\MathTests.cs" />
-            <Document filePathEndsWith="Linq\ExpressionSessionLeakTest.cs" />
+            <Document filePathEndsWith="Linq/MathTests.cs" />
+            <Document filePathEndsWith="Linq/ExpressionSessionLeakTest.cs" />
           </IgnoreDocuments>
           <TypeConversion>
             <Type conversion="Ignore" name="NorthwindDbCreator" />

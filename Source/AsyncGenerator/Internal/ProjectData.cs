@@ -25,7 +25,7 @@ namespace AsyncGenerator.Internal
 			_solutionData = solutionData;
 			Configuration = configuration;
 			ProjectId = projectId;
-			DirectoryPath = Path.GetDirectoryName(Project.FilePath) + @"\";
+			DirectoryPath = Path.GetDirectoryName(Project.FilePath);
 		}
 
 		public ProjectData(Project project, ProjectConfiguration configuration)
@@ -33,7 +33,7 @@ namespace AsyncGenerator.Internal
 			_project = project;
 			Configuration = configuration;
 			ProjectId = project.Id;
-			DirectoryPath = Path.GetDirectoryName(Project.FilePath) + @"\";
+			DirectoryPath = Path.GetDirectoryName(Project.FilePath);
 		}
 
 		internal readonly ProjectConfiguration Configuration;
