@@ -215,6 +215,7 @@
     <Compile Include="Internal\DataReference.cs" />
     <Compile Include="Internal\FieldVariableDataReference.cs" />
     <Compile Include="Internal\SourceCodeCompiler.cs" />
+    <Compile Include="Internal\UnixEndOfLineTriviaRewriter.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
     <Compile Include="Internal\ProjectData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

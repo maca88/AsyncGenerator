@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Transformation;
+using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -596,6 +597,10 @@ namespace AsyncGenerator.Extensions.Internal
 			if (node == null)
 			{
 				return null; // TODO: we need to preserve or remove directives!
+			}
+			if (!EnvironmentHelper.IsWindows)
+			{
+				node = (T)new UnixEndOfLineTriviaRewriter().Visit(node);
 			}
 			foreach (var directiveAnnotation in directiveAnnotations)
 			{
