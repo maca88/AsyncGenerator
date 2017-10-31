@@ -13,17 +13,16 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Github.Issue57.Input
+namespace AsyncGenerator.Tests.PrivateMethods.Input
 {
 	using System.Threading.Tasks;
-	using System.Threading;
 	public class TestCaseAsync
 	{
 		public event Action Event = () => { };
 
-		public async Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
+		public async Task ReadAsync()
 		{
-			await (SimpleFile.ReadAsync(cancellationToken));
+			await (SimpleFile.ReadAsync());
 			Event += ReadInternal;
 		}
 

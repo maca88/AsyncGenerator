@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Fields.Input
+namespace AsyncGenerator.Tests.PrivateFields.Input
 {
 	/// <summary>
 	/// The field must be removed when the class is converted to a new type where only the Read method will get converted.

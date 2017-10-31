@@ -68,13 +68,13 @@ namespace AsyncGenerator.Internal
 			if (node is AnonymousFunctionExpressionSyntax anonymousFunc)
 			{
 				var symbol = semanticModel.GetSymbolInfo(node).Symbol as IMethodSymbol;
-				return ChildFunctions.GetOrAdd(node, syntax => new AnonymousFunctionData(GetBaseMethodData(), symbol, anonymousFunc, this));
+				return ChildFunctions.GetOrAdd(node, syntax => OnChildCreated(new AnonymousFunctionData(GetBaseMethodData(), symbol, anonymousFunc, this)));
 			}
 
 			if (node is LocalFunctionStatementSyntax localFunc)
 			{
 				var symbol = semanticModel.GetDeclaredSymbol(node) as IMethodSymbol;
-				return ChildFunctions.GetOrAdd(node, syntax => new LocalFunctionData(GetBaseMethodData(), symbol, localFunc, this));
+				return ChildFunctions.GetOrAdd(node, syntax => OnChildCreated(new LocalFunctionData(GetBaseMethodData(), symbol, localFunc, this)));
 			}
 			throw new InvalidOperationException($"Cannot get a ChildFunctionData from syntax node {node}");
 		}
@@ -157,6 +157,25 @@ namespace AsyncGenerator.Internal
 			{
 				Conversion = MethodConversion.ToAsync;
 			}
+		}
+
+		/// <summary>
+		/// We need to do the same logic as in Copy or Ignore methods as a child can be added after the Copy/Ignore methods are called
+		/// </summary>
+		/// <param name="childFunctionData">The newly created child function</param>
+		/// <returns></returns>
+		private ChildFunctionData OnChildCreated(ChildFunctionData childFunctionData)
+		{
+			switch (Conversion)
+			{
+				case MethodConversion.Copy:
+					childFunctionData.Copy();
+					break;
+				case MethodConversion.Ignore:
+					childFunctionData.Ignore("Cascade ignored.");
+					break;
+			}
+			return childFunctionData;
 		}
 
 		private IEnumerable<T> GetSelfAndDescendantsFunctionsRecursively<T>(T functionData, Func<T, bool> predicate = null)

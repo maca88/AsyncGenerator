@@ -10,25 +10,36 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
+using System.IO;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Github.Issue57.Input
+namespace AsyncGenerator.Tests.PrivateFields.Input
 {
 	using System.Threading.Tasks;
-	public class TestCaseAsync
+	public class UsedByNestedFunctionAsync
 	{
-		public event Action Event = () => { };
+		private string _content = "";
+		private string _content2 = "";
+		private string _content3 = "";
 
-		public async Task ReadAsync()
+		public async Task WriteAsync()
 		{
-			await (SimpleFile.ReadAsync());
-			Event += ReadInternal;
-		}
+			await (Runner.RunAsync(s =>
+			{
+				return SimpleFile.WriteAsync(_content);
+			}));
 
-		private void ReadInternal()
-		{
-			SimpleFile.Read();
+			var arr = new List<Action>
+			{
+				() =>
+				{
+					SimpleFile.Write(_content2);
+				},
+				delegate
+				{
+					File.Open(_content3, FileMode.Append);
+				}
+			};
 		}
 	}
 }

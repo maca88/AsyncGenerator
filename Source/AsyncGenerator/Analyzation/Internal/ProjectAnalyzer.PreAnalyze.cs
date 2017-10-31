@@ -432,42 +432,51 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			var funcionSymbol = functionData.Symbol;
 			var forceAsync = functionData.MethodData.Conversion.HasFlag(MethodConversion.ToAsync);
+			var newType = functionData.MethodData.TypeData.GetSelfAndAncestorsTypeData()
+				.Any(o => o.Conversion == TypeConversion.NewType);
 			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog;
+			void IgnoreOrCopy(string reason)
+			{
+				if (newType)
+				{
+					functionData.Copy();
+				}
+				else
+				{
+					functionData.Ignore(reason);
+					log(functionData);
+				}
+			}
+			
 			if (funcionSymbol.IsAsync)
 			{
-				functionData.Ignore("Is already async");
-				log(functionData);
+				IgnoreOrCopy("Is already async");
 				return;
 			}
 			if (funcionSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				functionData.Ignore("Has out parameters");
-				log(functionData);
+				IgnoreOrCopy("Has out parameters");
 				return;
 			}
 
 			if (!functionData.Node.Parent.IsKind(SyntaxKind.Argument))
 			{
-				functionData.Ignore($"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported");
-				log(functionData);
+				IgnoreOrCopy($"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported");
 				return;
 			}
 			var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
 			if (!argumentNode.Parent.Parent.IsKind(SyntaxKind.InvocationExpression))
 			{
-				functionData.Ignore($"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported");
-				log(functionData);
+				IgnoreOrCopy($"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported");
 				return;
 			}
 			var invocationNode = (InvocationExpressionSyntax)argumentNode.Parent.Parent;
-			var argumentListNode = (ArgumentListSyntax)argumentNode.Parent;
-			var index = argumentListNode.Arguments.IndexOf(argumentNode);
+			//var argumentListNode = (ArgumentListSyntax)argumentNode.Parent;
+			//var index = argumentListNode.Arguments.IndexOf(argumentNode);
 			var symbol = semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
-			var methodSymbol = symbol as IMethodSymbol;
-			if (methodSymbol == null)
+			if (!(symbol is IMethodSymbol))
 			{
-				functionData.Ignore($"Is passed as an argument to a symbol {symbol} which is currently not supported");
-				log(functionData);
+				IgnoreOrCopy($"Is passed as an argument to a symbol {symbol} which is currently not supported");
 				return;
 			}
 			FillFunctionLocks(functionData, semanticModel);

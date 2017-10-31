@@ -642,9 +642,13 @@ namespace AsyncGenerator.Analyzation.Internal
 					LogIgnoredReason(baseMethodData, !baseMethodData.ExplicitlyIgnored);
 					continue;
 				}
+				// Do not scan for method that will be only copied (e.g. the containing type is a new type). 
+				if (baseMethodData.Conversion == MethodConversion.Copy)
+				{
+					continue;
+				}
 
-				var methodData = baseMethodData as MethodOrAccessorData;
-				if (methodData != null && !_scannedMethodOrAccessors.Contains(methodData))
+				if (baseMethodData is MethodOrAccessorData methodData && !_scannedMethodOrAccessors.Contains(methodData))
 				{
 					await ScanMethodData(methodData, depth, cancellationToken).ConfigureAwait(false);
 				}

@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Core;
-using AsyncGenerator.Tests.Github.Issue57.Input;
+using AsyncGenerator.Tests.PrivateMethods.Input;
 using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.Github.Issue57
+namespace AsyncGenerator.Tests.PrivateMethods
 {
+	/// <summary>
+	/// GitHub: https://github.com/maca88/AsyncGenerator/issues/57
+	/// </summary>
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
@@ -147,6 +150,29 @@ namespace AsyncGenerator.Tests.Github.Issue57
 
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(ExplicitInterface)), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestUsedByNestedFunctionAfterTransformation()
+		{
+			var config = Configure(nameof(UsedByNestedFunction), p => p
+				.ConfigureAnalyzation(a => a
+					.TypeConversion(symbol => TypeConversion.NewType)
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(UsedByNestedFunction)), document.Transformed.ToFullString());
 					})
 				)
 			);

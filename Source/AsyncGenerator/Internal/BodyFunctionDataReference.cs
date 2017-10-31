@@ -17,6 +17,10 @@ namespace AsyncGenerator.Internal
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
 			: base(data, reference, referenceNameNode, referenceSymbol, referenceFunctionData, true)
 		{
+			if (data.Conversion == MethodConversion.Copy)
+			{
+				Ignore("Method will be copied");
+			}
 		}
 
 		public HashSet<IMethodSymbol> ReferenceAsyncSymbols { get; set; }

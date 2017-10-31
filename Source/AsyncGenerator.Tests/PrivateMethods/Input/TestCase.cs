@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Github.Issue57.Input
+namespace AsyncGenerator.Tests.PrivateMethods.Input
 {
 	public class TestCase
 	{

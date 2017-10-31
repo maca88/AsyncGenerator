@@ -314,18 +314,23 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-			if (functionData.Conversion != MethodConversion.Ignore && functionData.BodyFunctionReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
+			if (functionData.Conversion != MethodConversion.Ignore && functionData.Conversion != MethodConversion.Copy &&
+			    functionData.BodyFunctionReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
 			{
 				// A method may be already calculated to be async, but we will ignore it if the method does not have any dependency and was not explicitly set to be async
 				var methodData = functionData as MethodOrAccessorData;
-				if (methodData == null || (!methodData.Missing && methodData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) && !asyncMethodDatas.Contains(methodData)))
+				if (methodData == null ||
+				    (
+					    !methodData.Missing && methodData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) &&
+					    !asyncMethodDatas.Contains(methodData)
+				    ))
 				{
 					functionData.Ignore("Does not have any async invocations");
 				}
 				return;
 			}
 
-			if (functionData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Ignore))
+			if (functionData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Ignore, MethodConversion.Copy))
 			{
 				return;
 			}
