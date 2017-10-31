@@ -24,7 +24,7 @@ namespace AsyncGenerator.Transformation.Internal
 	{
 		private IProjectCancellationTokenConfiguration _configuration;
 
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			_configuration = configuration.AnalyzeConfiguration.CancellationTokens;
 			return Task.CompletedTask;

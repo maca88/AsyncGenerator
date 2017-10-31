@@ -26,7 +26,7 @@ namespace AsyncGenerator.Core.Plugins
 			_fileName = fileName;
 		}
 
-		public async Task Initialize(Project project, IProjectConfiguration configuration)
+		public async Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			var extProject = project.Solution.Projects.First(o => o.Name == _projectName);
 			var doc = extProject.Documents.First(o => o.Name == _fileName);

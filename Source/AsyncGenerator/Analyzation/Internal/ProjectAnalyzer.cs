@@ -164,8 +164,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			IMethodSymbol methodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options, bool onlyNew = false)
 		{
 			var dict = asyncCounterparts.GetOrAdd(methodSymbol, new ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>());
-			HashSet<IMethodSymbol> asyncMethodSymbols;
-			if (dict.TryGetValue(options, out asyncMethodSymbols))
+			if (dict.TryGetValue(options, out var asyncMethodSymbols))
 			{
 				return onlyNew ? Enumerable.Empty<IMethodSymbol>() : asyncMethodSymbols;
 			}

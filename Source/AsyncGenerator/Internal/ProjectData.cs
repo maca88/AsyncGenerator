@@ -42,6 +42,8 @@ namespace AsyncGenerator.Internal
 
 		public ProjectId ProjectId { get; }
 
+		public Compilation Compilation { get; internal set; }
+
 		public Project Project
 		{
 			get { return _project ?? _solutionData.Solution.GetProject(ProjectId); }

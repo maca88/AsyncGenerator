@@ -100,6 +100,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				AnalyzeCrefMethodReference(documentData, methodAccessorData, reference);
 			}
 
+			foreach (var reference in methodAccessorData.NameofFunctionReferences)
+			{
+				AnalyzeNameofMethodReference(documentData, methodAccessorData, reference);
+			}
+
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
 			// Do not ignore accessor as they are executed prior passing
 			foreach (var reference in methodAccessorData.BodyFunctionReferences
@@ -178,6 +183,12 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			crefData.RelatedBodyFunctionReferences.AddRange(
 				methoData.BodyFunctionReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
+		}
+
+		private void AnalyzeNameofMethodReference(DocumentData documentData, MethodOrAccessorData methoData, NameofFunctionDataReference nameofData)
+		{
+			nameofData.RelatedBodyFunctionReferences.AddRange(
+				methoData.BodyFunctionReferences.Where(o => o.ReferenceSymbol.Equals(nameofData.ReferenceSymbol)));
 		}
 
 		private void AnalyzeMethodReference(DocumentData documentData, BodyFunctionDataReference refData)

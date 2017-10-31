@@ -112,6 +112,14 @@ namespace AsyncGenerator
 				}
 			}
 
+			// Setup parsing
+			SetupParsing(projectData);
+
+			// Compile project for the first time
+			Logger.Info($"Compiling project '{projectData.Project.Name}' started");
+			projectData.Compilation = await projectData.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
+			Logger.Info($"Compiling project '{projectData.Project.Name}' completed");
+
 			// Initialize plugins
 			Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' started");
 			foreach (var registeredPlugin in projectData.Configuration.RegisteredPlugins)
@@ -120,16 +128,12 @@ namespace AsyncGenerator
 				{
 					cancellationToken.ThrowIfCancellationRequested();
 				}
-				await registeredPlugin.Initialize(projectData.Project, projectData.Configuration).ConfigureAwait(false);
+				await registeredPlugin.Initialize(projectData.Project, projectData.Configuration, projectData.Compilation).ConfigureAwait(false);
 			}
 			Logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' completed");
 
-			// Setup parsing
-			SetupParsing(projectData);
-
 			// Analyze project
 			Logger.Info($"Analyzing project '{projectData.Project.Name}' started");
-
 			var analyzationResult = await AnalyzeProject(projectData, cancellationToken).ConfigureAwait(false);
 			foreach (var action in analyzeConfig.AfterAnalyzation)
 			{
@@ -151,12 +155,12 @@ namespace AsyncGenerator
 				Logger.Info($"Transforming project '{projectData.Project.Name}' completed");
 			}
 
-			// Compile
+			// Compile transformed project
 			var compileConfig = projectData.Configuration.CompileConfiguration;
 			if (compileConfig != null)
 			{
 				Logger.Info($"Compiling project '{projectData.Project.Name}' started");
-				var compilation = await projectData.Project.GetCompilationAsync(cancellationToken);
+				var compilation = await projectData.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
 				var emit = compilation.Emit(compileConfig.OutputPath, compileConfig.SymbolsPath, compileConfig.XmlDocumentationPath);
 				if (!emit.Success)
 				{
@@ -410,6 +414,7 @@ namespace AsyncGenerator
 		private void RegisterInternalPlugins(IFluentProjectConfiguration configuration)
 		{
 			configuration.RegisterPlugin(new DefaultAsyncCounterpartsFinder());
+			configuration.RegisterPlugin(new ThreadSleepAsyncCounterpartFinder());
 			configuration.RegisterPlugin(new DefaultPreconditionChecker());
 
 			// Document transformers

@@ -10,7 +10,7 @@ namespace AsyncGenerator.Core.Plugins
 {
 	public class NUnitAsyncCounterpartsFinder : IAsyncCounterpartsFinder
 	{
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			return Task.CompletedTask;
 		}

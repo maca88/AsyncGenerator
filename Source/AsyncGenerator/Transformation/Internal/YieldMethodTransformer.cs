@@ -13,7 +13,7 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	internal class YieldMethodTransformer : IMethodOrAccessorTransformer
 	{
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			return Task.CompletedTask;
 		}

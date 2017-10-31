@@ -331,6 +331,8 @@
     <Compile Include="SimpleClassInheritance\Fixture.cs" />
     <Compile Include="SimpleReference\Fixture.cs" />
     <Compile Include="SimpleOmitAsync\Fixture.cs" />
+    <Compile Include="Sleep\Fixture.cs" />
+    <Compile Include="Sleep\Input\TestCase.cs" />
     <Compile Include="SynhronizedMethod\Fixture.cs" />
     <Compile Include="CastOmitAsync\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Input\TestCase.cs" />
@@ -820,6 +822,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Github\Issue57\Output\ExplicitInterface.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sleep\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sleep\Output\TestCaseTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

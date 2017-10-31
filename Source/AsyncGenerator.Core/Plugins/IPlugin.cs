@@ -6,6 +6,6 @@ namespace AsyncGenerator.Core.Plugins
 {
 	public interface IPlugin
 	{
-		Task Initialize(Project project, IProjectConfiguration configuration);
+		Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation);
 	}
 }

@@ -45,6 +45,13 @@ namespace AsyncGenerator.Transformation.Internal
 					if (crefNode.Parameters != null)
 					{
 						paramList.AddRange(crefNode.Parameters.Parameters);
+						// If the external async counterpart has a cancellation token, add it
+						if (funReferenceResult.AsyncCounterpartFunction == null &&
+						    funReferenceResult.ReferenceSymbol.Parameters.Length <
+						    funReferenceResult.AsyncCounterpartSymbol.Parameters.Length)
+						{
+							paramList.Add(CrefParameter(IdentifierName(nameof(CancellationToken))));
+						}
 					}
 					else
 					{
@@ -60,16 +67,28 @@ namespace AsyncGenerator.Transformation.Internal
 					{
 						paramList.Add(CrefParameter(IdentifierName(nameof(CancellationToken))));
 					}
-					node = node
-							.ReplaceNode(crefNode, crefNode
-								.ReplaceNode(nameNode, newNameNode)
-								.WithParameters(CrefParameterList(SeparatedList(paramList))))
-						;
+
+					node = node.ReplaceNestedNodes(
+						crefNode.Parent as QualifiedCrefSyntax,
+						crefNode,
+						crefNode
+							.ReplaceNode(nameNode, newNameNode)
+							.WithParameters(CrefParameterList(SeparatedList(paramList))),
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+							(type, fullName) => rootNode.WithContainer(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(rootNode.Container)),
+						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+					);
 				}
 				else if (funReferenceResult.IsNameOf)
 				{
-					node = node
-						.ReplaceNode(nameNode, newNameNode);
+					node = node.ReplaceNestedNodes(
+						nameNode.Parent as MemberAccessExpressionSyntax,
+						nameNode,
+						newNameNode,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName)).WithTriviaFrom(rootNode.Expression)),
+						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+					);
 				}
 				return node;
 
@@ -104,20 +123,32 @@ namespace AsyncGenerator.Transformation.Internal
 					{
 						returnTypeMismatch = !delReturnType.Equals(returnType); // TODO Generics
 					}
-					
+
 					var newArgumentExpression = argumentNode.Expression
-						.ReplaceNode(nameNode, newNameNode)
+						.ReplaceNestedNodes(
+							nameNode.Parent as MemberAccessExpressionSyntax,
+							nameNode,
+							newNameNode,
+							rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+								(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName))),
+							childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+						)
 						.WrapInsideFunction(bodyFuncReferenceResult.AsyncDelegateArgument, returnTypeMismatch,
 							namespaceMetadata.TaskConflict,
 							invocation => invocation.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
-
 					node = node
 						.ReplaceNode(argumentNode.Expression, newArgumentExpression);
 				}
 				else
 				{
-					node = node
-						.ReplaceNode(nameNode, newNameNode);
+					node = node.ReplaceNestedNodes(
+						nameNode.Parent as MemberAccessExpressionSyntax,
+						nameNode,
+						newNameNode,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName))),
+						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+					);
 				}
 				return node;
 			}
@@ -131,52 +162,52 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (!bodyFuncReferenceResult.AwaitInvocation)
 			{
-				var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
 				// An arrow method does not have a statement
-				if (statement == null)
+				var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
+				var newNode = (SyntaxNode)statement ?? node;
+
+				if (invokeNode != null)
 				{
-					if (invokeNode != null)
-					{
-						node = node.ReplaceNode(invokeNode, invokeNode
-							.ReplaceNode(nameNode, newNameNode)
-							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
-					}
-					else if (isAccessor)
-					{
-						node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult);
-					}
-					else
-					{
-						node = node
-							.ReplaceNode(nameNode, newNameNode);
-						
-					}
+					newNode = newNode.ReplaceNestedNodes(
+						invokeNode,
+						nameNode,
+						newNameNode,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode
+								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult),
+							funReferenceResult, namespaceMetadata,
+							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
+					);
+				}
+				else if (isAccessor)
+				{
+					newNode = ConvertAccessor(newNode, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, 
+						invNode => UpdateTypeAndRunReferenceTransformers(invNode, funReferenceResult, namespaceMetadata,
+							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression)));
 				}
 				else
 				{
-					StatementSyntax newStatement;
-					if (invokeNode != null)
-					{
-						newStatement = statement.ReplaceNode(invokeNode, invokeNode
-							.ReplaceNode(nameNode, newNameNode)
-							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
-					}
-					else if (isAccessor)
-					{
-						newStatement = ConvertAccessor(statement, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult);
-					}
-					else
-					{
-						newStatement = statement.ReplaceNode(nameNode, newNameNode);
-					}
+					newNode = newNode.ReplaceNestedNodes(
+						nameNode.Parent as MemberAccessExpressionSyntax,
+						nameNode,
+						newNameNode,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName)).WithTriviaFrom(rootNode.Expression)),
+						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+					);
+				}
 
+				if (statement != null)
+				{
 					if (bodyFuncReferenceResult.UseAsReturnValue)
 					{
-						newStatement = newStatement.ToReturnStatement();
+						newNode = ((StatementSyntax) newNode).ToReturnStatement();
 					}
-
 					node = node
-						.ReplaceNode(statement, newStatement);
+						.ReplaceNode(statement, newNode);
+				}
+				else
+				{
+					node = (T)newNode;
 				}
 			}
 			else
@@ -185,17 +216,24 @@ namespace AsyncGenerator.Transformation.Internal
 				var invokeAnnotation = Guid.NewGuid().ToString();
 				if (isAccessor)
 				{
-					node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, o => o
-						.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation)));
+					node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, invNode =>
+						UpdateTypeAndRunReferenceTransformers(invNode, funReferenceResult, namespaceMetadata,
+								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
+							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
+					);
 				}
 				else
 				{
-					node = node
-						.ReplaceNode(invokeNode, invokeNode
-							.ReplaceNode(nameNode, newNameNode)
-							.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult)
+					node = node.ReplaceNestedNodes(
+						invokeNode,
+						nameNode,
+						newNameNode,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode
+									.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult),
+								funReferenceResult, namespaceMetadata,
+								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
 							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
-						);
+					);
 				}
 
 				invokeNode = node.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
@@ -300,7 +338,48 @@ namespace AsyncGenerator.Transformation.Internal
 					node = node.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
 				}
 			}
+			return node;
+		}
 
+
+		private InvocationExpressionSyntax UpdateTypeAndRunReferenceTransformers(InvocationExpressionSyntax node, IFunctionReferenceAnalyzationResult funReferenceResult,
+			INamespaceTransformationMetadata namespaceMetadata, Func<MemberAccessExpressionSyntax, INamedTypeSymbol, bool, MemberAccessExpressionSyntax> updateTypeFunc)
+		{
+			// If the async counterpart is from another type e.g. Thread.Sleep -> Task.Delay, we need to change also the type
+			if (!funReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
+			    !funReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
+				    funReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType) &&
+			    node.Expression is MemberAccessExpressionSyntax memberAccess)
+			{
+				var type = funReferenceResult.AsyncCounterpartSymbol.ContainingType;
+				node = node.WithExpression(updateTypeFunc(memberAccess, type, 
+					namespaceMetadata.AnalyzationResult.IsIncluded(type.ContainingNamespace?.ToString())));
+			}
+			return RunReferenceTransformers(node, funReferenceResult, namespaceMetadata);
+		}
+
+		private T UpdateTypeAndRunReferenceTransformers<T>(T node, IFunctionReferenceAnalyzationResult funReferenceResult,
+			INamespaceTransformationMetadata namespaceMetadata, Func<INamedTypeSymbol, bool, T> updateTypeFunc)
+			where T : SyntaxNode
+		{
+			// If the async counterpart is from another type e.g. Thread.Sleep -> Task.Delay, we need to change also the type
+			if (!funReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
+			    !funReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
+				    funReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType))
+			{
+				var type = funReferenceResult.AsyncCounterpartSymbol.ContainingType;
+				node = updateTypeFunc(type, namespaceMetadata.AnalyzationResult.IsIncluded(type.ContainingNamespace?.ToString()));
+			}
+			return RunReferenceTransformers(node, funReferenceResult, namespaceMetadata);
+		}
+
+		private T RunReferenceTransformers<T>(T node, IFunctionReferenceAnalyzationResult funReferenceResult, INamespaceTransformationMetadata namespaceMetadata)
+			where T : SyntaxNode
+		{
+			foreach (var transformer in _configuration.FunctionReferenceTransformers)
+			{
+				node = transformer.TransformFunctionReference(node, funReferenceResult, namespaceMetadata) ?? node;
+			}
 			return node;
 		}
 
