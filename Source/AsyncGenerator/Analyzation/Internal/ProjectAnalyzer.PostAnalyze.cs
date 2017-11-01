@@ -57,10 +57,18 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				CalculatePreserveReturnType(currentMethodData);
 
+				var copy = false;
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
 					var depMethodData = depFunctionData as MethodOrAccessorData;
 					var bodyReferences = depFunctionData.BodyFunctionReferences.Where(o => o.ReferenceFunctionData == currentMethodData).ToList();
+					// If the dependent method is located in the same type as the current method and the type will be generated as a new type,
+					// we need to make a copy if there is a non async reference
+					var shouldCopy = depFunctionData.TypeData == currentMethodData.TypeData &&
+					                    currentMethodData.TypeData.GetSelfAndAncestorsTypeData()
+						                    .Any(o => o.Conversion == TypeConversion.NewType) &&
+					                    bodyReferences.Any(o => o.GetConversion() == ReferenceConversion.Ignore);
+
 					if (depMethodData != null)
 					{
 						// Before setting the dependency to async we need to check if there is at least one invocation that will be converted to async
@@ -72,6 +80,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 						if (!toProcessMethodData.Contains(depMethodData))
 						{
+							copy |= shouldCopy;
 							continue;
 						}
 						processingMetodData.Enqueue(depMethodData);
@@ -82,6 +91,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					depFunctionData.ToAsync();
+					copy |= shouldCopy;
 
 					if (!currentMethodData.CancellationTokenRequired)
 					{
@@ -92,6 +102,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
+				}
+
+				if (copy)
+				{
+					currentMethodData.SoftCopy();
 				}
 			}
 		}
@@ -286,7 +301,18 @@ namespace AsyncGenerator.Analyzation.Internal
 				foreach (var funArgument in bodyRefData.FunctionArguments.Where(o => o.FunctionReference != null))
 				{
 					var argRefFunction = funArgument.FunctionReference;
-					var delegateFun = (IMethodSymbol)asyncCounterpart.Parameters[funArgument.Index].Type.GetMembers("Invoke").First();
+					// Check if the argument does match with the async counterpart. e.g. Parallel.ForEach -> Task.WaitAll
+					// When something like this happens, break the iteration, the following logic should be done by a custom analyzer
+					if (funArgument.Index >= asyncCounterpart.Parameters.Length)
+					{
+						break;
+					}
+					var delegateFun = (IMethodSymbol)asyncCounterpart.Parameters[funArgument.Index].Type.GetMembers("Invoke").FirstOrDefault();
+					if (delegateFun == null)
+					{
+						break;
+					}
+
 					argRefFunction.AsyncDelegateArgument = delegateFun;
 
 					if (argRefFunction.AsyncCounterpartSymbol != null)

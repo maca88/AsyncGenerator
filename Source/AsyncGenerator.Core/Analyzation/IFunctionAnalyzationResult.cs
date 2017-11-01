@@ -82,9 +82,9 @@ namespace AsyncGenerator.Core.Analyzation
 		bool Faulted { get; }
 
 		/// <summary>
-		/// When true, yield statements in method body will be rewritten to return statements
+		/// When true, yield is used inside the method body
 		/// </summary>
-		bool RewriteYields { get; }
+		bool HasYields { get; }
 
 		/// <summary>
 		/// The name what will be used for the async counterpart

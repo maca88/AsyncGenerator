@@ -28,5 +28,11 @@ namespace AsyncGenerator.Core.Transformation
 		/// When true, the current namespace or one of its parents have a using for System
 		/// </summary>
 		bool UsingSystem { get; }
+
+		/// <summary>
+		/// Adds a using statement inside the namespace. Use it with caution, as adding a namespace may cause a conflict between types
+		/// </summary>
+		/// <param name="ns">Namespace to be included</param>
+		void AddUsing(string ns);
 	}
 }

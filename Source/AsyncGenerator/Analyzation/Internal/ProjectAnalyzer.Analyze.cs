@@ -79,7 +79,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 
 			var methodBody = methodAccessorData.GetBodyNode();
-			methodAccessorData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodAccessorData.HasYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodAccessorData.MustRunSynchronized = methodAccessorData.Symbol.GetAttributes()
 				.Where(o => o.AttributeClass.Name == "MethodImplAttribute")
 				.Any(o => ((MethodImplOptions)(int)o.ConstructorArguments.First().Value).HasFlag(MethodImplOptions.Synchronized));
@@ -176,7 +176,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
-			functionData.RewriteYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			functionData.HasYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodOrAccessorData methoData, CrefFunctionDataReference crefData)

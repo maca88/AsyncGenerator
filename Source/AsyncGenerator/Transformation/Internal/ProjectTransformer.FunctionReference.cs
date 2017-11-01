@@ -155,7 +155,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			InvocationExpressionSyntax invokeNode = null;
 			var isAccessor = bodyFuncReferenceResult.ReferenceSymbol.IsAccessor();
-			if (!isAccessor && (bodyFuncReferenceResult.PassCancellationToken || bodyFuncReferenceResult.AwaitInvocation))
+			if (!isAccessor && funReferenceResult.ReferenceNode.IsKind(SyntaxKind.InvocationExpression))
 			{
 				invokeNode = nameNode.Ancestors().OfType<InvocationExpressionSyntax>().First();
 			}
@@ -378,7 +378,7 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			foreach (var transformer in _configuration.FunctionReferenceTransformers)
 			{
-				node = transformer.TransformFunctionReference(node, funReferenceResult, namespaceMetadata) ?? node;
+				node = (T)transformer.TransformFunctionReference(node, funReferenceResult, namespaceMetadata) ?? node;
 			}
 			return node;
 		}

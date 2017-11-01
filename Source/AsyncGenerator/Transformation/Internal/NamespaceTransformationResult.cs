@@ -31,6 +31,13 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public bool UsingSystem { get; set; }
 
+		public HashSet<string> AdditionalUsings { get; } = new HashSet<string>();
+
+		public void AddUsing(string ns)
+		{
+			AdditionalUsings.Add(ns);
+		}
+
 		/// <summary>
 		/// Used for check if we have to add the System.Threading namespace because of <see cref="CancellationToken"/>
 		/// </summary>

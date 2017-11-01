@@ -199,9 +199,14 @@
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
+    <Compile Include="ParallelForEach\Fixture.cs" />
+    <Compile Include="ParallelForEach\Input\NoLinq.cs" />
+    <Compile Include="ParallelForEach\Input\TestCase.cs" />
+    <Compile Include="ParallelForEach\Output\Class1.cs" />
     <Compile Include="PrivateFields\Input\UsedByNestedFunction.cs" />
     <Compile Include="PrivateMethods\Fixture.cs" />
     <Compile Include="PrivateMethods\Input\ExplicitInterface.cs" />
+    <Compile Include="NewTypes\Input\MethodWithDelegate.cs" />
     <Compile Include="PrivateMethods\Input\TestCase.cs" />
     <Compile Include="MethodReferences\Fixture.cs" />
     <Compile Include="MethodReferences\Input\ForwardCall.cs" />
@@ -836,6 +841,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PrivateMethods\Output\UsedByNestedFunction.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\TestCaseNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\NoLinq.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\MethodWithDelegate.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

@@ -808,7 +808,7 @@ namespace AsyncGenerator.Extensions.Internal
 		}
 
 		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(this ExpressionSyntax expression, IMethodSymbol delegateSymbol,
-			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc)
+			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc = null)
 		{
 			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			var parameters = delegateSymbol.Parameters
@@ -823,7 +823,7 @@ namespace AsyncGenerator.Extensions.Internal
 					: new SyntaxNodeOrToken[] { comma, o });
 			var invocation = InvocationExpression(expression)
 				.WithArgumentList(ArgumentList(SeparatedList<ArgumentSyntax>(arguments)));
-			invocation = invocationModifierFunc(invocation);
+			invocation = invocationModifierFunc?.Invoke(invocation) ?? invocation;
 			CSharpSyntaxNode body = invocation;
 			if (returnTypeMismatch)
 			{
