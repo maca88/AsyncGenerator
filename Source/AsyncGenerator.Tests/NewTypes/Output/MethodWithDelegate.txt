@@ -19,6 +19,10 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 {
 	public class MethodWithDelegateAsync
 	{
+		public Task TestAsync()
+		{
+			return ReadAsync(() => SimpleFile.Read());
+		}
 
 		public Task ReadAsync(Action action)
 		{

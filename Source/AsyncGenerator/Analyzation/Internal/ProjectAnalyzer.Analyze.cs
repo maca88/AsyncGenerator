@@ -429,12 +429,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-			if (functionReferenceData.FunctionArguments != null && ProjectData.Contains(methodSymbol) && functionReferenceData.FunctionArguments.Any())
-			{
-				functionReferenceData.Ignore($"Internal invoked method {methodSymbol} contains at least one argument that is a delegate which is currently not supported");
-				return;
-			}
-
 			SetAsyncCounterpart(functionReferenceData);
 
 			CalculateLastInvocation(node, functionReferenceData);

@@ -140,6 +140,19 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 			return result;
 		}
 
+		public Task Read12Async()
+		{
+			try
+			{
+				TextWriter tw = new StringWriter();
+				return Runner.RunAsync(tw.Write);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
+
 		public Task Read13Async()
 		{
 			return Runner.RunAsync(Console.WriteLine);

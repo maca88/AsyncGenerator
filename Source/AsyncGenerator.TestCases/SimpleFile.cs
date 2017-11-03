@@ -80,5 +80,10 @@ namespace AsyncGenerator.TestCases
 		{
 			
 		}
+
+		public static bool IsBusy()
+		{
+			return false;
+		}
 	}
 }

@@ -159,6 +159,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SymbolExtensions.cs">
+      <Link>Extensions\SymbolExtensions.cs</Link>
+    </Compile>
     <Compile Include="Configuration\Internal\ProjectAsyncExtensionMethodsConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectDocumentationCommentConfiguration.cs" />

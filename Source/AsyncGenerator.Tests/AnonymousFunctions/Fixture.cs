@@ -10,12 +10,12 @@ using AsyncGenerator.Tests.AnonymousFunctions.Input;
 namespace AsyncGenerator.Tests.AnonymousFunctions
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<TestCase>
+	public class Fixture : BaseFixture
 	{
 		[Test]
 		public void TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -38,7 +38,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 		[Test]
 		public void TestPreserveReturnTypeAfterTransformation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -62,7 +62,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 		[Test]
 		public void TestPreserveReturnTypeWithoutTokensAfterTransformation()
 		{
-			var config = Configure(p => p
+			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
@@ -77,6 +77,28 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile("PreserveReturnTypeWithoutTokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public void TestMethodWithDelegateAfterTransformation()
+		{
+			var config = Configure(nameof(MethodWithDelegate), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(MethodWithDelegate)), document.Transformed.ToFullString());
 					})
 				)
 			);

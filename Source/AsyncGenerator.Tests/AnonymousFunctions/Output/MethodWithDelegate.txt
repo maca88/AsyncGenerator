@@ -16,43 +16,29 @@ using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
+namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
 	/// <content>
 	/// Contains generated async methods
 	/// </content>
-	public partial class NUnitAssertThat
+	public partial class MethodWithDelegate
 	{
-		public void TestAsync()
+		public Task TestAsync()
 		{
-			Assert.That(1, Is.EqualTo(1));
-
-			Assert.That(async () =>
+			try
 			{
-				await (SimpleFile.ReadAsync());
-				return true;
-			}, Is.EqualTo(true));
-
-			Assert.That(() =>
+				Assert.DoesNotThrowAsync(() => ReadAsync(s => Console.WriteLine(s)));
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
 			{
-				SimpleFile.Read();
-				return true;
-			});
+				return Task.FromException<object>(ex);
+			}
+		}
 
-			Assert.That(() =>
-			{
-				return SimpleFile.ReadAsync();
-			}, Throws.Nothing);
-
-			Assert.That(() =>
-			{
-				Console.WriteLine("");
-			}, Throws.Nothing);
-
-			var result = false;
-			Assert.That(async () => result = await (SimpleFile.WriteAsync("")), Throws.Nothing);
-			Assert.IsTrue(result);
-
+		public Task ReadAsync(Action<string> action)
+		{
+			return SimpleFile.ReadAsync();
 		}
 	}
 }
