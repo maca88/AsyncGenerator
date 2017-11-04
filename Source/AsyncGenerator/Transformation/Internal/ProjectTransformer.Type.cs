@@ -222,7 +222,8 @@ namespace AsyncGenerator.Transformation.Internal
 						!typeResult.GetSelfAndDescendantsTypes().SelectMany(o => o.MethodsAndAccessors).Any(o => o.Missing)
 					))
 				{
-					rootTypeNode = rootTypeNode.RemoveNodeKeepDirectives(transformResult.Annotation, transformResult.LeadingWhitespaceTrivia);
+					rootTypeNode = rootTypeNode.RemoveNodeKeepDirectives(transformResult.Annotation, transformResult.LeadingWhitespaceTrivia,
+						transformResult.EndOfLineTrivia);
 					continue;
 				}
 
@@ -237,7 +238,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 					// We need to remove all other members that are not methods, properties or types
 					newTypeNode = newTypeNode.RemoveMembersKeepDirectives(o => 
-						!(o is BaseMethodDeclarationSyntax || o is TypeDeclarationSyntax || o is PropertyDeclarationSyntax), memberWhitespace);
+						!(o is BaseMethodDeclarationSyntax || o is TypeDeclarationSyntax || o is PropertyDeclarationSyntax), memberWhitespace,
+						transformResult.EndOfLineTrivia);
 					newTypeNode = TransformMethodsAndProperties(newTypeNode, transformResult, namespaceMetadata, memberWhitespace, onlyMissingMembers);
 					newTypeNode = RunTypeTransformers(newTypeNode, transformResult, namespaceMetadata, onlyMissingMembers);
 					transformResult.Transformed = newTypeNode;
@@ -316,7 +318,8 @@ namespace AsyncGenerator.Transformation.Internal
 			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || onlyMissingMembers)
 			{
 				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
-				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace,
+					transformResult.EndOfLineTrivia);
 				return newTypeNode;
 			}
 			var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
@@ -339,7 +342,7 @@ namespace AsyncGenerator.Transformation.Internal
 			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || (onlyMissingMembers && !methodTransform.AnalyzationResult.Missing))
 			{
 				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
-				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace);
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace, transformResult.EndOfLineTrivia);
 				return newTypeNode;
 			}
 			var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
@@ -431,7 +434,8 @@ namespace AsyncGenerator.Transformation.Internal
 			if (onlyMissingMembers || propertyTransform.AnalyzationResult.Conversion == PropertyConversion.Ignore)
 			{
 				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
-				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(propertyTransform.Annotation, memberWhitespace);
+				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(propertyTransform.Annotation, memberWhitespace,
+					transformResult.EndOfLineTrivia);
 			}
 			return newTypeNode;
 		}

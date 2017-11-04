@@ -86,7 +86,8 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				if (transformResult.AnalyzationResult.Conversion == NamespaceConversion.Ignore)
 				{
-					rootNode = rootNode.RemoveNodeKeepDirectives(transformResult.Annotation, transformResult.LeadingWhitespaceTrivia);
+					rootNode = rootNode.RemoveNodeKeepDirectives(transformResult.Annotation, transformResult.LeadingWhitespaceTrivia,
+						transformResult.EndOfLineTrivia);
 					continue;
 				}
 
@@ -99,7 +100,7 @@ namespace AsyncGenerator.Transformation.Internal
 					if (transformType.AnalyzationResult.Conversion == TypeConversion.Ignore)
 					{
 						// We need to add a whitespace trivia to kept directives as they will not have any leading whitespace
-						newNode = newNode.RemoveNodeKeepDirectives(transformType.Annotation, memberWhitespace);
+						newNode = newNode.RemoveNodeKeepDirectives(transformType.Annotation, memberWhitespace, transformResult.EndOfLineTrivia);
 						continue;
 					}
 
@@ -112,7 +113,8 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 
 				// We need to remove all other members that are not namespaces or types
-				newNode = newNode.RemoveMembersKeepDirectives(o => !(o is NamespaceDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace);
+				newNode = newNode.RemoveMembersKeepDirectives(o => !(o is NamespaceDeclarationSyntax || o is TypeDeclarationSyntax), memberWhitespace,
+					transformResult.EndOfLineTrivia);
 
 				// TODO: adding namespaces can introduce name conflicts, we should avoid it
 				if (!transformResult.TaskConflict && !rootResult.Node.HasUsing("System.Threading.Tasks"))
