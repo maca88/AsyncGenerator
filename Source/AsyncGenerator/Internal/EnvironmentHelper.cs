@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Microsoft.Build.MSBuildLocator;
 #endif
 
+#if NETCOREAPP2_0 || NET46
+
 namespace AsyncGenerator.Internal
 {
 	internal static class EnvironmentHelper
@@ -139,3 +141,5 @@ namespace AsyncGenerator.Internal
 		}
 	}
 }
+
+#endif
