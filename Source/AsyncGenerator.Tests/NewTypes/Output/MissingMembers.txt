@@ -18,7 +18,7 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.NewTypes.Input
 {
 	using System.Threading;
-	#if TEST
+#if TEST
 	public class MissingMembersAsync : IExternalInterface
 	{
 		public class NestedClass : IExternalInterface
@@ -87,14 +87,8 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			return MethodAsync();
 		}
 	}
-		/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class MissingMembers : IExternalInterface
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class NestedClass : IExternalInterface
 		{
 			public Task MethodAsync()
@@ -128,5 +122,5 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			return Method2Async(cancellationToken);
 		}
 	}
-	#endif
+#endif
 }

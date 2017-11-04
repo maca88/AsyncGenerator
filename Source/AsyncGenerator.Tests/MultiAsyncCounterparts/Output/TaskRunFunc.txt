@@ -19,9 +19,6 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.MultiAsyncCounterparts.Input
 {
 	using System.Threading;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TaskRunFunc
 	{
 

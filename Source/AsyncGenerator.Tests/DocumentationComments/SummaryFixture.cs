@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.DocumentationComments
 	public class SummaryFixture : BaseFixture
 	{
 		[Test]
-		public void TestAddOrReplaceSummaryAfterTransformation()
+		public Task TestAddOrReplaceSummaryAfterTransformation()
 		{
-			var config = Configure(nameof(Summary), p => p
+			return ReadonlyTest(nameof(Summary), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -33,14 +34,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestRemoveSummaryAfterTransformation()
+		public Task TestRemoveSummaryAfterTransformation()
 		{
-			var config = Configure(nameof(Summary), p => p
+			return ReadonlyTest(nameof(Summary), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -58,14 +57,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestComplexSummaryAfterTransformation()
+		public Task TestComplexSummaryAfterTransformation()
 		{
-			var config = Configure(nameof(Summary), p => p
+			return ReadonlyTest(nameof(Summary), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -88,8 +85,6 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

@@ -19,9 +19,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.MethodReferences.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ForwardCall
 	{
 		[Custom]

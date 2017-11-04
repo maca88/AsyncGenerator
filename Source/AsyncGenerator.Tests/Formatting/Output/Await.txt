@@ -18,14 +18,8 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.Formatting.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Await
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Reader
 		{
 			public async Task<Reader> ReadAsync()

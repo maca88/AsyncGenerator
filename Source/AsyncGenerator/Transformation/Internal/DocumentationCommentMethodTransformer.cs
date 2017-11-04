@@ -18,7 +18,7 @@ namespace AsyncGenerator.Transformation.Internal
 		private IProjectDocumentationCommentConfiguration _configuration;
 		private bool _isEnabled;
 
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			_configuration = configuration.TransformConfiguration.DocumentationComments;
 			_isEnabled =

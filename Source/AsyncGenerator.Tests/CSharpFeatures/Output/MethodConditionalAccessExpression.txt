@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.CSharpFeatures.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class MethodConditionalAccessExpression
 	{
 		public async Task<object> ReturnVariableAsync()

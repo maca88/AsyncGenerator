@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
@@ -13,7 +14,7 @@ namespace AsyncGenerator.Transformation.Internal
 {
 	internal class YieldMethodTransformer : IMethodOrAccessorTransformer
 	{
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			return Task.CompletedTask;
 		}
@@ -22,7 +23,7 @@ namespace AsyncGenerator.Transformation.Internal
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;
-			if (!methodResult.RewriteYields)
+			if (!methodResult.HasYields || !methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return MethodTransformerResult.Skip;
 			}

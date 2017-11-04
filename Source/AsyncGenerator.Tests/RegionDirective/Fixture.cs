@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -14,9 +15,9 @@ namespace AsyncGenerator.Tests.RegionDirective
 	public class Fixture : BaseFixture<Input.Parent>
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -31,14 +32,12 @@ namespace AsyncGenerator.Tests.RegionDirective
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestEmptyRegionRemoverAfterTransformation()
+		public Task TestEmptyRegionRemoverAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -54,14 +53,12 @@ namespace AsyncGenerator.Tests.RegionDirective
 				)
 				.RegisterPlugin<EmptyRegionRemover>()
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensAfterTransformation()
+		public Task TestCancellationTokensAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
@@ -78,8 +75,6 @@ namespace AsyncGenerator.Tests.RegionDirective
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

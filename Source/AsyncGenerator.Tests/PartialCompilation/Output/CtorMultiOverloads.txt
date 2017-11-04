@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.PartialCompilation.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class CtorMultiOverloads
 	{
 

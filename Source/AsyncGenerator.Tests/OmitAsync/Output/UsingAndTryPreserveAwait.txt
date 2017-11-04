@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.OmitAsync.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class UsingAndTryPreserveAwait
 	{
 		public async Task<bool> AwaitShallNotBeOmittedInUsingAsync()

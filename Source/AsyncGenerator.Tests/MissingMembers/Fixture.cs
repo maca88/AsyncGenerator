@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.MissingMembers
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), o => o
+			return ReadonlyTest(nameof(TestCase), o => o
 				.ConfigureParsing(p => p
 					.AddPreprocessorSymbolName("TEST")
 				)
@@ -33,14 +34,12 @@ namespace AsyncGenerator.Tests.MissingMembers
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestGetterPropertyAfterTransformation()
+		public Task TestGetterPropertyAfterTransformation()
 		{
-			var config = Configure(nameof(GetterProperty), o => o
+			return ReadonlyTest(nameof(GetterProperty), o => o
 				.ConfigureParsing(p => p
 					.AddPreprocessorSymbolName("TEST")
 				)
@@ -58,14 +57,12 @@ namespace AsyncGenerator.Tests.MissingMembers
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedTypeAfterTransformation()
+		public Task TestNestedTypeAfterTransformation()
 		{
-			var config = Configure(nameof(NestedType), o => o
+			return ReadonlyTest(nameof(NestedType), o => o
 				.ConfigureParsing(p => p
 					.AddPreprocessorSymbolName("TEST")
 				)
@@ -83,14 +80,12 @@ namespace AsyncGenerator.Tests.MissingMembers
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedTypeNewTypeAfterTransformation()
+		public Task TestNestedTypeNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(NestedType), o => o
+			return ReadonlyTest(nameof(NestedType), o => o
 				.ConfigureParsing(p => p
 					.AddPreprocessorSymbolName("TEST")
 				)
@@ -109,8 +104,6 @@ namespace AsyncGenerator.Tests.MissingMembers
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

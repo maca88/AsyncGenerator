@@ -26,7 +26,7 @@ namespace AsyncGenerator.Transformation.Internal
 		private IProjectTransformConfiguration _configuration;
 		private IProjectAnalyzeConfiguration _analyzeConfiguration;
 
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			_configuration = configuration.TransformConfiguration;
 			_analyzeConfiguration = configuration.AnalyzeConfiguration;

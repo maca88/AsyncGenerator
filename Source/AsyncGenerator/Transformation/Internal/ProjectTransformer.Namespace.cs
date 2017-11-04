@@ -102,10 +102,7 @@ namespace AsyncGenerator.Transformation.Internal
 						newNode = newNode.RemoveNodeKeepDirectives(transformType.Annotation, memberWhitespace);
 						continue;
 					}
-					//if(transformType.AnalyzationResult.Conversion == TypeConversion.Partial || tra)
-					//{
 
-					//}
 					var typeNode = newNode.GetAnnotatedNodes(transformType.Annotation)
 						.OfType<MemberDeclarationSyntax>()
 						.First();
@@ -120,26 +117,22 @@ namespace AsyncGenerator.Transformation.Internal
 				// TODO: adding namespaces can introduce name conflicts, we should avoid it
 				if (!transformResult.TaskConflict && !rootResult.Node.HasUsing("System.Threading.Tasks"))
 				{
-					newNode = newNode.AddUsing("System.Threading.Tasks", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
+					transformResult.AddUsing("System.Threading.Tasks");
 				}
 				if (transformResult.ThreadingUsingRequired && !rootResult.Node.HasUsing("System.Threading"))
 				{
-					newNode = newNode.AddUsing("System.Threading", TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
+					transformResult.AddUsing("System.Threading");
 				}
 				// TODO: add locking namespaces
 
-				//var newMembers = transformResult.TransformedTypes
-				//	.OrderBy(o => o.OriginalStartSpan)
-				//	.SelectMany(o => o.GetTransformedNodes())
-				//	.Union(node.DescendantNodes().Where(o => o is NamespaceDeclarationSyntax)) // We need to include the already transformed namespaces
-				//	.ToList();
-				//if (!newMembers.Any())
-				//{
-				//	//TODO: fix regions
-				//	rootNode = rootNode.RemoveNode(node, SyntaxRemoveOptions.KeepNoTrivia);
-				//	continue;
-				//}
-				//var newNode = node.WithMembers(List(newMembers));
+				foreach (var additionalUsing in transformResult.AdditionalUsings)
+				{
+					if (!rootResult.Node.HasUsing(additionalUsing) && !node.HasUsing(additionalUsing))
+					{
+						newNode = newNode.AddUsing(additionalUsing, TriviaList(memberWhitespace), transformResult.EndOfLineTrivia);
+					}
+				}
+
 				transformResult.Transformed = newNode;
 				rootNode = rootNode.ReplaceNode(node, newNode);
 

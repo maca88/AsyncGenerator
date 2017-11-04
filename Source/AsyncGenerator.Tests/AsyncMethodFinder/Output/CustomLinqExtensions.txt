@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class CustomLinqExtensions
 	{
 
@@ -32,6 +29,11 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 		public async Task DoAverageAsync()
 		{
 			var item = await (Query<string>().AverageAsync(o => o.Length));
+		}
+
+		public async Task DoAverage2Async()
+		{
+			var item = await (Query<string>().AverageAsync(o => SimpleFile.Write<int>("")));
 		}
 	}
 }

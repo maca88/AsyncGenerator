@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.DocumentationComments
 	public class RemarksFixture : BaseFixture
 	{
 		[Test]
-		public void TestAddOrReplaceRemarksAfterTransformation()
+		public Task TestAddOrReplaceRemarksAfterTransformation()
 		{
-			var config = Configure(nameof(Remarks), p => p
+			return ReadonlyTest(nameof(Remarks), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -33,14 +34,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestRemoveRemarksAfterTransformation()
+		public Task TestRemoveRemarksAfterTransformation()
 		{
-			var config = Configure(nameof(Remarks), p => p
+			return ReadonlyTest(nameof(Remarks), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -58,14 +57,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestComplexRemarksAfterTransformation()
+		public Task TestComplexRemarksAfterTransformation()
 		{
-			var config = Configure(nameof(Remarks), p => p
+			return ReadonlyTest(nameof(Remarks), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -88,8 +85,6 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

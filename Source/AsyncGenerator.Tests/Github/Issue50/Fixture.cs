@@ -14,10 +14,10 @@ namespace AsyncGenerator.Tests.Github.Issue50
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test, Repeat(10)]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
 			var read = GetMethodName(o => o.Read);
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConcurrentRun()
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(IInterface) && symbol.Name == read ? MethodConversion.Ignore : MethodConversion.Smart)
@@ -49,8 +49,6 @@ namespace AsyncGenerator.Tests.Github.Issue50
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

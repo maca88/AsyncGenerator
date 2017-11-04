@@ -21,9 +21,6 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
 	using System.Threading;
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public void ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -90,6 +87,19 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 
 			await (SimpleFile.ReadAsync(cancellationToken));
 			return result;
+		}
+
+		public Task Read12Async()
+		{
+			try
+			{
+				TextWriter tw = new StringWriter();
+				return Runner.RunAsync(tw.Write);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 
 		public Task Read13Async()

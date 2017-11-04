@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -14,9 +15,9 @@ namespace AsyncGenerator.Tests.AbstractClass
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAsyncFromInterfaceAfterTransformation()
+		public Task TestAsyncFromInterfaceAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
@@ -31,14 +32,12 @@ namespace AsyncGenerator.Tests.AbstractClass
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAsyncFromImplementationAfterTransformation()
+		public Task TestAsyncFromImplementationAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(TestCase) ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
@@ -53,14 +52,12 @@ namespace AsyncGenerator.Tests.AbstractClass
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestIgnoreFromInterfaceAfterTransformation()
+		public Task TestIgnoreFromInterfaceAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) && symbol.Name == "Read" ? MethodConversion.Ignore : MethodConversion.Smart)
 				)
@@ -75,14 +72,12 @@ namespace AsyncGenerator.Tests.AbstractClass
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensAfterTransformation()
+		public Task TestCancellationTokensAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -98,8 +93,6 @@ namespace AsyncGenerator.Tests.AbstractClass
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

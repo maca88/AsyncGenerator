@@ -200,12 +200,21 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="AnonymousFunctions\Input\MethodWithDelegate.cs" />
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
-    <Compile Include="Github\Issue57\Fixture.cs" />
-    <Compile Include="Github\Issue57\Input\ExplicitInterface.cs" />
-    <Compile Include="Github\Issue57\Input\TestCase.cs" />
+    <Compile Include="ParallelFor\Fixture.cs" />
+    <Compile Include="ParallelFor\Input\NoLinq.cs" />
+    <Compile Include="ParallelFor\Input\TestCase.cs" />
+    <Compile Include="ParallelForEach\Fixture.cs" />
+    <Compile Include="ParallelForEach\Input\NoLinq.cs" />
+    <Compile Include="ParallelForEach\Input\TestCase.cs" />
+    <Compile Include="PrivateFields\Input\UsedByNestedFunction.cs" />
+    <Compile Include="PrivateMethods\Fixture.cs" />
+    <Compile Include="PrivateMethods\Input\ExplicitInterface.cs" />
+    <Compile Include="NewTypes\Input\MethodWithDelegate.cs" />
+    <Compile Include="PrivateMethods\Input\TestCase.cs" />
     <Compile Include="MethodReferences\Fixture.cs" />
     <Compile Include="MethodReferences\Input\ForwardCall.cs" />
     <Compile Include="Nameof\Fixture.cs" />
@@ -269,9 +278,9 @@
     <Compile Include="Exceptions\Fixture.cs" />
     <Compile Include="Exceptions\Input\TestCase.cs" />
     <Compile Include="ExternalProjects\NHibernate\Fixture.cs" />
-    <Compile Include="Fields\Fixture.cs" />
-    <Compile Include="Fields\Input\UnusedField.cs" />
-    <EmbeddedResource Include="Fields\Output\UnusedField.txt" />
+    <Compile Include="PrivateFields\Fixture.cs" />
+    <Compile Include="PrivateFields\Input\UnusedField.cs" />
+    <EmbeddedResource Include="PrivateFields\Output\UnusedField.txt" />
     <Compile Include="FileComments\Fixture.cs" />
     <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="Formatting\Fixture.cs" />
@@ -328,6 +337,7 @@
     <Compile Include="Preconditions\Fixture.cs" />
     <Compile Include="IfDirective\Fixture.cs" />
     <Compile Include="IfDirective\Input\TestCase.cs" />
+    <Compile Include="PrivateMethods\Input\UsedByNestedFunction.cs" />
     <Compile Include="RegionDirective\Fixture.cs" />
     <Compile Include="RegionDirective\Input\TestCase.cs" />
     <Compile Include="SimpleAnonymousFunctions\Fixture.cs" />
@@ -335,6 +345,8 @@
     <Compile Include="SimpleClassInheritance\Fixture.cs" />
     <Compile Include="SimpleReference\Fixture.cs" />
     <Compile Include="SimpleOmitAsync\Fixture.cs" />
+    <Compile Include="Sleep\Fixture.cs" />
+    <Compile Include="Sleep\Input\TestCase.cs" />
     <Compile Include="SynhronizedMethod\Fixture.cs" />
     <Compile Include="CastOmitAsync\Input\TestCase.cs" />
     <Compile Include="OverloadWithDifferentParameters\Input\TestCase.cs" />
@@ -811,24 +823,61 @@
     <EmbeddedResource Include="DocumentationComments\Output\CommentsNewTypeAddMissing.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Github\Issue57\Output\TestCase.txt" />
+    <EmbeddedResource Include="PrivateMethods\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Github\Issue57\Output\TestCaseWithToken.txt" />
+    <EmbeddedResource Include="PrivateMethods\Output\TestCaseWithToken.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Github\Issue57\Output\TestCaseNewType.txt" />
+    <EmbeddedResource Include="PrivateMethods\Output\TestCaseNewType.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Github\Issue57\Output\TestCaseNewTypeWithToken.txt" />
+    <EmbeddedResource Include="PrivateMethods\Output\TestCaseNewTypeWithToken.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Github\Issue57\Output\ExplicitInterface.txt" />
+    <EmbeddedResource Include="PrivateMethods\Output\ExplicitInterface.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
-      <Link>EnvironmentHelper.cs</Link>
-    </Compile>
+    <EmbeddedResource Include="Sleep\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sleep\Output\TestCaseTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PrivateFields\Output\UsedByNestedFunction.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PrivateMethods\Output\UsedByNestedFunction.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\TestCaseNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\NoLinq.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NewTypes\Output\MethodWithDelegate.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\MethodWithDelegate.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\TestCaseTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\NoLinq.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\TestCaseNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\TestCaseTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -11,7 +12,7 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var notAwaitedActionTask = GetMethodName(o => o.NotAwaitedActionTask);
 			var notAwaitedFunctionTask = GetMethodName(o => o.NotAwaitedFunctionTask);
@@ -23,8 +24,6 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 			var awaitedFunctionTask = GetMethodName(o => o.AwaitedFunctionTask);
 			var configuratedAwaitedActionTask = GetMethodName(o => o.ConfiguratedAwaitedActionTask);
 			var configuratedAwaitedFunctionTask = GetMethodName(o => o.ConfiguratedAwaitedFunctionTask);
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -70,7 +69,7 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				}
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
 					{
@@ -79,7 +78,6 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

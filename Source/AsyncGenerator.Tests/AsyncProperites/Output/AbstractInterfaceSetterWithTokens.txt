@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
 	using System.Threading;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestAbstractInterfaceSetter
 	{
 		protected Task TestAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -29,9 +26,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ConcreteAbstractInterfaceSetter : AbstractInterfaceSetter
 	{
 		public override Task SetSuccessAsync(bool value, CancellationToken cancellationToken = default(CancellationToken))
@@ -40,9 +34,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Concrete2AbstractInterfaceSetter : AbstractInterfaceSetter
 	{
 
@@ -53,17 +44,11 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractInterfaceSetter : IAbstractInterfaceSetter
 	{
 		public abstract Task SetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken));
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IAbstractInterfaceSetter
 	{
 		Task SetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken));

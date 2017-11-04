@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestAbstractInterfaceGetter
 	{
 		protected Task TestAsync()
@@ -28,9 +25,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ConcreteAbstractInterfaceGetter : AbstractInterfaceGetter
 	{
 		public override async Task<bool> GetSuccessAsync()
@@ -40,33 +34,21 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Concrete2AbstractInterfaceGetter : AbstractInterfaceGetter
 	{
 		public override Task<bool> GetSuccessAsync() => Task.FromResult<bool>(true);
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Concrete3AbstractInterfaceGetter : AbstractInterfaceGetter
 	{
 		public override Task<bool> GetSuccessAsync() => Task.FromResult<bool>(false);
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractInterfaceGetter : IAbstractInterfaceGetter
 	{
 		public abstract Task<bool> GetSuccessAsync();
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IAbstractInterfaceGetter
 	{
 		Task<bool> GetSuccessAsync();

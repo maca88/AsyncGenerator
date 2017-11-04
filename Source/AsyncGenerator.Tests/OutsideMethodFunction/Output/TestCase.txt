@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.OutsideMethodFunction.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 

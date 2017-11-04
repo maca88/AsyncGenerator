@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.NestedTypes
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AfterAnalyzation(result =>
@@ -27,14 +28,12 @@ namespace AsyncGenerator.Tests.NestedTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -50,14 +49,12 @@ namespace AsyncGenerator.Tests.NestedTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test, Repeat(5)]
-		public void TestMultipleNestedAfterTransformation()
+		public Task TestMultipleNestedAfterTransformation()
 		{
-			var config = Configure(nameof(MultipleNested), p => p
+			return ReadonlyTest(nameof(MultipleNested), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == "Nested1" ? TypeConversion.Ignore : TypeConversion.Unknown)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -73,8 +70,6 @@ namespace AsyncGenerator.Tests.NestedTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

@@ -24,5 +24,13 @@ namespace AsyncGenerator.TestCases
 		public static void RunWithParameter(Func<object, Task> func)
 		{
 		}
+
+		public static void RunWithIntParameter(Action<int> action)
+		{
+		}
+
+		public static void RunWithIntParameterAsync(Func<int, Task> func)
+		{
+		}
 	}
 }

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -65,8 +66,14 @@ namespace AsyncGenerator.Internal
 			{
 				return true;
 			}
-			if(fullNamespace == "System.Threading" && Types.Values
+			if (fullNamespace == "System.Threading" && Types.Values
 				.Any(o => o.GetSelfAndDescendantsTypeData().Any(t => t.MethodsAndAccessors.Any(m => m.CancellationTokenRequired))))
+			{
+				return true;
+			}
+			if (fullNamespace == "System.Threading.Tasks" && !ContainsType(nameof(Task)) &&
+			    Types.Values
+				    .Any(o => o.GetSelfAndDescendantsTypeData().Any(t => t.MethodsAndAccessors.Any(m => m.Conversion.HasFlag(MethodConversion.ToAsync)))))
 			{
 				return true;
 			}

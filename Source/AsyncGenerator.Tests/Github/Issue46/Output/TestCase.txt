@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.Github.Issue46.Input
 {
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase : InternalReader
 	{
 		public override Task<bool> ReadAsync()
@@ -28,9 +25,6 @@ namespace AsyncGenerator.Tests.Github.Issue46.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCaseWithExternal : ExternalReader
 	{
 		public override Task<bool> ReadAsync()
@@ -39,9 +33,6 @@ namespace AsyncGenerator.Tests.Github.Issue46.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCaseBaseCall : InternalReader
 	{
 		public override async Task<bool> ReadAsync()
@@ -51,9 +42,6 @@ namespace AsyncGenerator.Tests.Github.Issue46.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCaseBaseCallWithExternal : ExternalReader
 	{
 		public override async Task<bool> ReadAsync()

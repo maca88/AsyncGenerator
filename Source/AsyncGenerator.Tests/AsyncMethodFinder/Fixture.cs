@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Plugins;
@@ -14,9 +15,9 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestCustomLinqExtensionsAfterTransformation()
+		public Task TestCustomLinqExtensionsAfterTransformation()
 		{
-			var config = Configure(nameof(CustomLinqExtensions), p => p
+			return ReadonlyTest(nameof(CustomLinqExtensions), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AsyncExtensionMethods(e => e.ProjectFile("AsyncGenerator.Tests", "LinqExtensions.cs"))
@@ -32,14 +33,12 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNUnitAssertThatAfterTransformation()
+		public Task TestNUnitAssertThatAfterTransformation()
 		{
-			var config = Configure(nameof(NUnitAssertThat), p => p
+			return ReadonlyTest(nameof(NUnitAssertThat), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PreserveReturnType(o => true)
@@ -56,14 +55,12 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 				)
 				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestIgnoreSomeAsyncMethodsAfterTransformation()
+		public Task TestIgnoreSomeAsyncMethodsAfterTransformation()
 		{
-			var config = Configure(nameof(IgnoreSomeAsyncMethods), p => p
+			return ReadonlyTest(nameof(IgnoreSomeAsyncMethods), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.SearchForAsyncCounterparts(symbol => symbol.Name == "Write" ? false : true)
@@ -79,14 +76,12 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestGenericParameterAfterTransformation()
+		public Task TestGenericParameterAfterTransformation()
 		{
-			var config = Configure(nameof(GenericParameter), p => p
+			return ReadonlyTest(nameof(GenericParameter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -102,8 +97,6 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 	}
 }

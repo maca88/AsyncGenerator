@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -15,12 +16,10 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var read = GetMethodName(o => o.Read);
 			var readFile = GetMethodName<DerivedClass>(o => o.ReadFile);
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -36,7 +35,7 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 				Assert.AreEqual(MethodConversion.ToAsync, types[nameof(BaseClass)].Methods[0].Conversion);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
 					{
@@ -44,14 +43,13 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					})
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -66,14 +64,12 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensAfterTransformation()
+		public Task TestCancellationTokensAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -89,14 +85,12 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensCustomGenerationAfterTransformation()
+		public Task TestCancellationTokensCustomGenerationAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
@@ -120,8 +114,6 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

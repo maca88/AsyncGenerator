@@ -58,7 +58,26 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				if (funcResult.Conversion == MethodConversion.Ignore)
 				{
-					continue; // The ignored type shall be only annotated
+					continue; // Ignored functions shall be only annotated
+				}
+
+				foreach (var typeReference in funcResult.TypeReferences.Where(o => o.TypeAnalyzationResult.Conversion == TypeConversion.NewType))
+				{
+					var reference = typeReference.ReferenceLocation;
+					var refSpanStart = reference.Location.SourceSpan.Start - startRootFuncSpan;
+					var refSpanLength = reference.Location.SourceSpan.Length;
+					var nameNode = rootFuncNode.GetSimpleName(refSpanStart, refSpanLength, typeReference.IsCref);
+					var transformedNode = new TransformationResult(nameNode)
+					{
+						Transformed = nameNode.WithIdentifier(Identifier(nameNode.Identifier.ValueText + "Async").WithTriviaFrom(nameNode.Identifier))
+					};
+					transformResult.TransformedNodes.Add(transformedNode);
+					rootFuncNode = rootFuncNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
+				}
+
+				if (funcResult.Conversion == MethodConversion.Copy)
+				{
+					continue;
 				}
 
 				// TODO: unify with method in order to avoid duplicate code
@@ -85,19 +104,7 @@ namespace AsyncGenerator.Transformation.Internal
 						rootFuncNode = rootFuncNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 					}
 				}
-				foreach (var typeReference in funcResult.TypeReferences.Where(o => o.TypeAnalyzationResult.Conversion == TypeConversion.NewType))
-				{
-					var reference = typeReference.ReferenceLocation;
-					var refSpanStart = reference.Location.SourceSpan.Start - startRootFuncSpan;
-					var refSpanLength = reference.Location.SourceSpan.Length;
-					var nameNode = rootFuncNode.GetSimpleName(refSpanStart, refSpanLength, typeReference.IsCref);
-					var transformedNode = new TransformationResult(nameNode)
-					{
-						Transformed = nameNode.WithIdentifier(Identifier(nameNode.Identifier.ValueText + "Async").WithTriviaFrom(nameNode.Identifier))
-					};
-					transformResult.TransformedNodes.Add(transformedNode);
-					rootFuncNode = rootFuncNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
-				}
+				
 
 			}
 

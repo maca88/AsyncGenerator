@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -17,15 +18,13 @@ namespace AsyncGenerator.Tests.SimpleReference
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public async Task TestAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 			var callReadFile = GetMethodName(o => o.CallReadFile);
 			var callCallReadFile = GetMethodName(o => o.CallCallReadFile);
 			var read = GetMethodName(() => SimpleFile.Read());
 			var readAsync = GetMethodName(() => SimpleFile.ReadAsync());
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -64,22 +63,21 @@ namespace AsyncGenerator.Tests.SimpleReference
 			var methodConversions = new[] {MethodConversion.ToAsync, MethodConversion.Smart};
 			foreach (var methodConversion in methodConversions)
 			{
-				var config = Configure(p => p
-				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => symbol.Name == readFile ? methodConversion : MethodConversion.Unknown)
-					.AfterAnalyzation(AfterAnalyzation)
-				)
+				await ReadonlyTest(p => p
+					.ConfigureAnalyzation(a => a
+						.MethodConversion(symbol => symbol.Name == readFile ? methodConversion : MethodConversion.Unknown)
+						.AfterAnalyzation(AfterAnalyzation)
+					)
 				);
-				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 			}
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
 				)
@@ -94,20 +92,16 @@ namespace AsyncGenerator.Tests.SimpleReference
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensAfterAnalyzation()
+		public async Task TestCancellationTokensAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 			var callReadFile = GetMethodName(o => o.CallReadFile);
 			var callCallReadFile = GetMethodName(o => o.CallCallReadFile);
 			var read = GetMethodName(() => SimpleFile.Read());
 			var readAsync = GetMethodName(() => SimpleFile.ReadAsync());
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -163,25 +157,24 @@ namespace AsyncGenerator.Tests.SimpleReference
 			};
 			foreach (var methodConversion in methodConversions)
 			{
-				var config = Configure(p => p
-				.ConfigureAnalyzation(a => a
-					.MethodConversion(methodConversion)
-					.CancellationTokens(true)
-					.AfterAnalyzation(AfterAnalyzation)
-				)
+				await ReadonlyTest(p => p
+					.ConfigureAnalyzation(a => a
+						.MethodConversion(methodConversion)
+						.CancellationTokens(true)
+						.AfterAnalyzation(AfterAnalyzation)
+					)
 				);
-				Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 				Console.WriteLine("Passed");
 			}
 		}
 
 
 		[Test]
-		public void TestCancellationTokensAfterTransformation()
+		public Task TestCancellationTokensAfterTransformation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(true)
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Unknown)
@@ -196,16 +189,14 @@ namespace AsyncGenerator.Tests.SimpleReference
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokenParameterAfterTransformation()
+		public Task TestCancellationTokenParameterAfterTransformation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(ct => ct
 						.ParameterGeneration(symbol => MethodCancellationToken.Required))
@@ -221,16 +212,14 @@ namespace AsyncGenerator.Tests.SimpleReference
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokenOverloadAfterTransformation()
+		public Task TestCancellationTokenOverloadAfterTransformation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile);
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(ct => ct
 						.ParameterGeneration(symbol => MethodCancellationToken.Required | MethodCancellationToken.ForwardNone))
@@ -246,8 +235,6 @@ namespace AsyncGenerator.Tests.SimpleReference
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 	}

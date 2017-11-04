@@ -38,8 +38,7 @@ namespace AsyncGenerator.CommandLine
 					return 1;
 				}
 
-				var generator = new AsyncCodeGenerator();
-				generator.GenerateAsync(configuration, cancellationSource.Token)
+				AsyncCodeGenerator.GenerateAsync(configuration, cancellationSource.Token)
 					.GetAwaiter()
 					.GetResult();
 

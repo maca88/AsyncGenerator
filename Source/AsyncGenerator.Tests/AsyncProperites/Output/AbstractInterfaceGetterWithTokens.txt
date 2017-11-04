@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
 	using System.Threading;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestAbstractInterfaceGetter
 	{
 		protected Task TestAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -29,9 +26,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ConcreteAbstractInterfaceGetter : AbstractInterfaceGetter
 	{
 		public override async Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -41,33 +35,21 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Concrete2AbstractInterfaceGetter : AbstractInterfaceGetter
 	{
 		public override Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken)) => Task.FromResult<bool>(true);
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Concrete3AbstractInterfaceGetter : AbstractInterfaceGetter
 	{
 		public override Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken)) => Task.FromResult<bool>(false);
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractInterfaceGetter : IAbstractInterfaceGetter
 	{
 		public abstract Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken));
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IAbstractInterfaceGetter
 	{
 		Task<bool> GetSuccessAsync(CancellationToken cancellationToken = default(CancellationToken));

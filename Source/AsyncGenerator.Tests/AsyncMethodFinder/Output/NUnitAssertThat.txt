@@ -18,9 +18,6 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NUnitAssertThat
 	{
 		public void TestAsync()
@@ -42,6 +39,11 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 			Assert.That(() =>
 			{
 				return SimpleFile.ReadAsync();
+			}, Throws.Nothing);
+
+			Assert.That(() =>
+			{
+				Console.WriteLine("");
 			}, Throws.Nothing);
 
 			var result = false;

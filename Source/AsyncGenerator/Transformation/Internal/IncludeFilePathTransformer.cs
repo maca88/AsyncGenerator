@@ -78,7 +78,7 @@ namespace AsyncGenerator.Transformation.Internal
 			return rootNode;
 		}
 
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			_asyncFolderPath = configuration.TransformConfiguration.AsyncFolder;
 			return Task.CompletedTask;

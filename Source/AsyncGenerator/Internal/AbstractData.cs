@@ -42,9 +42,9 @@ namespace AsyncGenerator.Internal
 						return true;
 					}
 				}
-				else if (data is BaseMethodData baseMethodData)
+				else if (data is FunctionData functionData)
 				{
-					if (baseMethodData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Copy))
+					if (functionData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Copy))
 					{
 						return true;
 					}

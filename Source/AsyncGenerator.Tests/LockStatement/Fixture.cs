@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.LockStatement
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(Lock), p => p
+			return ReadonlyTest(nameof(Lock), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -31,8 +32,6 @@ namespace AsyncGenerator.Tests.LockStatement
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

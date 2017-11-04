@@ -31,10 +31,39 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 				SimpleFile.Read();
 			}, Throws.Nothing);
 
+			Assert.That(() =>
+			{
+				Console.WriteLine("");
+			}, Throws.Nothing);
+
 			var result = false;
 			Assert.That(() => result = SimpleFile.Write(""), Throws.Nothing);
 			Assert.IsTrue(result);
 
+		}
+
+		public void AssertThat()
+		{
+			Assert.That(() => Console.WriteLine(""), Throws.Nothing);
+			Assert.That(() => SimpleFile.Clear(), Throws.Nothing);
+			Assert.That(() => Read(), Throws.Nothing);
+		}
+
+		public void AssertThatWithReturn()
+		{
+			Assert.That(() => Console.Read(), Throws.Nothing);
+			Assert.That(() => SimpleFile.IsBusy(), Throws.Nothing);
+			Assert.That(() => Write(), Throws.Nothing);
+		}
+
+		private void Read()
+		{
+			
+		}
+
+		private bool Write()
+		{
+			return true;
 		}
 	}
 }

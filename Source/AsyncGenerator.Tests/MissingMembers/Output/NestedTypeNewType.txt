@@ -46,15 +46,9 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NestedType
 	{
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class NestedClass : INestedClass
 		{
 

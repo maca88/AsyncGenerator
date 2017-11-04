@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -15,9 +16,9 @@ namespace AsyncGenerator.Tests.Formatting
 	{
 		[Test]
 		[Repeat(5)]
-		public void TestAwaitAfterTransformation()
+		public Task TestAwaitAfterTransformation()
 		{
-			var config = Configure(nameof(Await), p => p
+			return ReadonlyTest(nameof(Await), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -32,14 +33,12 @@ namespace AsyncGenerator.Tests.Formatting
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAsyncAfterTransformation()
+		public Task TestAsyncAfterTransformation()
 		{
-			var config = Configure(nameof(Async), p => p
+			return ReadonlyTest(nameof(Async), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 					.PreserveReturnType(symbol => true)
@@ -55,14 +54,12 @@ namespace AsyncGenerator.Tests.Formatting
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestConfigureAwaitAfterTransformation()
+		public Task TestConfigureAwaitAfterTransformation()
 		{
-			var config = Configure(nameof(ConfigureAwait), p => p
+			return ReadonlyTest(nameof(ConfigureAwait), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PreserveReturnType(symbol => true)
@@ -79,14 +76,12 @@ namespace AsyncGenerator.Tests.Formatting
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestIndentationAfterTransformation()
+		public Task TestIndentationAfterTransformation()
 		{
-			var config = Configure(nameof(Indentation), p => p
+			return ReadonlyTest(nameof(Indentation), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PreserveReturnType(symbol => true)
@@ -105,14 +100,12 @@ namespace AsyncGenerator.Tests.Formatting
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestMethodBodyBracesAfterTransformation()
+		public Task TestMethodBodyBracesAfterTransformation()
 		{
-			var config = Configure(nameof(MethodBodyBraces), p => p
+			return ReadonlyTest(nameof(MethodBodyBraces), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 					.CallForwarding(true)
@@ -132,14 +125,12 @@ namespace AsyncGenerator.Tests.Formatting
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestMultilineParametersAfterTransformation()
+		public Task TestMultilineParametersAfterTransformation()
 		{
-			var config = Configure(nameof(MultilineParameters), p => p
+			return ReadonlyTest(nameof(MultilineParameters), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
@@ -157,8 +148,6 @@ namespace AsyncGenerator.Tests.Formatting
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 	}
 }

@@ -13,17 +13,11 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IClass
 	{
 		Task ReadFileAsync();
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class BaseClass : IClass
 	{
 		public virtual Task ReadFileAsync()
@@ -32,9 +26,6 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class DerivedClass : BaseClass
 	{
 		public override Task ReadFileAsync()
@@ -43,9 +34,6 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public Task ReadAsync()

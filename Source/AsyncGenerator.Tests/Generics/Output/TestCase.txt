@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.Generics.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public async Task<IList<IEnumerable<T>>> ComplexWriteAsync<T>(string path)
@@ -42,9 +39,6 @@ namespace AsyncGenerator.Tests.Generics.Input
 	}
 
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class GenericTestCase<T>
 	{
 
@@ -64,9 +58,6 @@ namespace AsyncGenerator.Tests.Generics.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class StringTestCase : GenericTestCase<string>
 	{
 		public Task<IList<IEnumerable<string>>> StringComplexWriteAsync(string path)

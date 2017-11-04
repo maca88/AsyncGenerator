@@ -24,7 +24,7 @@ namespace AsyncGenerator.Transformation.Internal
 		private bool _isEnabledForPartialTypes;
 		private bool _isEnabledForNewTypes;
 
-		public Task Initialize(Project project, IProjectConfiguration configuration)
+		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			_configuration = configuration.TransformConfiguration.DocumentationComments;
 			_isEnabledForPartialTypes =

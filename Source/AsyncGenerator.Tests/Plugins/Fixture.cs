@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -15,9 +16,9 @@ namespace AsyncGenerator.Tests.Plugins
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestEmptyRegionRemoverAfterTransformation()
+		public Task TestEmptyRegionRemoverAfterTransformation()
 		{
-			var config = Configure(nameof(EmptyRegions), p => p
+			return ReadonlyTest(nameof(EmptyRegions), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -33,14 +34,12 @@ namespace AsyncGenerator.Tests.Plugins
 				)
 				.RegisterPlugin<EmptyRegionRemover>()
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedEmptyRegionRemoverAfterTransformation()
+		public Task TestNestedEmptyRegionRemoverAfterTransformation()
 		{
-			var config = Configure(nameof(NestedEmptyRegions), p => p
+			return ReadonlyTest(nameof(NestedEmptyRegions), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -56,14 +55,12 @@ namespace AsyncGenerator.Tests.Plugins
 				)
 				.RegisterPlugin<EmptyRegionRemover>()
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestTransactionScopeAsyncFlowAfterTransformation()
+		public Task TestTransactionScopeAsyncFlowAfterTransformation()
 		{
-			var config = Configure(nameof(TransactionScopeAsyncFlow), p => p
+			return ReadonlyTest(nameof(TransactionScopeAsyncFlow), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -79,8 +76,6 @@ namespace AsyncGenerator.Tests.Plugins
 				)
 				.RegisterPlugin<TransactionScopeAsyncFlowAdder>()
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

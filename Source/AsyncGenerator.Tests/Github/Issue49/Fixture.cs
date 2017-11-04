@@ -14,9 +14,9 @@ namespace AsyncGenerator.Tests.Github.Issue49
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(TestCase) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -32,8 +32,6 @@ namespace AsyncGenerator.Tests.Github.Issue49
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

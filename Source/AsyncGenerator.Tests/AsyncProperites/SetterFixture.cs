@@ -13,9 +13,9 @@ namespace AsyncGenerator.Tests.AsyncProperites
 	public class SetterFixture : BaseFixture
 	{
 		[Test]
-		public void TestSetterAfterTransformation()
+		public Task TestSetterAfterTransformation()
 		{
-			var config = Configure(nameof(Setter), p => p
+			return ReadonlyTest(nameof(Setter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -31,14 +31,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestArrowSetterAfterTransformation()
+		public Task TestArrowSetterAfterTransformation()
 		{
-			var config = Configure(nameof(ArrowSetter), p => p
+			return ReadonlyTest(nameof(ArrowSetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -54,14 +52,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractSetterAfterTransformation()
+		public Task TestAbstractSetterAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractSetter), p => p
+			return ReadonlyTest(nameof(AbstractSetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -77,14 +73,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractSetterNewTypeAfterTransformation()
+		public Task TestAbstractSetterNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractSetter), p => p
+			return ReadonlyTest(nameof(AbstractSetter), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -101,14 +95,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractInterfaceSetterAfterTransformation()
+		public Task TestAbstractInterfaceSetterAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractInterfaceSetter), p => p
+			return ReadonlyTest(nameof(AbstractInterfaceSetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == "Test" ? MethodConversion.Smart : MethodConversion.Unknown)
 					.PropertyConversion(true)
@@ -124,14 +116,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractInterfaceSetterWithTokensAfterTransformation()
+		public Task TestAbstractInterfaceSetterWithTokensAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractInterfaceSetter), p => p
+			return ReadonlyTest(nameof(AbstractInterfaceSetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == "Test" ? MethodConversion.Smart : MethodConversion.Unknown)
 					.PropertyConversion(true)
@@ -148,8 +138,6 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

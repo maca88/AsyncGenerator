@@ -41,6 +41,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<IInvocationExpressionAnalyzer> InvocationExpressionAnalyzers { get; } = new List<IInvocationExpressionAnalyzer>();
 
+		public List<IBodyFunctionReferencePostAnalyzer> BodyFunctionReferencePostAnalyzers { get; } = new List<IBodyFunctionReferencePostAnalyzer>();
+
 		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 
 		public ProjectCancellationTokenConfiguration CancellationTokens { get; } = new ProjectCancellationTokenConfiguration();

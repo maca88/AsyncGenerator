@@ -17,9 +17,9 @@ namespace AsyncGenerator.Tests.Github.Issue46
 		#region Default
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.ScanForMissingAsyncMembers(true)
@@ -35,14 +35,12 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUnknownConversionAfterTransformation()
+		public Task TestUnknownConversionAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Unknown)
 					.ScanForMissingAsyncMembers(true)
@@ -58,15 +56,13 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestIgnoreConversionAfterTransformation()
+		public Task TestIgnoreConversionAfterTransformation()
 		{
 			var read = GetMethodName<TestCase>(o => o.Read());
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == read ? MethodConversion.Ignore : MethodConversion.Unknown)
 					.ScanForMissingAsyncMembers(true)
@@ -79,8 +75,6 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		#endregion
@@ -88,9 +82,9 @@ namespace AsyncGenerator.Tests.Github.Issue46
 		#region WithToken
 
 		[Test]
-		public void TestWithTokenAfterTransformation()
+		public Task TestWithTokenAfterTransformation()
 		{
-			var config = Configure(nameof(TestCaseWithToken), p => p
+			return ReadonlyTest(nameof(TestCaseWithToken), p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -107,14 +101,12 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestWithoutMissingMembersWithTokenAfterTransformation()
+		public Task TestWithoutMissingMembersWithTokenAfterTransformation()
 		{
-			var config = Configure(nameof(TestCaseWithToken), p => p
+			return ReadonlyTest(nameof(TestCaseWithToken), p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(true)
 					.MethodConversion(symbol => MethodConversion.Unknown)
@@ -127,14 +119,12 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUnknownConversionWithTokenAfterTransformation()
+		public Task TestUnknownConversionWithTokenAfterTransformation()
 		{
-			var config = Configure(nameof(TestCaseWithToken), p => p
+			return ReadonlyTest(nameof(TestCaseWithToken), p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(true)
 					.MethodConversion(symbol => MethodConversion.Unknown)
@@ -151,15 +141,13 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestIgnoreConversionWithTokenAfterTransformation()
+		public Task TestIgnoreConversionWithTokenAfterTransformation()
 		{
 			var read = GetMethodName<TestCaseWithToken>(o => o.Read());
-			var config = Configure(nameof(TestCaseWithToken), p => p
+			return ReadonlyTest(nameof(TestCaseWithToken), p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(true)
 					.MethodConversion(symbol => symbol.Name == read ? MethodConversion.Ignore : MethodConversion.Unknown)
@@ -173,8 +161,6 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		#endregion

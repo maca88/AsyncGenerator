@@ -21,14 +21,8 @@ namespace AsyncGenerator.Tests.IfDirective
 	#if TRACE
 	namespace Input
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Parent
 		{
-			/// <content>
-			/// Contains generated async methods
-			/// </content>
 			public partial class TestCase
 			{
 				#if ASYNC

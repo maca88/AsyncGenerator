@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestAbstractInterfaceSetter
 	{
 		protected Task TestAsync()
@@ -28,9 +25,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ConcreteAbstractInterfaceSetter : AbstractInterfaceSetter
 	{
 		public override Task SetSuccessAsync(bool value)
@@ -39,9 +33,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Concrete2AbstractInterfaceSetter : AbstractInterfaceSetter
 	{
 
@@ -52,17 +43,11 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractInterfaceSetter : IAbstractInterfaceSetter
 	{
 		public abstract Task SetSuccessAsync();
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IAbstractInterfaceSetter
 	{
 		Task SetSuccessAsync();

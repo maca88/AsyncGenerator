@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.TestCases;
@@ -14,9 +15,9 @@ namespace AsyncGenerator.Tests.MethodReferences
 	public class Fixture : BaseFixture
 	{
 		[Test, Repeat(10)]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(ForwardCall), p => p
+			return ReadonlyTest(nameof(ForwardCall), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.SearchForMethodReferences(symbol => !symbol.GetAttributes().Any(o => o.AttributeClass.Name == nameof(CustomAttribute)))
@@ -32,8 +33,6 @@ namespace AsyncGenerator.Tests.MethodReferences
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

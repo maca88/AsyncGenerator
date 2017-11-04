@@ -139,11 +139,12 @@
     <Compile Include="Analyzation\IAnalyzationResult.cs" />
     <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\IChildFunctionAnalyzationResult.cs" />
+    <Compile Include="Analyzation\IDelegateArgumentAnalyzationResult.cs" />
     <Compile Include="Analyzation\IDocumentAnalyzationResult.cs" />
     <Compile Include="Analyzation\IFieldAnalyzationResult.cs" />
     <Compile Include="Analyzation\IFieldVariableDeclaratorResult.cs" />
     <Compile Include="Analyzation\IFunctionAnalyzationResult.cs" />
-    <Compile Include="Analyzation\IFunctionReferenceAnalyzation.cs" />
+    <Compile Include="Analyzation\IBodyFunctionReferenceAnalyzation.cs" />
     <Compile Include="Analyzation\IFunctionReferenceAnalyzationResult.cs" />
     <Compile Include="Analyzation\ILockAnalyzationResult.cs" />
     <Compile Include="Analyzation\IMemberAnalyzationResult.cs" />
@@ -189,7 +190,9 @@
     <Compile Include="Plugins\AsyncExtensionMethodsFinder.cs" />
     <Compile Include="Plugins\EmptyRegionRemover.cs" />
     <Compile Include="Plugins\IAsyncCounterpartsFinder.cs" />
+    <Compile Include="Plugins\IBodyFunctionReferencePostAnalyzer.cs" />
     <Compile Include="Plugins\IDocumentTransformer.cs" />
+    <Compile Include="Plugins\IFunctionReferenceTransformer.cs" />
     <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
     <Compile Include="Plugins\IMethodOrAccessorTransformer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />

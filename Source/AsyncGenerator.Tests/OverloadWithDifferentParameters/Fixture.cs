@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -12,7 +13,7 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var readData = GetMethodName(o => o.ReadData(null));
 			var customReadData = GetMethodName(o => o.CustomReadData(null));
@@ -21,8 +22,6 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 			var dataReader = nameof(DataReader);
 			var customDataReader = nameof(CustomDataReader);
 			var overloadWithDiffParams = nameof(TestCase);
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -75,13 +74,12 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 	}
 }

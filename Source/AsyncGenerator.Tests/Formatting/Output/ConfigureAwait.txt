@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.Formatting.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ConfigureAwait
 	{
 		public async Task TestAsync()

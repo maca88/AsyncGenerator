@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -10,12 +11,12 @@ using AsyncGenerator.Tests.AnonymousFunctions.Input;
 namespace AsyncGenerator.Tests.AnonymousFunctions
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<TestCase>
+	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -31,14 +32,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPreserveReturnTypeAfterTransformation()
+		public Task TestPreserveReturnTypeAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -55,14 +54,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPreserveReturnTypeWithoutTokensAfterTransformation()
+		public Task TestPreserveReturnTypeWithoutTokensAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
@@ -80,8 +77,26 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
+		public Task TestMethodWithDelegateAfterTransformation()
+		{
+			return ReadonlyTest(nameof(MethodWithDelegate), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(MethodWithDelegate)), document.Transformed.ToFullString());
+					})
+				)
+			);
 		}
 	}
 }

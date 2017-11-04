@@ -342,6 +342,10 @@ namespace AsyncGenerator.Extensions.Internal
 		internal static bool IsInsideNameOf(this SimpleNameSyntax node)
 		{
 			var parent = node.Parent;
+			if (parent.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+			{
+				parent = parent.Parent;
+			}
 			return parent.IsKind(SyntaxKind.Argument) &&
 			       parent.Parent.Parent is InvocationExpressionSyntax invocation &&
 			       invocation.Expression.ToString() == "nameof";
@@ -481,6 +485,25 @@ namespace AsyncGenerator.Extensions.Internal
 				}
 			}
 			return node;
+		}
+
+		internal static T ReplaceNestedNodes<T, TRoot, TChild>(this T node, TRoot rootNode, TChild oldChildNode, TChild newChildNode,
+			Func<TRoot, TRoot> modifyRootNodeFunc = null,
+			Func<TChild, TChild> modifyChildNodeFunc = null)
+			where T : SyntaxNode
+			where TRoot : SyntaxNode
+			where TChild : SyntaxNode
+		{
+			if (rootNode == null)
+			{
+				return node
+					.ReplaceNode(oldChildNode, modifyChildNodeFunc != null ? modifyChildNodeFunc(newChildNode) : newChildNode);
+			}
+			return node
+				.ReplaceNode(rootNode, modifyRootNodeFunc != null
+					? modifyRootNodeFunc(rootNode.ReplaceNode(oldChildNode, newChildNode))
+					: rootNode.ReplaceNode(oldChildNode, newChildNode)
+				);
 		}
 
 		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node,
@@ -790,7 +813,7 @@ namespace AsyncGenerator.Extensions.Internal
 		}
 
 		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(this ExpressionSyntax expression, IMethodSymbol delegateSymbol,
-			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc)
+			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc = null)
 		{
 			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			var parameters = delegateSymbol.Parameters
@@ -805,7 +828,7 @@ namespace AsyncGenerator.Extensions.Internal
 					: new SyntaxNodeOrToken[] { comma, o });
 			var invocation = InvocationExpression(expression)
 				.WithArgumentList(ArgumentList(SeparatedList<ArgumentSyntax>(arguments)));
-			invocation = invocationModifierFunc(invocation);
+			invocation = invocationModifierFunc?.Invoke(invocation) ?? invocation;
 			CSharpSyntaxNode body = invocation;
 			if (returnTypeMismatch)
 			{

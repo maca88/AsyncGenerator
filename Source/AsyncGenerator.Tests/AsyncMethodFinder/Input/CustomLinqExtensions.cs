@@ -25,5 +25,10 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 		{
 			var item = Query<string>().Average(o => o.Length);
 		}
+
+		public void DoAverage2()
+		{
+			var item = Query<string>().Average(o => SimpleFile.Write<int>(""));
+		}
 	}
 }
