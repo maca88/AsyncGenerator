@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.CSharpFeatures
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestMethodConditionalAccessExpressionAfterTransformation()
+		public Task TestMethodConditionalAccessExpressionAfterTransformation()
 		{
-			var config = Configure(nameof(MethodConditionalAccessExpression), p => p
+			return ReadonlyTest(nameof(MethodConditionalAccessExpression), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -30,14 +31,12 @@ namespace AsyncGenerator.Tests.CSharpFeatures
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCustomEnumerableAfterTransformation()
+		public Task TestCustomEnumerableAfterTransformation()
 		{
-			var config = Configure(nameof(CustomEnumerable), p => p
+			return ReadonlyTest(nameof(CustomEnumerable), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -52,8 +51,6 @@ namespace AsyncGenerator.Tests.CSharpFeatures
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

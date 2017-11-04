@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.NewTypes
 	public class Fixture : BaseFixture<NestedClasses>
 	{
 		[Test]
-		public void TestNestedClassesAfterTransformation()
+		public Task TestNestedClassesAfterTransformation()
 		{
-			var config = Configure(nameof(NestedClasses), p => p
+			return ReadonlyTest(nameof(NestedClasses), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NestedClasses) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol =>
@@ -36,14 +37,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedClassesWithTokensAfterTransformation()
+		public Task TestNestedClassesWithTokensAfterTransformation()
 		{
-			var config = Configure(nameof(NestedClasses), p => p
+			return ReadonlyTest(nameof(NestedClasses), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NestedClasses) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.CancellationTokens(true)
@@ -65,14 +64,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedClassesWithTokensForNestedClassAfterTransformation()
+		public Task TestNestedClassesWithTokensForNestedClassAfterTransformation()
 		{
-			var config = Configure(nameof(NestedClasses), p => p
+			return ReadonlyTest(nameof(NestedClasses), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NestedClasses) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.CancellationTokens(t => t
@@ -95,14 +92,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNonAsyncNewTypeAfterTransformation()
+		public Task TestNonAsyncNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(NonAsync), p => p
+			return ReadonlyTest(nameof(NonAsync), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NonAsync) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -115,14 +110,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestInheritanceNewTypeAfterTransformation()
+		public Task TestInheritanceNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(Inheritance), p => p
+			return ReadonlyTest(nameof(Inheritance), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -138,14 +131,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestInheritanceIgnoreBaseAfterTransformation()
+		public Task TestInheritanceIgnoreBaseAfterTransformation()
 		{
-			var config = Configure(nameof(Inheritance), p => p
+			return ReadonlyTest(nameof(Inheritance), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol =>
 					{
@@ -164,14 +155,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestInheritanceIgnoreBaseWithTokensAfterTransformation()
+		public Task TestInheritanceIgnoreBaseWithTokensAfterTransformation()
 		{
-			var config = Configure(nameof(Inheritance), p => p
+			return ReadonlyTest(nameof(Inheritance), p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(true)
 					.TypeConversion(symbol =>
@@ -191,14 +180,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestMissingMembersAfterTransformation()
+		public Task TestMissingMembersAfterTransformation()
 		{
-			var config = Configure(nameof(MissingMembers), o => o
+			return ReadonlyTest(nameof(MissingMembers), o => o
 				.ConfigureParsing(p => p
 					.AddPreprocessorSymbolName("TEST")
 				)
@@ -223,14 +210,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedCopyAfterTransformation()
+		public Task TestNestedCopyAfterTransformation()
 		{
-			var config = Configure(nameof(NestedCopy), p => p
+			return ReadonlyTest(nameof(NestedCopy), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(AbstractNestedCopy) ? TypeConversion.Ignore : TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -246,14 +231,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test, Repeat(10)]
-		public void TestNestedCopyIgnoreReadMethodAfterTransformation()
+		public Task TestNestedCopyIgnoreReadMethodAfterTransformation()
 		{
-			var config = Configure(nameof(NestedCopy), p => p
+			return ReadonlyTest(nameof(NestedCopy), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(AbstractNestedCopy) ? TypeConversion.Ignore : TypeConversion.NewType)
 					.MethodConversion(symbol => symbol.Name == "Read" ? MethodConversion.Ignore : MethodConversion.Smart)
@@ -269,14 +252,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedCopyCopyReadMethodAfterTransformation()
+		public Task TestNestedCopyCopyReadMethodAfterTransformation()
 		{
-			var config = Configure(nameof(NestedCopy), p => p
+			return ReadonlyTest(nameof(NestedCopy), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(AbstractNestedCopy) ? TypeConversion.Ignore : TypeConversion.NewType)
 					.MethodConversion(symbol => symbol.Name == "Read" ? MethodConversion.Copy : MethodConversion.Smart)
@@ -292,14 +273,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestDerivedClassesAfterTransformation()
+		public Task TestDerivedClassesAfterTransformation()
 		{
-			var config = Configure(nameof(DerivedClasses), p => p
+			return ReadonlyTest(nameof(DerivedClasses), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -315,14 +294,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestDerivedClassesBaseNewTypeAfterTransformation()
+		public Task TestDerivedClassesBaseNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(DerivedClasses), p => p
+			return ReadonlyTest(nameof(DerivedClasses), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(BaseClass) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -338,14 +315,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPartialDerivedClassesAfterTransformation()
+		public Task TestPartialDerivedClassesAfterTransformation()
 		{
-			var config = Configure(nameof(DerivedClasses), p => p
+			return ReadonlyTest(nameof(DerivedClasses), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -360,14 +335,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestDerivedAsyncClassAfterTransformation()
+		public Task TestDerivedAsyncClassAfterTransformation()
 		{
-			var config = Configure(nameof(DerivedAsyncClass), p => p
+			return ReadonlyTest(nameof(DerivedAsyncClass), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -383,14 +356,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestSubNestedClassAfterTransformation()
+		public Task TestSubNestedClassAfterTransformation()
 		{
-			var config = Configure(nameof(SubNestedClass), p => p
+			return ReadonlyTest(nameof(SubNestedClass), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(SubNestedClass) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -406,14 +377,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedDerivedAsyncAfterTransformation()
+		public Task TestNestedDerivedAsyncAfterTransformation()
 		{
-			var config = Configure(nameof(NestedDerivedAsync), p => p
+			return ReadonlyTest(nameof(NestedDerivedAsync), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NestedDerivedAsync) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol => symbol.Name == "Write" ? MethodConversion.Smart : MethodConversion.Unknown)
@@ -430,14 +399,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedDerivedAsyncIgnoreAfterTransformation()
+		public Task TestNestedDerivedAsyncIgnoreAfterTransformation()
 		{
-			var config = Configure(nameof(NestedDerivedAsync), p => p
+			return ReadonlyTest(nameof(NestedDerivedAsync), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NestedDerivedAsync) ? TypeConversion.Ignore : TypeConversion.Unknown)
 					.MethodConversion(symbol => symbol.Name == "Write" ? MethodConversion.Smart : MethodConversion.Unknown)
@@ -451,14 +418,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNestedDerivedAsyncWithTokenAfterTransformation()
+		public Task TestNestedDerivedAsyncWithTokenAfterTransformation()
 		{
-			var config = Configure(nameof(NestedDerivedAsyncWithToken), p => p
+			return ReadonlyTest(nameof(NestedDerivedAsyncWithToken), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => symbol.Name == nameof(NestedDerivedAsyncWithToken) ? TypeConversion.NewType : TypeConversion.Unknown)
 					.MethodConversion(symbol => symbol.Name == "Write" ? MethodConversion.Smart : MethodConversion.Unknown)
@@ -476,14 +441,12 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestMethodWithDelegateAfterTransformation()
+		public Task TestMethodWithDelegateAfterTransformation()
 		{
-			var config = Configure(nameof(MethodWithDelegate), p => p
+			return ReadonlyTest(nameof(MethodWithDelegate), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => TypeConversion.NewType)
@@ -500,8 +463,6 @@ namespace AsyncGenerator.Tests.NewTypes
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

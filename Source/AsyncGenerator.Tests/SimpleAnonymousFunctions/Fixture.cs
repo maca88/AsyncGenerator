@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -11,7 +12,7 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var readFile = GetMethodName(o => o.ReadFile());
 			var declareAction = GetMethodName(o => o.DeclareAction());
@@ -19,8 +20,6 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 			var declareNamedDelegate = GetMethodName(o => o.DeclareNamedDelegate());
 			var returnDelegate = GetMethodName(o => o.ReturnDelegate());
 			var argumentAction = GetMethodName(o => o.ArgumentAction);
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -58,13 +57,12 @@ namespace AsyncGenerator.Tests.SimpleAnonymousFunctions
 				Assert.IsTrue(readFileMethod.ReferencedBy.Any(o => o == method.ChildFunctions[0]));
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == readFile ? MethodConversion.ToAsync : MethodConversion.Smart)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 	}
 }

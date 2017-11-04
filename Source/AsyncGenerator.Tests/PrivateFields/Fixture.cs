@@ -1,4 +1,5 @@
-﻿using AsyncGenerator.Core;
+﻿using System.Threading.Tasks;
+using AsyncGenerator.Core;
 using AsyncGenerator.Tests.PrivateFields.Input;
 using NUnit.Framework;
 
@@ -8,9 +9,9 @@ namespace AsyncGenerator.Tests.PrivateFields
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestUnusedFieldAfterTransformation()
+		public Task TestUnusedFieldAfterTransformation()
 		{
-			var config = Configure(nameof(UnusedField), p => p
+			return ReadonlyTest(nameof(UnusedField), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -26,14 +27,12 @@ namespace AsyncGenerator.Tests.PrivateFields
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUsedByNestedFunctionAfterTransformation()
+		public Task TestUsedByNestedFunctionAfterTransformation()
 		{
-			var config = Configure(nameof(UsedByNestedFunction), p => p
+			return ReadonlyTest(nameof(UsedByNestedFunction), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -49,8 +48,6 @@ namespace AsyncGenerator.Tests.PrivateFields
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

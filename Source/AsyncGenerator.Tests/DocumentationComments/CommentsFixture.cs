@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Tests.DocumentationComments.Input;
 using NUnit.Framework;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.DocumentationComments
 	public class CommentsFixture : BaseFixture
 	{
 		[Test]
-		public void TestPartialTypeAfterTransformation()
+		public Task TestPartialTypeAfterTransformation()
 		{
-			var config = Configure(nameof(Comments), p => p
+			return ReadonlyTest(nameof(Comments), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -30,14 +31,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPartialTypeReplaceAfterTransformation()
+		public Task TestPartialTypeReplaceAfterTransformation()
 		{
-			var config = Configure(nameof(Comments), p => p
+			return ReadonlyTest(nameof(Comments), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -61,14 +60,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNewTypeAfterTransformation()
+		public Task TestNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(Comments), p => p
+			return ReadonlyTest(nameof(Comments), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => symbol.Name == nameof(Comments) ? TypeConversion.NewType : TypeConversion.Unknown)
@@ -84,14 +81,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNewTypeReplaceAfterTransformation()
+		public Task TestNewTypeReplaceAfterTransformation()
 		{
-			var config = Configure(nameof(Comments), p => p
+			return ReadonlyTest(nameof(Comments), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => symbol.Name == nameof(Comments) ? TypeConversion.NewType : TypeConversion.Unknown)
@@ -116,14 +111,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNewTypeRemoveAfterTransformation()
+		public Task TestNewTypeRemoveAfterTransformation()
 		{
-			var config = Configure(nameof(Comments), p => p
+			return ReadonlyTest(nameof(Comments), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => symbol.Name == nameof(Comments) ? TypeConversion.NewType : TypeConversion.Unknown)
@@ -142,14 +135,12 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNewTypeAddMissingAfterTransformation()
+		public Task TestNewTypeAddMissingAfterTransformation()
 		{
-			var config = Configure(nameof(Comments), p => p
+			return ReadonlyTest(nameof(Comments), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => symbol.Name == nameof(Comments) ? TypeConversion.NewType : TypeConversion.Unknown)
@@ -176,8 +167,6 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

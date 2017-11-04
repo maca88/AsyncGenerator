@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -14,13 +15,11 @@ namespace AsyncGenerator.Tests.Preconditions
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var divide = GetMethodName(o => o.Divide(0, 0));
 			var divideShort = GetMethodName(o => o.DivideShort(0, 0));
 			var readFile = GetMethodName(o => o.ReadFile(null));
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -48,19 +47,18 @@ namespace AsyncGenerator.Tests.Preconditions
 				}
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -74,14 +72,12 @@ namespace AsyncGenerator.Tests.Preconditions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestLocalFunctionAfterTransformation()
+		public Task TestLocalFunctionAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -96,18 +92,14 @@ namespace AsyncGenerator.Tests.Preconditions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCustomPreconditionCheckerAfterAnalyzation()
+		public Task TestCustomPreconditionCheckerAfterAnalyzation()
 		{
 			var divide = GetMethodName(o => o.Divide(0, 0));
 			var divideShort = GetMethodName(o => o.DivideShort(0, 0));
 			var readFile = GetMethodName(o => o.ReadFile(null));
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -135,7 +127,7 @@ namespace AsyncGenerator.Tests.Preconditions
 				}
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.IsPrecondition((statement, semanticModel) =>
@@ -151,14 +143,13 @@ namespace AsyncGenerator.Tests.Preconditions
 					})
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 
 		[Test]
-		public void TestCustomPreconditionCheckerAfterTransformation()
+		public Task TestCustomPreconditionCheckerAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.IsPrecondition((statement, semanticModel) =>
@@ -183,14 +174,12 @@ namespace AsyncGenerator.Tests.Preconditions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensAfterTransformation()
+		public Task TestCancellationTokensAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -205,14 +194,12 @@ namespace AsyncGenerator.Tests.Preconditions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensLocalFunctionsAfterTransformation()
+		public Task TestCancellationTokensLocalFunctionsAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -228,8 +215,6 @@ namespace AsyncGenerator.Tests.Preconditions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

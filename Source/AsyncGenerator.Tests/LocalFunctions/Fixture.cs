@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -13,12 +14,10 @@ namespace AsyncGenerator.Tests.LocalFunctions
 	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var simple = GetMethodName(o => o.Simple);
 			var expression = GetMethodName(o => o.Expression);
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -33,13 +32,12 @@ namespace AsyncGenerator.Tests.LocalFunctions
 				Assert.AreEqual(1, methods[expression].ChildFunctions.Count);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

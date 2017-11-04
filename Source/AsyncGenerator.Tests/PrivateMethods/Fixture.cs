@@ -16,9 +16,9 @@ namespace AsyncGenerator.Tests.PrivateMethods
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -34,14 +34,12 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUnknownAfterTransformation()
+		public Task TestUnknownAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == "ReadInternal" ? MethodConversion.Unknown : MethodConversion.Smart)
 				)
@@ -57,14 +55,12 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestWithTokenAfterTransformation()
+		public Task TestWithTokenAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -81,14 +77,12 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNewTypeAfterTransformation()
+		public Task TestNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => TypeConversion.NewType)
@@ -105,14 +99,12 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestNewTypeWithTokenAfterTransformation()
+		public Task TestNewTypeWithTokenAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => TypeConversion.NewType)
@@ -130,14 +122,12 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void ExplicitInterfaceAfterTransformation()
+		public Task ExplicitInterfaceAfterTransformation()
 		{
-			var config = Configure(nameof(ExplicitInterface), p => p
+			return ReadonlyTest(nameof(ExplicitInterface), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -153,14 +143,12 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUsedByNestedFunctionAfterTransformation()
+		public Task TestUsedByNestedFunctionAfterTransformation()
 		{
-			var config = Configure(nameof(UsedByNestedFunction), p => p
+			return ReadonlyTest(nameof(UsedByNestedFunction), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -176,8 +164,6 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

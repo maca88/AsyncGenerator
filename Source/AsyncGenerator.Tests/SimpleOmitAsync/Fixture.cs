@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -14,7 +15,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var simpleReturn = GetMethodName(o => o.SimpleReturn());
 			var doubleCallReturn = GetMethodName(o => o.DoubleCallReturn());
@@ -31,8 +32,6 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var returnDefaultString = GetMethodName(o => o.SimpleReturnDefaultOfString());
 			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
 			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -166,19 +165,20 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
-						? MethodConversion.ToAsync
-						: MethodConversion.Smart)
+					.MethodConversion(symbol =>
+						symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString ||
+						symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
+							? MethodConversion.ToAsync
+							: MethodConversion.Smart)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
 			var syncReturn = GetMethodName(o => o.SyncReturn());
 			var returnString = GetMethodName(o => o.SimpleReturnString());
@@ -186,7 +186,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
 			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
 						? MethodConversion.ToAsync
@@ -202,12 +202,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestConfigureAwaitAfterTransformation()
+		public Task TestConfigureAwaitAfterTransformation()
 		{
 			var syncReturn = GetMethodName(o => o.SyncReturn());
 			var returnString = GetMethodName(o => o.SimpleReturnString());
@@ -215,7 +213,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
 			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
 						? MethodConversion.ToAsync
@@ -232,12 +230,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUseCancellationTokenOverloadAfterTransformation()
+		public Task TestUseCancellationTokenOverloadAfterTransformation()
 		{
 			var syncReturn = GetMethodName(o => o.SyncReturn());
 			var returnString = GetMethodName(o => o.SimpleReturnString());
@@ -245,7 +241,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 			var returnDecimal = GetMethodName(o => o.SimpleReturnDecimal());
 			var returnDecimalConstructor = GetMethodName(o => o.ReturnDecimalConstructor());
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReturn || symbol.Name == returnString || symbol.Name == returnDefaultString || symbol.Name == returnDecimal || symbol.Name == returnDecimalConstructor
 						? MethodConversion.ToAsync
@@ -262,8 +258,6 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

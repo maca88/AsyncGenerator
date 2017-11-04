@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -12,7 +13,7 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var preconditionReturn = GetMethodName(o => o.PreconditionReturn(null));
 			var preconditionVoid = GetMethodName(o => o.PreconditionVoid(null));
@@ -20,8 +21,6 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 			var syncPrecondition = GetMethodName(o => o.SyncPrecondition(null));
 			var readFile = GetMethodName(o => o.ReadFile());
 			var syncReadFile = GetMethodName(o => o.SyncReadFile());
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -79,20 +78,19 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				Assert.AreEqual(0, method.FunctionReferences.Count);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => symbol.Name == syncReadFile ?  MethodConversion.Ignore : MethodConversion.ToAsync)
+					.MethodConversion(symbol => symbol.Name == syncReadFile ? MethodConversion.Ignore : MethodConversion.ToAsync)
 					.AfterAnalyzation(AfterAnalyzation)
 				)
-				);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			);
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
 			var syncReadFile = GetMethodName(o => o.SyncReadFile());
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReadFile ? MethodConversion.Ignore : MethodConversion.ToAsync)
 				)
@@ -106,15 +104,13 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestLocalFunctionsAfterTransformation()
+		public Task TestLocalFunctionsAfterTransformation()
 		{
 			var syncReadFile = GetMethodName(o => o.SyncReadFile());
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == syncReadFile ? MethodConversion.Ignore : MethodConversion.ToAsync)
 				)
@@ -129,8 +125,6 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

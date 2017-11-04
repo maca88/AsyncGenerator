@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.PartialCompilation
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestCtorAfterTransformation()
+		public Task TestCtorAfterTransformation()
 		{
-			var config = Configure(nameof(Ctor), o => o
+			return ReadonlyTest(nameof(Ctor), o => o
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -33,14 +34,12 @@ namespace AsyncGenerator.Tests.PartialCompilation
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCtorMultiOverloadsAfterTransformation()
+		public Task TestCtorMultiOverloadsAfterTransformation()
 		{
-			var config = Configure(nameof(CtorMultiOverloads), o => o
+			return ReadonlyTest(nameof(CtorMultiOverloads), o => o
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -58,14 +57,12 @@ namespace AsyncGenerator.Tests.PartialCompilation
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestGenericCtorMultiOverloadsAfterTransformation()
+		public Task TestGenericCtorMultiOverloadsAfterTransformation()
 		{
-			var config = Configure(nameof(GenericCtorMultiOverloads), o => o
+			return ReadonlyTest(nameof(GenericCtorMultiOverloads), o => o
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -83,14 +80,12 @@ namespace AsyncGenerator.Tests.PartialCompilation
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestGenericCtorMultiOverloadsDiffReturnTypeAfterTransformation()
+		public Task TestGenericCtorMultiOverloadsDiffReturnTypeAfterTransformation()
 		{
-			var config = Configure(nameof(GenericCtorMultiOverloadsDiffReturnType), o => o
+			return ReadonlyTest(nameof(GenericCtorMultiOverloadsDiffReturnType), o => o
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -108,8 +103,6 @@ namespace AsyncGenerator.Tests.PartialCompilation
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

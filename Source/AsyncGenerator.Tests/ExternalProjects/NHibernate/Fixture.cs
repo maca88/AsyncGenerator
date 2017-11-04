@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core;
@@ -24,58 +25,54 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 	{
 		[Explicit]
 		[Test]
-		public void TestXmlConfigurationAfterTransformation()
+		public Task TestXmlConfigurationAfterTransformation()
 		{
 			var asm = Assembly.GetExecutingAssembly();
 			var resource = $"{GetType().Namespace}.Configuration.xml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromStream<XmlFileConfigurator>(stream);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
 		[Explicit]
 		[Test]
-		public void TestYamlSolutionConfigurationAfterTransformation()
+		public Task TestYamlSolutionConfigurationAfterTransformation()
 		{
 			var asm = Assembly.GetExecutingAssembly();
 			var resource = $"{GetType().Namespace}.SolutionConfiguration.yml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromStream<YamlFileConfigurator>(stream);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
 		[Explicit]
 		[Test]
-		public void TestYamlProjectConfigurationAfterTransformation()
+		public Task TestYamlProjectConfigurationAfterTransformation()
 		{
 			var asm = Assembly.GetExecutingAssembly();
 			var resource = $"{GetType().Namespace}.ProjectConfiguration.yml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromStream<YamlFileConfigurator>(stream);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
 		[Explicit]
 		[Test]
-		public void TestYamlAfterTransformation()
+		public Task TestYamlAfterTransformation()
 		{
 			var configPath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate","Source","src","AsyncGenerator.yml"));
 			
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromFile<YamlFileConfigurator>(configPath);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
 		[Explicit]
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
 			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate", "Source", "src", "NHibernate.sln"));
 			
@@ -202,8 +199,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 					)
 					.ApplyChanges(true)
 				);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
 		static string GetMethodSummary(IMethodSymbol symbol)

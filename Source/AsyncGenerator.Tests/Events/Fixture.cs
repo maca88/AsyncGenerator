@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.Events
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAddRemoveEventAfterTransformation()
+		public Task TestAddRemoveEventAfterTransformation()
 		{
-			var config = Configure(nameof(AddRemoveEvent),p => p
+			return ReadonlyTest(nameof(AddRemoveEvent),p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -30,8 +31,6 @@ namespace AsyncGenerator.Tests.Events
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

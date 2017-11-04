@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,10 +14,10 @@ namespace AsyncGenerator.Tests.CallForwarding
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
 			var syncMethod = GetMethodName(o => o.SyncMethod);
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 					.CallForwarding(symbol => symbol.Name != syncMethod)
@@ -32,8 +33,6 @@ namespace AsyncGenerator.Tests.CallForwarding
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

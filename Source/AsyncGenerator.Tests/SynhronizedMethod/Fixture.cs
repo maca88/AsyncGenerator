@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
@@ -11,12 +12,10 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var noOptimizationSynhronized = GetMethodName(o => o.NoOptimizationSynhronized);
 			var synhronized = GetMethodName(o => o.Synhronized);
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -29,7 +28,7 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 				Assert.IsTrue(methods[synhronized].MustRunSynchronized);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 					.AfterAnalyzation(AfterAnalyzation)
@@ -38,13 +37,12 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 					.AsyncLock("Test.MyAsyncLock", "LockAsync")
 				)
 			);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 				)
@@ -60,8 +58,6 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

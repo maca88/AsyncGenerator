@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -31,14 +32,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPreserveReturnTypeAfterTransformation()
+		public Task TestPreserveReturnTypeAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -55,14 +54,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPreserveReturnTypeWithoutTokensAfterTransformation()
+		public Task TestPreserveReturnTypeWithoutTokensAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
@@ -80,14 +77,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestMethodWithDelegateAfterTransformation()
+		public Task TestMethodWithDelegateAfterTransformation()
 		{
-			var config = Configure(nameof(MethodWithDelegate), p => p
+			return ReadonlyTest(nameof(MethodWithDelegate), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -102,8 +97,6 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

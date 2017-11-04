@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -12,12 +13,10 @@ namespace AsyncGenerator.Tests.CustomReturnType
 	public class Fixture : BaseFixture<Input.TestCase>
 	{
 		[Test]
-		public void TestAfterAnalyzation()
+		public Task TestAfterAnalyzation()
 		{
 			var getData = GetMethodName(o => o.GetData());
 			var getDataAsync = GetMethodName(o => o.GetDataAsync());
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -32,7 +31,7 @@ namespace AsyncGenerator.Tests.CustomReturnType
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
 					{
@@ -41,16 +40,13 @@ namespace AsyncGenerator.Tests.CustomReturnType
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensAfterAnalyzation()
+		public Task TestCancellationTokensAfterAnalyzation()
 		{
 			var getData = GetMethodName(o => o.GetData());
 			var getDataAsync = GetMethodName(o => o.GetDataAsync());
-
-			var generator = new AsyncCodeGenerator();
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
@@ -65,7 +61,7 @@ namespace AsyncGenerator.Tests.CustomReturnType
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
 			}
 
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(t => t
 						.ParameterGeneration(symbol => MethodCancellationToken.Required | MethodCancellationToken.ForwardNone))
@@ -76,7 +72,6 @@ namespace AsyncGenerator.Tests.CustomReturnType
 					.AfterAnalyzation(AfterAnalyzation)
 				)
 			);
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

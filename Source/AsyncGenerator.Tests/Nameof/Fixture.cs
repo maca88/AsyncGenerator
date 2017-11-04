@@ -1,4 +1,5 @@
-﻿using AsyncGenerator.Core;
+﻿using System.Threading.Tasks;
+using AsyncGenerator.Core;
 using AsyncGenerator.Tests.Nameof.Input;
 using NUnit.Framework;
 
@@ -8,9 +9,9 @@ namespace AsyncGenerator.Tests.Nameof
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestNewTypeAfterTransformation()
+		public Task TestNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(Method), p => p
+			return ReadonlyTest(nameof(Method), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.TypeConversion(symbol => TypeConversion.NewType)
@@ -26,14 +27,12 @@ namespace AsyncGenerator.Tests.Nameof
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestPartialAfterTransformation()
+		public Task TestPartialAfterTransformation()
 		{
-			var config = Configure(nameof(Method), p => p
+			return ReadonlyTest(nameof(Method), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -48,8 +47,6 @@ namespace AsyncGenerator.Tests.Nameof
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

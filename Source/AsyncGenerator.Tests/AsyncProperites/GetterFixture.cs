@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.AsyncProperites
 	public class GetterFixture : BaseFixture
 	{
 		[Test]
-		public void TestGetterAfterTransformation()
+		public Task TestGetterAfterTransformation()
 		{
-			var config = Configure(nameof(Getter), p => p
+			return ReadonlyTest(nameof(Getter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -31,14 +32,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestGetterWithAsyncPartAfterTransformation()
+		public Task TestGetterWithAsyncPartAfterTransformation()
 		{
-			var config = Configure(nameof(GetterWithAsyncPart), p => p
+			return ReadonlyTest(nameof(GetterWithAsyncPart), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -54,14 +53,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestGetterNoConversionAfterTransformation()
+		public Task TestGetterNoConversionAfterTransformation()
 		{
-			var config = Configure(nameof(Getter), p => p
+			return ReadonlyTest(nameof(Getter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -76,14 +73,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestArrowGetterAfterTransformation()
+		public Task TestArrowGetterAfterTransformation()
 		{
-			var config = Configure(nameof(ArrowGetter), p => p
+			return ReadonlyTest(nameof(ArrowGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -99,14 +94,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractGetterAfterTransformation()
+		public Task TestAbstractGetterAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractGetter), p => p
+			return ReadonlyTest(nameof(AbstractGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -122,14 +115,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractGetterNewTypeAfterTransformation()
+		public Task TestAbstractGetterNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractGetter), p => p
+			return ReadonlyTest(nameof(AbstractGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -146,14 +137,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestInterfaceGetterAfterTransformation()
+		public Task TestInterfaceGetterAfterTransformation()
 		{
-			var config = Configure(nameof(InterfaceGetter), p => p
+			return ReadonlyTest(nameof(InterfaceGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -169,14 +158,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestInterfaceGetterNewTypeAfterTransformation()
+		public Task TestInterfaceGetterNewTypeAfterTransformation()
 		{
-			var config = Configure(nameof(InterfaceGetter), p => p
+			return ReadonlyTest(nameof(InterfaceGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.TypeConversion(symbol => TypeConversion.NewType)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -193,14 +180,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestExternalGetterAfterTransformation()
+		public Task TestExternalGetterAfterTransformation()
 		{
-			var config = Configure(nameof(ExternalGetter), p => p
+			return ReadonlyTest(nameof(ExternalGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -216,14 +201,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractInterfaceGetterAfterTransformation()
+		public Task TestAbstractInterfaceGetterAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractInterfaceGetter), p => p
+			return ReadonlyTest(nameof(AbstractInterfaceGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == "Test" ?  MethodConversion.Smart : MethodConversion.Unknown)
 					.PropertyConversion(true)
@@ -239,14 +222,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestAbstractInterfaceGetterWithTokensAfterTransformation()
+		public Task TestAbstractInterfaceGetterWithTokensAfterTransformation()
 		{
-			var config = Configure(nameof(AbstractInterfaceGetter), p => p
+			return ReadonlyTest(nameof(AbstractInterfaceGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => symbol.Name == "Test" ? MethodConversion.Smart : MethodConversion.Unknown)
 					.PropertyConversion(true)
@@ -263,14 +244,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestListGetterAfterTransformation()
+		public Task TestListGetterAfterTransformation()
 		{
-			var config = Configure(nameof(ListGetter), p => p
+			return ReadonlyTest(nameof(ListGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -286,14 +265,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestListGetterWithTokensAfterTransformation()
+		public Task TestListGetterWithTokensAfterTransformation()
 		{
-			var config = Configure(nameof(ListGetter), p => p
+			return ReadonlyTest(nameof(ListGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
@@ -310,14 +287,12 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestArgumentGetterAfterTransformation()
+		public Task TestArgumentGetterAfterTransformation()
 		{
-			var config = Configure(nameof(ArgumentGetter), p => p
+			return ReadonlyTest(nameof(ArgumentGetter), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.PropertyConversion(true)
@@ -333,8 +308,6 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

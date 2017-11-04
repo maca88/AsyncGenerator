@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
@@ -22,6 +24,11 @@ namespace AsyncGenerator.Tests
 {
 	public abstract class BaseFixture
 	{
+		private static readonly Lazy<Microsoft.CodeAnalysis.Project> ReadonlyProject =
+			new Lazy<Microsoft.CodeAnalysis.Project>(OpenProject, LazyThreadSafetyMode.ExecutionAndPublication);
+		private static readonly Lazy<Microsoft.CodeAnalysis.Solution> ReadonlySolution =
+			new Lazy<Microsoft.CodeAnalysis.Solution>(OpenSolution, LazyThreadSafetyMode.ExecutionAndPublication);
+
 		static BaseFixture()
 		{
 			ConfigureMSBuild();
@@ -36,9 +43,24 @@ namespace AsyncGenerator.Tests
 
 		public string InputFolderPath { get; }
 
-		public string GetBaseDirectory()
+		public static string GetBaseDirectory()
 		{
 			return AppDomain.CurrentDomain.BaseDirectory;
+		}
+
+		public async Task ReadonlyTest(Action<IFluentProjectConfiguration> action = null)
+		{
+			var configuration = Configure(action).ProjectConfigurations.Single();
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadonlyProject.Value, configuration);
+			await AsyncCodeGenerator.GenerateProject(projectData).ConfigureAwait(false);
+		}
+
+		public async Task ReadonlyTest(string fileName, Action<IFluentProjectConfiguration> action = null)
+		{
+			var configuration = Configure(fileName, action).SolutionConfigurations.First();
+			var solutionData = AsyncCodeGenerator.CreateSolutionData(ReadonlySolution.Value, configuration);
+			var project = solutionData.GetProjects().Single();
+			await AsyncCodeGenerator.GenerateProject(project).ConfigureAwait(false);
 		}
 
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
@@ -204,6 +226,20 @@ namespace AsyncGenerator.Tests
 				}
 			}
 			while (fetched > 0);
+		}
+
+		private static Microsoft.CodeAnalysis.Project OpenProject()
+		{
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
+			var workspace = AsyncCodeGenerator.CreateWorkspace();
+			return AsyncCodeGenerator.OpenProject(workspace, filePath, ImmutableArray<Predicate<string>>.Empty).GetAwaiter().GetResult();
+		}
+
+		private static Microsoft.CodeAnalysis.Solution OpenSolution()
+		{
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.sln"));
+			var workspace = AsyncCodeGenerator.CreateWorkspace();
+			return AsyncCodeGenerator.OpenSolution(workspace, filePath, ImmutableArray<Predicate<string>>.Empty).GetAwaiter().GetResult();
 		}
 	}
 

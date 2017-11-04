@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
@@ -14,9 +15,9 @@ namespace AsyncGenerator.Tests.CancellationTokens
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestCancellationTokensCustomGenerationAfterTransformation()
+		public Task TestCancellationTokensCustomGenerationAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
@@ -42,14 +43,12 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestCancellationTokensGuardsCustomGenerationAfterTransformation()
+		public Task TestCancellationTokensGuardsCustomGenerationAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
@@ -76,14 +75,12 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestDefaultParameterAfterTransformation()
+		public Task TestDefaultParameterAfterTransformation()
 		{
-			var config = Configure(nameof(DefaultParameter), p => p
+			return ReadonlyTest(nameof(DefaultParameter), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -105,14 +102,12 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestDefaultParameterNoTokenAfterTransformation()
+		public Task TestDefaultParameterNoTokenAfterTransformation()
 		{
-			var config = Configure(nameof(DefaultParameter), p => p
+			return ReadonlyTest(nameof(DefaultParameter), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -139,14 +134,12 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestParamsAfterTransformation()
+		public Task TestParamsAfterTransformation()
 		{
-			var config = Configure(nameof(Params), p => p
+			return ReadonlyTest(nameof(Params), p => p
 				.ConfigureAnalyzation(a => a
 					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
@@ -168,8 +161,6 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

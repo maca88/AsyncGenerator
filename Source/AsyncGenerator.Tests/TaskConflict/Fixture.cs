@@ -13,9 +13,9 @@ namespace AsyncGenerator.Tests.TaskConflict
 	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public System.Threading.Tasks.Task TestAfterTransformation()
 		{
-			var config = Configure(p => p
+			return ReadonlyTest(p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.ToAsync)
 				)
@@ -30,8 +30,6 @@ namespace AsyncGenerator.Tests.TaskConflict
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
 		}
 	}
 }

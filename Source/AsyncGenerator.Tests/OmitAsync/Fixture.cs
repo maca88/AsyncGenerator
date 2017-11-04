@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace AsyncGenerator.Tests.OmitAsync
 	public class Fixture : BaseFixture
 	{
 		[Test]
-		public void TestAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			var config = Configure(nameof(TestCase), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -30,14 +31,12 @@ namespace AsyncGenerator.Tests.OmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 
 		[Test]
-		public void TestUsingAndTryPreserveAwaitAfterTransformation()
+		public Task TestUsingAndTryPreserveAwaitAfterTransformation()
 		{
-			var config = Configure(nameof(UsingAndTryPreserveAwait), p => p
+			return ReadonlyTest(nameof(UsingAndTryPreserveAwait), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -52,8 +51,6 @@ namespace AsyncGenerator.Tests.OmitAsync
 					})
 				)
 			);
-			var generator = new AsyncCodeGenerator();
-			Assert.DoesNotThrowAsync(() => generator.GenerateAsync(config));
 		}
 	}
 }

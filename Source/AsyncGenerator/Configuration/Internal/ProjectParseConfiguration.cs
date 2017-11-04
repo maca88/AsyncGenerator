@@ -16,6 +16,11 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public LanguageVersion? LanguageVersion { get; private set; }
 
+		public bool IsSet =>
+			AddPreprocessorSymbolNames.Count > 0 ||
+			RemovePreprocessorSymbolNames.Count > 0 ||
+			LanguageVersion.HasValue;
+
 		#region IFluentProjectParseConfiguration
 
 		IFluentProjectParseConfiguration IFluentProjectParseConfiguration.AddPreprocessorSymbolName(string value)
