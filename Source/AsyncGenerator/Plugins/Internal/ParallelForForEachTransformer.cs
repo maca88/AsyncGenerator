@@ -11,6 +11,7 @@ using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Plugins.Internal
 {
@@ -22,7 +23,7 @@ namespace AsyncGenerator.Plugins.Internal
 	{
 		private IMethodSymbol _whenAllMethod;
 		private IMethodSymbol _forEachMethod;
-		private List<IMethodSymbol> _forMethods;
+		private IMethodSymbol _forMethod;
 
 		public override Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
@@ -64,16 +65,16 @@ namespace AsyncGenerator.Plugins.Internal
 					namedType.TypeArguments.Length == 1 // Action<TSource>
 				);
 
-			// Try to get members
+			// Try to get member
 			// ParallelLoopResult For(int fromInclusive, int toExclusive, Action<int> body)
-			// ParallelLoopResult For(long fromInclusive, long toExclusive, Action<long> body)
-			_forMethods = parallelSymbol.GetMembers("For").OfType<IMethodSymbol>()
-				.Where(o =>
+			_forMethod = parallelSymbol.GetMembers("For").OfType<IMethodSymbol>()
+				.FirstOrDefault(o =>
 					o.Parameters.Length == 3 &&
+					o.Parameters[0].Type.Name == "Int32" &&
 					o.Parameters[2].Type is INamedTypeSymbol namedType &&
 					namedType.IsGenericType &&
 					namedType.TypeArguments.Length == 1 // Action<int> or Action<long>
-				).ToList();
+				);
 
 			return Task.CompletedTask;
 		}
@@ -116,27 +117,22 @@ namespace AsyncGenerator.Plugins.Internal
 			if (!(node is InvocationExpressionSyntax invokeNode) ||
 			    !(funcReferenceResult is IBodyFunctionReferenceAnalyzationResult bodyReference))
 			{
-				return node; // Should not happen
+				return node; // Cref
 			}
 
 			// Here are some examples of expected nodes
 			// Task.WhenAll(Results, ReadAsync)
+			// Task.WhenAll(1, 100, ReadAsync)
 			// Task.WhenAll(Enumerable.Empty<string>(), ReadAsync)
 			// Task.WhenAll(GetStringList(), i =>
 			// {
 			//	return SimpleFile.ReadAsync();
 			// })
 
-			// We then need to combine the two arguments into one, using the Select Linq extension e.g.
+			// For Parallel.ForEach, we need to combine the two arguments into one, using the Select Linq extension e.g.
 			// Task.WhenAll(Results.Select(i => ReadAsync(i))
-
-			// Skip if the delegate argument cannot be async
-			var delArgument = bodyReference.DelegateArguments.Last();
-			if (delArgument.Function?.Conversion == MethodConversion.Ignore ||
-			    delArgument.BodyFunctionReference?.GetConversion() == ReferenceConversion.Ignore)
-			{
-				return node;
-			}
+			// For Parallel.For, we need to move the first two parameters into Enumerable.Range and then apply the same logic as for
+			// Parallel.ForEach
 
 			var actionParam = bodyReference.ReferenceSymbol.Parameters.Last();
 			var actionType = actionParam.Type as INamedTypeSymbol;
@@ -152,20 +148,46 @@ namespace AsyncGenerator.Plugins.Internal
 			var newExpression = invokeNode.ArgumentList.Arguments.Last().Expression;
 			if (!(newExpression is AnonymousFunctionExpressionSyntax))
 			{
-				
+				var delArgument = bodyReference.DelegateArguments.Last();
 				var cancellationTokenParamName = funcResult.GetMethodOrAccessor().CancellationTokenRequired
 					? "cancellationToken"
 					: null; // TODO: find a way to not have this duplicated and fix naming colision
 				newExpression = newExpression.WrapInsideFunction(actionMethod, false, namespaceMetadata.TaskConflict,
 					invoke => invoke.AddCancellationTokenArgumentIf(cancellationTokenParamName, delArgument.BodyFunctionReference));
 			}
-			var memberAccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-				invokeNode.ArgumentList.Arguments.First().Expression,
-				SyntaxFactory.Token(SyntaxKind.DotToken),
-				SyntaxFactory.IdentifierName("Select"));
-			var argument = SyntaxFactory.InvocationExpression(memberAccess)
-				.WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(newExpression))));
-			return invokeNode.WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(argument))));
+			ExpressionSyntax enumerableExpression;
+			if (bodyReference.ReferenceSymbol.Equals(_forMethod))
+			{
+				// Construct an Enumerable.Range(1, 10), where 1 and 10 are the first two arguments of Parallel.For method
+				enumerableExpression = InvocationExpression(
+					MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+						IdentifierName("Enumerable"),
+						Token(SyntaxKind.DotToken),
+						IdentifierName("Range")),
+					ArgumentList(
+						SeparatedList<ArgumentSyntax>(
+							new SyntaxNodeOrToken[]
+							{
+								invokeNode.ArgumentList.Arguments.First(),
+								Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
+								invokeNode.ArgumentList.Arguments.Skip(1).First()
+							}
+						)
+					)
+				);
+			}
+			else
+			{
+				enumerableExpression = invokeNode.ArgumentList.Arguments.First().Expression; // For ForEach take the first parmeter e.g. Enumerable.Range(1, 10)
+			}
+
+			var memberAccess = MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+				enumerableExpression,
+				Token(SyntaxKind.DotToken),
+				IdentifierName("Select"));
+			var argument = InvocationExpression(memberAccess)
+				.WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(newExpression))));
+			return invokeNode.WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(argument))));
 		}
 
 		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)
@@ -175,7 +197,7 @@ namespace AsyncGenerator.Plugins.Internal
 				case "ForEach" when syncMethodSymbol.Equals(_forEachMethod):
 					yield return _whenAllMethod;
 					break;
-				case "For" when _forMethods.Any(o => o.Equals(syncMethodSymbol)):
+				case "For" when _forMethod.Equals(syncMethodSymbol):
 					yield return _whenAllMethod;
 					break;
 			}

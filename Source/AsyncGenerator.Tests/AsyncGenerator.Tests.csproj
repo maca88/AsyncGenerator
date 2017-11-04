@@ -200,6 +200,9 @@
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
+    <Compile Include="ParallelFor\Fixture.cs" />
+    <Compile Include="ParallelFor\Input\NoLinq.cs" />
+    <Compile Include="ParallelFor\Input\TestCase.cs" />
     <Compile Include="ParallelForEach\Fixture.cs" />
     <Compile Include="ParallelForEach\Input\NoLinq.cs" />
     <Compile Include="ParallelForEach\Input\TestCase.cs" />
@@ -859,6 +862,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ParallelForEach\Output\TestCaseTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\NoLinq.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\TestCaseNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\TestCaseTokens.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
