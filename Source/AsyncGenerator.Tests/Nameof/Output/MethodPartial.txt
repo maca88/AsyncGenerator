@@ -14,9 +14,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.Nameof.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class Method
 	{
 		[DefaultValue(nameof(WriteAsync))]

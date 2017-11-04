@@ -19,9 +19,6 @@ using NUnit.Framework;
 namespace AsyncGenerator.Tests.Sleep.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		/// <summary>

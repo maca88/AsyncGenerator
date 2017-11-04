@@ -79,15 +79,9 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NestedDerivedAsyncWithToken
 	{
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Nested : InternalReaderWithToken
 		{
 			public override Task<bool> ReadAsync(CancellationToken cancellationToken)
@@ -96,9 +90,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Nested2 : ExternalReaderWithToken
 		{
 			public override Task<bool> ReadAsync(CancellationToken cancellationToken)
@@ -107,9 +98,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class NestedBaseCall : InternalReaderWithToken
 		{
 			public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
@@ -119,9 +107,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Nested2BaseCall : ExternalReaderWithToken
 		{
 			public override async Task<bool> ReadAsync(CancellationToken cancellationToken)

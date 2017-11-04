@@ -16,9 +16,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.PrivateMethods.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 

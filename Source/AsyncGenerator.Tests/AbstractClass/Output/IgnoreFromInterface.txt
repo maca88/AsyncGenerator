@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AbstractClass.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface ITestInteraface
 	{
 
@@ -27,18 +24,12 @@ namespace AsyncGenerator.Tests.AbstractClass.Input
 	}
 
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractTest : ITestInteraface
 	{
 
 		public abstract Task<bool> WriteAsync(string content);
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase : AbstractTest
 	{
 

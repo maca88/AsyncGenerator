@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.ParallelForEach.Input
 {
 	using System.Threading;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public async Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))

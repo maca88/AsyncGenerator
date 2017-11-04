@@ -129,15 +129,9 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NestedDerivedAsync
 	{
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Nested : InternalReader
 		{
 
@@ -154,9 +148,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Nested2 : ExternalReader
 		{
 
@@ -173,9 +164,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class NestedBaseCall : InternalReader
 		{
 
@@ -186,9 +174,6 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			}
 		}
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Nested2BaseCall : ExternalReader
 		{
 

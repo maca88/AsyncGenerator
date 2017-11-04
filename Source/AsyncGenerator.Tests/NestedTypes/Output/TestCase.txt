@@ -17,14 +17,8 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.NestedTypes.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Child
 		{
 			public Task ReadAsync()

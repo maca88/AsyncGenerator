@@ -16,9 +16,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.Github.Issue51.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase : AbstractTest
 	{
 
@@ -28,18 +25,12 @@ namespace AsyncGenerator.Tests.Github.Issue51.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractTest : ITestInterface
 	{
 
 		public abstract Task<bool> WriteAsync(string content);
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface ITestInterface
 	{
 

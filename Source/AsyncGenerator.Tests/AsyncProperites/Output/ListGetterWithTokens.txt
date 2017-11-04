@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
 	using System.Threading;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ListGetter
 	{
 		public async Task TestAsync(CancellationToken cancellationToken = default(CancellationToken))

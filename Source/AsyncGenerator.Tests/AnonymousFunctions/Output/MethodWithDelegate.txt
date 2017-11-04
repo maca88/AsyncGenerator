@@ -18,9 +18,6 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class MethodWithDelegate
 	{
 		public Task TestAsync()

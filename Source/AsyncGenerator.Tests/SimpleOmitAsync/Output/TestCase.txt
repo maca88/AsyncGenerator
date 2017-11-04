@@ -13,9 +13,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public Task<bool> SimpleReturnAsync()

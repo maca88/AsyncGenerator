@@ -21,9 +21,6 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
 	using System.Threading;
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public void ReadAsync(CancellationToken cancellationToken = default(CancellationToken))

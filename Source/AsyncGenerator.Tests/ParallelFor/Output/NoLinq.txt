@@ -14,9 +14,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.ParallelFor.Input
 {
 	using System.Linq;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NoLinq
 	{
 		public Task ReadAsync()

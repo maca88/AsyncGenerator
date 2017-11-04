@@ -13,9 +13,6 @@
 namespace AsyncGenerator.Tests.Github.Issue50.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IInterface
 	{
 

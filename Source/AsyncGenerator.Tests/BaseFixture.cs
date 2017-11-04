@@ -51,13 +51,6 @@ namespace AsyncGenerator.Tests
 					p.ConfigureAnalyzation(a => a
 						.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath)
 					);
-					p.ConfigureTransformation(t => t // TODO: Remove
-						.DocumentationComments(c => c
-							.AddOrReplacePartialTypeComments(symbol =>
-								$"/// <content>{Environment.NewLine}/// Contains generated async methods{Environment.NewLine}/// </content>"
-							)
-						)
-					);
 					action?.Invoke(p);
 				})
 				;
@@ -72,13 +65,6 @@ namespace AsyncGenerator.Tests
 					{
 						p.ConfigureAnalyzation(a => a
 							.DocumentSelection(o => string.Join("/", o.Folders) == InputFolderPath && o.Name == fileName + ".cs")
-						);
-						p.ConfigureTransformation(t => t // TODO: Remove
-							.DocumentationComments(dc => dc
-								.AddOrReplacePartialTypeComments(symbol =>
-									$"/// <content>{Environment.NewLine}/// Contains generated async methods{Environment.NewLine}/// </content>"
-								)
-							)
 						);
 						action?.Invoke(p);
 					})

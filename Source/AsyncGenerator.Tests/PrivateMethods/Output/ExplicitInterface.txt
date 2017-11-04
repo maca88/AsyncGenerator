@@ -16,17 +16,11 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.PrivateMethods.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IInterface
 	{
 		Task ReadAsync();
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class ExplicitInterface : IInterface
 	{
 		Task IInterface.ReadAsync()

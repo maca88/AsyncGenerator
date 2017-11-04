@@ -18,9 +18,6 @@ using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NUnitAssertThat
 	{
 		public void TestAsync()

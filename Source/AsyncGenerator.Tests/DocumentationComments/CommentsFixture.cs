@@ -20,9 +20,6 @@ namespace AsyncGenerator.Tests.DocumentationComments
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
 				.ConfigureTransformation(t => t
-					.DocumentationComments(d => d
-						.AddOrReplacePartialTypeComments(symbol => null) // TODO: Remove when the default configuration will be fixed
-					)
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);

@@ -7,7 +7,7 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.NewTypes.Input
 {
-	#if TEST
+#if TEST
 	public class MissingMembers : IExternalInterface
 	{
 		public class NestedClass : IExternalInterface
@@ -47,5 +47,5 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 			Method();
 		}
 	}
-	#endif
+#endif
 }

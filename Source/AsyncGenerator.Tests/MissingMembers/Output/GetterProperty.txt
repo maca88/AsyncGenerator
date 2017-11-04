@@ -23,9 +23,6 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	#endif
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class GetterProperty : IGetterProperty
 	{
 		public Task<bool> GetWriteSuccessAsync()

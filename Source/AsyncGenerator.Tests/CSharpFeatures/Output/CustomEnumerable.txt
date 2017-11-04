@@ -18,9 +18,6 @@ using System.Threading.Tasks;
 namespace AsyncGenerator.Tests.CSharpFeatures.Input
 {
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class CustomEnumerable
 	{
 		public async Task<int> SumAsync()

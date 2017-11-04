@@ -14,9 +14,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.PreconditionOmitAsync.Input
 {
 	using System.Threading.Tasks;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public Task<string> PreconditionReturnAsync(string name)

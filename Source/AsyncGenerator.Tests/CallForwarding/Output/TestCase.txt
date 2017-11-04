@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.CallForwarding.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface IInterface
 	{
 		Task SyncReadAsync();
@@ -27,9 +24,6 @@ namespace AsyncGenerator.Tests.CallForwarding.Input
 		Task<bool> SyncWriteAsync();
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase : IInterface
 	{
 		public Task SyncMethodAsync()

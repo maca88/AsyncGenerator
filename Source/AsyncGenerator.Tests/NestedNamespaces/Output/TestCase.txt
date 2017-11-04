@@ -17,14 +17,8 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.NestedNamespaces.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Child
 		{
 			public Task ReadAsync()
@@ -36,14 +30,8 @@ namespace AsyncGenerator.Tests.NestedNamespaces.Input
 
 	namespace Inner
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class TestCase
 		{
-			/// <content>
-			/// Contains generated async methods
-			/// </content>
 			public partial class Child
 			{
 				public Task ReadAsync()

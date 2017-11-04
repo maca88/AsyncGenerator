@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.AsyncProperites.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class AbstractGetter : BaseAbstractGetter
 	{
 
@@ -42,9 +39,6 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class BaseAbstractGetter
 	{
 		public abstract Task<bool> GetWriteSuccessAsync();

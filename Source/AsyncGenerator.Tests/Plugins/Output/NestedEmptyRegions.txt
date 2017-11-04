@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.Plugins.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class NestedEmptyRegions
 	{
 		#region Async
@@ -36,9 +33,6 @@ namespace AsyncGenerator.Tests.Plugins.Input
 
 		#endregion Async
 
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class MyClass
 		{
 			#region MyClassAsync

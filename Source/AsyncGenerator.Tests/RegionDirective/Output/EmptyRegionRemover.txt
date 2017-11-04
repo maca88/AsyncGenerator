@@ -21,14 +21,8 @@ namespace AsyncGenerator.Tests.RegionDirective
 	#region Input
 	namespace Input
 	{
-		/// <content>
-		/// Contains generated async methods
-		/// </content>
 		public partial class Parent
 		{
-			/// <content>
-			/// Contains generated async methods
-			/// </content>
 			public partial class TestCase
 			{
 				#region Async methods
@@ -48,9 +42,6 @@ namespace AsyncGenerator.Tests.RegionDirective
 
 	#region Nested type: TestCase4
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class TestCase4
 	{
 

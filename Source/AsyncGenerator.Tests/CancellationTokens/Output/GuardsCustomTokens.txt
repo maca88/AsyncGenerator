@@ -18,9 +18,6 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.CancellationTokens.Input
 {
 	using System.Threading;
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial interface ITestInteraface
 	{
 		/// <summary>
@@ -53,9 +50,6 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 	}
 
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public abstract partial class AbstractTest : ITestInteraface
 	{
 		public virtual Task ReadAsync(CancellationToken cancellationToken)
@@ -118,9 +112,6 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase : AbstractTest
 	{
 		public override Task ReadAsync(CancellationToken cancellationToken)
@@ -191,9 +182,6 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 		}
 	}
 
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class DerivedEmptyTestCase : TestCase
 	{
 		public override Task ReadAsync(CancellationToken cancellationToken)

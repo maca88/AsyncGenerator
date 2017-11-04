@@ -12,9 +12,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TaskConflict.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		public System.Threading.Tasks.Task MethodAsync()

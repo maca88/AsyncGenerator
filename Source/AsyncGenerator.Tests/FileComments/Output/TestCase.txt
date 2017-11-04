@@ -17,9 +17,6 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.FileComments.Input
 {
-	/// <content>
-	/// Contains generated async methods
-	/// </content>
 	public partial class TestCase
 	{
 		/// <include file='..\..\..\FileComments\Input\..\TestCase.cs.xmldoc' path='//members[@type="TestCase"]/member[@name="M:TestCase.Read"]/*' /> 
