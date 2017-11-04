@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class BodyFunctionDataReference : AbstractFunctionDataReference<FunctionData>, IBodyFunctionReferenceAnalyzationResult, IFunctionReferenceAnalyzation
+	internal class BodyFunctionDataReference : AbstractFunctionDataReference<FunctionData>, IBodyFunctionReferenceAnalyzation
 	{
 		public BodyFunctionDataReference(FunctionData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData)
@@ -54,14 +54,14 @@ namespace AsyncGenerator.Internal
 		public BodyFunctionDataReference ArgumentOfFunctionInvocation { get; set; }
 
 		/// <summary>
-		/// Functions passed as arguments
+		/// Delegates passed as arguments
 		/// </summary>
-		public List<FunctionArgumentData> FunctionArguments { get; set; }
+		public List<DelegateArgumentData> DelegateArguments { get; set; }
 
-		public void AddFunctionArgument(FunctionArgumentData functionArgument)
+		public void AddDelegateArgument(DelegateArgumentData functionArgument)
 		{
-			FunctionArguments = FunctionArguments ?? new List<FunctionArgumentData>();
-			FunctionArguments.Add(functionArgument);
+			DelegateArguments = DelegateArguments ?? new List<DelegateArgumentData>();
+			DelegateArguments.Add(functionArgument);
 		}
 
 		public void Ignore(string reason)
@@ -72,11 +72,11 @@ namespace AsyncGenerator.Internal
 			}
 			Conversion = ReferenceConversion.Ignore;
 			PassCancellationToken = false;
-			if (FunctionArguments == null)
+			if (DelegateArguments == null)
 			{
 				return;
 			}
-			foreach (var functionArgument in FunctionArguments)
+			foreach (var functionArgument in DelegateArguments)
 			{
 				functionArgument.FunctionData?.Ignore("Cascade ignored.");
 				functionArgument.FunctionReference?.Ignore("Cascade ignored.");
@@ -92,7 +92,7 @@ namespace AsyncGenerator.Internal
 			var conversion = ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
 				? ReferenceConversion.ToAsync
 				: ReferenceConversion.Ignore;
-			if (conversion == ReferenceConversion.Ignore || FunctionArguments == null || !FunctionArguments.Any())
+			if (conversion == ReferenceConversion.Ignore || DelegateArguments == null || !DelegateArguments.Any())
 			{
 				return conversion;
 			}
@@ -101,12 +101,12 @@ namespace AsyncGenerator.Internal
 
 		public void CalculateFunctionArguments()
 		{
-			foreach (var functionArgument in FunctionArguments)
+			foreach (var functionArgument in DelegateArguments)
 			{
 				var syncType = ReferenceSymbol.Parameters[functionArgument.Index].Type;
 				var paramOffset = AsyncCounterpartSymbol.IsExtensionMethod ? 1 : 0;
 				// If the async counterpart does have less parameters than sync method e.g. (Parallel.ForEach -> Task.WaitAll)
-				// return false as we don't have enough information to tell yet
+				// return, as we don't have enough information
 				if (functionArgument.Index + paramOffset >= AsyncCounterpartSymbol.Parameters.Length)
 				{
 					return;
@@ -138,7 +138,7 @@ namespace AsyncGenerator.Internal
 
 				// When the async delegate return type is a type parameter that supports Task e.g. Assert.That,
 				// we shall ignore the current reference if the argument is not async
-				if (asyncDelegateFunc?.ReturnType is ITypeParameterSymbol)  // TODO: check if supports Task
+				if (asyncDelegateFunc.ReturnType is ITypeParameterSymbol)  // TODO: check if supports Task
 				{
 					if (functionArgument.FunctionReference?.GetConversion() == ReferenceConversion.ToAsync ||
 					    functionArgument.FunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true)
@@ -236,9 +236,7 @@ namespace AsyncGenerator.Internal
 
 		#region IFunctionReferenceAnalyzation
 
-		IFunctionAnalyzationResult IFunctionReferenceAnalyzation.ReferenceFunctionData => ReferenceFunctionData;
-		IReadOnlyList<IMethodSymbol> IFunctionReferenceAnalyzation.ReferenceAsyncSymbols => 
-			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
+		IFunctionAnalyzationResult IBodyFunctionReferenceAnalyzation.ReferenceFunctionData => ReferenceFunctionData;
 
 		public override string AsyncCounterpartName { get; set; }
 
@@ -249,6 +247,12 @@ namespace AsyncGenerator.Internal
 		public override bool IsCref => false;
 
 		public override bool IsNameOf => false;
+
+		#endregion
+
+		#region IBodyFunctionReferenceAnalyzationResult
+
+		IEnumerable<IDelegateArgumentAnalyzationResult> IBodyFunctionReferenceAnalyzationResult.DelegateArguments => DelegateArguments ?? Enumerable.Empty<IDelegateArgumentAnalyzationResult>();
 
 		#endregion
 	}

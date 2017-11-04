@@ -14,8 +14,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Plugins.Internal
 {
-	internal class ParallelForForEachTransformer : AbstractPlugin, IAsyncCounterpartsFinder, IFunctionReferenceTransformer,
-		IInvocationExpressionAnalyzer
+	internal class ParallelForForEachTransformer : AbstractPlugin,
+		IAsyncCounterpartsFinder,
+		IFunctionReferenceTransformer,
+		IInvocationExpressionAnalyzer,
+		IBodyFunctionReferencePostAnalyzer
 	{
 		private IMethodSymbol _whenAllMethod;
 		private IMethodSymbol _forEachMethod;
@@ -75,29 +78,43 @@ namespace AsyncGenerator.Plugins.Internal
 			return Task.CompletedTask;
 		}
 
-		public void Analyze(InvocationExpressionSyntax invocation, IFunctionReferenceAnalyzation funReferenceResult,
+		public void PostAnalyzeBodyFunctionReference(IBodyFunctionReferenceAnalyzation functionReferenceAnalyzation)
+		{
+			if (functionReferenceAnalyzation.AsyncCounterpartSymbol?.Equals(_whenAllMethod) != true)
+			{
+				return;
+			}
+			var delegateArgument = functionReferenceAnalyzation.DelegateArguments.FirstOrDefault(o => o.Function != null);
+			if (delegateArgument?.Function.Conversion == MethodConversion.Ignore)
+			{
+				functionReferenceAnalyzation.Ignore("Delegate argument is not async");
+			}
+		}
+
+		public void AnalyzeInvocationExpression(InvocationExpressionSyntax invocation, IBodyFunctionReferenceAnalyzation funcReferenceResult,
 			SemanticModel semanticModel)
 		{
-			if (funReferenceResult.AsyncCounterpartSymbol?.Equals(_whenAllMethod) != true)
+			if (funcReferenceResult.AsyncCounterpartSymbol?.Equals(_whenAllMethod) != true)
 			{
 				return;
 			}
 			// Ignore if the Parallel.For/ForEach return value is used
 			if (!invocation.Parent.IsKind(SyntaxKind.ExpressionStatement))
 			{
-				funReferenceResult.Ignore("Unable to convert to Task.WaitAll, because the return value is used");
+				funcReferenceResult.Ignore("Unable to convert to Task.WaitAll, because the return value is used");
 			}
 		}
 
-		public SyntaxNode TransformFunctionReference(SyntaxNode node, IFunctionReferenceAnalyzationResult funReferenceResult,
+		public SyntaxNode TransformFunctionReference(SyntaxNode node, IFunctionAnalyzationResult funcResult,
+			IFunctionReferenceAnalyzationResult funcReferenceResult,
 			INamespaceTransformationMetadata namespaceMetadata)
 		{
-			if (!funReferenceResult.AsyncCounterpartSymbol.Equals(_whenAllMethod))
+			if (!funcReferenceResult.AsyncCounterpartSymbol.Equals(_whenAllMethod))
 			{
 				return node;
 			}
 			if (!(node is InvocationExpressionSyntax invokeNode) ||
-			    !(funReferenceResult is IBodyFunctionReferenceAnalyzationResult bodyReference))
+			    !(funcReferenceResult is IBodyFunctionReferenceAnalyzationResult bodyReference))
 			{
 				return node; // Should not happen
 			}
@@ -113,6 +130,14 @@ namespace AsyncGenerator.Plugins.Internal
 			// We then need to combine the two arguments into one, using the Select Linq extension e.g.
 			// Task.WhenAll(Results.Select(i => ReadAsync(i))
 
+			// Skip if the delegate argument cannot be async
+			var delArgument = bodyReference.DelegateArguments.Last();
+			if (delArgument.Function?.Conversion == MethodConversion.Ignore ||
+			    delArgument.BodyFunctionReference?.GetConversion() == ReferenceConversion.Ignore)
+			{
+				return node;
+			}
+
 			var actionParam = bodyReference.ReferenceSymbol.Parameters.Last();
 			var actionType = actionParam.Type as INamedTypeSymbol;
 			var actionMethod = actionType?.DelegateInvokeMethod;
@@ -127,7 +152,12 @@ namespace AsyncGenerator.Plugins.Internal
 			var newExpression = invokeNode.ArgumentList.Arguments.Last().Expression;
 			if (!(newExpression is AnonymousFunctionExpressionSyntax))
 			{
-				newExpression = newExpression.WrapInsideFunction(actionMethod, false, namespaceMetadata.TaskConflict);
+				
+				var cancellationTokenParamName = funcResult.GetMethodOrAccessor().CancellationTokenRequired
+					? "cancellationToken"
+					: null; // TODO: find a way to not have this duplicated and fix naming colision
+				newExpression = newExpression.WrapInsideFunction(actionMethod, false, namespaceMetadata.TaskConflict,
+					invoke => invoke.AddCancellationTokenArgumentIf(cancellationTokenParamName, delArgument.BodyFunctionReference));
 			}
 			var memberAccess = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 				invokeNode.ArgumentList.Arguments.First().Expression,

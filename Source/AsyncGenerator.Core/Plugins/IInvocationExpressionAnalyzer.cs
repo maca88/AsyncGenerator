@@ -6,6 +6,6 @@ namespace AsyncGenerator.Core.Plugins
 {
 	public interface IInvocationExpressionAnalyzer : IPlugin
 	{
-		void Analyze(InvocationExpressionSyntax invocation, IFunctionReferenceAnalyzation functionReferenceAnalyzation, SemanticModel semanticModel);
+		void AnalyzeInvocationExpression(InvocationExpressionSyntax invocation, IBodyFunctionReferenceAnalyzation functionReferenceAnalyzation, SemanticModel semanticModel);
 	}
 }

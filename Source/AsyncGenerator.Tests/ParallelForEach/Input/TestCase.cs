@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
@@ -30,6 +31,8 @@ namespace AsyncGenerator.Tests.ParallelForEach.Input
 					SimpleFile.Read();
 				});
 			});
+			Parallel.ForEach(Enumerable.Empty<string>(), s => Console.WriteLine(s));
+			Parallel.ForEach(Enumerable.Empty<string>(), File.Delete);
 
 			// Not supported cases
 			Parallel.ForEach(Enumerable.Range(1, 100), (i, state) =>

@@ -266,7 +266,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Before checking the conversion of method references we have to calculate the conversion of invocations that 
 			// have one or more methods passed as an argument as the current calculated conversion may be wrong
 			// (eg. one of the arguments may be ignored in the post-analyze step)
-			foreach (var bodyRefData in functionData.BodyFunctionReferences.Where(o => o.FunctionArguments != null && o.Conversion != ReferenceConversion.Ignore))
+			foreach (var bodyRefData in functionData.BodyFunctionReferences.Where(o => o.DelegateArguments != null && o.Conversion != ReferenceConversion.Ignore))
 			{
 				var asyncCounterpart = bodyRefData.AsyncCounterpartSymbol;
 				if (asyncCounterpart == null)
@@ -275,6 +275,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					throw new InvalidOperationException($"AsyncCounterpartSymbol is null {bodyRefData.ReferenceNode}");
 				}
 				bodyRefData.CalculateFunctionArguments();
+				foreach (var analyzer in _configuration.BodyFunctionReferencePostAnalyzers)
+				{
+					analyzer.PostAnalyzeBodyFunctionReference(bodyRefData);
+				}
 			}
 
 			if (functionData.Conversion != MethodConversion.Ignore && functionData.Conversion != MethodConversion.Copy &&

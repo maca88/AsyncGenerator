@@ -26,5 +26,7 @@ namespace AsyncGenerator.Core.Analyzation
 		bool LastInvocation { get; }
 
 		IMethodSymbol AsyncDelegateArgument { get; }
+
+		IEnumerable<IDelegateArgumentAnalyzationResult> DelegateArguments { get; }
 	}
 }

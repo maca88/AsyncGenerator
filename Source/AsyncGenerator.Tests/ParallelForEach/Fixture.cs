@@ -35,6 +35,29 @@ namespace AsyncGenerator.Tests.ParallelForEach
 		}
 
 		[Test]
+		public void TestCancellationTokensAfterTransformation()
+		{
+			var config = Configure(nameof(TestCase), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TestCase) + "Tokens"), document.Transformed.ToFullString());
+					})
+				)
+			);
+			var generator = new AsyncCodeGenerator();
+			Assert.DoesNotThrowAsync(async () => await generator.GenerateAsync(config));
+		}
+
+		[Test]
 		public void TestNewTypeAfterTransformation()
 		{
 			var config = Configure(nameof(TestCase), p => p

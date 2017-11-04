@@ -17,28 +17,32 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.ParallelForEach.Input
 {
-	public class TestCaseAsync
+	using System.Threading;
+	/// <content>
+	/// Contains generated async methods
+	/// </content>
+	public partial class TestCase
 	{
-		public async Task ReadAsync()
+		public async Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			await (Task.WhenAll(Enumerable.Range(1, 100).Select(i =>
 			{
-				return SimpleFile.ReadAsync();
+				return SimpleFile.ReadAsync(cancellationToken);
 			})));
-			await (Task.WhenAll(Enumerable.Range(1, 100).Select((obj) => ReadAsync(obj))));
+			await (Task.WhenAll(Enumerable.Range(1, 100).Select((obj) => ReadAsync(obj, cancellationToken))));
 			await (Task.WhenAll(GetStringList().Select(i =>
 			{
-				return SimpleFile.ReadAsync();
+				return SimpleFile.ReadAsync(cancellationToken);
 			})));
-			await (Task.WhenAll(GetStringList().Select((obj) => ReadAsync(obj))));
-			await (Task.WhenAll(Results.Select((obj) => ReadAsync(obj))));
-			await (Task.WhenAll(Enumerable.Empty<string>().Select((obj) => ReadAsync(obj))));
+			await (Task.WhenAll(GetStringList().Select((obj) => ReadAsync(obj, cancellationToken))));
+			await (Task.WhenAll(Results.Select((obj) => ReadAsync(obj, cancellationToken))));
+			await (Task.WhenAll(Enumerable.Empty<string>().Select((obj) => ReadAsync(obj, cancellationToken))));
 			await (Task.WhenAll(GetStringList().Select(async i =>
 			{
-				await (SimpleFile.ReadAsync());
+				await (SimpleFile.ReadAsync(cancellationToken));
 				await (Task.WhenAll(GetStringList().Select(j =>
 				{
-					return SimpleFile.ReadAsync();
+					return SimpleFile.ReadAsync(cancellationToken);
 				})));
 			})));
 			Parallel.ForEach(Enumerable.Empty<string>(), s => Console.WriteLine(s));
@@ -65,26 +69,14 @@ namespace AsyncGenerator.Tests.ParallelForEach.Input
 			var result = Parallel.ForEach(Results, Read);
 		}
 
-		private Task ReadAsync(int i)
+		private Task ReadAsync(int i, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.ReadAsync();
+			return SimpleFile.ReadAsync(cancellationToken);
 		}
 
-		private Task ReadAsync(string i)
+		private Task ReadAsync(string i, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.ReadAsync();
-		}
-
-		private void Read(string i)
-		{
-			SimpleFile.Read();
-		}
-
-		private IEnumerable<string> Results { get; } = Enumerable.Empty<string>();
-
-		private IEnumerable<string> GetStringList()
-		{
-			yield break;
+			return SimpleFile.ReadAsync(cancellationToken);
 		}
 	}
 }

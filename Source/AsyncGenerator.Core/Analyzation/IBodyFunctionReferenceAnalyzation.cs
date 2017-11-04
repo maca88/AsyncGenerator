@@ -10,19 +10,9 @@ namespace AsyncGenerator.Core.Analyzation
 	/// <summary>
 	/// Used by <see cref="IInvocationExpressionAnalyzer"/> in order to customize the analyzation process of a reference
 	/// </summary>
-	public interface IFunctionReferenceAnalyzation
+	public interface IBodyFunctionReferenceAnalyzation : IBodyFunctionReferenceAnalyzationResult
 	{
 		IFunctionAnalyzationResult ReferenceFunctionData { get; }
-
-		SimpleNameSyntax ReferenceNameNode { get; }
-
-		ReferenceLocation ReferenceLocation { get; }
-
-		IMethodSymbol ReferenceSymbol { get; }
-
-		IReadOnlyList<IMethodSymbol> ReferenceAsyncSymbols { get; }
-
-		IMethodSymbol AsyncCounterpartSymbol { get; }
 
 		void Ignore(string reason);
 	}

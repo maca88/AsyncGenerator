@@ -857,6 +857,9 @@
   <ItemGroup>
     <EmbeddedResource Include="AnonymousFunctions\Output\MethodWithDelegate.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelForEach\Output\TestCaseTokens.txt" />
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
