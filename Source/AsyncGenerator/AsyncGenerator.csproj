@@ -159,6 +159,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SymbolExtensions.cs">
+      <Link>Extensions\SymbolExtensions.cs</Link>
+    </Compile>
     <Compile Include="Configuration\Internal\ProjectAsyncExtensionMethodsConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectDocumentationCommentConfiguration.cs" />
@@ -182,7 +185,7 @@
     <Compile Include="Internal\ChildFunctionData.cs" />
     <Compile Include="Internal\FieldData.cs" />
     <Compile Include="Internal\FieldVariableDeclaratorData.cs" />
-    <Compile Include="Internal\FunctionArgumentData.cs" />
+    <Compile Include="Internal\DelegateArgumentData.cs" />
     <Compile Include="Internal\IDataReference.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
@@ -214,6 +217,7 @@
     <Compile Include="Internal\DataReference.cs" />
     <Compile Include="Internal\FieldVariableDataReference.cs" />
     <Compile Include="Internal\SourceCodeCompiler.cs" />
+    <Compile Include="Plugins\Internal\ParallelForForEachTransformer.cs" />
     <Compile Include="Internal\ThreadSleepAsyncCounterpartFinder.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
     <Compile Include="Internal\ProjectData.cs" />

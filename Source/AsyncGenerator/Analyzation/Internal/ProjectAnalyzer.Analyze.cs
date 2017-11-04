@@ -79,7 +79,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 
 			var methodBody = methodAccessorData.GetBodyNode();
-			methodAccessorData.RewriteYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			methodAccessorData.HasYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 			methodAccessorData.MustRunSynchronized = methodAccessorData.Symbol.GetAttributes()
 				.Where(o => o.AttributeClass.Name == "MethodImplAttribute")
 				.Any(o => ((MethodImplOptions)(int)o.ConstructorArguments.First().Value).HasFlag(MethodImplOptions.Synchronized));
@@ -176,7 +176,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				reference.Ignore("The invoked method does not have an async counterpart");
 			}
 
-			functionData.RewriteYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
+			functionData.HasYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
 		}
 
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodOrAccessorData methoData, CrefFunctionDataReference crefData)
@@ -389,7 +389,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (argumentExpression.IsFunction())
 				{
 					var anonFunction = (AnonymousFunctionData)functionData.ChildFunctions[argumentExpression];
-					functionReferenceData.AddFunctionArgument(new FunctionArgumentData(anonFunction, i));
+					functionReferenceData.AddDelegateArgument(new DelegateArgumentData(anonFunction, i));
 					anonFunction.ArgumentOfFunctionInvocation = functionReferenceData;
 					continue;
 				}
@@ -400,7 +400,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (argRefFunction == null)
 					{
 						// Ignore only if the async argument does not match
-						// TODO: internal methods
+						// TODO: internal methods, unify with CalculateFunctionArguments
 						if (functionReferenceData.ReferenceFunctionData == null && delegateParams[i]) // If the parameter is a delegate check the symbol of the argument
 						{
 							var argSymbol = documentData.SemanticModel.GetSymbolInfo(argumentExpression).Symbol;
@@ -412,10 +412,11 @@ namespace AsyncGenerator.Analyzation.Internal
 							}
 							if (argSymbol is IMethodSymbol argMethodSymbol)
 							{
+								// TODO: support custom async counterparts that have different parameters
 								// If the invocation has at least one argument that does not fit into any async counterparts we have to ignore it
-								if (functionReferenceData.ReferenceAsyncSymbols.All(o =>
-									!((IMethodSymbol) o.Parameters[i].Type.GetMembers("Invoke").First()).ReturnType.Equals(argMethodSymbol
-										.ReturnType)))
+								if (functionReferenceData.ReferenceAsyncSymbols
+									.Where(o => o.Parameters.Length >= methodSymbol.Parameters.Length) // The async counterpart may have less parameters. e.g. Parallel.For -> Task.WhenAll
+									.All(o => !((IMethodSymbol) o.Parameters[i].Type.GetMembers("Invoke").First()).ReturnType.Equals(argMethodSymbol.ReturnType)))
 								{
 									functionReferenceData.Ignore("The delegate argument does not fit to any async counterparts");
 									return;
@@ -424,15 +425,9 @@ namespace AsyncGenerator.Analyzation.Internal
 						}
 						continue;
 					}
-					functionReferenceData.AddFunctionArgument(new FunctionArgumentData(argRefFunction, i));
+					functionReferenceData.AddDelegateArgument(new DelegateArgumentData(argRefFunction, i));
 					argRefFunction.ArgumentOfFunctionInvocation = functionReferenceData;
 				}
-			}
-
-			if (functionReferenceData.FunctionArguments != null && ProjectData.Contains(methodSymbol) && functionReferenceData.FunctionArguments.Any())
-			{
-				functionReferenceData.Ignore($"Internal invoked method {methodSymbol} contains at least one argument that is a delegate which is currently not supported");
-				return;
 			}
 
 			SetAsyncCounterpart(functionReferenceData);
@@ -441,7 +436,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			foreach (var analyzer in _configuration.InvocationExpressionAnalyzers)
 			{
-				analyzer.Analyze(node, functionReferenceData, documentData.SemanticModel);
+				analyzer.AnalyzeInvocationExpression(node, functionReferenceData, documentData.SemanticModel);
 			}
 
 			PropagateCancellationToken(functionReferenceData);
@@ -466,7 +461,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				methodData.CancellationTokenRequired = true;
 			}
 			// Propagate if there is at least one async invocation inside an anoymous function that is passed as an argument to this invocation
-			else if (functionReferenceData.FunctionArguments != null && functionReferenceData.FunctionArguments
+			else if (functionReferenceData.DelegateArguments != null && functionReferenceData.DelegateArguments
 				.Where(o => o.FunctionData != null)
 				.Any(o => o.FunctionData.BodyFunctionReferences.Any(r => r.GetConversion() == ReferenceConversion.ToAsync && r.PassCancellationToken)))
 			{
@@ -701,12 +696,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			// More than one
 			// By default we will get here when there are multiple overloads of an async function (e.g. Task.Run<T>(Func<T>, CancellationToken) and Task.Run<T>(Func<Task<T>>, CancellationToken))
 			// In the Task.Run case we have to check the delegate argument if it can be asnyc or not (the delegate argument will be processed before the invocation)
-			if (!functionReferenceData.FunctionArguments.Any())
+			if (!functionReferenceData.DelegateArguments.Any())
 			{
 				functionReferenceData.Ignore("Multiple async counterparts without delegate arguments.");
 				return null;
 			}
-			foreach (var functionArgument in functionReferenceData.FunctionArguments)
+			foreach (var functionArgument in functionReferenceData.DelegateArguments)
 			{
 				var funcData = functionArgument.FunctionData;
 				if (funcData != null) // Anonymous function as argument

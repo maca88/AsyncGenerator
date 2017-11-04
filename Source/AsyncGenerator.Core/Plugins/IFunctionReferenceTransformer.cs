@@ -11,7 +11,7 @@ namespace AsyncGenerator.Core.Plugins
 {
 	public interface IFunctionReferenceTransformer : IPlugin
 	{
-		T TransformFunctionReference<T>(T node, IFunctionReferenceAnalyzationResult funReferenceResult, INamespaceTransformationMetadata namespaceMetadata)
-			where T : SyntaxNode;
+		SyntaxNode TransformFunctionReference(SyntaxNode node, IFunctionAnalyzationResult funcResult, 
+			IFunctionReferenceAnalyzationResult funcReferenceResult, INamespaceTransformationMetadata namespaceMetadata);
 	}
 }

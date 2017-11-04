@@ -193,6 +193,8 @@ namespace AsyncGenerator.Configuration.Internal
 		private void RegisterPlugin(IPlugin plugin)
 		{
 			TryAdd(plugin, AnalyzeConfiguration.FindAsyncCounterpartsFinders);
+			TryAdd(plugin, AnalyzeConfiguration.InvocationExpressionAnalyzers);
+			TryAdd(plugin, AnalyzeConfiguration.BodyFunctionReferencePostAnalyzers);
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
 			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
 			TryAdd(plugin, TransformConfiguration.FunctionReferenceTransformers);

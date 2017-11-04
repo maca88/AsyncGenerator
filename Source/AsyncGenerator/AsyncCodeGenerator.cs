@@ -17,6 +17,7 @@ using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Internal;
+using AsyncGenerator.Plugins.Internal;
 using AsyncGenerator.Transformation;
 using AsyncGenerator.Transformation.Internal;
 using log4net;
@@ -415,6 +416,7 @@ namespace AsyncGenerator
 		{
 			configuration.RegisterPlugin(new DefaultAsyncCounterpartsFinder());
 			configuration.RegisterPlugin(new ThreadSleepAsyncCounterpartFinder());
+			configuration.RegisterPlugin(new ParallelForForEachTransformer());
 			configuration.RegisterPlugin(new DefaultPreconditionChecker());
 
 			// Document transformers

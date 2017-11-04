@@ -201,7 +201,7 @@ namespace AsyncGenerator.Internal
 
 		#region Analyze step
 
-		public bool RewriteYields { get; set; }
+		public bool HasYields { get; set; }
 
 		public BodyFunctionDataReference ArgumentOfFunctionInvocation { get; set; }
 

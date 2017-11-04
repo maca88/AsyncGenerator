@@ -5,9 +5,9 @@ using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
-using AsyncGenerator.Tests.AnonymousFunctions.Input;
+using AsyncGenerator.Tests.ParallelFor.Input;
 
-namespace AsyncGenerator.Tests.AnonymousFunctions
+namespace AsyncGenerator.Tests.ParallelFor
 {
 	[TestFixture]
 	public class Fixture : BaseFixture
@@ -18,7 +18,6 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.CancellationTokens(true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -36,13 +35,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 		}
 
 		[Test]
-		public void TestPreserveReturnTypeAfterTransformation()
+		public void TestCancellationTokensAfterTransformation()
 		{
 			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(true)
-					.PreserveReturnType(symbol => true)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -51,7 +49,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("PreserveReturnType"), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile(nameof(TestCase) + "Tokens"), document.Transformed.ToFullString());
 					})
 				)
 			);
@@ -60,14 +58,12 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 		}
 
 		[Test]
-		public void TestPreserveReturnTypeWithoutTokensAfterTransformation()
+		public void TestNewTypeAfterTransformation()
 		{
 			var config = Configure(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
-					.CancellationTokens(t => t
-						.RequiresCancellationToken(s => s.ContainingType.Name == "TestCase" ? (bool?)false : null))
-					.PreserveReturnType(symbol => true)
+					.TypeConversion(symbol => TypeConversion.NewType)
 				)
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
@@ -75,8 +71,8 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 						AssertValidAnnotations(result);
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("PreserveReturnTypeWithoutTokens"), document.Transformed.ToFullString());
+						Assert.IsNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TestCase) + "NewType"), document.Transformed.ToFullString());
 					})
 				)
 			);
@@ -85,9 +81,9 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 		}
 
 		[Test]
-		public void TestMethodWithDelegateAfterTransformation()
+		public void TestNoLinqAfterTransformation()
 		{
-			var config = Configure(nameof(MethodWithDelegate), p => p
+			var config = Configure(nameof(NoLinq), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 				)
@@ -98,7 +94,7 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 						Assert.AreEqual(1, result.Documents.Count);
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(MethodWithDelegate)), document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile(nameof(NoLinq)), document.Transformed.ToFullString());
 					})
 				)
 			);

@@ -57,10 +57,18 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				CalculatePreserveReturnType(currentMethodData);
 
+				var copy = false;
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
 					var depMethodData = depFunctionData as MethodOrAccessorData;
 					var bodyReferences = depFunctionData.BodyFunctionReferences.Where(o => o.ReferenceFunctionData == currentMethodData).ToList();
+					// If the dependent method is located in the same type as the current method and the type will be generated as a new type,
+					// we need to make a copy if there is a non async reference
+					var shouldCopy = depFunctionData.TypeData == currentMethodData.TypeData &&
+					                    currentMethodData.TypeData.GetSelfAndAncestorsTypeData()
+						                    .Any(o => o.Conversion == TypeConversion.NewType) &&
+					                    bodyReferences.Any(o => o.GetConversion() == ReferenceConversion.Ignore);
+
 					if (depMethodData != null)
 					{
 						// Before setting the dependency to async we need to check if there is at least one invocation that will be converted to async
@@ -72,6 +80,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 						if (!toProcessMethodData.Contains(depMethodData))
 						{
+							copy |= shouldCopy;
 							continue;
 						}
 						processingMetodData.Enqueue(depMethodData);
@@ -82,6 +91,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					depFunctionData.ToAsync();
+					copy |= shouldCopy;
 
 					if (!currentMethodData.CancellationTokenRequired)
 					{
@@ -92,6 +102,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
+				}
+
+				if (copy)
+				{
+					currentMethodData.SoftCopy();
 				}
 			}
 		}
@@ -251,8 +266,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Before checking the conversion of method references we have to calculate the conversion of invocations that 
 			// have one or more methods passed as an argument as the current calculated conversion may be wrong
 			// (eg. one of the arguments may be ignored in the post-analyze step)
-			// TODO: analyze if all code is required
-			foreach (var bodyRefData in functionData.BodyFunctionReferences.Where(o => o.FunctionArguments != null && o.Conversion != ReferenceConversion.Ignore))
+			foreach (var bodyRefData in functionData.BodyFunctionReferences.Where(o => o.DelegateArguments != null && o.Conversion != ReferenceConversion.Ignore))
 			{
 				var asyncCounterpart = bodyRefData.AsyncCounterpartSymbol;
 				if (asyncCounterpart == null)
@@ -260,57 +274,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					// TODO: define
 					throw new InvalidOperationException($"AsyncCounterpartSymbol is null {bodyRefData.ReferenceNode}");
 				}
-
-				var nonAsyncArgs = bodyRefData.FunctionArguments.Where(o =>
-						(o.FunctionData != null && o.FunctionData.Conversion == MethodConversion.Ignore) ||
-						(o.FunctionReference != null && o.FunctionReference.GetConversion() == ReferenceConversion.Ignore))
-					.Select(o => o.Index)
-					.ToList();
-				if (nonAsyncArgs.Any())
+				bodyRefData.CalculateFunctionArguments();
+				foreach (var analyzer in _configuration.BodyFunctionReferencePostAnalyzers)
 				{
-					// Check if any of the arguments needs to be async in order to have the invocation async
-					var paramOffset = asyncCounterpart.IsExtensionMethod ? 1 : 0;
-					if (asyncCounterpart.Parameters
-						.Where((symbol, i) => nonAsyncArgs.Contains(i + paramOffset))
-						.Select(o => o.Type)
-						.OfType<INamedTypeSymbol>()
-						.Any(o => o.DelegateInvokeMethod != null))
-					{
-						bodyRefData.Ignore($"Arguments at indexes '{string.Join(", ", nonAsyncArgs)}' cannot be converted to async");
-						continue;
-					}
-				}
-				
-				// Check if we need to wrap the argument into an anonymous function. We can skip anonymous functions passed as argument as they will never have an additinal parameter
-				// TODO: maybe this should be moved elsewhere
-				foreach (var funArgument in bodyRefData.FunctionArguments.Where(o => o.FunctionReference != null))
-				{
-					var argRefFunction = funArgument.FunctionReference;
-					var delegateFun = (IMethodSymbol)asyncCounterpart.Parameters[funArgument.Index].Type.GetMembers("Invoke").First();
-					argRefFunction.AsyncDelegateArgument = delegateFun;
-
-					if (argRefFunction.AsyncCounterpartSymbol != null)
-					{
-						// TODO: check internal functions, parameters
-						if (argRefFunction.ReferenceFunctionData == null && !argRefFunction.AsyncCounterpartSymbol.ReturnType.Equals(delegateFun.ReturnType))
-						{
-							bodyRefData.Ignore("One of the arguments does not match the with the async delegate parameter");
-							break;
-						}
-
-						// If the argument is an internal method and it will be generated with an additinal parameter we need to wrap it inside a function
-						if (argRefFunction.ReferenceFunctionData != null)
-						{
-							// TODO: check return type
-							argRefFunction.WrapInsideFunction = argRefFunction.ReferenceFunctionData is MethodData argRefMethodData &&
-																(argRefMethodData.CancellationTokenRequired || argRefMethodData.PreserveReturnType);
-						}
-						// For now we check only if the parameters matches in case the async counterpart has a cancellation token parameter
-						else if (delegateFun.Parameters.Length < argRefFunction.AsyncCounterpartSymbol.Parameters.Length)
-						{
-							argRefFunction.WrapInsideFunction = true;
-						}
-					}
+					analyzer.PostAnalyzeBodyFunctionReference(bodyRefData);
 				}
 			}
 

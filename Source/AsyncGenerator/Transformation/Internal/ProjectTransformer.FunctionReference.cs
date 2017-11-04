@@ -74,9 +74,9 @@ namespace AsyncGenerator.Transformation.Internal
 						crefNode
 							.ReplaceNode(nameNode, newNameNode)
 							.WithParameters(CrefParameterList(SeparatedList(paramList))),
-						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
 							(type, fullName) => rootNode.WithContainer(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(rootNode.Container)),
-						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
 				else if (funReferenceResult.IsNameOf)
@@ -85,9 +85,9 @@ namespace AsyncGenerator.Transformation.Internal
 						nameNode.Parent as MemberAccessExpressionSyntax,
 						nameNode,
 						newNameNode,
-						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
 							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName)).WithTriviaFrom(rootNode.Expression)),
-						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
 				return node;
@@ -129,9 +129,9 @@ namespace AsyncGenerator.Transformation.Internal
 							nameNode.Parent as MemberAccessExpressionSyntax,
 							nameNode,
 							newNameNode,
-							rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+							rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
 								(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName))),
-							childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+							childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 						)
 						.WrapInsideFunction(bodyFuncReferenceResult.AsyncDelegateArgument, returnTypeMismatch,
 							namespaceMetadata.TaskConflict,
@@ -145,9 +145,9 @@ namespace AsyncGenerator.Transformation.Internal
 						nameNode.Parent as MemberAccessExpressionSyntax,
 						nameNode,
 						newNameNode,
-						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
 							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName))),
-						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
 				return node;
@@ -155,7 +155,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			InvocationExpressionSyntax invokeNode = null;
 			var isAccessor = bodyFuncReferenceResult.ReferenceSymbol.IsAccessor();
-			if (!isAccessor && (bodyFuncReferenceResult.PassCancellationToken || bodyFuncReferenceResult.AwaitInvocation))
+			if (!isAccessor && funReferenceResult.ReferenceNode.IsKind(SyntaxKind.InvocationExpression))
 			{
 				invokeNode = nameNode.Ancestors().OfType<InvocationExpressionSyntax>().First();
 			}
@@ -174,14 +174,14 @@ namespace AsyncGenerator.Transformation.Internal
 						newNameNode,
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode
 								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult),
-							funReferenceResult, namespaceMetadata,
+							funcResult, funReferenceResult, namespaceMetadata,
 							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
 					);
 				}
 				else if (isAccessor)
 				{
 					newNode = ConvertAccessor(newNode, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, 
-						invNode => UpdateTypeAndRunReferenceTransformers(invNode, funReferenceResult, namespaceMetadata,
+						invNode => UpdateTypeAndRunReferenceTransformers(invNode, funcResult, funReferenceResult, namespaceMetadata,
 							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression)));
 				}
 				else
@@ -190,9 +190,9 @@ namespace AsyncGenerator.Transformation.Internal
 						nameNode.Parent as MemberAccessExpressionSyntax,
 						nameNode,
 						newNameNode,
-						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funReferenceResult, namespaceMetadata,
+						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
 							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName)).WithTriviaFrom(rootNode.Expression)),
-						childNode => RunReferenceTransformers(childNode, funReferenceResult, namespaceMetadata)
+						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
 
@@ -217,7 +217,7 @@ namespace AsyncGenerator.Transformation.Internal
 				if (isAccessor)
 				{
 					node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, invNode =>
-						UpdateTypeAndRunReferenceTransformers(invNode, funReferenceResult, namespaceMetadata,
+						UpdateTypeAndRunReferenceTransformers(invNode, funcResult, funReferenceResult, namespaceMetadata,
 								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
 							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
 					);
@@ -230,7 +230,7 @@ namespace AsyncGenerator.Transformation.Internal
 						newNameNode,
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode
 									.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult),
-								funReferenceResult, namespaceMetadata,
+								funcResult, funReferenceResult, namespaceMetadata,
 								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
 							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
 					);
@@ -342,43 +342,46 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 
-		private InvocationExpressionSyntax UpdateTypeAndRunReferenceTransformers(InvocationExpressionSyntax node, IFunctionReferenceAnalyzationResult funReferenceResult,
-			INamespaceTransformationMetadata namespaceMetadata, Func<MemberAccessExpressionSyntax, INamedTypeSymbol, bool, MemberAccessExpressionSyntax> updateTypeFunc)
+		private InvocationExpressionSyntax UpdateTypeAndRunReferenceTransformers(InvocationExpressionSyntax node, IFunctionAnalyzationResult funcResult,
+			IFunctionReferenceAnalyzationResult funcReferenceResult,
+			INamespaceTransformationMetadata namespaceMetadata,
+			Func<MemberAccessExpressionSyntax, INamedTypeSymbol, bool, MemberAccessExpressionSyntax> updateTypeFunc)
 		{
 			// If the async counterpart is from another type e.g. Thread.Sleep -> Task.Delay, we need to change also the type
-			if (!funReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
-			    !funReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
-				    funReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType) &&
+			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
+			    !funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
+				    funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType) &&
 			    node.Expression is MemberAccessExpressionSyntax memberAccess)
 			{
-				var type = funReferenceResult.AsyncCounterpartSymbol.ContainingType;
+				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;
 				node = node.WithExpression(updateTypeFunc(memberAccess, type, 
 					namespaceMetadata.AnalyzationResult.IsIncluded(type.ContainingNamespace?.ToString())));
 			}
-			return RunReferenceTransformers(node, funReferenceResult, namespaceMetadata);
+			return RunReferenceTransformers(node, funcResult, funcReferenceResult, namespaceMetadata);
 		}
 
-		private T UpdateTypeAndRunReferenceTransformers<T>(T node, IFunctionReferenceAnalyzationResult funReferenceResult,
+		private T UpdateTypeAndRunReferenceTransformers<T>(T node, IFunctionAnalyzationResult funcResult, IFunctionReferenceAnalyzationResult funcReferenceResult,
 			INamespaceTransformationMetadata namespaceMetadata, Func<INamedTypeSymbol, bool, T> updateTypeFunc)
 			where T : SyntaxNode
 		{
 			// If the async counterpart is from another type e.g. Thread.Sleep -> Task.Delay, we need to change also the type
-			if (!funReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
-			    !funReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
-				    funReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType))
+			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
+			    !funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
+				    funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType))
 			{
-				var type = funReferenceResult.AsyncCounterpartSymbol.ContainingType;
+				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;
 				node = updateTypeFunc(type, namespaceMetadata.AnalyzationResult.IsIncluded(type.ContainingNamespace?.ToString()));
 			}
-			return RunReferenceTransformers(node, funReferenceResult, namespaceMetadata);
+			return RunReferenceTransformers(node, funcResult, funcReferenceResult, namespaceMetadata);
 		}
 
-		private T RunReferenceTransformers<T>(T node, IFunctionReferenceAnalyzationResult funReferenceResult, INamespaceTransformationMetadata namespaceMetadata)
+		private T RunReferenceTransformers<T>(T node, IFunctionAnalyzationResult funcResult, IFunctionReferenceAnalyzationResult funcReferenceResult,
+			INamespaceTransformationMetadata namespaceMetadata)
 			where T : SyntaxNode
 		{
 			foreach (var transformer in _configuration.FunctionReferenceTransformers)
 			{
-				node = transformer.TransformFunctionReference(node, funReferenceResult, namespaceMetadata) ?? node;
+				node = (T)transformer.TransformFunctionReference(node, funcResult, funcReferenceResult, namespaceMetadata) ?? node;
 			}
 			return node;
 		}
