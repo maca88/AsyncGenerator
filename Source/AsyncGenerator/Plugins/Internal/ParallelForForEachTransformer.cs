@@ -60,6 +60,7 @@ namespace AsyncGenerator.Plugins.Internal
 			_forEachMethod = parallelSymbol.GetMembers("ForEach").OfType<IMethodSymbol>()
 				.FirstOrDefault(o =>
 					o.Parameters.Length == 2 &&
+					o.Parameters[0].Type.Name == "IEnumerable" &&
 					o.Parameters[1].Type is INamedTypeSymbol namedType &&
 					namedType.IsGenericType &&
 					namedType.TypeArguments.Length == 1 // Action<TSource>
