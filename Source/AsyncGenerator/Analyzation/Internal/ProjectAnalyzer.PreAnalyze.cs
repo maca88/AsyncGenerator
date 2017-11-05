@@ -247,6 +247,15 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
+			// Override user configuration if the method is set to be copied on a partial type conversion
+			if (methodData.Conversion == MethodConversion.Copy && 
+				methodData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType))
+			{
+				Logger.Warn($"Invalid conversion for method {methodData.Symbol}. Method cannot be copied, " +
+				            "when the containing type conversion is not set to be a new type. Override the method conversion to Unknown");
+				methodData.Conversion = MethodConversion.Unknown;
+			}
+
 			// Check if explicitly implements external interfaces
 			if (methodSymbol.MethodKind == MethodKind.ExplicitInterfaceImplementation)
 			{

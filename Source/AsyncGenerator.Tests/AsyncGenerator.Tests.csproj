@@ -204,6 +204,8 @@
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
     <Compile Include="AnonymousFunctions\Input\MethodWithDelegate.cs" />
+    <Compile Include="ConfigurationOverride\Fixture.cs" />
+    <Compile Include="ConfigurationOverride\Input\PartialCopy.cs" />
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
@@ -881,6 +883,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ParallelFor\Output\TestCaseTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ConfigurationOverride\Output\PartialCopy.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
