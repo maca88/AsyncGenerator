@@ -4,6 +4,7 @@ using System.Threading;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Internal;
 using log4net;
 using log4net.Config;
 using Microsoft.VisualStudio.Setup.Configuration;
@@ -26,7 +27,7 @@ namespace AsyncGenerator.CommandLine
 			};
 			try
 			{
-				ConfigureMSBuild();
+				EnvironmentHelper.Setup();
 				var configuration = Configure();
 				if (configuration == null)
 				{
@@ -48,47 +49,6 @@ namespace AsyncGenerator.CommandLine
 				Logger.Fatal(e);
 				return -1;
 			}
-		}
-
-		// Copied from here: https://github.com/T4MVC/R4MVC/commit/ae2fd5d8f3ab60708419d37c8a42d237d86d3061#diff-89dd7d1659695edb3702bfe879b34b09R61
-		// in order to fix the issue https://github.com/Microsoft/msbuild/issues/2369 -> https://github.com/Microsoft/msbuild/issues/2030
-		private static void ConfigureMSBuild()
-		{
-			if (Type.GetType("Mono.Runtime") != null)
-				return;
-			
-			var query = new SetupConfiguration();
-			var query2 = (ISetupConfiguration2)query;
-
-			try
-			{
-				if (query2.GetInstanceForCurrentProcess() is ISetupInstance2 instance)
-				{
-					Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-					Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-					return;
-				}
-			}
-			catch { }
-
-			var instances = new ISetupInstance[1];
-			var e = query2.EnumAllInstances();
-			int fetched;
-			do
-			{
-				e.Next(1, instances, out fetched);
-				if (fetched > 0)
-				{
-					var instance = instances[0] as ISetupInstance2;
-					if (instance.GetInstallationVersion().StartsWith("15."))
-					{
-						Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.GetInstallationPath());
-						Environment.SetEnvironmentVariable("VisualStudioVersion", @"15.0");
-						return;
-					}
-				}
-			}
-			while (fetched > 0);
 		}
 
 		static AsyncCodeConfiguration Configure()

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <AsyncGenerator xmlns="https://github.com/maca88/AsyncGenerator">
-  <Solution filePath="..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln">
+  <Solution filePath="../../ExternalProjects/NHibernate/Source/src/NHibernate.sln">
     <Projects>
       <Project name="NHibernate">
         <Analyzation>
@@ -135,8 +135,8 @@
           </CancellationTokens>
           <ScanMethodBody>true</ScanMethodBody>
           <IgnoreDocuments>
-            <Document filePathEndsWith="Linq\MathTests.cs" />
-            <Document filePathEndsWith="Linq\ExpressionSessionLeakTest.cs" />
+            <Document filePathEndsWith="Linq/MathTests.cs" />
+            <Document filePathEndsWith="Linq/ExpressionSessionLeakTest.cs" />
           </IgnoreDocuments>
           <TypeConversion>
             <Type conversion="Ignore" name="NorthwindDbCreator" />

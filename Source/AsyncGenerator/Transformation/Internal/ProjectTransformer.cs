@@ -81,14 +81,15 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private string GetDocumentAsyncPath(Document document)
 		{
-			var path = "";
+			var paths = new List<string> { Path.GetDirectoryName(document.FilePath) };
 			for (var i = 0; i < document.Folders.Count; i++)
 			{
-				path += @"..\";
+				paths.Add("..");
 			}
-			path += $@"{_configuration.AsyncFolder}\";
-			path += string.Join(@"\", document.Folders);
-			return $@"{Path.GetFullPath(Path.Combine(Path.GetDirectoryName(document.FilePath), path))}\{document.Name}";
+			paths.Add(_configuration.AsyncFolder);
+			paths.AddRange(document.Folders);
+			paths.Add(document.Name);
+			return Path.GetFullPath(Path.Combine(paths.ToArray()));
 		}
 	}
 }

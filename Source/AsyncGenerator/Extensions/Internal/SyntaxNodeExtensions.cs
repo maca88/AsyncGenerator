@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Transformation;
+using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -563,7 +564,7 @@ namespace AsyncGenerator.Extensions.Internal
 
 		// TODO: take the original directive whitespace
 		internal static TypeDeclarationSyntax RemoveMembersKeepDirectives(this TypeDeclarationSyntax node, 
-			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace)
+			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace, SyntaxTrivia eol)
 		{
 			var annotations = new List<string>();
 			foreach (var memberSpan in node.Members.Where(o => predicate(o)).Select(o => o.Span))
@@ -575,14 +576,14 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 			foreach (var annotation in annotations)
 			{
-				node = RemoveNodeKeepDirectives(node, annotation, directiveLeadingWhitespace);
+				node = RemoveNodeKeepDirectives(node, annotation, directiveLeadingWhitespace, eol);
 			}
 			return node;
 		}
 
 		// TODO: take the original directive whitespace
 		internal static NamespaceDeclarationSyntax RemoveMembersKeepDirectives(this NamespaceDeclarationSyntax node,
-			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace)
+			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace, SyntaxTrivia eol)
 		{
 			var annotations = new List<string>();
 			foreach (var memberSpan in node.Members.Where(o => predicate(o)).Select(o => o.Span))
@@ -594,13 +595,13 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 			foreach (var annotation in annotations)
 			{
-				node = RemoveNodeKeepDirectives(node, annotation, directiveLeadingWhitespace);
+				node = RemoveNodeKeepDirectives(node, annotation, directiveLeadingWhitespace, eol);
 			}
 			return node;
 		}
 
 		// TODO: take the original directive whitespace
-		internal static T RemoveNodeKeepDirectives<T>(this T node, string annotation, SyntaxTrivia directiveLeadingWhitespace)
+		internal static T RemoveNodeKeepDirectives<T>(this T node, string annotation, SyntaxTrivia directiveLeadingWhitespace, SyntaxTrivia eol)
 			where T : SyntaxNode
 		{
 			var toRemoveNode = node.GetAnnotatedNodes(annotation).First();
@@ -619,6 +620,11 @@ namespace AsyncGenerator.Extensions.Internal
 			if (node == null)
 			{
 				return null; // TODO: we need to preserve or remove directives!
+			}
+			// Workaround: When EOL is not CRLF we need to replace all CRLF that may be added by RemoveNode with LF
+			if (eol.ToFullString() != CarriageReturnLineFeed.ToFullString())
+			{
+				node = (T)new UnixEndOfLineTriviaRewriter().Visit(node);
 			}
 			foreach (var directiveAnnotation in directiveAnnotations)
 			{

@@ -1,5 +1,5 @@
 ﻿solution:
-  filePath: ..\..\ExternalProjects\NHibernate\Source\src\NHibernate.sln
+  filePath: ../../ExternalProjects/NHibernate/Source/src/NHibernate.sln
   concurrentRun: true
   applyChanges: true
   suppressDiagnosticFailures:
@@ -186,8 +186,8 @@
       - conversion: Ignore
         anyBaseTypeRule: IsTestCase
       ignoreDocuments:
-      - filePathEndsWith: Linq\MathTests.cs
-      - filePathEndsWith: Linq\ExpressionSessionLeakTest.cs
+      - filePathEndsWith: Linq/MathTests.cs
+      - filePathEndsWith: Linq/ExpressionSessionLeakTest.cs
       cancellationTokens:
         withoutCancellationToken:
         - hasAttributeName: TestAttribute

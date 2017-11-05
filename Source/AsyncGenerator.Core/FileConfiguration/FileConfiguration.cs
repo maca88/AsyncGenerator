@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Xml.Serialization;
 
 namespace AsyncGenerator.Core.FileConfiguration
@@ -42,8 +43,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Solution
 	{
+		private string _filePath;
+
 		[XmlAttribute(AttributeName = "filePath")]
-		public string FilePath { get; set; }
+		public string FilePath
+		{
+			get => _filePath;
+			set => _filePath = value?.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
 		[XmlElement(IsNullable = true)]
 		public bool? ConcurrentRun { get; set; }
 		[XmlElement(IsNullable = true)]
@@ -68,8 +75,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Project
 	{
+		private string _filePath;
+
 		[XmlAttribute(AttributeName = "filePath")]
-		public string FilePath { get; set; }
+		public string FilePath
+		{
+			get => _filePath;
+			set => _filePath = value?.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
 		[XmlElement(IsNullable = true)]
 		public bool? ConcurrentRun { get; set; }
 		[XmlElement(IsNullable = true)]
@@ -474,10 +487,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class DocumentFilter
 	{
+		private string _filePath;
+		private string _filePathEndsWith;
+
 		[XmlAttribute(AttributeName = "filePath")]
-		public string FilePath { get; set; }
+		public string FilePath
+		{
+			get => _filePath;
+			set => _filePath = value?.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
 		[XmlAttribute(AttributeName = "filePathEndsWith")]
-		public string FilePathEndsWith { get; set; }
+		public string FilePathEndsWith
+		{
+			get => _filePathEndsWith;
+			set => _filePathEndsWith = value?.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
 	}

@@ -1,0 +1,16 @@
+language: csharp
+matrix:
+  include:
+    - os: linux
+      mono: latest
+    - os: osx
+      mono: latest
+script:
+  - sudo ./build.sh
+git:
+  submodules: false
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo nuget update -self; fi
+cache:
+  directories:
+    - Source/packages

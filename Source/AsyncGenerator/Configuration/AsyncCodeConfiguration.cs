@@ -92,7 +92,7 @@ namespace AsyncGenerator.Configuration
 			{
 				throw new FileNotFoundException($"Configuration file not found. Path:'{filePath}'");
 			}
-			return ConfigureFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath) + @"\");
+			return ConfigureFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath));
 		}
 
 		private AsyncCodeConfiguration ConfigureFromStream(Stream stream, IFileConfigurator fileConfigurator, string basePath = null)
@@ -139,10 +139,6 @@ namespace AsyncGenerator.Configuration
 			var uri = new UriBuilder(codeBase);
 			var assemblyPath = Uri.UnescapeDataString(uri.Path);
 			var dir = Path.GetDirectoryName(assemblyPath);
-			if (!dir.EndsWith(@"\"))
-			{
-				dir += @"\";
-			}
 			return dir;
 		}
 	}

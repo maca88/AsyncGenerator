@@ -183,6 +183,7 @@
     <Compile Include="Internal\Annotations.cs" />
     <Compile Include="Internal\BaseMethodData.cs" />
     <Compile Include="Internal\ChildFunctionData.cs" />
+    <Compile Include="Internal\EnvironmentHelper.cs" />
     <Compile Include="Internal\FieldData.cs" />
     <Compile Include="Internal\FieldVariableDeclaratorData.cs" />
     <Compile Include="Internal\DelegateArgumentData.cs" />
@@ -217,6 +218,7 @@
     <Compile Include="Internal\DataReference.cs" />
     <Compile Include="Internal\FieldVariableDataReference.cs" />
     <Compile Include="Internal\SourceCodeCompiler.cs" />
+    <Compile Include="Internal\UnixEndOfLineTriviaRewriter.cs" />
     <Compile Include="Plugins\Internal\ParallelForForEachTransformer.cs" />
     <Compile Include="Internal\ThreadSleepAsyncCounterpartFinder.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />
@@ -257,7 +259,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj">
