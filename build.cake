@@ -43,7 +43,10 @@ Task("Restore-NuGet-Packages")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    NuGetRestore("./Source/AsyncGenerator.sln");
+    NuGetRestore("./Source/AsyncGenerator.sln", new NuGetRestoreSettings()
+    {
+        ConfigFile = "./Nuget.config"
+    });
 });
 
 Task("Build")
