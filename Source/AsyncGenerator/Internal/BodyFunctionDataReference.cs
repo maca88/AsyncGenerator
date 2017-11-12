@@ -25,7 +25,13 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public HashSet<IMethodSymbol> ReferenceAsyncSymbols { get; set; }
+		private HashSet<IMethodSymbol> _referenceAsyncSymbols;
+
+		public HashSet<IMethodSymbol> ReferenceAsyncSymbols
+		{
+			get => _referenceAsyncSymbols ?? (_referenceAsyncSymbols = new HashSet<IMethodSymbol>());
+			set => _referenceAsyncSymbols = value;
+		}
 
 		public override ReferenceConversion Conversion { get; set; }
 
@@ -89,12 +95,15 @@ namespace AsyncGenerator.Internal
 			{
 				return Conversion;
 			}
-			var conversion = ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
-				? ReferenceConversion.ToAsync
-				: ReferenceConversion.Ignore;
-			if (conversion == ReferenceConversion.Ignore || DelegateArguments == null || !DelegateArguments.Any())
+			var methodConversion = ReferenceFunctionData?.Conversion ?? MethodConversion.Unknown;
+			var conversion = Conversion;
+			if (methodConversion.HasFlag(MethodConversion.ToAsync))
 			{
-				return conversion;
+				conversion = ReferenceConversion.ToAsync;
+			}
+			else if (methodConversion == MethodConversion.Ignore || methodConversion == MethodConversion.Copy)
+			{
+				conversion = ReferenceConversion.Ignore;
 			}
 			return conversion;
 		}

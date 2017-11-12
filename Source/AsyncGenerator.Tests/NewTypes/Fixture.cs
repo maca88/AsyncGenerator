@@ -245,10 +245,7 @@ namespace AsyncGenerator.Tests.NewTypes
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
-						var document = result.Documents[0];
-						Assert.Null(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("NestedCopyIgnoreRead"), document.Transformed.ToFullString());
+						Assert.AreEqual(0, result.Documents.Count);
 					})
 				)
 			);
@@ -266,10 +263,7 @@ namespace AsyncGenerator.Tests.NewTypes
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
-						var document = result.Documents[0];
-						Assert.Null(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("NestedCopyIgnoreRead"), document.Transformed.ToFullString());
+						Assert.AreEqual(0, result.Documents.Count);
 					})
 				)
 			);

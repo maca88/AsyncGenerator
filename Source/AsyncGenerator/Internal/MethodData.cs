@@ -20,5 +20,7 @@ namespace AsyncGenerator.Internal
 
 		public MethodDeclarationSyntax Node { get; }
 
+		public override bool IsPrivate => !InterfaceMethod && Symbol.ExplicitInterfaceImplementations.Length == 0 &&
+		                                  (!Node.Modifiers.Any() || Node.Modifiers.Any(SyntaxKind.PrivateKeyword));
 	}
 }

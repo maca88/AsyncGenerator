@@ -20,6 +20,23 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
+				// Ignore or copy properties of new types
+				foreach (var property in typeData.Properties.Values)
+				{
+					if (typeData.IsNewType)
+					{
+						property.Copy(); // TODO: copy only if needed
+						SoftCopyAllDependencies(property.GetAccessorData);
+						SoftCopyAllDependencies(property.SetAccessorData);
+					}
+					// A type with Unknown conversion may be converted to a new type if one of its base classes
+					// is a new type and has at least one async member
+					else if (typeData.BaseTypes.All(o => o.Conversion != TypeConversion.NewType))
+					{
+						property.Conversion = PropertyConversion.Ignore;
+					}
+				}
+
 				foreach (var methodData in typeData.MethodsAndAccessors.Where(o => o.Conversion != MethodConversion.Ignore))
 				{
 					foreach (var functionData in methodData.GetDescendantsChildFunctions(o => o.Conversion != MethodConversion.Ignore)
@@ -32,19 +49,39 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
+		private void SoftCopyAllDependencies(MethodOrAccessorData methodOrAccessor)
+		{
+			if (methodOrAccessor == null)
+			{
+				return;
+			}
+			var processedMethods = new HashSet<MethodOrAccessorData>();
+			var processingMetods = new Queue<MethodOrAccessorData>();
+			processingMetods.Enqueue(methodOrAccessor);
+
+			while (processingMetods.Count > 0)
+			{
+				var currentOrAccessor = processingMetods.Dequeue();
+				processedMethods.Add(currentOrAccessor);
+				foreach (var referencedMethodOrAccessor in currentOrAccessor.BodyFunctionReferences
+					.Select(o => o.ReferenceFunctionData)
+					.Where(o => o != null)
+					.Where(o => o.Conversion != MethodConversion.Ignore && o.TypeData.IsNewType)
+					.Where(o => !processedMethods.Contains(o))
+					.OfType<MethodOrAccessorData>())
+				{
+					referencedMethodOrAccessor.SoftCopy();
+					processingMetods.Enqueue(referencedMethodOrAccessor);
+				}
+			}
+		}
+
 		private void AnalyzeMethodData(DocumentData documentData, MethodOrAccessorData methodAccessorData)
 		{
 			if (methodAccessorData.Conversion == MethodConversion.Copy)
 			{
-				foreach (var bodyReference in methodAccessorData.BodyFunctionReferences.Where(o => o.ReferenceFunctionData != null))
-				{
-					var invokedMethodData = bodyReference.ReferenceFunctionData;
-					if (invokedMethodData.Conversion != MethodConversion.Ignore)
-					{
-						// Soft copy as the method may be also converted to async
-						invokedMethodData.SoftCopy(); // TODO: do we need to do this recursively?
-					}
-				}
+				// If the method will be copied then we have to copy all methods that are used inside this one and do this recursively
+				SoftCopyAllDependencies(methodAccessorData);
 				return; // We do not want to analyze method that will be only copied
 			}
 			
@@ -55,20 +92,12 @@ namespace AsyncGenerator.Analyzation.Internal
 				.Where(o => o.Symbol.IsAbstract || o.Symbol.IsVirtual).ToList();
 			if (!methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync) && baseMethods.Any() && baseMethods.All(o => o.Conversion == MethodConversion.Ignore))
 			{
-				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData()
-					.Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy))
+				if (methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 				{
 					methodAccessorData.Copy();
 					// Check if there are any internal methods that are candidate to be async and are invoked inside this method
 					// If there are, then we need to copy them
-					foreach (var bodyReference in methodAccessorData.BodyFunctionReferences.Where(o => o.ReferenceFunctionData != null))
-					{
-						var invokedMethodData = bodyReference.ReferenceFunctionData;
-						if (invokedMethodData.Conversion != MethodConversion.Ignore)
-						{
-							invokedMethodData.Conversion |= MethodConversion.Copy;
-						}
-					}
+					SoftCopyAllDependencies(methodAccessorData);
 				}
 				else
 				{
@@ -151,14 +180,28 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (parentFunction.BodyFunctionReferences.All(
 						o => !invocationNode.Expression.Span.Contains(o.ReferenceNameNode.Span)))
 					{
-						functionData.Ignore("Function is passed as an argument to a non async invocation");
+						if (functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+						{
+							functionData.Ignore("Function is passed as an argument to a non async invocation");
+						}
+						else
+						{
+							functionData.Copy();
+						}
 						return;
 					}
 				}
 				else
 				{
 					// TODO: find examples and add support
-					functionData.Ignore($"Anonymous function is passed as argument to a non supported node {callNode}");
+					if (functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+					{
+						functionData.Ignore($"Anonymous function is passed as argument to a non supported node {callNode}");
+					}
+					else
+					{
+						functionData.Copy();
+					}
 					return;
 				}
 			}
@@ -240,6 +283,12 @@ namespace AsyncGenerator.Analyzation.Internal
 						break;
 					case SyntaxKind.ReturnStatement:
 						break;
+					case SyntaxKind.ArrayInitializerExpression:
+					case SyntaxKind.CollectionInitializerExpression:
+					case SyntaxKind.ComplexElementInitializerExpression:
+						refData.Ignore($"Async method inside an array/collection initializer is not supported:\r\n{nameNode.Parent}\r\n");
+						Logger.Warn(refData.IgnoredReason);
+						break;
 					// skip
 					case SyntaxKind.VariableDeclarator:
 					case SyntaxKind.EqualsValueClause:
@@ -271,7 +320,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var functionData = functionReferenceData.Data;
 			var functionNode = functionData.GetNode();
 
-			if (IgnoreIfInsideQueryExpression(node, functionNode, functionReferenceData))
+			if (IgnoreIfInvalidAncestor(node, functionNode, functionReferenceData))
 			{
 				return;
 			}
@@ -282,17 +331,18 @@ namespace AsyncGenerator.Analyzation.Internal
 			PropagateCancellationToken(functionReferenceData);
 		}
 
-		private bool IgnoreIfInsideQueryExpression(SyntaxNode node, SyntaxNode endNode, BodyFunctionDataReference functionReferenceData)
+		private bool IgnoreIfInvalidAncestor(SyntaxNode node, SyntaxNode endNode, BodyFunctionDataReference functionReferenceData)
 		{
-			var queryExpression = node.Ancestors()
-				.TakeWhile(o => o != endNode)
-				.OfType<QueryExpressionSyntax>()
-				.FirstOrDefault();
-			if (queryExpression != null) // Await is not supported in a linq query
+			var currAncestor = node.Parent;
+			while (!currAncestor.Equals(endNode))
 			{
-				functionReferenceData.Ignore($"Cannot await async method in a query expression:\r\n{queryExpression}\r\n");
-				Logger.Warn(functionReferenceData.IgnoredReason);
-				return true;
+				if (currAncestor.IsKind(SyntaxKind.QueryExpression))
+				{
+					functionReferenceData.Ignore($"Cannot await async method in a query expression:\r\n{currAncestor}\r\n");
+					Logger.Warn(functionReferenceData.IgnoredReason);
+					return true;
+				}
+				currAncestor = currAncestor.Parent;
 			}
 			return false;
 		}
@@ -303,7 +353,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionNode = functionData.GetNode();
 
-			if (IgnoreIfInsideQueryExpression(node, functionNode, functionReferenceData))
+			if (IgnoreIfInvalidAncestor(node, functionNode, functionReferenceData))
 			{
 				return;
 			}

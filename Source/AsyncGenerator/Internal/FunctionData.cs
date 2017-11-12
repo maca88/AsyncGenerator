@@ -28,6 +28,8 @@ namespace AsyncGenerator.Internal
 
 		public string AsyncCounterpartName { get; set; }
 
+		public bool ForceAsync { get; set; }
+
 		public override ISymbol GetSymbol()
 		{
 			return Symbol;

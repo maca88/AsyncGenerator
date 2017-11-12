@@ -98,5 +98,29 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 				)
 			);
 		}
+
+		[Test]
+		public Task TestArrayOfDelegatesAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ArrayOfDelegates), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.TypeConversion(symbol => nameof(ArrayOfDelegates) == symbol.Name
+						? TypeConversion.NewType
+						: TypeConversion.Unknown)
+					.CancellationTokens(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ArrayOfDelegates)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

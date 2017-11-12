@@ -65,6 +65,8 @@ namespace AsyncGenerator.Internal
 
 		public bool IsPartial { get; set; }
 
+		public bool IsNewType => GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType);
+
 		public ConcurrentDictionary<MethodDeclarationSyntax, MethodData> Methods { get; } = new ConcurrentDictionary<MethodDeclarationSyntax, MethodData>();
 
 		public ConcurrentDictionary<BaseMethodDeclarationSyntax, BaseMethodData> SpecialMethods { get; } = new ConcurrentDictionary<BaseMethodDeclarationSyntax, BaseMethodData>();

@@ -44,7 +44,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				// conversion. (e.g. ignored a method that is used in a method that will be genereated)
 				foreach (var methodOrAccessorData in typeData.MethodsAndAccessors
 					.Where(o => o.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart) ||
-					            (o.ExplicitlyIgnored && (o.TypeData.Conversion == TypeConversion.NewType || o.TypeData.Conversion == TypeConversion.Copy))
+					            // TODO: Make configurable: Scan private methods in order to ignore them if they are not used
+								((o.ExplicitlyIgnored /*|| o.IsPrivate*/) && o.TypeData.IsNewType)
 					)
 				)
 				{

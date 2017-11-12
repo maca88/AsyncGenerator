@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
@@ -67,6 +69,8 @@ namespace AsyncGenerator.Internal
 		public bool CancellationTokenRequired { get; set; }
 
 		public bool HasAsyncCounterpart => AsyncCounterpartWithTokenSymbol != null || AsyncCounterpartSymbol != null;
+
+		public abstract bool IsPrivate { get; }
 
 		#region Analyzation step
 

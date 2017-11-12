@@ -89,6 +89,8 @@ namespace AsyncGenerator.Internal
 			IgnoredReason = null;
 			ExplicitlyIgnored = false;
 			Conversion = PropertyConversion.Copy;
+			GetAccessorData?.SoftCopy();
+			SetAccessorData?.SoftCopy();
 		}
 	}
 }
