@@ -12,26 +12,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AsyncProperites.Input
+namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
-	public partial class Setter
+	public class ArrayOfDelegatesAsync
 	{
-		public Task SetWriteSuccessAsync(string value)
-		{
-			return WriteAsync(value);
-		}
 
-		private Task<bool> WriteAsync(string value)
+		public Task ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return SimpleFile.WriteAsync(value);
-		}
-
-		protected async Task SetSuccessAsync()
-		{
-			await (SetWriteSuccessAsync(""));
+			return SimpleFile.ReadAsync(cancellationToken);
 		}
 	}
 }

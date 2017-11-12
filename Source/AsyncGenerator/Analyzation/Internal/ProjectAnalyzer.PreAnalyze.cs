@@ -144,7 +144,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				fieldData.Ignore("Cascade ignored.");
 				return;
 			}
-			if (fieldData.TypeData.Conversion.HasAnyFlag(TypeConversion.NewType, TypeConversion.Copy))
+			if (fieldData.TypeData.IsNewType)
 			{
 				foreach (var variable in fieldData.Variables)
 				{
@@ -155,7 +155,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private void PreAnalyzePropertyData(PropertyData propertyData, SemanticModel semanticModel)
 		{
-			var newType = propertyData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
+			var newType = propertyData.TypeData.IsNewType;
 			if (!_configuration.PropertyConversion)
 			{
 				// Ignore getter and setter accessors and copy the property if needed
@@ -203,9 +203,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			var forceAsync = functionData.Conversion.HasFlag(MethodConversion.ToAsync);
-			var newType = functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType || o.Conversion == TypeConversion.Copy);
-			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog; // here we want to log only ignored methods that were explicitly set to async
+			functionData.ForceAsync = functionData.Conversion.HasFlag(MethodConversion.ToAsync);
+			var newType = functionData.TypeData.IsNewType;
+			// Here we want to log only ignored methods that were explicitly set to async
+			var log = functionData.ForceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog; 
 			void IgnoreOrCopy(string reason)
 			{
 				if (newType)
@@ -241,15 +242,13 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			FillFunctionLocks(functionData, semanticModel);
 
-			var methodData = functionData as MethodOrAccessorData;
-			if (methodData == null)
+			if (!(functionData is MethodOrAccessorData methodData))
 			{
 				return;
 			}
 
 			// Override user configuration if the method is set to be copied on a partial type conversion
-			if (methodData.Conversion == MethodConversion.Copy && 
-				methodData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType))
+			if (methodData.Conversion == MethodConversion.Copy && !newType)
 			{
 				Logger.Warn($"Invalid conversion for method {methodData.Symbol}. Method cannot be copied, " +
 				            "when the containing type conversion is not set to be a new type. Override the method conversion to Unknown");
@@ -279,7 +278,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// For new types we need to copy all interface members
 					if (newType)
 					{
-						methodData.Conversion |= MethodConversion.Copy;
+						methodData.SoftCopy();
 					}
 				}
 			}
@@ -349,7 +348,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				// For new types we need to copy all interface member
 				if (newType)
 				{
-					methodData.Conversion |= MethodConversion.Copy;
+					methodData.SoftCopy();
 				}
 			}
 
@@ -399,7 +398,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				methodData.Missing = true;
 				methodData.ToAsync();
-				if (methodData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
+				if (newType)
 				{
 					methodData.SoftCopy();
 				}

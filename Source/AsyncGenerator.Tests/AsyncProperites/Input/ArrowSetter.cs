@@ -19,7 +19,7 @@ namespace AsyncGenerator.Tests.AsyncProperites.Input
 			return SimpleFile.Write(value);
 		}
 
-		private void SetSuccess()
+		protected void SetSuccess()
 		{
 			WriteSuccess = "";
 		}

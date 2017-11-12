@@ -203,6 +203,7 @@
     <Compile Include="AbstractClass\Fixture.cs" />
     <Compile Include="AbstractClass\Input\TestCase.cs" />
     <Compile Include="AnonymousFunctions\Fixture.cs" />
+    <Compile Include="AnonymousFunctions\Input\ArrayOfDelegates.cs" />
     <Compile Include="AnonymousFunctions\Input\MethodWithDelegate.cs" />
     <Compile Include="ConfigurationOverride\Fixture.cs" />
     <Compile Include="ConfigurationOverride\Input\PartialCopy.cs" />
@@ -747,9 +748,6 @@
     <EmbeddedResource Include="PartialCompilation\Output\GenericCtorMultiOverloadsDiffReturnType.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="NewTypes\Output\NestedCopyIgnoreRead.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="CSharpFeatures\Output\CustomEnumerable.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -886,6 +884,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ConfigurationOverride\Output\PartialCopy.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\ArrayOfDelegates.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

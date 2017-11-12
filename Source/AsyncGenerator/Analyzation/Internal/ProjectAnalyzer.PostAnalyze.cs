@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using AsyncGenerator.Core;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
@@ -57,17 +58,10 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				CalculatePreserveReturnType(currentMethodData);
 
-				var copy = false;
 				foreach (var depFunctionData in currentMethodData.Dependencies)
 				{
 					var depMethodData = depFunctionData as MethodOrAccessorData;
 					var bodyReferences = depFunctionData.BodyFunctionReferences.Where(o => o.ReferenceFunctionData == currentMethodData).ToList();
-					// If the dependent method is located in the same type as the current method and the type will be generated as a new type,
-					// we need to make a copy if there is a non async reference
-					var shouldCopy = depFunctionData.TypeData == currentMethodData.TypeData &&
-					                    currentMethodData.TypeData.GetSelfAndAncestorsTypeData()
-						                    .Any(o => o.Conversion == TypeConversion.NewType) &&
-					                    bodyReferences.Any(o => o.GetConversion() == ReferenceConversion.Ignore);
 
 					if (depMethodData != null)
 					{
@@ -80,7 +74,6 @@ namespace AsyncGenerator.Analyzation.Internal
 
 						if (!toProcessMethodData.Contains(depMethodData))
 						{
-							copy |= shouldCopy;
 							continue;
 						}
 						processingMetodData.Enqueue(depMethodData);
@@ -91,7 +84,6 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					depFunctionData.ToAsync();
-					copy |= shouldCopy;
 
 					if (!currentMethodData.CancellationTokenRequired)
 					{
@@ -102,11 +94,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
-				}
-
-				if (copy)
-				{
-					currentMethodData.SoftCopy();
 				}
 			}
 		}
@@ -381,21 +368,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart, MethodConversion.Unknown))));
 			//TODO: optimize steps for better performance
 
-			// We have to copy methods that are used by properties or methods that are marked to be copied
-			foreach (var methodData in toProcessMethodData.OfType<MethodData>()
-				.Where(o => !o.Conversion.HasFlag(MethodConversion.Copy) && o.TypeData.GetSelfAndAncestorsTypeData().Any(t => t.Conversion == TypeConversion.NewType)))
-			{
-				if (methodData.GetAllReferencedByFunctions()
-						.Any(o =>
-							o.Conversion.HasFlag(MethodConversion.Copy) ||
-							(o is AccessorData accessorData && accessorData.PropertyData.Conversion == PropertyConversion.Copy)
-						)
-				)
-				{
-					methodData.SoftCopy();
-				}
-			}
-
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
 			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
@@ -406,11 +378,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (toProcessMethodData.Count == 0)
 					{
 						break;
-					}
-					if (IsUnused(tokenMethodData) == true)
-					{
-						tokenMethodData.Ignore("Method is not used.");
-						continue;
 					}
 					tokenMethodData.ToAsync();
 					PostAnalyzeAsyncMethodData(tokenMethodData, toProcessMethodData);
@@ -447,11 +414,6 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (methodData.Conversion == MethodConversion.Ignore)
 				{
 					Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
-					continue;
-				}
-				if (IsUnused(methodData) == true)
-				{
-					methodData.Ignore("Method is not used.");
 					continue;
 				}
 				methodData.ToAsync();
@@ -539,6 +501,67 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
+			// Ignore unused private methods
+			var methodOrAccessorQueue = new Queue<MethodOrAccessorData>(allTypeData
+				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion != MethodConversion.Ignore && m.IsPrivate && !m.ForceAsync)));
+			var postopnedMethods = new List<MethodOrAccessorData>();
+			var lastPostponedMethods = 0;
+			while (methodOrAccessorQueue.Count > 0 || postopnedMethods.Count > 0)
+			{
+				if (methodOrAccessorQueue.Count == 0)
+				{
+					if (lastPostponedMethods == postopnedMethods.Count)
+					{
+						break;
+					}
+					lastPostponedMethods = postopnedMethods.Count;
+					foreach (var postopnedMethod in postopnedMethods)
+					{
+						methodOrAccessorQueue.Enqueue(postopnedMethod);
+					}
+					postopnedMethods.Clear();
+					continue;
+				}
+
+				var methodOrAccessor = methodOrAccessorQueue.Dequeue();
+				var usage = GetUsage(methodOrAccessor);
+				switch (usage)
+				{
+					case MethodUsage.None:
+						// Ignore only if there is no CS0103 error related to the current function.
+						// e.g. The name 'identifier' does not exist in the current context
+						if (!methodOrAccessor.TypeData.NamespaceData.DocumentData.SemanticModel.GetDiagnostics()
+							.Where(o => o.Id == "CS0103")
+							.Select(o => Regex.Match(o.GetMessage(), "'(.+)'").Groups[1].Value)
+							.Any(o => o.Equals(methodOrAccessor.AsyncCounterpartName)))
+						{
+							methodOrAccessor.Ignore("Method is not used.");
+						}
+						continue;
+					// We have to postpone the calculation of a private method that is marked to be async when it is references only by 
+					// private methods. We could later discover that methods that are referencing this one will be ignored.
+					case MethodUsage.Async when methodOrAccessor.ReferencedBy.OfType<MethodOrAccessorData>().All(o => o.IsPrivate):
+						postopnedMethods.Add(methodOrAccessor);
+						continue;
+				}
+				if (methodOrAccessor.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType))
+				{
+					if (usage == MethodUsage.Sync)
+					{
+						methodOrAccessor.Ignore("Method is not used as async.");
+					}
+					continue;
+				}
+				if (usage == MethodUsage.Sync)
+				{
+					methodOrAccessor.Copy();
+				}
+				else if (usage.HasFlag(MethodUsage.Sync))
+				{
+					methodOrAccessor.SoftCopy();
+				}
+			}
+
 			// 4. Step - Calculate the final type conversion
 			foreach (var typeData in allTypeData)
 			{
@@ -553,6 +576,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					typeData.BaseTypes.Any(t => t.Conversion == TypeConversion.NewType && t.MethodsAndAccessors.Any(o => o.Conversion.HasFlag(MethodConversion.ToAsync))))
 				{
 					typeData.Conversion = TypeConversion.NewType;
+					foreach (var property in typeData.Properties.Values)
+					{
+						property.Copy(); // TODO: copy only if needed
+					}
+					// TODO: what else should we do here?
 					continue;
 				}
 
@@ -606,16 +634,6 @@ namespace AsyncGenerator.Analyzation.Internal
 						? FieldVariableConversion.Copy
 						: FieldVariableConversion.Ignore;
 				}
-
-				// 5.2 Step - Ignore or copy properties of new types
-				var conversion = type.Conversion == TypeConversion.NewType || type.Conversion == TypeConversion.Copy
-					? PropertyConversion.Copy 
-					: PropertyConversion.Ignore;
-
-				foreach (var property in type.Properties.Values)
-				{
-					property.Conversion = conversion; // TODO: copy only if needed
-				}
 			}
 
 			// 5. Step - Calculate the final namespace conversion
@@ -645,39 +663,64 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		/// <summary>
-		/// Determines whether a method or accessor is un-used or not
-		/// </summary>
-		private bool? IsUnused(MethodOrAccessorData methodOrAccessorData)
+		[Flags]
+		private enum MethodUsage
 		{
-			if (methodOrAccessorData.Symbol.ExplicitInterfaceImplementations.Length > 0)
-			{
-				return false;
-			}
+			Unknown = 1,
+			None = 4,
+			Async = 8,
+			Sync = 16,
+			Nameof = 32,
+			Cref = 64
+		}
 
+		/// <summary>
+		/// Retrieve the method usage
+		/// </summary>
+		private MethodUsage GetUsage(MethodOrAccessorData methodOrAccessorData)
+		{
 			// If the method was not scanned we don't know if is used or not
 			if (!_scannedMethodOrAccessors.Contains(methodOrAccessorData))
 			{
-				return null;
+				return MethodUsage.Unknown;
 			}
-			if (methodOrAccessorData is MethodData methodData)
+
+			var usage = MethodUsage.None;
+			// A method is unused when is private and never used
+			foreach (var reference in methodOrAccessorData.SelfReferences)
 			{
-				// A method is un-used when is private and never used
-				return (
-							!methodData.Node.Modifiers.Any() ||
-							methodData.Node.Modifiers.Any(SyntaxKind.PrivateKeyword)
-						) &&
-						methodData.SelfReferences.OfType<BodyFunctionDataReference>()
-							.All(o => 
-								o.Conversion == ReferenceConversion.Ignore &&
-								(
-									o.Data == null ||
-									// A reference may be ignored because will get copied
-									!o.Data.Conversion.HasAnyFlag(MethodConversion.Copy)
-								)
-							);
+				switch (reference)
+				{
+					case BodyFunctionDataReference bodyRef:
+						if (bodyRef.GetConversion() == ReferenceConversion.ToAsync)
+						{
+							usage |= MethodUsage.Async;
+							continue;
+						}
+						if (bodyRef.GetConversion() != ReferenceConversion.Ignore ||
+						    bodyRef.Data.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.Unknown))
+						{
+							usage |= MethodUsage.Unknown; // We don't know yet
+						}
+						// A reference may be ignored because will get copied
+						if (bodyRef.Data.Conversion.HasAnyFlag(MethodConversion.Copy, MethodConversion.ToAsync))
+						{
+							usage |= MethodUsage.Sync;
+						}
+						break;
+					case NameofFunctionDataReference _:
+						usage |= MethodUsage.Nameof;
+						break;
+					case CrefFunctionDataReference _:
+						usage |= MethodUsage.Cref;
+						break;
+				}
 			}
-			return null;
+			if (usage != MethodUsage.None)
+			{
+				usage &= ~MethodUsage.None;
+			}
+			return usage;
 		}
 
 		private void CalculateFinalFlags(FunctionData functionData)
