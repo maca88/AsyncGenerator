@@ -5,12 +5,13 @@ using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Tests.CustomReturnType.Input;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests.CustomReturnType
 {
 	[TestFixture]
-	public class Fixture : BaseFixture<Input.TestCase>
+	public class Fixture : BaseFixture<TestCase>
 	{
 		[Test]
 		public Task TestAfterAnalyzation()
@@ -31,13 +32,29 @@ namespace AsyncGenerator.Tests.CustomReturnType
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
 			}
 
-			return ReadonlyTest(p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol =>
 					{
 						return symbol.Name == getData ?  MethodConversion.ToAsync : MethodConversion.Unknown;
 					})
 					.AfterAnalyzation(AfterAnalyzation)
+				)
+			);
+		}
+
+		[Test]
+		public Task TestAfterTransformation()
+		{
+			return ReadonlyTest(nameof(TestCase), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(0, result.Documents.Count);
+					})
 				)
 			);
 		}
@@ -61,7 +78,7 @@ namespace AsyncGenerator.Tests.CustomReturnType
 				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
 			}
 
-			return ReadonlyTest(p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.CancellationTokens(t => t
 						.ParameterGeneration(symbol => MethodCancellationToken.Required | MethodCancellationToken.ForwardNone))
@@ -70,6 +87,22 @@ namespace AsyncGenerator.Tests.CustomReturnType
 						return symbol.Name == getData ? MethodConversion.ToAsync : MethodConversion.Unknown;
 					})
 					.AfterAnalyzation(AfterAnalyzation)
+				)
+			);
+		}
+
+		[Test]
+		public Task TestSameTypeAfterTransformation()
+		{
+			return ReadonlyTest(nameof(SameType), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						Assert.AreEqual(0, result.Documents.Count);
+					})
 				)
 			);
 		}

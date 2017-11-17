@@ -211,6 +211,7 @@
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
     <Compile Include="ParallelFor\Fixture.cs" />
+    <Compile Include="CustomReturnType\Input\SameType.cs" />
     <Compile Include="ParallelFor\Input\NoLinq.cs" />
     <Compile Include="ParallelFor\Input\TestCase.cs" />
     <Compile Include="ParallelForEach\Fixture.cs" />

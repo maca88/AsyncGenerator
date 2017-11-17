@@ -106,12 +106,9 @@ namespace AsyncGenerator.Core.Extensions
 			{
 				return false;
 			}
-			// Both methods can have the same return type only if we have at least one delegate argument that can be async
-			var result = !syncMethod.ReturnType.OriginalDefinition.Equals(candidateAsyncMethod.ReturnType.OriginalDefinition);
-			if (!result && equalParameters)
-			{
-				return false;
-			}
+			// Both methods can have the same return type only if we have at least one delegate argument that can be async or the ignoreReturnType
+			// is set to true
+			var result = ignoreReturnType || !syncMethod.ReturnType.OriginalDefinition.Equals(candidateAsyncMethod.ReturnType.OriginalDefinition);
 
 			for (var i = 0; i < syncMethod.Parameters.Length; i++)
 			{
