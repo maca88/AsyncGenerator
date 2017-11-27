@@ -21,15 +21,15 @@ namespace AsyncGenerator.Tests.ParallelFor.Input
 	{
 		public async Task ReadAsync()
 		{
-			await (Task.WhenAll(Enumerable.Range(1, 100).Select(i =>
+			await (Task.WhenAll(Enumerable.Range(1, 100 - 1).Select(i =>
 			{
 				return SimpleFile.ReadAsync();
 			})));
-			await (Task.WhenAll(Enumerable.Range(1, 100).Select((obj) => ReadAsync(obj))));
-			await (Task.WhenAll(Enumerable.Range(1, 100).Select(async i =>
+			await (Task.WhenAll(Enumerable.Range(1, 100 - 1).Select((obj) => ReadAsync(obj))));
+			await (Task.WhenAll(Enumerable.Range(1, 100 - 1).Select(async i =>
 			{
 				await (SimpleFile.ReadAsync());
-				await (Task.WhenAll(Enumerable.Range(1, 100).Select(j =>
+				await (Task.WhenAll(Enumerable.Range(1, 100 - 1).Select(j =>
 				{
 					return SimpleFile.ReadAsync();
 				})));

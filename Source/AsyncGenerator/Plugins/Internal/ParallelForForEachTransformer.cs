@@ -159,7 +159,8 @@ namespace AsyncGenerator.Plugins.Internal
 			ExpressionSyntax enumerableExpression;
 			if (bodyReference.ReferenceSymbol.Equals(_forMethod))
 			{
-				// Construct an Enumerable.Range(1, 10), where 1 and 10 are the first two arguments of Parallel.For method
+				// Construct an Enumerable.Range(1, 10 - 1), where 1 and 10 are the first two arguments of Parallel.For method
+				var startArg = invokeNode.ArgumentList.Arguments.First();
 				enumerableExpression = InvocationExpression(
 					MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
 						IdentifierName("Enumerable"),
@@ -169,9 +170,13 @@ namespace AsyncGenerator.Plugins.Internal
 						SeparatedList<ArgumentSyntax>(
 							new SyntaxNodeOrToken[]
 							{
-								invokeNode.ArgumentList.Arguments.First(),
+								startArg,
 								Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
-								invokeNode.ArgumentList.Arguments.Skip(1).First()
+								Argument(
+									BinaryExpression(SyntaxKind.SubtractExpression,
+										invokeNode.ArgumentList.Arguments.Skip(1).First().WithTrailingTrivia(Space).Expression,
+										Token(TriviaList(), SyntaxKind.MinusToken, TriviaList(Space)),
+										startArg.WithoutTrivia().Expression))
 							}
 						)
 					)

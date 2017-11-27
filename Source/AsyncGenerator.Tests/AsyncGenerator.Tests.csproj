@@ -217,6 +217,7 @@
     <Compile Include="ParallelForEach\Fixture.cs" />
     <Compile Include="ParallelForEach\Input\NoLinq.cs" />
     <Compile Include="ParallelForEach\Input\TestCase.cs" />
+    <Compile Include="ParallelFor\Input\Variables.cs" />
     <Compile Include="PrivateFields\Input\UsedByNestedFunction.cs" />
     <Compile Include="PrivateMethods\Fixture.cs" />
     <Compile Include="PrivateMethods\Input\ExplicitInterface.cs" />
@@ -888,6 +889,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AnonymousFunctions\Output\ArrayOfDelegates.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\Variables.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

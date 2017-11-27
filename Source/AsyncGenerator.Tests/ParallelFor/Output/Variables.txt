@@ -8,17 +8,37 @@
 //------------------------------------------------------------------------------
 
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.ParallelFor.Input
 {
-	using System.Linq;
-	public partial class NoLinq
+	public partial class Variables
 	{
 		public Task ReadAsync()
 		{
-			return Task.WhenAll(Enumerable.Range(1, 100 - 1).Select(i =>
+			try
+			{
+				var start = 5;
+				var end = 10;
+				return Task.WhenAll(Enumerable.Range(start, end - start).Select(i =>
+				{
+					return SimpleFile.ReadAsync();
+				}));
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
+
+		public Task Read2Async(int start, int end)
+		{
+			return Task.WhenAll(Enumerable.Range(start, end - start).Select(i =>
 			{
 				return SimpleFile.ReadAsync();
 			}));
