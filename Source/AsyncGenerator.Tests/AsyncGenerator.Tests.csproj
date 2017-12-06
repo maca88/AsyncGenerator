@@ -214,6 +214,7 @@
     <Compile Include="IgnoreAsyncCounterparts\Input\TestCase.cs" />
     <Compile Include="ParallelFor\Fixture.cs" />
     <Compile Include="CustomReturnType\Input\SameType.cs" />
+    <Compile Include="ParallelFor\Input\Formatting.cs" />
     <Compile Include="ParallelFor\Input\NoLinq.cs" />
     <Compile Include="ParallelFor\Input\TestCase.cs" />
     <Compile Include="ParallelForEach\Fixture.cs" />
@@ -895,6 +896,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ParallelFor\Output\Variables.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ParallelFor\Output\Formatting.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

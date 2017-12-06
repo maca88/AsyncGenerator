@@ -163,18 +163,18 @@ namespace AsyncGenerator.Plugins.Internal
 				var startArg = invokeNode.ArgumentList.Arguments.First();
 				enumerableExpression = InvocationExpression(
 					MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
-						IdentifierName("Enumerable"),
+						IdentifierName("Enumerable").WithLeadingTrivia(startArg.GetLeadingTrivia()),
 						Token(SyntaxKind.DotToken),
 						IdentifierName("Range")),
 					ArgumentList(
 						SeparatedList<ArgumentSyntax>(
 							new SyntaxNodeOrToken[]
 							{
-								startArg,
+								startArg.WithoutTrivia(),
 								Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
 								Argument(
 									BinaryExpression(SyntaxKind.SubtractExpression,
-										invokeNode.ArgumentList.Arguments.Skip(1).First().WithTrailingTrivia(Space).Expression,
+										invokeNode.ArgumentList.Arguments.Skip(1).First().Expression.WithoutTrivia().WithTrailingTrivia(Space),
 										Token(TriviaList(), SyntaxKind.MinusToken, TriviaList(Space)),
 										startArg.WithoutTrivia().Expression))
 							}
@@ -192,8 +192,12 @@ namespace AsyncGenerator.Plugins.Internal
 				Token(SyntaxKind.DotToken),
 				IdentifierName("Select"));
 			var argument = InvocationExpression(memberAccess)
-				.WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(newExpression))));
-			return invokeNode.WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(argument))));
+				.WithArgumentList(
+					ArgumentList(SingletonSeparatedList(Argument(newExpression.WithoutTrivia())))
+						.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, newExpression.GetTrailingTrivia()))
+				);
+			return invokeNode.WithArgumentList(
+				invokeNode.ArgumentList.WithArguments(SingletonSeparatedList(Argument(argument))));
 		}
 
 		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)

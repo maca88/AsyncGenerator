@@ -114,5 +114,25 @@ namespace AsyncGenerator.Tests.ParallelFor
 				)
 			);
 		}
+
+		[Test]
+		public Task TestFormattingAfterTransformation()
+		{
+			return ReadonlyTest(nameof(Formatting), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(Formatting)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

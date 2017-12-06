@@ -75,7 +75,7 @@ namespace AsyncGenerator.Transformation.Internal
 							.ReplaceNode(nameNode, newNameNode)
 							.WithParameters(CrefParameterList(SeparatedList(paramList))),
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
-							(type, fullName) => rootNode.WithContainer(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(rootNode.Container)),
+							(type, fullName) => rootNode.WithContainer(type.CreateTypeSyntax(true, fullName).WithTriviaFrom(rootNode.Container))),
 						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
@@ -86,7 +86,7 @@ namespace AsyncGenerator.Transformation.Internal
 						nameNode,
 						newNameNode,
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
-							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName)).WithTriviaFrom(rootNode.Expression)),
+							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName).WithTriviaFrom(rootNode.Expression))),
 						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
@@ -175,14 +175,14 @@ namespace AsyncGenerator.Transformation.Internal
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode
 								.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult),
 							funcResult, funReferenceResult, namespaceMetadata,
-							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
+							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName).WithTriviaFrom(memberNode.Expression)))
 					);
 				}
 				else if (isAccessor)
 				{
 					newNode = ConvertAccessor(newNode, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, 
 						invNode => UpdateTypeAndRunReferenceTransformers(invNode, funcResult, funReferenceResult, namespaceMetadata,
-							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression)));
+							(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName).WithTriviaFrom(memberNode.Expression))));
 				}
 				else
 				{
@@ -191,7 +191,7 @@ namespace AsyncGenerator.Transformation.Internal
 						nameNode,
 						newNameNode,
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode, funcResult, funReferenceResult, namespaceMetadata,
-							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName)).WithTriviaFrom(rootNode.Expression)),
+							(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName).WithTriviaFrom(rootNode.Expression))),
 						childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 					);
 				}
@@ -218,7 +218,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					node = ConvertAccessor(node, nameNode, newNameNode, cancellationTokenParamName, bodyFuncReferenceResult, invNode =>
 						UpdateTypeAndRunReferenceTransformers(invNode, funcResult, funReferenceResult, namespaceMetadata,
-								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
+								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName).WithTriviaFrom(memberNode.Expression)))
 							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
 					);
 				}
@@ -231,7 +231,7 @@ namespace AsyncGenerator.Transformation.Internal
 						rootNode => UpdateTypeAndRunReferenceTransformers(rootNode
 									.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult),
 								funcResult, funReferenceResult, namespaceMetadata,
-								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName)).WithTriviaFrom(memberNode.Expression))
+								(memberNode, type, fullName) => memberNode.WithExpression(type.CreateTypeSyntax(true, fullName).WithTriviaFrom(memberNode.Expression)))
 							.WithAdditionalAnnotations(new SyntaxAnnotation(invokeAnnotation))
 					);
 				}
