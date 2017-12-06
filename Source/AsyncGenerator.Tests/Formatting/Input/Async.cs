@@ -34,7 +34,9 @@ namespace AsyncGenerator.Tests.Formatting.Input
 				});
 
 #pragma warning disable CS0168 // Variable is declared but never used
+#pragma warning disable CS8321 // Local function is declared but never used
 			void LocalDoubleRead()
+#pragma warning restore CS8321 // Local function is declared but never used
 #pragma warning restore CS0168 // Variable is declared but never used
 			{
 				SimpleFile.Read();

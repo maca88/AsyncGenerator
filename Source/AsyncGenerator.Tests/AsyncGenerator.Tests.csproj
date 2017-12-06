@@ -210,6 +210,8 @@
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
+    <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
+    <Compile Include="IgnoreAsyncCounterparts\Input\TestCase.cs" />
     <Compile Include="ParallelFor\Fixture.cs" />
     <Compile Include="CustomReturnType\Input\SameType.cs" />
     <Compile Include="ParallelFor\Input\NoLinq.cs" />
@@ -414,6 +416,7 @@
     <Folder Include="ArrowFunctions\" />
     <Folder Include="CastOmitAsync\Output\" />
     <Folder Include="CustomReturnType\Output\" />
+    <Folder Include="IgnoreAsyncCounterparts\Output\" />
     <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />

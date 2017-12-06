@@ -667,7 +667,8 @@ namespace AsyncGenerator.Analyzation.Internal
 				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition,
-				functionReferenceData.InvokedFromType, searchOptions));
+				functionReferenceData.InvokedFromType, searchOptions)
+				.Where(o => _configuration.IgnoreAsyncCounterpartsPredicates.All(p => !p(o))));
 		}
 
 		private bool SetAsyncCounterpart(BodyFunctionDataReference functionReferenceData)

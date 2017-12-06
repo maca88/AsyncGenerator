@@ -11,9 +11,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
+using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.FileConfiguration;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Transformation;
@@ -64,6 +66,20 @@ namespace AsyncGenerator.Tests
 			await AsyncCodeGenerator.GenerateProject(project).ConfigureAwait(false);
 		}
 
+		public async Task YamlReadonlyTest(string yamlConfig, Action<IFluentProjectConfiguration> action = null)
+		{
+			var configuration = ConfigureByYaml(yamlConfig, action).ProjectConfigurations.Single();
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadonlyProject.Value, configuration);
+			await AsyncCodeGenerator.GenerateProject(projectData).ConfigureAwait(false);
+		}
+
+		public async Task XmlReadonlyTest(string xmlConfig, Action<IFluentProjectConfiguration> action = null)
+		{
+			var configuration = ConfigureByXml(xmlConfig, action).ProjectConfigurations.Single();
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadonlyProject.Value, configuration);
+			await AsyncCodeGenerator.GenerateProject(projectData).ConfigureAwait(false);
+		}
+
 		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
 			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
@@ -77,6 +93,18 @@ namespace AsyncGenerator.Tests
 					action?.Invoke(p);
 				})
 				;
+		}
+
+		public AsyncCodeConfiguration ConfigureByYaml(string yamlConfig, Action<IFluentProjectConfiguration> action = null)
+		{
+			return AsyncCodeConfiguration.Create()
+				.ConfigureFromStream(GenerateStreamFromString(yamlConfig), new TestProjectYamlFileConfigurator(InputFolderPath, action));
+		}
+
+		public AsyncCodeConfiguration ConfigureByXml(string xmlConfig, Action<IFluentProjectConfiguration> action = null)
+		{
+			return AsyncCodeConfiguration.Create()
+				.ConfigureFromStream(GenerateStreamFromString(xmlConfig), new TestProjectXmlFileConfigurator(InputFolderPath, action));
 		}
 
 		public AsyncCodeConfiguration Configure(string fileName, Action<IFluentProjectConfiguration> action = null)
@@ -200,6 +228,67 @@ namespace AsyncGenerator.Tests
 			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.sln"));
 			var workspace = AsyncCodeGenerator.CreateWorkspace();
 			return AsyncCodeGenerator.OpenSolution(workspace, filePath, ImmutableArray<Predicate<string>>.Empty).GetAwaiter().GetResult();
+		}
+
+		private static Stream GenerateStreamFromString(string value)
+		{
+			return new MemoryStream(Encoding.UTF8.GetBytes(value ?? ""));
+		}
+
+		private class TestProjectYamlFileConfigurator : TestProjectFileConfigurator
+		{
+			public TestProjectYamlFileConfigurator(string inputFolderPath, Action<IFluentProjectConfiguration> configureProjectAction) 
+				: base(new YamlFileConfigurator(), inputFolderPath, configureProjectAction)
+			{
+			}
+		}
+
+		private class TestProjectXmlFileConfigurator : TestProjectFileConfigurator
+		{
+			public TestProjectXmlFileConfigurator(string inputFolderPath, Action<IFluentProjectConfiguration> configureProjectAction)
+				: base(new XmlFileConfigurator(), inputFolderPath, configureProjectAction)
+			{
+			}
+		}
+
+		private abstract class TestProjectFileConfigurator : IFileConfigurator
+		{
+			private readonly string _inputFolderPath;
+			private readonly Action<IFluentProjectConfiguration> _configureProjectAction;
+			private readonly IFileConfigurator _realConfigurator;
+
+			protected TestProjectFileConfigurator(IFileConfigurator realConfigurator, string inputFolderPath, Action<IFluentProjectConfiguration> configureProjectAction)
+			{
+				_inputFolderPath = inputFolderPath;
+				_configureProjectAction = configureProjectAction;
+				_realConfigurator = realConfigurator;
+			}
+
+			public virtual Core.FileConfiguration.AsyncGenerator Parse(string content)
+			{
+				var config = _realConfigurator.Parse(content);
+				foreach (var testProject in config.Projects.Where(o => o.FilePath == "AsyncGenerator.Tests.csproj"))
+				{
+					testProject.FilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
+				}
+				return config;
+			}
+
+			public void Configure(Core.FileConfiguration.AsyncGenerator configuration, Solution solution, IFluentSolutionConfiguration solutionConfiguration,
+				Assembly assembly)
+			{
+				_realConfigurator.Configure(configuration, solution, solutionConfiguration, assembly);
+			}
+
+			public virtual void Configure(Core.FileConfiguration.AsyncGenerator configuration, Project project, IFluentProjectConfiguration projectConfiguration,
+				Assembly assembly)
+			{
+				_realConfigurator.Configure(configuration, project, projectConfiguration, assembly);
+				projectConfiguration.ConfigureAnalyzation(a => a
+					.DocumentSelection(o => string.Join("/", o.Folders) == _inputFolderPath)
+				);
+				_configureProjectAction?.Invoke(projectConfiguration);
+			}
 		}
 	}
 

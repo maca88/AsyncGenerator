@@ -39,6 +39,12 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration FindAsyncCounterparts(Func<IMethodSymbol, ITypeSymbol, AsyncCounterpartsSearchOptions, IEnumerable<IMethodSymbol>> func);
 
 		/// <summary>
+		/// Append a predicate that will decide if the found async counterparts can be used or not.
+		/// <para>Default all found async counterparts will be used.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration IgnoreAsyncCounterparts(Predicate<IMethodSymbol> predicate);
+
+		/// <summary>
 		/// Append a predicate that will check if the given statement is a precondition
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration IsPrecondition(Func<StatementSyntax, SemanticModel, bool> predicate);

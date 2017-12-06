@@ -80,7 +80,7 @@ namespace AsyncGenerator.Configuration
 			return ConfigureFromStream(stream, new T(), basePath);
 		}
 
-		private AsyncCodeConfiguration ConfigureFromFile(string filePath, IFileConfigurator fileConfigurator)
+		internal AsyncCodeConfiguration ConfigureFromFile(string filePath, IFileConfigurator fileConfigurator)
 		{
 			if (filePath == null)
 			{
@@ -95,7 +95,7 @@ namespace AsyncGenerator.Configuration
 			return ConfigureFromStream(File.OpenRead(filePath), fileConfigurator, Path.GetDirectoryName(filePath));
 		}
 
-		private AsyncCodeConfiguration ConfigureFromStream(Stream stream, IFileConfigurator fileConfigurator, string basePath = null)
+		internal AsyncCodeConfiguration ConfigureFromStream(Stream stream, IFileConfigurator fileConfigurator, string basePath = null)
 		{
 			if (stream == null)
 			{

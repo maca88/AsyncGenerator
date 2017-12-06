@@ -37,6 +37,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>();
 
+		public List<Predicate<IMethodSymbol>> IgnoreAsyncCounterpartsPredicates { get; } = new List<Predicate<IMethodSymbol>>();
+
 		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>();
 
 		public List<IInvocationExpressionAnalyzer> InvocationExpressionAnalyzers { get; } = new List<IInvocationExpressionAnalyzer>();
@@ -92,6 +94,16 @@ namespace AsyncGenerator.Configuration.Internal
 				throw new ArgumentNullException(nameof(func));
 			}
 			FindAsyncCounterpartsFinders.Add(new DelegateAsyncCounterpartsFinder(func));
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.IgnoreAsyncCounterparts(Predicate<IMethodSymbol> predicate)
+		{
+			if (predicate == null)
+			{
+				throw new ArgumentNullException(nameof(predicate));
+			}
+			IgnoreAsyncCounterpartsPredicates.Add(predicate);
 			return this;
 		}
 

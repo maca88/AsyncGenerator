@@ -145,6 +145,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> IgnoreSearchForAsyncCounterparts { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodFilter> IgnoreAsyncCounterparts { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> IgnoreSearchForMethodReferences { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? CallForwarding { get; set; }
@@ -162,6 +164,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			AsyncExtensionMethods = new AsyncExtensionMethods();
 			CancellationTokens = new CancellationTokens();
 			IgnoreSearchForAsyncCounterparts = new List<MethodFilter>();
+			IgnoreAsyncCounterparts = new List<MethodFilter>();
 			IgnoreSearchForMethodReferences = new List<MethodFilter>();
 			IgnoreDocuments = new List<DocumentFilter>();
 			TypeConversion = new List<TypeConversionFilter>();
@@ -217,8 +220,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string HasAttribute { get; set; }
 		[XmlAttribute(AttributeName = "hasAttributeName")]
 		public string HasAttributeName { get; set; }
+
+		public bool? HasDocumentationComment
+		{
+			get
+			{
+				if (bool.TryParse(HasDocumentationCommentString, out var value))
+				{
+					return value;
+				}
+				return null;
+			}
+			set => HasDocumentationCommentString = value?.ToString();
+		}
+
 		[XmlAttribute(AttributeName = "hasDocumentationComment")]
-		public bool? HasDocumentationComment { get; set; }
+		internal string HasDocumentationCommentString { get; set; }
 		[XmlAttribute(AttributeName = "containingNamespace")]
 		public string ContainingNamespace { get; set; }
 		[XmlAttribute(AttributeName = "containingType")]

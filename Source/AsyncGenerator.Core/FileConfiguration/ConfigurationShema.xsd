@@ -230,6 +230,13 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
+      <xs:element name="IgnoreAsyncCounterparts" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="IgnoreSearchForMethodReferences" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
