@@ -616,7 +616,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						throw new InvalidOperationException($"Unable to find symbol for node {nameNode} inside function {baseMethodData.Symbol}");
 					}
-					Logger.Warn($"GetSymbolInfo did not successfully resloved symbol for node {nameNode} inside function {baseMethodData.Symbol}, but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}");
+					Logger.Warn($"GetSymbolInfo did not successfully resolved symbol for node {nameNode} inside function {baseMethodData.Symbol}, " +
+					            $"but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}");
 				}
 				var referenceMethodData = ProjectData.GetMethodOrAccessorData(methodReferenceSymbol);
 				// Check if the reference is a cref reference or a nameof
