@@ -203,7 +203,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					 methodGeneration.HasFlag(MethodCancellationToken.Required))
 			{
 				methodGeneration &= ~MethodCancellationToken.Required;
-				Logger.Warn($"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				Logger.Warn($"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
 							$"The method cannot have '{MethodCancellationToken.Required}' and '{MethodCancellationToken.Optional}' options set at once. " +
 				            $"'{MethodCancellationToken.Required}' option will be removed.");
 			}
@@ -211,7 +211,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			    methodGeneration.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
 				methodGeneration &= ~MethodCancellationToken.ForwardNone;
-				Logger.Warn($"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				Logger.Warn($"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
 				            $"The method cannot have '{MethodCancellationToken.ForwardNone}' and '{MethodCancellationToken.SealedForwardNone}' options set at once. " +
 				            $"'{MethodCancellationToken.ForwardNone}' option will be removed.");
 			}
@@ -219,7 +219,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			    methodGeneration.HasAnyFlag(MethodCancellationToken.ForwardNone, MethodCancellationToken.SealedForwardNone))
 			{
 				methodGeneration = MethodCancellationToken.Optional;
-				Logger.Warn($"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+				Logger.Warn($"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
 				            $"The '{MethodCancellationToken.Optional}' option cannot be combined " +
 				            $"with '{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
 				            $"'{MethodCancellationToken.ForwardNone}' and '{MethodCancellationToken.SealedForwardNone}' options will be removed.");
