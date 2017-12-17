@@ -7,6 +7,7 @@ using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
+using AsyncGenerator.Logging;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 
@@ -31,6 +32,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var resource = $"{GetType().Namespace}.Configuration.xml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
+				.LoggerFactory(new Log4NetLoggerFactory())
 				.ConfigureFromStream<XmlFileConfigurator>(stream);
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
@@ -43,6 +45,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var resource = $"{GetType().Namespace}.SolutionConfiguration.yml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
+				.LoggerFactory(new Log4NetLoggerFactory())
 				.ConfigureFromStream<YamlFileConfigurator>(stream);
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
@@ -55,6 +58,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var resource = $"{GetType().Namespace}.ProjectConfiguration.yml";
 			var stream = asm.GetManifestResourceStream(resource);
 			var config = AsyncCodeConfiguration.Create()
+				.LoggerFactory(new Log4NetLoggerFactory())
 				.ConfigureFromStream<YamlFileConfigurator>(stream);
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
@@ -66,6 +70,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var configPath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate","Source","src","AsyncGenerator.yml"));
 			
 			var config = AsyncCodeConfiguration.Create()
+				.LoggerFactory(new Log4NetLoggerFactory())
 				.ConfigureFromFile<YamlFileConfigurator>(configPath);
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
@@ -77,6 +82,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate", "Source", "src", "NHibernate.sln"));
 			
 			var config = AsyncCodeConfiguration.Create()
+				.LoggerFactory(new Log4NetLoggerFactory())
 				.ConfigureSolution(slnFilePath, s => s
 					.ConcurrentRun()
 					.SuppressDiagnosticFailures("NHibernate.Test.VisualBasic.vbproj")

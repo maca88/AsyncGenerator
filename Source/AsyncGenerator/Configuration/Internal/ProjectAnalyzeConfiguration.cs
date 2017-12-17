@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Internal;
-using AsyncGenerator.Plugins;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -50,6 +48,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public ProjectCancellationTokenConfiguration CancellationTokens { get; } = new ProjectCancellationTokenConfiguration();
 
 		public ProjectAsyncExtensionMethodsConfiguration AsyncExtensionMethods { get; } = new ProjectAsyncExtensionMethodsConfiguration();
+
+		public ProjectDiagnosticsConfiguration Diagnostics { get; } = new ProjectDiagnosticsConfiguration();
 
 		public bool ScanMethodBody { get; private set; }
 
@@ -160,6 +160,16 @@ namespace AsyncGenerator.Configuration.Internal
 			}
 			CancellationTokens.Enabled = true;
 			action(AsyncExtensionMethods);
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.Diagnostics(Action<IFluentProjectDiagnosticsConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			action(Diagnostics);
 			return this;
 		}
 

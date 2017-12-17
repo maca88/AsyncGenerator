@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class DataReference<TData, TReferenceSymbol, TReferenceData> : AbstractDataReference<TData, TReferenceSymbol, TReferenceData>
+	internal abstract class DataReference<TData, TReferenceSymbol, TReferenceData> : AbstractDataReference<TData, TReferenceSymbol, TReferenceData>
 		where TReferenceSymbol : ISymbol
 		where TData : AbstractData
 		where TReferenceData : AbstractData

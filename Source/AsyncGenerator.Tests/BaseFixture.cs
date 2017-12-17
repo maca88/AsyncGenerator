@@ -16,11 +16,11 @@ using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.FileConfiguration;
+using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
-using AsyncGenerator.Transformation;
+using AsyncGenerator.Logging;
 using log4net.Config;
-using Microsoft.VisualStudio.Setup.Configuration;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
@@ -31,15 +31,19 @@ namespace AsyncGenerator.Tests
 			new Lazy<Microsoft.CodeAnalysis.Project>(OpenProject, LazyThreadSafetyMode.ExecutionAndPublication);
 		private static readonly Lazy<Microsoft.CodeAnalysis.Solution> ReadonlySolution =
 			new Lazy<Microsoft.CodeAnalysis.Solution>(OpenSolution, LazyThreadSafetyMode.ExecutionAndPublication);
+		private static readonly ILoggerFactory LoggerFactory;
+		private static readonly ILogger Logger;
 
 		static BaseFixture()
 		{
+			XmlConfigurator.Configure();
 			EnvironmentHelper.Setup();
+			LoggerFactory = new Log4NetLoggerFactory();
+			Logger = LoggerFactory.GetLogger(nameof(AsyncGenerator));
 		}
 
 		protected BaseFixture(string folderPath = null)
 		{
-			XmlConfigurator.Configure();
 			var ns = GetType().Namespace ?? "";
 			InputFolderPath = folderPath ?? $"{string.Join("/", ns.Split('.').Skip(2))}/Input";
 		}
@@ -55,7 +59,7 @@ namespace AsyncGenerator.Tests
 		{
 			var configuration = Configure(action).ProjectConfigurations.Single();
 			var projectData = AsyncCodeGenerator.CreateProjectData(ReadonlyProject.Value, configuration);
-			await AsyncCodeGenerator.GenerateProject(projectData).ConfigureAwait(false);
+			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task ReadonlyTest(string fileName, Action<IFluentProjectConfiguration> action = null)
@@ -63,24 +67,24 @@ namespace AsyncGenerator.Tests
 			var configuration = Configure(fileName, action).SolutionConfigurations.First();
 			var solutionData = AsyncCodeGenerator.CreateSolutionData(ReadonlySolution.Value, configuration);
 			var project = solutionData.GetProjects().Single();
-			await AsyncCodeGenerator.GenerateProject(project).ConfigureAwait(false);
+			await AsyncCodeGenerator.GenerateProject(project, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task YamlReadonlyTest(string yamlConfig, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = ConfigureByYaml(yamlConfig, action).ProjectConfigurations.Single();
 			var projectData = AsyncCodeGenerator.CreateProjectData(ReadonlyProject.Value, configuration);
-			await AsyncCodeGenerator.GenerateProject(projectData).ConfigureAwait(false);
+			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task XmlReadonlyTest(string xmlConfig, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = ConfigureByXml(xmlConfig, action).ProjectConfigurations.Single();
 			var projectData = AsyncCodeGenerator.CreateProjectData(ReadonlyProject.Value, configuration);
-			await AsyncCodeGenerator.GenerateProject(projectData).ConfigureAwait(false);
+			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
-		public AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
+		public virtual AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
 			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
 			
@@ -220,14 +224,14 @@ namespace AsyncGenerator.Tests
 		{
 			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
 			var workspace = AsyncCodeGenerator.CreateWorkspace();
-			return AsyncCodeGenerator.OpenProject(workspace, filePath, ImmutableArray<Predicate<string>>.Empty).GetAwaiter().GetResult();
+			return AsyncCodeGenerator.OpenProject(workspace, filePath, ImmutableArray<Predicate<string>>.Empty, Logger).GetAwaiter().GetResult();
 		}
 
 		private static Microsoft.CodeAnalysis.Solution OpenSolution()
 		{
 			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.sln"));
 			var workspace = AsyncCodeGenerator.CreateWorkspace();
-			return AsyncCodeGenerator.OpenSolution(workspace, filePath, ImmutableArray<Predicate<string>>.Empty).GetAwaiter().GetResult();
+			return AsyncCodeGenerator.OpenSolution(workspace, filePath, ImmutableArray<Predicate<string>>.Empty, Logger).GetAwaiter().GetResult();
 		}
 
 		private static Stream GenerateStreamFromString(string value)

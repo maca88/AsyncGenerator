@@ -5,15 +5,15 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Internal;
+using AsyncGenerator.Logging;
 using log4net;
 using log4net.Config;
-using Microsoft.VisualStudio.Setup.Configuration;
 
 namespace AsyncGenerator.CommandLine
 {
 	static class Program
 	{
-		private static readonly ILog Logger = LogManager.GetLogger(typeof(Program));
+		private static readonly ILog Logger = LogManager.GetLogger($"{nameof(AsyncGenerator)}.{nameof(CommandLine)}");
 
 		public static int Main(string[] args)
 		{
@@ -59,6 +59,7 @@ namespace AsyncGenerator.CommandLine
 				using (var stream = xmlConfig.OpenRead())
 				{
 					return AsyncCodeConfiguration.Create()
+						.LoggerFactory(new Log4NetLoggerFactory())
 						.ConfigureFromStream<XmlFileConfigurator>(stream, Environment.CurrentDirectory);
 				}
 			}
@@ -68,6 +69,7 @@ namespace AsyncGenerator.CommandLine
 				using (var stream = ymlConfig.OpenRead())
 				{
 					return AsyncCodeConfiguration.Create()
+						.LoggerFactory(new Log4NetLoggerFactory())
 						.ConfigureFromStream<YamlFileConfigurator>(stream, Environment.CurrentDirectory);
 				}
 			}

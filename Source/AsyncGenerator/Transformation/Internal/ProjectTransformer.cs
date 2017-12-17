@@ -4,23 +4,23 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Core.Transformation;
-using log4net;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Transformation.Internal
 {
 	internal partial class ProjectTransformer
 	{
-		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectTransformer));
+		private readonly ILogger _logger;
 		private readonly ProjectTransformConfiguration _configuration;
 
-		public ProjectTransformer(ProjectTransformConfiguration configuration)
+		public ProjectTransformer(ProjectTransformConfiguration configuration, ILoggerFactory loggerFactory)
 		{
 			_configuration = configuration;
+			_logger = loggerFactory.GetLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectTransformer)}");
 		}
 
 		public IProjectTransformationResult Transform(IProjectAnalyzationResult analyzationResult)
@@ -42,7 +42,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			// Step 1: Transform all documents
-			Logger.Info("Generating documents started");
+			_logger.Info("Generating documents started");
 			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(analyzationResult.Documents, TransfromDocument);
@@ -54,10 +54,10 @@ namespace AsyncGenerator.Transformation.Internal
 					TransfromDocument(document);
 				}
 			}
-			Logger.Info("Generating documents completed");
+			_logger.Info("Generating documents completed");
 
 			// Step 2: Modify the project by adding newly generated documents and optionally update the existing ones
-			Logger.Info("Adding generated documents to the project started");
+			_logger.Info("Adding generated documents to the project started");
 			var project = analyzationResult.Project;
 			foreach (var docResult in result.Documents)
 			{
@@ -74,7 +74,7 @@ namespace AsyncGenerator.Transformation.Internal
 				project = project.AddDocument(document.Document.Name, docResult.Transformed.GetText(Encoding.UTF8), folders, GetDocumentAsyncPath(document.Document)).Project;
 			}
 			result.Project = project;
-			Logger.Info("Adding generated documents to the project completed");
+			_logger.Info("Adding generated documents to the project completed");
 			
 			return result;
 		}

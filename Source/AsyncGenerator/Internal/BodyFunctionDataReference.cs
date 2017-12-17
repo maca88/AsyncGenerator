@@ -21,7 +21,7 @@ namespace AsyncGenerator.Internal
 		{
 			if (data.Conversion == MethodConversion.Copy)
 			{
-				Ignore("Method will be copied");
+				Ignore(IgnoreReason.MethodIsCopied);
 			}
 		}
 
@@ -35,7 +35,22 @@ namespace AsyncGenerator.Internal
 
 		public override ReferenceConversion Conversion { get; set; }
 
-		public string IgnoredReason { get; private set; }
+		public IgnoreReason IgnoredReason { get; private set; }
+
+		/// <summary>
+		/// Can be null
+		/// </summary>
+		private List<DiagnosticData> Diagnostics { get; set; }
+
+		public IEnumerable<DiagnosticData> GetDiagnostics()
+		{
+			return Diagnostics ?? Enumerable.Empty<DiagnosticData>();
+		}
+
+		public void AddDiagnostic(string description, DiagnosticSeverity severity)
+		{
+			(Diagnostics ?? (Diagnostics = new List<DiagnosticData>())).Add(new DiagnosticData(description, severity));
+		}
 
 		public bool? AwaitInvocation { get; internal set; }
 
@@ -72,6 +87,11 @@ namespace AsyncGenerator.Internal
 
 		public void Ignore(string reason)
 		{
+			Ignore(IgnoreReason.Custom(reason, DiagnosticSeverity.Hidden));
+		}
+
+		public void Ignore(IgnoreReason reason)
+		{
 			if (Conversion != ReferenceConversion.Ignore)
 			{
 				IgnoredReason = reason;
@@ -84,8 +104,8 @@ namespace AsyncGenerator.Internal
 			}
 			foreach (var functionArgument in DelegateArguments)
 			{
-				functionArgument.FunctionData?.Ignore("Cascade ignored.");
-				functionArgument.FunctionReference?.Ignore("Cascade ignored.");
+				functionArgument.FunctionData?.Ignore(IgnoreReason.Cascade);
+				functionArgument.FunctionReference?.Ignore(IgnoreReason.Cascade);
 			}
 		}
 
@@ -135,12 +155,14 @@ namespace AsyncGenerator.Internal
 					// TODO: support for parameter conversion e.g. Action -> Func<Task>
 					if (functionArgument.FunctionData != null && functionArgument.FunctionData.Conversion != MethodConversion.Ignore)
 					{
-						functionArgument.FunctionData.Ignore($"Argument type {syncType} of internal method {ReferenceSymbol} cannot be made async.");
+						functionArgument.FunctionData.Ignore(IgnoreReason.Custom(
+							$"Argument type {syncType} of internal method {ReferenceSymbol} cannot be made async.", DiagnosticSeverity.Hidden));
 					}
 					else if (functionArgument.FunctionReference != null &&
 					         functionArgument.FunctionReference.Conversion != ReferenceConversion.Ignore)
 					{
-						functionArgument.FunctionReference.Ignore($"Argument type {syncType} of internal method {ReferenceSymbol} cannot be made async.");
+						functionArgument.FunctionReference.Ignore(IgnoreReason.Custom(
+							$"Argument type {syncType} of internal method {ReferenceSymbol} cannot be made async.", DiagnosticSeverity.Hidden));
 					}
 					continue;
 				}
@@ -154,7 +176,7 @@ namespace AsyncGenerator.Internal
 					{
 						continue;
 					}
-					Ignore($"Argument at index '{functionArgument.Index}' cannot be converted to async. Node: {ReferenceNode}");
+					Ignore(IgnoreReason.Custom($"Argument at index '{functionArgument.Index}' cannot be converted to async", DiagnosticSeverity.Hidden));
 					return;
 				}
 
@@ -171,7 +193,7 @@ namespace AsyncGenerator.Internal
 					functionArgument.FunctionData?.Conversion.HasFlag(MethodConversion.Ignore) == true
 					)
 				{
-					Ignore($"Argument at index '{functionArgument.Index}' cannot be converted to async. Node: {ReferenceNode}");
+					Ignore(IgnoreReason.Custom($"Argument at index '{functionArgument.Index}' cannot be converted to async", DiagnosticSeverity.Hidden));
 					return;
 				}
 			}
@@ -188,7 +210,7 @@ namespace AsyncGenerator.Internal
 			// e.g. Assert.DoesNotThrow(SimpleFile.Read)
 			if (ReferenceFunctionData == null && !AsyncCounterpartSymbol.ReturnType.Equals(asyncDelegateArgument.ReturnType))
 			{
-				Ignore("One of the arguments does not match the with the async delegate parameter");
+				Ignore(IgnoreReason.Custom("One of the arguments does not match the with the async delegate parameter", DiagnosticSeverity.Hidden));
 				return;
 			}
 

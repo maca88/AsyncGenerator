@@ -43,8 +43,9 @@ namespace AsyncGenerator.Internal
 			return Symbol;
 		}
 
-		internal void Copy()
+		public override void Copy()
 		{
+			base.Copy();
 			Conversion = TypeConversion.Copy;
 			foreach (var typeData in GetSelfAndDescendantsTypeData().Where(o => o.Conversion != TypeConversion.Ignore))
 			{
@@ -52,14 +53,12 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
-			IgnoredReason = reason;
-			ExplicitlyIgnored = explicitlyIgnored;
 			Conversion = TypeConversion.Ignore;
 			foreach (var typeData in GetSelfAndDescendantsTypeData().Where(o => o.Conversion != TypeConversion.Ignore))
 			{
-				typeData.Ignore("Cascade ignored.");
+				typeData.Ignore(IgnoreReason.Cascade);
 			}
 		}
 

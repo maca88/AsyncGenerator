@@ -336,7 +336,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				referenceData.References.TryAdd(reference);
 				if (!data.SelfReferences.TryAdd(reference))
 				{
-					Logger.Debug($"Performance hit: Self reference for type {symbol} already exists");
+					_logger.Debug($"Performance hit: Self reference for type {symbol} already exists");
 				}
 			}
 		}
@@ -390,7 +390,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (!syncMethods.Contains(asyncMember.Name))
 				{
 					// Try to find if there is a property with that name
-					Logger.Debug($"Sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+					documentData.AddDiagnostic($"Sync counterpart of async member {asyncMember} not found", DiagnosticSeverity.Hidden);
 					continue;
 				}
 				var nonAsyncMember = syncMethods[asyncMember.Name].First(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false)); // TODO: what to do if there are more than one?
@@ -422,13 +422,13 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					if (!syncMethods.Contains(asyncMember.Name))
 					{
-						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+						documentData.AddDiagnostic($"Abstract sync counterpart of async member {asyncMember} not found", DiagnosticSeverity.Hidden);
 						continue;
 					}
 					var nonAsyncMember = syncMethods[asyncMember.Name].FirstOrDefault(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false));
 					if (nonAsyncMember == null)
 					{
-						Logger.Debug($"Abstract sync counterpart of async member {asyncMember} not found in file {documentData.FilePath}");
+						documentData.AddDiagnostic($"Abstract sync counterpart of async member {asyncMember} not found", DiagnosticSeverity.Hidden);
 						continue;
 					}
 					var methodData = documentData.GetMethodOrAccessorData(nonAsyncMember.Node);
@@ -546,7 +546,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				var symbol = documentData.GetEnclosingSymbol(refLocation);
 				if (symbol == null)
 				{
-					Logger.Debug($"Symbol not found for reference ${refLocation}");
+					documentData.AddDiagnostic($"Symbol not found for reference ${refLocation}", DiagnosticSeverity.Hidden);
 					continue;
 				}
 
@@ -562,11 +562,15 @@ namespace AsyncGenerator.Analyzation.Internal
 					var refMethodSymbol = (IMethodSymbol) symbol;
 					if (refMethodSymbol.MethodKind == MethodKind.AnonymousFunction || refMethodSymbol.MethodKind == MethodKind.LambdaMethod)
 					{
-						Logger.Warn($"Function inside member {refMethodSymbol.ContainingSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
+						documentData.AddDiagnostic(
+							$"Function inside member {refMethodSymbol.ContainingSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}",
+							DiagnosticSeverity.Hidden);
 					}
 					else
 					{
-						Logger.Warn($"Method {refMethodSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}");
+						documentData.AddDiagnostic(
+							$"Method {refMethodSymbol} cannot be async because of its kind {refMethodSymbol.MethodKind}",
+							DiagnosticSeverity.Hidden);
 					}
 					continue;
 				}
@@ -602,7 +606,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						var nameofReference = new NameofFunctionDataReference(baseMethodData, refLocation, nameNode, referencedFuncs, true);
 						if (!baseMethodData.References.TryAdd(nameofReference))
 						{
-							Logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
+							_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
 						}
 						foreach (var referencedFun in referencedFuncs.Values.Where(o => o != null))
 						{
@@ -616,8 +620,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						throw new InvalidOperationException($"Unable to find symbol for node {nameNode} inside function {baseMethodData.Symbol}");
 					}
-					Logger.Warn($"GetSymbolInfo did not successfully resolved symbol for node {nameNode} inside function {baseMethodData.Symbol}, " +
-					            $"but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}");
+					documentData.AddDiagnostic(
+						$"GetSymbolInfo did not successfully resolved symbol for node {nameNode} inside function " +
+						$"{baseMethodData.Symbol.Name} {baseMethodData.GetLineSpan().Span.Format()}, " +
+						$"but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}",
+						DiagnosticSeverity.Info);
 				}
 				var referenceMethodData = ProjectData.GetMethodOrAccessorData(methodReferenceSymbol);
 				// Check if the reference is a cref reference or a nameof
@@ -626,7 +633,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					var crefReference = new CrefFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData, true);
 					if (!baseMethodData.References.TryAdd(crefReference))
 					{
-						Logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
+						_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
 					}
 					referenceMethodData?.SelfReferences.TryAdd(crefReference);
 					continue; // No need to further scan a cref reference
@@ -634,14 +641,13 @@ namespace AsyncGenerator.Analyzation.Internal
 				var methodReferenceData = new BodyFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
 				if (!baseMethodData.References.TryAdd(methodReferenceData))
 				{
-					Logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
+					_logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
 					continue; // Reference already processed
 				}
 				referenceMethodData?.SelfReferences.TryAdd(methodReferenceData);
 
 				if (baseMethodData.Conversion == MethodConversion.Ignore)
 				{
-					LogIgnoredReason(baseMethodData, !baseMethodData.ExplicitlyIgnored);
 					continue;
 				}
 				// Do not scan for method that will be only copied (e.g. the containing type is a new type). 

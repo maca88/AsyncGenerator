@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Extensions;
@@ -100,13 +99,9 @@ namespace AsyncGenerator.Internal
 			Conversion |= MethodConversion.Copy;
 		}
 
-		public void Copy()
+		public override void Copy()
 		{
-			// TODO: ToAsync and Copy combined
-			// Copy can be mixed with Smart, ToAsync and Unknown
-			//Conversion &= ~MethodConversion.Ignore;
-			//Conversion &= ~MethodConversion.Unknown;
-			IgnoredReason = null;
+			base.Copy();
 			if (this is MethodOrAccessorData methodData)
 			{
 				methodData.CancellationTokenRequired = false;
@@ -115,7 +110,7 @@ namespace AsyncGenerator.Internal
 
 			foreach (var bodyReference in BodyFunctionReferences)
 			{
-				bodyReference.Ignore("Method will be copied");
+				bodyReference.Ignore(IgnoreReason.MethodIsCopied);
 			}
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
@@ -123,21 +118,17 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
-			if (Conversion != MethodConversion.Ignore || IgnoredReason == null)
-			{
-				IgnoredReason = reason;
-			}
+			base.Ignore();
 			Conversion = MethodConversion.Ignore;
-			ExplicitlyIgnored = explicitlyIgnored;
 			foreach (var bodyReference in BodyFunctionReferences)
 			{
-				bodyReference.Ignore("Cascade ignored.");
+				bodyReference.Ignore(IgnoreReason.Cascade);
 			}
 			foreach (var childFunction in GetDescendantsChildFunctions())
 			{
-				childFunction.Ignore("Cascade ignored.");
+				childFunction.Ignore(IgnoreReason.Cascade, ExplicitlyIgnored);
 			}
 		}
 
@@ -174,7 +165,7 @@ namespace AsyncGenerator.Internal
 					childFunctionData.Copy();
 					break;
 				case MethodConversion.Ignore:
-					childFunctionData.Ignore("Cascade ignored.");
+					childFunctionData.Ignore(IgnoreReason.Cascade);
 					break;
 			}
 			return childFunctionData;
