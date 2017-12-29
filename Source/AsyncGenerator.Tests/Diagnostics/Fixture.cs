@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -39,6 +40,68 @@ namespace AsyncGenerator.Tests.Diagnostics
 				)
 				.ConfigureTransformation(t => t.Disable())
 			);
+		}
+
+		[Test]
+		public Task IgnoreTest2YamlAfterAnalyzation()
+		{
+			return YamlReadonlyTest(
+				@"projects:
+- filePath: AsyncGenerator.Tests.csproj
+  analyzation:
+    methodConversion:
+    - conversion: Smart
+      all: true
+    diagnostics:
+      diagnoseMethod:
+      - name: Test2
+        result: false
+",
+				p => p
+					.ConfigureAnalyzation(a => a
+						.AfterAnalyzation(IgnoreTest2))
+					.ConfigureTransformation(t => t.Disable())
+			);
+		}
+
+		[Test]
+		public Task IgnoreTest2XmlAfterAnalyzation()
+		{
+			return XmlReadonlyTest(
+				@"
+<AsyncGenerator xmlns=""https://github.com/maca88/AsyncGenerator"">
+  <Projects>
+    <Project filePath=""AsyncGenerator.Tests.csproj"">
+      <Analyzation>
+        <MethodConversion>
+          <Method conversion=""Smart"" all=""true"" />
+        </MethodConversion>
+        <Diagnostics>
+          <DiagnoseMethod>
+            <Method name=""Test2"" result=""false""/>
+          </DiagnoseMethod>
+        </Diagnostics>
+      </Analyzation>
+    </Project>
+  </Projects>
+</AsyncGenerator>
+",
+				p => p
+					.ConfigureAnalyzation(a => a
+						.AfterAnalyzation(IgnoreTest2))
+					.ConfigureTransformation(t => t.Disable())
+			);
+		}
+
+		private void IgnoreTest2(IProjectAnalyzationResult result)
+		{
+			bool val;
+			var test2 = GetMethodName(o => o.Test2(out val));
+
+			var methods = result.Documents.First().AllTypes.First().Methods.ToDictionary(o => o.Symbol.Name);
+			var test2Method = (MethodData)methods[test2];
+			Assert.AreEqual(DiagnosticSeverity.Hidden, test2Method.IgnoredReason.DiagnosticSeverity);
+			Assert.AreEqual(0, test2Method.GetDiagnostics().Count());
 		}
 	}
 }
