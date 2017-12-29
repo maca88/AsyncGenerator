@@ -44,6 +44,7 @@
   </xs:complexType>
   
   <xs:complexType name="DocumentFilter">
+    <xs:attribute name="all" type="xs:boolean" />
     <xs:attribute name="filePath" type="xs:string" />
     <xs:attribute name="filePathEndsWith" type="xs:string" />
     <xs:attribute name="name" type="xs:string" />
@@ -61,7 +62,30 @@
       <xs:extension base="MemberFilter">
         <xs:attribute name="anyInterfaceRule" type="xs:string" />
         <xs:attribute name="anyBaseTypeRule" type="xs:string" />
-        
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MethodPredicateFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="result" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+    
+  <xs:complexType name="TypePredicateFilter">
+    <xs:complexContent>
+      <xs:extension base="TypeFilter">
+        <xs:attribute name="result" type="xs:boolean" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="DocumentPredicateFilter">
+    <xs:complexContent>
+      <xs:extension base="DocumentFilter">
+        <xs:attribute name="result" type="xs:boolean" use="required" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -190,6 +214,33 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
+    
+  <xs:complexType name="Diagnostics">
+    <xs:all>
+      <xs:element name="Disable" type="xs:boolean" nillable="true" minOccurs="0" />
+      <xs:element name="DiagnoseDocument" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Document" type="DocumentPredicateFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="DiagnoseType" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Type" type="TypePredicateFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="DiagnoseMethod" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodPredicateFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
   
   <xs:complexType name="Analyzation">
     <xs:all>
@@ -202,6 +253,7 @@
       </xs:element>
       <xs:element name="PropertyConversion" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="AsyncExtensionMethods" type="AsyncExtensionMethods" minOccurs="0"/>
+      <xs:element name="Diagnostics" type="Diagnostics" minOccurs="0" />
       <xs:element name="PreserveReturnType" minOccurs="0">
         <xs:complexType>
           <xs:sequence>

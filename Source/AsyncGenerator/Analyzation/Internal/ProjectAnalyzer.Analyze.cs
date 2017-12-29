@@ -101,7 +101,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
-					methodAccessorData.Ignore("All abstract/virtual related methods are ignored");
+					methodAccessorData.Ignore(IgnoreReason.AllRelatedMethodsIgnored);
 				}
 				return;
 			}
@@ -139,7 +139,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			foreach (var reference in methodAccessorData.BodyFunctionReferences
 				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
-				reference.Ignore("The invoked method does not have an async counterpart");
+				reference.Ignore(IgnoreReason.InvokedMethodNoAsyncCounterpart);
 			}
 
 			if (methodAccessorData.Conversion.HasFlag(MethodConversion.ToAsync))
@@ -160,8 +160,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				!methodAccessorData.ExternalRelatedMethods.Any()
 			)
 			{
-				methodAccessorData.Ignore("Method is never used and has no async invocations");
-				LogIgnoredReason(methodAccessorData);
+				methodAccessorData.Ignore(IgnoreReason.NeverUsedAndNoAsyncInvocations);
 			}
 		}
 
@@ -182,7 +181,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						if (functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 						{
-							functionData.Ignore("Function is passed as an argument to a non async invocation");
+							functionData.Ignore(IgnoreReason.Custom("Function is passed as an argument to a non async invocation", DiagnosticSeverity.Hidden));
 						}
 						else
 						{
@@ -196,7 +195,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// TODO: find examples and add support
 					if (functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 					{
-						functionData.Ignore($"Anonymous function is passed as argument to a non supported node {callNode}");
+						functionData.Ignore(IgnoreReason.NotSupported($"Anonymous function is passed as argument to a non supported node {callNode}"));
 					}
 					else
 					{
@@ -216,7 +215,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			foreach (var reference in functionData.BodyFunctionReferences
 				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
 			{
-				reference.Ignore("The invoked method does not have an async counterpart");
+				reference.Ignore(IgnoreReason.InvokedMethodNoAsyncCounterpart);
 			}
 
 			functionData.HasYields = functionData.GetBodyNode()?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
@@ -266,16 +265,14 @@ namespace AsyncGenerator.Analyzation.Internal
 						AnalyzeArgumentExpression((ArgumentSyntax)currNode, nameNode, refData);
 						break;
 					case SyntaxKind.AddAssignmentExpression:
-						refData.Ignore($"Cannot attach an async method to an event (void async is not an option as cannot be awaited):\r\n{nameNode.Parent}\r\n");
-						Logger.Warn(refData.IgnoredReason);
+						refData.Ignore(IgnoreReason.Custom(
+							$"Cannot attach an async method to an event (void async is not an option as cannot be awaited)", DiagnosticSeverity.Info));
 						break;
 					case SyntaxKind.SubtractAssignmentExpression:
-						refData.Ignore($"Cannot detach an async method to an event:\r\n{nameNode.Parent}\r\n");
-						Logger.Warn(refData.IgnoredReason);
+						refData.Ignore(IgnoreReason.Custom($"Cannot detach an async method to an event", DiagnosticSeverity.Info));
 						break;
 					case SyntaxKind.VariableDeclaration:
-						refData.Ignore($"Assigning async method to a variable is not supported:\r\n{nameNode.Parent}\r\n");
-						Logger.Warn(refData.IgnoredReason);
+						refData.Ignore(IgnoreReason.NotSupported($"Assigning async method to a variable is not supported"));
 						break;
 					case SyntaxKind.CastExpression:
 						refData.AwaitInvocation = true;
@@ -286,8 +283,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					case SyntaxKind.ArrayInitializerExpression:
 					case SyntaxKind.CollectionInitializerExpression:
 					case SyntaxKind.ComplexElementInitializerExpression:
-						refData.Ignore($"Async method inside an array/collection initializer is not supported:\r\n{nameNode.Parent}\r\n");
-						Logger.Warn(refData.IgnoredReason);
+						refData.Ignore(IgnoreReason.NotSupported($"Async method inside an array/collection initializer is not supported"));
 						break;
 					// skip
 					case SyntaxKind.VariableDeclarator:
@@ -338,8 +334,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				if (currAncestor.IsKind(SyntaxKind.QueryExpression))
 				{
-					functionReferenceData.Ignore($"Cannot await async method in a query expression:\r\n{currAncestor}\r\n");
-					Logger.Warn(functionReferenceData.IgnoredReason);
+					functionReferenceData.Ignore(IgnoreReason.Custom("Cannot await async method in a query expression", DiagnosticSeverity.Info));
 					return true;
 				}
 				currAncestor = currAncestor.Parent;
@@ -411,7 +406,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (!canBeAwaited)
 				{
 					functionReferenceData.AwaitInvocation = false;
-					Logger.Info($"Cannot await invocation of a method that returns a Task without be synchronously awaited:\r\n{methodSymbol}\r\n");
+					functionReferenceData.AddDiagnostic("Cannot await invocation that returns a Task without being synchronously awaited", DiagnosticSeverity.Info);
 				}
 				else
 				{
@@ -426,7 +421,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				functionReferenceData.InvokedFromType = documentData.SemanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
 			}
-			
 
 			FindAsyncCounterparts(functionReferenceData);
 
@@ -457,7 +451,7 @@ namespace AsyncGenerator.Analyzation.Internal
 							if (argSymbol is ILocalSymbol arglocalSymbol)
 							{
 								// TODO: local arguments
-								functionReferenceData.Ignore("Local delegate arguments are currently not supported");
+								functionReferenceData.Ignore(IgnoreReason.NotSupported("Local delegate arguments are currently not supported"));
 								return;
 							}
 							if (argSymbol is IMethodSymbol argMethodSymbol)
@@ -468,7 +462,7 @@ namespace AsyncGenerator.Analyzation.Internal
 									.Where(o => o.Parameters.Length >= methodSymbol.Parameters.Length) // The async counterpart may have less parameters. e.g. Parallel.For -> Task.WhenAll
 									.All(o => !((IMethodSymbol) o.Parameters[i].Type.GetMembers("Invoke").First()).ReturnType.Equals(argMethodSymbol.ReturnType)))
 								{
-									functionReferenceData.Ignore("The delegate argument does not fit to any async counterparts");
+									functionReferenceData.Ignore(IgnoreReason.Custom("The delegate argument does not fit to any async counterparts", DiagnosticSeverity.Hidden));
 									return;
 								}
 							}
@@ -645,7 +639,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			else
 			{
-				result.Ignore("The method is already used as async");
+				result.Ignore(IgnoreReason.AlreadyAsync);
 
 				//var argumentMethodSymbol = (IMethodSymbol)documentData.SemanticModel.GetSymbolInfo(nameNode).Symbol;
 				//if (!argumentMethodSymbol.ReturnType.IsAwaitRequired(delegateMethod.ReturnType)) // i.e IList<T> -> IEnumerable<T>
@@ -660,14 +654,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			methodSymbol = methodSymbol.ReducedFrom ?? methodSymbol; // System.Linq extensions
 
-			var searchOptions = AsyncCounterpartsSearchOptions.Default;
-			var useTokens = _configuration.UseCancellationTokens | _configuration.ScanForMissingAsyncMembers != null;
-			if (useTokens)
-			{
-				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
-			}
 			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition,
-				functionReferenceData.InvokedFromType, searchOptions)
+				functionReferenceData.InvokedFromType, _searchOptions)
 				.Where(o => _configuration.IgnoreAsyncCounterpartsPredicates.All(p => !p(o))));
 		}
 
@@ -681,7 +669,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))
 				{
 					functionReferenceData.AwaitInvocation = false;
-					Logger.Info($"Cannot await method that is either void or do not return a Task:\r\n{methodSymbol}\r\n");
+					functionReferenceData.AddDiagnostic("Cannot await method that is either void or do not return a Task", DiagnosticSeverity.Hidden);
 				}
 				IMethodSymbol asyncCounterpart = null;
 				var passToken = useTokens;
@@ -720,8 +708,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			else if (!ProjectData.Contains(methodSymbol))
 			{
 				// If we are dealing with an external method and there are no async counterparts for it, we cannot convert it to async
-				functionReferenceData.Ignore($"Method {methodSymbol} can not be async as there is no async counterparts for it");
-				Logger.Info(functionReferenceData.IgnoredReason);
+				functionReferenceData.Ignore(IgnoreReason.NoAsyncCounterparts);
 				return false;
 			}
 			else if (functionReferenceData.ReferenceFunctionData != null)
@@ -749,7 +736,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// In the Task.Run case we have to check the delegate argument if it can be asnyc or not (the delegate argument will be processed before the invocation)
 			if (!functionReferenceData.DelegateArguments.Any())
 			{
-				functionReferenceData.Ignore("Multiple async counterparts without delegate arguments.");
+				functionReferenceData.Ignore(IgnoreReason.Custom("Multiple async counterparts without delegate arguments.", DiagnosticSeverity.Info));
 				return null;
 			}
 			foreach (var functionArgument in functionReferenceData.DelegateArguments)

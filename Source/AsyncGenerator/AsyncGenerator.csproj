@@ -34,9 +34,6 @@
     <Reference Include="Esent.Interop, Version=1.9.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\ManagedEsent.1.9.4\lib\net40\Esent.Interop.dll</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Build, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Build.15.5.180\lib\net46\Microsoft.Build.dll</HintPath>
       <Private>True</Private>
@@ -162,8 +159,10 @@
     <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SymbolExtensions.cs">
       <Link>Extensions\SymbolExtensions.cs</Link>
     </Compile>
+    <Compile Include="Analyzation\Internal\ProjectAnalyzer.Diagnose.cs" />
     <Compile Include="Configuration\Internal\ProjectAsyncExtensionMethodsConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
+    <Compile Include="Configuration\Internal\ProjectDiagnosticsConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectParseConfiguration.cs" />
     <Compile Include="Extensions\Internal\EnumExtensions.cs" />
@@ -183,11 +182,13 @@
     <Compile Include="Internal\Annotations.cs" />
     <Compile Include="Internal\BaseMethodData.cs" />
     <Compile Include="Internal\ChildFunctionData.cs" />
+    <Compile Include="Internal\DiagnosticData.cs" />
     <Compile Include="Internal\EnvironmentHelper.cs" />
     <Compile Include="Internal\FieldData.cs" />
     <Compile Include="Internal\FieldVariableDeclaratorData.cs" />
     <Compile Include="Internal\DelegateArgumentData.cs" />
     <Compile Include="Internal\IDataReference.cs" />
+    <Compile Include="Internal\IgnoreReason.cs" />
     <Compile Include="Internal\LocalFunctionData.cs" />
     <Compile Include="Internal\AnonymousFunctionData.cs" />
     <Compile Include="AsyncCodeGenerator.cs" />
@@ -219,6 +220,8 @@
     <Compile Include="Internal\FieldVariableDataReference.cs" />
     <Compile Include="Internal\SourceCodeCompiler.cs" />
     <Compile Include="Internal\UnixEndOfLineTriviaRewriter.cs" />
+    <Compile Include="Internal\VoidLogger.cs" />
+    <Compile Include="Internal\VoidLoggerFactory.cs" />
     <Compile Include="Plugins\Internal\ParallelForForEachTransformer.cs" />
     <Compile Include="Internal\ThreadSleepAsyncCounterpartFinder.cs" />
     <Compile Include="Plugins\Internal\AbstractPlugin.cs" />

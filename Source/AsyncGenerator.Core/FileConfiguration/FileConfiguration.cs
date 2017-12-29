@@ -136,6 +136,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public List<MethodConversionFilter> MethodConversion { get; set; }
 		[XmlElement("AsyncExtensionMethods")]
 		public AsyncExtensionMethods AsyncExtensionMethods { get; set; }
+		[XmlElement("Diagnostics")]
+		public Diagnostics Diagnostics { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> PreserveReturnType { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
@@ -162,6 +164,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public Analyzation()
 		{
 			AsyncExtensionMethods = new AsyncExtensionMethods();
+			Diagnostics = new Diagnostics();
 			CancellationTokens = new CancellationTokens();
 			IgnoreSearchForAsyncCounterparts = new List<MethodFilter>();
 			IgnoreAsyncCounterparts = new List<MethodFilter>();
@@ -186,8 +189,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public MethodConversion Conversion { get; set; }
 	}
 
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("MethodPredicateFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class MethodPredicateFilter : MethodFilter
+	{
+		[XmlAttribute(AttributeName = "result")]
+		public bool Result { get; set; }
+	}
+
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
+	[XmlInclude(typeof(MethodPredicateFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
@@ -201,9 +217,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[XmlInclude(typeof(TypeFilter))]
 	[XmlInclude(typeof(TypeScanMissingAsyncMembersFilter))]
 	[XmlInclude(typeof(TypeConversionFilter))]
+	[XmlInclude(typeof(TypePredicateFilter))]
 	[XmlInclude(typeof(MethodFilter))]
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
+	[XmlInclude(typeof(MethodPredicateFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
@@ -295,6 +313,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	}
 	[XmlInclude(typeof(TypeScanMissingAsyncMembersFilter))]
 	[XmlInclude(typeof(TypeConversionFilter))]
+	[XmlInclude(typeof(TypePredicateFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
@@ -319,6 +338,18 @@ namespace AsyncGenerator.Core.FileConfiguration
 	{
 		[XmlAttribute(AttributeName = "conversion")]
 		public TypeConversion Conversion { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("TypePredicateFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class TypePredicateFilter : TypeFilter
+	{
+		[XmlAttribute(AttributeName = "result")]
+		public bool Result { get; set; }
 	}
 
 	[Serializable]
@@ -375,6 +406,31 @@ namespace AsyncGenerator.Core.FileConfiguration
 		{
 			AsyncLock = new TransformationAsyncLock();
 			DocumentationComments = new DocumentationComments();
+		}
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("Transformation")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class Diagnostics
+	{
+		[XmlElement(IsNullable = true)]
+		public bool? Disable { get; set; }
+		[XmlArrayItem("Document", IsNullable = false)]
+		public List<DocumentPredicateFilter> DiagnoseDocument { get; set; }
+		[XmlArrayItem("Type", IsNullable = false)]
+		public List<TypePredicateFilter> DiagnoseType { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodPredicateFilter> DiagnoseMethod { get; set; }
+
+		public Diagnostics()
+		{
+			DiagnoseDocument = new List<DocumentPredicateFilter>();
+			DiagnoseType = new List<TypePredicateFilter>();
+			DiagnoseMethod = new List<MethodPredicateFilter>();
 		}
 	}
 
@@ -521,6 +577,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 		}
 		[XmlAttribute(AttributeName = "name")]
 		public string Name { get; set; }
+
+		[XmlAttribute(AttributeName = "all")]
+		public bool All { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("DocumentPredicateFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class DocumentPredicateFilter : DocumentFilter
+	{
+		[XmlAttribute(AttributeName = "result")]
+		public bool Result { get; set; }
 	}
 
 	[Serializable]

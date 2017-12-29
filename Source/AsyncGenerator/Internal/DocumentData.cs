@@ -70,7 +70,22 @@ namespace AsyncGenerator.Internal
 		public SyntaxNode GetNode()
 		{
 			return Node;
-		} 
+		}
+
+		/// <summary>
+		/// Can be null
+		/// </summary>
+		private List<DiagnosticData> Diagnostics { get; set; }
+
+		public IEnumerable<DiagnosticData> GetDiagnostics()
+		{
+			return Diagnostics ?? Enumerable.Empty<DiagnosticData>();
+		}
+
+		public void AddDiagnostic(string description, DiagnosticSeverity severity)
+		{
+			(Diagnostics ?? (Diagnostics = new List<DiagnosticData>())).Add(new DiagnosticData(description, severity));
+		}
 
 		/// <summary>
 		/// Iterate through all namespace data from top to bottom

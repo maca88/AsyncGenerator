@@ -74,14 +74,58 @@ namespace AsyncGenerator.Internal
 
 		public abstract ISymbol GetSymbol();
 
-		public string IgnoredReason { get; protected set; }
+		public IgnoreReason IgnoredReason { get; private set; }
 
-		public bool ExplicitlyIgnored { get; set; }
-
-		public virtual void Ignore(string reason, bool explicitlyIgnored = false)
+		public void SetIgnoreSeverity(DiagnosticSeverity severity)
 		{
+			IgnoredReason = IgnoredReason?.WithSeverity(severity);
+		}
+
+		public bool ExplicitlyIgnored { get; private set; }
+
+		public FileLinePositionSpan GetLineSpan()
+		{
+			return GetNode()?.SyntaxTree.GetLineSpan(GetNode().Span) ?? default(FileLinePositionSpan);
+		}
+
+		/// <summary>
+		/// Can be null
+		/// </summary>
+		private List<DiagnosticData> Diagnostics { get; set; }
+
+		public IEnumerable<DiagnosticData> GetDiagnostics()
+		{
+			return Diagnostics ?? Enumerable.Empty<DiagnosticData>();
+		}
+
+		public void AddDiagnostic(string description, DiagnosticSeverity diagnosticSeverity)
+		{
+			(Diagnostics ?? (Diagnostics = new List<DiagnosticData>())).Add(new DiagnosticData(description, diagnosticSeverity));
+		}
+
+		public void Ignore(IgnoreReason reason, bool explicitlyIgnored = false)
+		{
+			if (IgnoredReason != null)
+			{
+				return;
+			}
 			IgnoredReason = reason;
 			ExplicitlyIgnored = explicitlyIgnored;
+			Ignore();
+		}
+
+		public virtual void Copy()
+		{
+			if (IgnoredReason == null)
+			{
+				return;
+			}
+			IgnoredReason = null;
+			ExplicitlyIgnored = false;
+		}
+
+		protected virtual void Ignore()
+		{
 		}
 
 		#region IAnalyzationResult

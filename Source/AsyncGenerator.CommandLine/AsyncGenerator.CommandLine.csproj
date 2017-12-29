@@ -184,6 +184,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Log4NetLogger.cs" />
+    <Compile Include="Log4NetLoggerFactory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

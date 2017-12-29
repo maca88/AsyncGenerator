@@ -116,10 +116,10 @@ namespace AsyncGenerator.Internal
 
 		public override MethodOrAccessorData GetMethodOrAccessorData() => this;
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
+			base.Ignore();
 			CancellationTokenRequired = false;
-			base.Ignore(reason, explicitlyIgnored);
 		}
 
 		public IEnumerable<MethodOrAccessorData> GetAllRelatedMethods()

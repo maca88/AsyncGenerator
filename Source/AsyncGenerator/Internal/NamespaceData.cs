@@ -85,10 +85,8 @@ namespace AsyncGenerator.Internal
 			return Node;
 		}
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
-			IgnoredReason = reason;
-			ExplicitlyIgnored = explicitlyIgnored;
 			Conversion = NamespaceConversion.Ignore;
 		}
 

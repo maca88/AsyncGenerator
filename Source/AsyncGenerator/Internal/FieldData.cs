@@ -52,13 +52,13 @@ namespace AsyncGenerator.Internal
 
 		public override ISymbol GetSymbol() => Symbol;
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
+			base.Ignore();
 			foreach (var variable in Variables)
 			{
-				variable.Ignore("Cascade ignored.", explicitlyIgnored);
+				variable.Ignore(IgnoreReason.Cascade, ExplicitlyIgnored);
 			}
-			base.Ignore(reason, explicitlyIgnored);
 		}
 	}
 }

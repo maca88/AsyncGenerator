@@ -163,10 +163,14 @@
     <Compile Include="Configuration\IFluentProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectCompileConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectDiagnosticsConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectParseConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />
+    <Compile Include="Configuration\IProjectDiagnosticsConfiguration.cs" />
+    <Compile Include="Logging\ILogger.cs" />
+    <Compile Include="Logging\ILoggerFactory.cs" />
     <Compile Include="Configuration\IProjectDocumentationCommentConfiguration.cs" />
     <Compile Include="Extensions\AnalyzationResultExtensions.cs" />
     <Compile Include="Extensions\Internal\SymbolExtensions.cs" />

@@ -197,6 +197,12 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="..\AsyncGenerator.CommandLine\Log4NetLogger.cs">
+      <Link>Log4NetLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\AsyncGenerator.CommandLine\Log4NetLoggerFactory.cs">
+      <Link>Log4NetLoggerFactory.cs</Link>
+    </Compile>
     <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
       <Link>EnvironmentHelper.cs</Link>
     </Compile>
@@ -207,6 +213,8 @@
     <Compile Include="AnonymousFunctions\Input\MethodWithDelegate.cs" />
     <Compile Include="ConfigurationOverride\Fixture.cs" />
     <Compile Include="ConfigurationOverride\Input\PartialCopy.cs" />
+    <Compile Include="Diagnostics\Fixture.cs" />
+    <Compile Include="Diagnostics\Input\TestCase.cs" />
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />

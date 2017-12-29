@@ -70,24 +70,21 @@ namespace AsyncGenerator.Internal
 			return Node;
 		}
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
 			Conversion = PropertyConversion.Ignore;
-			IgnoredReason = reason;
-			ExplicitlyIgnored = explicitlyIgnored;
-			IgnoreAccessors("Cascade ignored.");
+			IgnoreAccessors(IgnoreReason.Cascade);
 		}
 
-		public void IgnoreAccessors(string reason)
+		public void IgnoreAccessors(IgnoreReason reason)
 		{
 			GetAccessorData?.Ignore(reason);
 			SetAccessorData?.Ignore(reason);
 		}
 
-		public void Copy()
+		public override void Copy()
 		{
-			IgnoredReason = null;
-			ExplicitlyIgnored = false;
+			base.Copy();
 			Conversion = PropertyConversion.Copy;
 			GetAccessorData?.SoftCopy();
 			SetAccessorData?.SoftCopy();

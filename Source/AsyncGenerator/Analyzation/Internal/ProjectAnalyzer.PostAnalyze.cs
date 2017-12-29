@@ -44,8 +44,9 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (currentMethodData.Symbol.Parameters.LastOrDefault()?.IsParams == true)
 				{
 					currentMethodData.CancellationTokenRequired = false;
-					Logger.Warn($"Cancellation token parameter will not be added for method {currentMethodData.Symbol} because the last parameter" +
-								$" is declared as a parameter array which is currently not supported");
+					currentMethodData.AddDiagnostic(
+						"Cancellation token parameter will not be added, because the last parameter is declared as an array which is currently not supported",
+						DiagnosticSeverity.Hidden);
 				}
 				if (currentMethodData.CancellationTokenRequired)
 				{
@@ -80,7 +81,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					if (depFunctionData.Conversion == MethodConversion.Ignore)
 					{
-						Logger.Warn($"Ignored method {depFunctionData.Symbol} has a method invocation that can be async");
+						depFunctionData.AddDiagnostic("Has a method invocation that can be async", DiagnosticSeverity.Warning);
 						continue;
 					}
 					depFunctionData.ToAsync();
@@ -188,51 +189,59 @@ namespace AsyncGenerator.Analyzation.Internal
 				methodGeneration = methodData.Symbol.ExplicitInterfaceImplementations.Length > 0
 					? MethodCancellationToken.Required 
 					: MethodCancellationToken.Optional;
-				Logger.Debug($"ParameterGeneration option for method '{methodData.Symbol}' was not set, " +
-				             $"'{methodGeneration}' option will be used.");
 			}
 			else if (
 				!methodGeneration.HasAnyFlag(MethodCancellationToken.Optional, MethodCancellationToken.Required) &&
 				methodGeneration.HasAnyFlag(MethodCancellationToken.ForwardNone, MethodCancellationToken.SealedForwardNone))
 			{
 				methodGeneration |= MethodCancellationToken.Required;
-				Logger.Debug($"'{MethodCancellationToken.Optional}' or '{MethodCancellationToken.Required}' ParameterGeneration option for method '{methodData.Symbol}' were not set, " +
-				             $"'{MethodCancellationToken.Required}' option will be added.");
+				methodData.AddDiagnostic(
+					$"'{MethodCancellationToken.Optional}' or '{MethodCancellationToken.Required}' ParameterGeneration option for method '{methodData.Symbol}' were not set, " +
+					$"'{MethodCancellationToken.Required}' option will be added.",
+					DiagnosticSeverity.Hidden);
 			}
 			else if (methodGeneration.HasFlag(MethodCancellationToken.Optional) &&
 					 methodGeneration.HasFlag(MethodCancellationToken.Required))
 			{
 				methodGeneration &= ~MethodCancellationToken.Required;
-				Logger.Warn($"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
-							$"The method cannot have '{MethodCancellationToken.Required}' and '{MethodCancellationToken.Optional}' options set at once. " +
-				            $"'{MethodCancellationToken.Required}' option will be removed.");
+				methodData.AddDiagnostic(
+					$"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
+					$"The method cannot have '{MethodCancellationToken.Required}' and '{MethodCancellationToken.Optional}' options set at once. " +
+					$"'{MethodCancellationToken.Required}' option will be removed.",
+					DiagnosticSeverity.Info);
 			}
 			if (methodGeneration.HasFlag(MethodCancellationToken.ForwardNone) &&
 			    methodGeneration.HasFlag(MethodCancellationToken.SealedForwardNone))
 			{
 				methodGeneration &= ~MethodCancellationToken.ForwardNone;
-				Logger.Warn($"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
-				            $"The method cannot have '{MethodCancellationToken.ForwardNone}' and '{MethodCancellationToken.SealedForwardNone}' options set at once. " +
-				            $"'{MethodCancellationToken.ForwardNone}' option will be removed.");
+				methodData.AddDiagnostic(
+					$"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
+					$"The method cannot have '{MethodCancellationToken.ForwardNone}' and '{MethodCancellationToken.SealedForwardNone}' options set at once. " +
+					$"'{MethodCancellationToken.ForwardNone}' option will be removed.",
+					DiagnosticSeverity.Info);
 			}
 			if (methodGeneration.HasFlag(MethodCancellationToken.Optional) &&
 			    methodGeneration.HasAnyFlag(MethodCancellationToken.ForwardNone, MethodCancellationToken.SealedForwardNone))
 			{
 				methodGeneration = MethodCancellationToken.Optional;
-				Logger.Warn($"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
-				            $"The '{MethodCancellationToken.Optional}' option cannot be combined " +
-				            $"with '{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
-				            $"'{MethodCancellationToken.ForwardNone}' and '{MethodCancellationToken.SealedForwardNone}' options will be removed.");
+				methodData.AddDiagnostic(
+					$"Invalid ParameterGeneration option for method '{methodData.Symbol}'. " +
+					$"The '{MethodCancellationToken.Optional}' option cannot be combined " +
+					$"with '{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
+					$"'{MethodCancellationToken.ForwardNone}' and '{MethodCancellationToken.SealedForwardNone}' options will be removed.",
+					DiagnosticSeverity.Info);
 			}
 
 			// Explicit implementor can have only Parameter combined with NoParameterForward or SealedNoParameterForward
 			if (methodData.Symbol.ExplicitInterfaceImplementations.Length > 0 && !methodGeneration.HasFlag(MethodCancellationToken.Required))
 			{
 				methodData.MethodCancellationToken = MethodCancellationToken.Required;
-				Logger.Warn($"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
-							$"Explicit implementor can have only '{MethodCancellationToken.Required}' option combined with " +
-				            $"'{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
-				            $"The ParameterGeneration will be set to '{methodData.MethodCancellationToken}'");
+				methodData.AddDiagnostic(
+					$"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+					$"Explicit implementor can have only '{MethodCancellationToken.Required}' option combined with " +
+					$"'{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
+					$"The ParameterGeneration will be set to '{methodData.MethodCancellationToken}'",
+					DiagnosticSeverity.Info);
 				return;
 			}
 
@@ -241,9 +250,11 @@ namespace AsyncGenerator.Analyzation.Internal
 			    methodGeneration.HasAnyFlag(MethodCancellationToken.ForwardNone, MethodCancellationToken.SealedForwardNone))
 			{
 				methodData.MethodCancellationToken = MethodCancellationToken.Required;
-				Logger.Warn($"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
-							$"Interface method can have '{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
-				            $"The ParameterGeneration will be set to '{methodData.MethodCancellationToken}'");
+				methodData.AddDiagnostic(
+					$"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+					$"Interface method can have '{MethodCancellationToken.ForwardNone}' or '{MethodCancellationToken.SealedForwardNone}' option. " +
+					$"The ParameterGeneration will be set to '{methodData.MethodCancellationToken}'",
+					DiagnosticSeverity.Info);
 				return;
 			}
 			methodData.MethodCancellationToken = methodGeneration;
@@ -280,7 +291,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					    !asyncMethodDatas.Contains(methodData)
 				    ))
 				{
-					functionData.Ignore("Does not have any async invocations");
+					functionData.Ignore(IgnoreReason.NoAsyncInvocations);
 				}
 				return;
 			}
@@ -296,7 +307,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			else
 			{
-				functionData.Ignore("Has no async invocations");
+				functionData.Ignore(IgnoreReason.NoAsyncInvocations);
 			}
 		}
 
@@ -323,7 +334,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				    methodData.Dependencies.Any(o => o.Conversion.HasAnyFlag(MethodConversion.Copy, MethodConversion.ToAsync)))
 				{
 					methodData.Copy();
-					Logger.Warn($"Explicitly ignored method {methodData.Symbol} will be copied as it is used in one or many methods that will be generated");
+					methodData.AddDiagnostic("Explicitly ignored method will be copied as it is used in one or many methods that will be generated", DiagnosticSeverity.Hidden);
 				}
 
 				// If an abstract method is ignored we have to ignore also the overrides otherwise we may break the functionality and the code from compiling (eg. base.Call())
@@ -338,9 +349,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						}
 						else
 						{
-							relatedMethodData.Ignore($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}");
-							WarnLogIgnoredReason(relatedMethodData);
-
+							relatedMethodData.Ignore(IgnoreReason.Custom($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}", DiagnosticSeverity.Hidden));
 						}
 					}
 				}
@@ -354,8 +363,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				// TODO: remove override keyword if exist for the non removed related methods
 				foreach (var relatedMethodData in methodData.RelatedMethods.Where(i => !i.RelatedMethods.Any(r => r != methodData && r.InterfaceMethod)))
 				{
-					relatedMethodData.Ignore($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}");
-					WarnLogIgnoredReason(relatedMethodData);
+					relatedMethodData.Ignore(IgnoreReason.Custom($"Implicitly ignored because of the explictly ignored method {methodData.Symbol}", DiagnosticSeverity.Hidden));
 				}
 			}
 
@@ -414,7 +422,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				if (methodData.Conversion == MethodConversion.Ignore)
 				{
-					Logger.Warn($"Ignored method {methodData.Symbol} has a method invocation that can be async");
+					methodData.AddDiagnostic("Has a method invocation that can be async", DiagnosticSeverity.Warning);
 					continue;
 				}
 				methodData.ToAsync();
@@ -457,7 +465,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						!methodData.HasAnyActiveReference()
 						)
 					{
-						methodData.Ignore("Method is never used.");
+						methodData.Ignore(IgnoreReason.NeverUsed);
 					}
 					else
 					{
@@ -466,11 +474,9 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
-					methodData.Ignore("Method is never used.");
+					methodData.Ignore(IgnoreReason.NeverUsed);
 				}
-				LogIgnoredReason(methodData);
 			}
-
 
 			// We need to calculate the final conversion for the local/anonymous functions
 			foreach (var methodData in allTypeData.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync))))
@@ -536,7 +542,7 @@ namespace AsyncGenerator.Analyzation.Internal
 							.Select(o => Regex.Match(o.GetMessage(), "'(.+)'").Groups[1].Value)
 							.Any(o => o.Equals(methodOrAccessor.AsyncCounterpartName)))
 						{
-							methodOrAccessor.Ignore("Method is not used.");
+							methodOrAccessor.Ignore(IgnoreReason.NeverUsed);
 						}
 						continue;
 					// We have to postpone the calculation of a private method that is marked to be async when it is references only by 
@@ -549,7 +555,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					if (usage == MethodUsage.Sync)
 					{
-						methodOrAccessor.Ignore("Method is not used as async.");
+						methodOrAccessor.Ignore(IgnoreReason.NeverUsedAsAsync);
 					}
 					continue;
 				}
@@ -594,7 +600,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					else
 					{
-						typeData.Ignore("Has no async methods");
+						typeData.Ignore(IgnoreReason.NoAsyncMembers);
 					}
 				}
 				else if(typeData.Conversion == TypeConversion.Unknown)
@@ -647,7 +653,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				// A type can be ignored only if it has no async methods that will get converted
 				if (namespaceData.GetSelfAndDescendantsNamespaceData().All(t => t.Types.Values.All(o => o.Conversion == TypeConversion.Ignore)))
 				{
-					namespaceData.Ignore("Has no async members.");
+					namespaceData.Ignore(IgnoreReason.NoAsyncMembers);
 				}
 				else
 				{

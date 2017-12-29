@@ -40,14 +40,10 @@ namespace AsyncGenerator.Internal
 			return Symbol;
 		}
 
-		public override void Ignore(string reason, bool explicitlyIgnored = false)
+		protected override void Ignore()
 		{
-			if (Conversion == FieldVariableConversion.Ignore)
-			{
-				return;
-			}
+			base.Ignore();
 			Conversion = FieldVariableConversion.Ignore;
-			base.Ignore(reason, explicitlyIgnored);
 		}
 	}
 

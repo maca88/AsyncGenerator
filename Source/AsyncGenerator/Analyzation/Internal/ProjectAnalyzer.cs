@@ -10,9 +10,9 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
-using log4net;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -25,8 +25,9 @@ namespace AsyncGenerator.Analyzation.Internal
 {
 	internal partial class ProjectAnalyzer
 	{
-		private static readonly ILog Logger = LogManager.GetLogger(typeof(ProjectAnalyzer));
-
+		private readonly ILogger _logger;
+		private readonly ILogger _diagnosticsLogger;
+		private AsyncCounterpartsSearchOptions _searchOptions;
 		private IImmutableSet<Document> _analyzeDocuments;
 		private IImmutableSet<Project> _analyzeProjects;
 		private ProjectAnalyzeConfiguration _configuration;
@@ -36,9 +37,11 @@ namespace AsyncGenerator.Analyzation.Internal
 		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> _methodAsyncConterparts =
 			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>();
 
-		public ProjectAnalyzer(ProjectData projectData)
+		public ProjectAnalyzer(ProjectData projectData, ILoggerFactory loggerFactory)
 		{
 			ProjectData = projectData;
+			_logger = loggerFactory.GetLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectAnalyzer)}");
+			_diagnosticsLogger = loggerFactory.GetLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectAnalyzer)}.Diagnostics");
 		}
 
 		public ProjectData ProjectData { get; }
@@ -52,7 +55,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			Setup();
 
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
-			Logger.Info("Parsing documents started");
+			_logger.Info("Parsing documents started");
 			DocumentData[] documentData;
 			if (_configuration.ConcurrentRun)
 			{
@@ -69,10 +72,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					i++;
 				}
 			}
-			Logger.Info("Parsing documents completed");
+			_logger.Info("Parsing documents completed");
 
 			// 2. Step - Each method in a document will be pre-analyzed and saved in a structural tree
-			Logger.Info("Pre-analyzing documents started");
+			_logger.Info("Pre-analyzing documents started");
 			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(documentData, PreAnalyzeDocumentData);
@@ -84,10 +87,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					PreAnalyzeDocumentData(item);
 				}
 			}
-			Logger.Info("Pre-analyzing documents completed");
+			_logger.Info("Pre-analyzing documents completed");
 
 			// 3. Step - Find all references for each method and optionally scan its body for async counterparts
-			Logger.Info("Scanning references started");
+			_logger.Info("Scanning references started");
 			if (_configuration.ConcurrentRun)
 			{
 				await Task.WhenAll(documentData.Select(o => ScanDocumentData(o, cancellationToken))).ConfigureAwait(false);
@@ -99,22 +102,22 @@ namespace AsyncGenerator.Analyzation.Internal
 					await ScanDocumentData(item, cancellationToken).ConfigureAwait(false);
 				}
 			}
-			Logger.Info("Scanning references completed");
+			_logger.Info("Scanning references completed");
 
-			Logger.Info(
-						$"Scanning statistics:{Environment.NewLine}" +
-						$"Total scanned documents: {documentData.Length}{Environment.NewLine}" +
-						$"Total scanned methods: {_scannedMethodOrAccessors.Count}{Environment.NewLine}" +
-						$"Total method implementations searched: {_searchedImplementations.Count}{Environment.NewLine}" +
-						$"Total method overrides searched: {_searchedOverrides.Count}{Environment.NewLine}" +
-						$"Total method references searched: {_searchedMethodReferences.Count}{Environment.NewLine}" +
-						$"Total method reference locations scanned: {_scannedLocationsSymbols.Count}{Environment.NewLine}" +
-						$"Total method bodies scanned: {_scannedMethodBodies.Count}{Environment.NewLine}" +
-						$"Max scanned depth: {_maxScanningDepth}"
-				);
+			_logger.Debug(
+				$"Scanning statistics:{Environment.NewLine}" +
+				$"Total scanned documents: {documentData.Length}{Environment.NewLine}" +
+				$"Total scanned methods: {_scannedMethodOrAccessors.Count}{Environment.NewLine}" +
+				$"Total method implementations searched: {_searchedImplementations.Count}{Environment.NewLine}" +
+				$"Total method overrides searched: {_searchedOverrides.Count}{Environment.NewLine}" +
+				$"Total method references searched: {_searchedMethodReferences.Count}{Environment.NewLine}" +
+				$"Total method reference locations scanned: {_scannedLocationsSymbols.Count}{Environment.NewLine}" +
+				$"Total method bodies scanned: {_scannedMethodBodies.Count}{Environment.NewLine}" +
+				$"Max scanned depth: {_maxScanningDepth}"
+			);
 
 			// 4. Step - Analyze all references found in the previous step
-			Logger.Info("Analyzing documents started");
+			_logger.Info("Analyzing documents started");
 			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(documentData, AnalyzeDocumentData);
@@ -126,13 +129,20 @@ namespace AsyncGenerator.Analyzation.Internal
 					AnalyzeDocumentData(item);
 				}
 			}
-			Logger.Info("Analyzing documents completed");
+			_logger.Info("Analyzing documents completed");
 
 			// 5. Step - Calculate the final conversion for all method data
-			Logger.Info("Post-analyzing documents started");
+			_logger.Info("Post-analyzing documents started");
 			PostAnalyze(documentData);
-			Logger.Info("Post-analyzing documents completed");
+			_logger.Info("Post-analyzing documents completed");
 
+			// 6. Step - Log the diagnoses of documents
+			if (_configuration.Diagnostics.Enabled)
+			{
+				_logger.Info("Diagnose of documents started");
+				Diagnose(documentData);
+				_logger.Info("Diagnose of documents completed");
+			}
 			return ProjectData;
 		}
 
@@ -175,7 +185,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				asyncMethodSymbols,
 				(k, v) =>
 				{
-					Logger.Debug($"Performance hit: Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
+					_logger.Debug($"Performance hit: Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
 					return asyncMethodSymbols;
 				});
 		}
@@ -206,11 +216,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			var documentData = methodData.TypeData.NamespaceData.DocumentData;
 			var semanticModel = documentData.SemanticModel;
-			var searchOptions = AsyncCounterpartsSearchOptions.Default;
-			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
-			{
-				searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
-			}
 
 			foreach (var node in methodDataBody.DescendantNodes().Where(o => o.IsKind(SyntaxKind.InvocationExpression) || o.IsKind(SyntaxKind.IdentifierName)))
 			{
@@ -259,7 +264,9 @@ namespace AsyncGenerator.Analyzation.Internal
 					_mustScanForMethodReferences.TryAdd(methodSymbol))
 				{
 					searchReferences.Add(methodSymbol);
-					Logger.Warn($"Overriding SearchForMethodReferences user setting for method {methodSymbol} as we found a reference to it");
+					ProjectData.GetFunctionData(methodSymbol).AddDiagnostic(
+						$"Overriding SearchForMethodReferences user setting, as we found a reference inside method {methodData.Symbol}",
+						DiagnosticSeverity.Info);
 				}
 
 				if (!_configuration.SearchForAsyncCounterparts(methodSymbol))
@@ -267,11 +274,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					continue;
 				}
 				// Add method only if new
-				if (GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions, true).Any())
+				if (GetAsyncCounterparts(methodSymbol, typeSymbol, _searchOptions, true).Any())
 				{
 					result.Add(methodSymbol);
 				}
-				if (invocation == null || !GetAsyncCounterparts(methodSymbol, typeSymbol, searchOptions).Any())
+				if (invocation == null || !GetAsyncCounterparts(methodSymbol, typeSymbol, _searchOptions).Any())
 				{
 					continue;
 				}
@@ -285,7 +292,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						continue;
 					}
-					if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, searchOptions, true).Any())
+					if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, _searchOptions, true).Any())
 					{
 						result.Add(argMethodSymbol);
 					}
@@ -303,28 +310,12 @@ namespace AsyncGenerator.Analyzation.Internal
 				.ToImmutableHashSet();
 			_analyzeProjects = new[] { ProjectData.Project }
 				.ToImmutableHashSet();
-		}
-
-		private void LogIgnoredReason(AbstractData functionData, bool warn = false)
-		{
-			var message = $"Method {functionData.GetSymbol()} was ignored. Reason: {functionData.IgnoredReason}";
-			if (warn)
+			_searchOptions = AsyncCounterpartsSearchOptions.Default;
+			var useTokens = _configuration.UseCancellationTokens | _configuration.ScanForMissingAsyncMembers != null;
+			if (useTokens)
 			{
-				Logger.Warn(message);
+				_searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
-			else
-			{
-				Logger.Debug(message);
-			}
-		}
-
-		private void WarnLogIgnoredReason(AbstractData functionData)
-		{
-			LogIgnoredReason(functionData, true);
-		}
-
-		private void VoidLog(AbstractData functionData)
-		{
 		}
 	}
 }

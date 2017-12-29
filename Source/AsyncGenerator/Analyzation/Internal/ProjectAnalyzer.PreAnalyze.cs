@@ -14,7 +14,7 @@ namespace AsyncGenerator.Analyzation.Internal
 {
 	internal partial class ProjectAnalyzer
 	{
-		private AsyncCounterpartsSearchOptions _searchOptions;
+		private AsyncCounterpartsSearchOptions _preAnalyzeSearchOptions;
 
 		/// <summary>
 		/// Set the method conversion to Ignore for all method data that are inside the given document and can not be
@@ -23,12 +23,12 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// <param name="documentData">The document data to be pre-analyzed</param>
 		private void PreAnalyzeDocumentData(DocumentData documentData)
 		{
-			_searchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
+			_preAnalyzeSearchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
 			// When searhing for missing async member we have to search also for overloads with a cancellation token
 			var searchWithTokens = _configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null;
 			if (searchWithTokens)
 			{
-				_searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
+				_preAnalyzeSearchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
 
 			foreach (var typeNode in documentData.Node
@@ -49,7 +49,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						var methodData = documentData.GetOrCreateBaseMethodData(methodNode, typeData);
 						if (typeIgnored)
 						{
-							methodData.Ignore("Ignored by TypeConversion function", true);
+							methodData.Ignore(IgnoreReason.TypeConversion, true);
 						}
 						else
 						{
@@ -66,7 +66,7 @@ namespace AsyncGenerator.Analyzation.Internal
 									var anonFunData = documentData.GetOrCreateAnonymousFunctionData((AnonymousFunctionExpressionSyntax)node, methodData);
 									if (methodData.Conversion == MethodConversion.Ignore)
 									{
-										anonFunData.Ignore("Cascade ignored.");
+										anonFunData.Ignore(IgnoreReason.Cascade, true);
 									}
 									else
 									{
@@ -77,7 +77,7 @@ namespace AsyncGenerator.Analyzation.Internal
 									var localFunData = documentData.GetOrCreateLocalFunctionData((LocalFunctionStatementSyntax)node, methodData);
 									if (methodData.Conversion == MethodConversion.Ignore)
 									{
-										localFunData.Ignore("Cascade ignored.");
+										localFunData.Ignore(IgnoreReason.Cascade, true);
 									}
 									else
 									{
@@ -92,7 +92,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						var propertyData = documentData.GetOrCreatePropertyData(propertyNode, typeData);
 						if (typeIgnored)
 						{
-							propertyData.Ignore("Ignored by TypeConversion function", true);
+							propertyData.Ignore(IgnoreReason.TypeConversion, true);
 						}
 						else
 						{
@@ -104,7 +104,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						var fieldData = documentData.GetOrCreateBaseFieldData(fieldNode, typeData);
 						if (typeIgnored)
 						{
-							fieldData.Ignore("Ignored by TypeConversion function", true);
+							fieldData.Ignore(IgnoreReason.TypeConversion, true);
 						}
 						else
 						{
@@ -136,12 +136,12 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			if (fieldData.TypeData.Conversion == TypeConversion.Partial)
 			{
-				fieldData.Ignore("The containing type is partial.");
+				fieldData.Ignore(IgnoreReason.PartialContainingType);
 				return;
 			}
 			if (fieldData.TypeData.Conversion == TypeConversion.Ignore)
 			{
-				fieldData.Ignore("Cascade ignored.");
+				fieldData.Ignore(IgnoreReason.Cascade);
 				return;
 			}
 			if (fieldData.TypeData.IsNewType)
@@ -159,7 +159,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (!_configuration.PropertyConversion)
 			{
 				// Ignore getter and setter accessors and copy the property if needed
-				propertyData.IgnoreAccessors("Ignored by PropertyConversion function");
+				propertyData.IgnoreAccessors(IgnoreReason.PropertyConversion);
 			}
 			if (newType)
 			{
@@ -199,15 +199,14 @@ namespace AsyncGenerator.Analyzation.Internal
 			// TODO: validate conversion
 			if (functionData.Conversion == MethodConversion.Ignore)
 			{
-				functionData.Ignore("Ignored by MethodConversion function", true);
+				functionData.Ignore(IgnoreReason.MethodConversion, true);
 				return;
 			}
 
 			functionData.ForceAsync = functionData.Conversion.HasFlag(MethodConversion.ToAsync);
 			var newType = functionData.TypeData.IsNewType;
 			// Here we want to log only ignored methods that were explicitly set to async
-			var log = functionData.ForceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog; 
-			void IgnoreOrCopy(string reason)
+			void IgnoreOrCopy(IgnoreReason reason)
 			{
 				if (newType)
 				{
@@ -215,14 +214,18 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
+					if (functionData.ForceAsync)
+					{
+						reason = reason.WithSeverity(DiagnosticSeverity.Warning);
+					}
 					functionData.Ignore(reason);
-					log(functionData);
+					
 				}
 			}
 
 			if (methodSymbol.IsAsync || methodSymbol.Name.EndsWith("Async"))
 			{
-				IgnoreOrCopy("Is already async");
+				IgnoreOrCopy(IgnoreReason.AlreadyAsync);
 				return;
 			}
 			if (
@@ -231,13 +234,13 @@ namespace AsyncGenerator.Analyzation.Internal
 				methodSymbol.MethodKind != MethodKind.PropertyGet &&
 				methodSymbol.MethodKind != MethodKind.PropertySet)
 			{
-				IgnoreOrCopy($"Unsupported method kind {methodSymbol.MethodKind}");
+				IgnoreOrCopy(IgnoreReason.NotSupported($"Unsupported method kind {methodSymbol.MethodKind}"));
 				return;
 			}
 
 			if (methodSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				IgnoreOrCopy("Has out parameters");
+				IgnoreOrCopy(IgnoreReason.OutParameters);
 				return;
 			}
 			FillFunctionLocks(functionData, semanticModel);
@@ -250,8 +253,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Override user configuration if the method is set to be copied on a partial type conversion
 			if (methodData.Conversion == MethodConversion.Copy && !newType)
 			{
-				Logger.Warn($"Invalid conversion for method {methodData.Symbol}. Method cannot be copied, " +
-				            "when the containing type conversion is not set to be a new type. Override the method conversion to Unknown");
+				methodData.AddDiagnostic(
+					"Method cannot be copied, when the containing type conversion is not set to be a new type. " +
+					$"Override the method conversion to '{MethodConversion.Unknown}'",
+					DiagnosticSeverity.Warning);
 				methodData.Conversion = MethodConversion.Unknown;
 			}
 
@@ -267,7 +272,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
 						if (!asyncConterparts.Any())
 						{
-							IgnoreOrCopy($"Explicity implements an external interface {interfaceMember} that has not an async counterpart");
+							IgnoreOrCopy(IgnoreReason.ExplicitImplementsExternalMethodWithoutAsync(interfaceMember));
 							return;
 						}
 					}
@@ -294,7 +299,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.ExternalRelatedMethods.TryAdd(overridenMethod);
 					if (!asyncConterparts.Any())
 					{
-						IgnoreOrCopy($"Overrides an external method {overridenMethod} that has not an async counterpart");
+						IgnoreOrCopy(IgnoreReason.OverridesExternalMethodWithoutAsync(overridenMethod));
 						return;
 					}
 				}
@@ -337,7 +342,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
 					if (!asyncConterparts.Any())
 					{
-						IgnoreOrCopy($"Implements an external interface {interfaceMember} that has not an async counterpart");
+						IgnoreOrCopy(IgnoreReason.ImplementsExternalMethodWithoutAsync(interfaceMember));
 						return;
 					}
 				}
@@ -355,15 +360,15 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Verify if there is already an async counterpart for this method
 			//TODO: this is not correct when generating methods with a cancellation token as here we do not know
 			// if the generated method will have the cancellation token parameter or not
-			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, _searchOptions).ToList();
+			var asyncCounterparts = GetAsyncCounterparts(methodSymbol.OriginalDefinition, _preAnalyzeSearchOptions).ToList();
 			if (asyncCounterparts.Any())
 			{
-				if (!_searchOptions.HasFlag(AsyncCounterpartsSearchOptions.HasCancellationToken) && asyncCounterparts.Count > 1)
+				if (!_preAnalyzeSearchOptions.HasFlag(AsyncCounterpartsSearchOptions.HasCancellationToken) && asyncCounterparts.Count > 1)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than one async counterpart");
 				}
 				// We shall get a maximum of two async counterparts when the HasCancellationToken flag is used
-				if (_searchOptions.HasFlag(AsyncCounterpartsSearchOptions.HasCancellationToken) && asyncCounterparts.Count > 2)
+				if (_preAnalyzeSearchOptions.HasFlag(AsyncCounterpartsSearchOptions.HasCancellationToken) && asyncCounterparts.Count > 2)
 				{
 					throw new InvalidOperationException($"Method {methodSymbol} has more than two async counterparts");
 				}
@@ -386,7 +391,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)*/
 				)
 				{
-					IgnoreOrCopy($"Has already an async counterpart {asyncCounterparts.First()}");
+					IgnoreOrCopy(IgnoreReason.AsyncCounterpartExists);
 					return;
 				}
 			}
@@ -420,7 +425,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private List<IMethodSymbol> FillRelatedAsyncMethods(MethodOrAccessorData methodOrAccessorData, IMethodSymbol symbol)
 		{
-			var asyncConterparts = GetAsyncCounterparts(symbol, _searchOptions).ToList();
+			var asyncConterparts = GetAsyncCounterparts(symbol, _preAnalyzeSearchOptions).ToList();
 			if (asyncConterparts.Any())
 			{
 				foreach (var asyncConterpart in asyncConterparts)
@@ -442,8 +447,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var forceAsync = functionData.MethodData.Conversion.HasFlag(MethodConversion.ToAsync);
 			var newType = functionData.MethodData.TypeData.GetSelfAndAncestorsTypeData()
 				.Any(o => o.Conversion == TypeConversion.NewType);
-			var log = forceAsync ? WarnLogIgnoredReason : (Action<AbstractData>)VoidLog;
-			void IgnoreOrCopy(string reason)
+			void IgnoreOrCopy(IgnoreReason reason)
 			{
 				if (newType)
 				{
@@ -451,31 +455,36 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				else
 				{
+					if (forceAsync)
+					{
+						reason = reason.WithSeverity(DiagnosticSeverity.Warning);
+					}
 					functionData.Ignore(reason);
-					log(functionData);
 				}
 			}
 			
 			if (funcionSymbol.IsAsync)
 			{
-				IgnoreOrCopy("Is already async");
+				IgnoreOrCopy(IgnoreReason.AlreadyAsync);
 				return;
 			}
 			if (funcionSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				IgnoreOrCopy("Has out parameters");
+				IgnoreOrCopy(IgnoreReason.OutParameters);
 				return;
 			}
 
 			if (!functionData.Node.Parent.IsKind(SyntaxKind.Argument))
 			{
-				IgnoreOrCopy($"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported");
+				IgnoreOrCopy(IgnoreReason.NotSupported(
+					$"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported"));
 				return;
 			}
 			var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
 			if (!argumentNode.Parent.Parent.IsKind(SyntaxKind.InvocationExpression))
 			{
-				IgnoreOrCopy($"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported");
+				IgnoreOrCopy(IgnoreReason.NotSupported(
+					$"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported"));
 				return;
 			}
 			var invocationNode = (InvocationExpressionSyntax)argumentNode.Parent.Parent;
@@ -484,7 +493,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var symbol = semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
 			if (!(symbol is IMethodSymbol))
 			{
-				IgnoreOrCopy($"Is passed as an argument to a symbol {symbol} which is currently not supported");
+				IgnoreOrCopy(IgnoreReason.NotSupported($"Is passed as an argument to a symbol {symbol} which is currently not supported"));
 				return;
 			}
 			FillFunctionLocks(functionData, semanticModel);

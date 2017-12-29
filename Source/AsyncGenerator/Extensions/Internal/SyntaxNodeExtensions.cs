@@ -1205,5 +1205,17 @@ namespace AsyncGenerator.Extensions.Internal
 				.WithTypeArgumentList(typeArgList);
 		}
 
+		/// <summary>
+		/// Prints the actual line positions
+		/// </summary>
+		internal static string Format(this LinePositionSpan fileSpan)
+		{
+			if (fileSpan.Equals(default(LinePositionSpan)))
+			{
+				return fileSpan.ToString();
+			}
+			return $"({fileSpan.Start.Line + 1},{fileSpan.Start.Character + 1})-" +
+			       $"({fileSpan.End.Line + 1},{fileSpan.End.Character + 1})";
+		}
 	}
 }

@@ -46,7 +46,7 @@ namespace AsyncGenerator.Internal
 
 		public Project Project
 		{
-			get { return _project ?? _solutionData.Solution.GetProject(ProjectId); }
+			get => _project ?? _solutionData.Solution.GetProject(ProjectId);
 			set
 			{
 				if (_project != null)
@@ -158,8 +158,7 @@ namespace AsyncGenerator.Internal
 
 		public DocumentData GetDocumentData(Document document)
 		{
-			DocumentData documentData;
-			if (!Documents.TryGetValue(document.FilePath, out documentData))
+			if (!Documents.TryGetValue(document.FilePath, out var documentData))
 			{
 				throw new InvalidOperationException($"Document {document.FilePath} was not found in the project {Project.Name}");
 			}

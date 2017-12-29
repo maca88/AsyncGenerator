@@ -113,6 +113,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			fluentConfig.CancellationTokens(o => Configure(configuration, config.CancellationTokens, o));
 			fluentConfig.AsyncExtensionMethods(o => Configure(config.AsyncExtensionMethods, o));
+			fluentConfig.Diagnostics(o => Configure(configuration, config.Diagnostics, o));
 
 			if (config.IgnoreDocuments.Any())
 			{
@@ -149,6 +150,26 @@ namespace AsyncGenerator.Core.FileConfiguration
 			foreach (var projectFile in config.ProjectFiles)
 			{
 				fluentConfig.ProjectFile(projectFile.ProjectName, projectFile.FileName);
+			}
+		}
+
+		private static void Configure(AsyncGenerator configuration, Diagnostics config, IFluentProjectDiagnosticsConfiguration fluentConfig)
+		{
+			if (config.Disable == true)
+			{
+				fluentConfig.Disable();
+			}
+			if (config.DiagnoseDocument.Any())
+			{
+				fluentConfig.DiagnoseDocument(CreateDocumentPredicateFunction(config.DiagnoseDocument, true));
+			}
+			if (config.DiagnoseType.Any())
+			{
+				fluentConfig.DiagnoseType(CreateTypePredicateFunction(configuration, config.DiagnoseType, true));
+			}
+			if (config.DiagnoseMethod.Any())
+			{
+				fluentConfig.DiagnoseMethod(CreateMethodPredicateFunction(configuration, config.DiagnoseMethod, true));
 			}
 		}
 
@@ -301,6 +322,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 			};
 		}
 
+		private static Predicate<INamedTypeSymbol> CreateTypePredicateFunction(AsyncGenerator globalConfig, IList<TypePredicateFilter> filters, bool defaultResult)
+		{
+			var rules = globalConfig.TypeRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.Result;
+					}
+				}
+				return defaultResult;
+			};
+		}
+
 		private static Func<IMethodSymbol, bool?> CreateMethodNullablePredicate(AsyncGenerator globalConfig, 
 			IList<MethodFilter> falseFilters, IList<MethodFilter> trueFilters)
 		{
@@ -373,6 +410,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 			};
 		}
 
+		private static Predicate<IMethodSymbol> CreateMethodPredicateFunction(AsyncGenerator globalConfig, IList<MethodPredicateFilter> filters, bool defaultResult)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.Result;
+					}
+				}
+				return defaultResult; // Default value
+			};
+		}
+
 		private static Predicate<Document> CreateDocumentPredicate(IList<DocumentFilter> filters, bool validValue)
 		{
 			return document =>
@@ -385,6 +438,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 					}
 				}
 				return !validValue;
+			};
+		}
+
+		private static Predicate<Document> CreateDocumentPredicateFunction(IList<DocumentPredicateFilter> filters, bool defaultResult)
+		{
+			return document =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(document, filter))
+					{
+						return filter.Result;
+					}
+				}
+				return defaultResult;
 			};
 		}
 
@@ -479,6 +547,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		private static bool CanApply(Document document, DocumentFilter filter)
 		{
+			if (filter.All)
+			{
+				return true;
+			}
 			if (!string.IsNullOrEmpty(filter.Name) && filter.Name != document.Name)
 			{
 				return false;
