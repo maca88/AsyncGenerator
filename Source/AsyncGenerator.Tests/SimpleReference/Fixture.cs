@@ -164,7 +164,6 @@ namespace AsyncGenerator.Tests.SimpleReference
 						.AfterAnalyzation(AfterAnalyzation)
 					)
 				);
-				Console.WriteLine("Passed");
 			}
 		}
 
