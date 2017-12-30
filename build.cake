@@ -47,6 +47,15 @@ Task("Restore-NuGet-Packages")
     {
         ConfigFile = "./Nuget.config"
     });
+    var testSolutions = GetFiles("./Source/AsyncGenerator.TestProjects/*.sln");
+    foreach(var testSolution in testSolutions)
+    {
+        Information("Restoring {0}", testSolution);
+        NuGetRestore(testSolution, new NuGetRestoreSettings
+        {
+            ConfigFile = "./Nuget.config"
+        });
+    }
 });
 
 Task("Build")

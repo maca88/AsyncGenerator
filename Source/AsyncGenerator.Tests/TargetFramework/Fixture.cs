@@ -13,20 +13,6 @@ namespace AsyncGenerator.Tests.TargetFramework
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
-		[OneTimeSetUp]
-		public void Restore()
-		{
-			var process = new Process();
-			var startInfo = new ProcessStartInfo
-			{
-				WindowStyle = ProcessWindowStyle.Hidden,
-				FileName = "cmd.exe",
-				Arguments = $"/C dotnet restore {GetTestSolutionPath("MultiTargetFrameworks")}"
-			};
-			process.StartInfo = startInfo;
-			process.Start();
-		}
-
 		[Test]
 		public Task TestSolution()
 		{
