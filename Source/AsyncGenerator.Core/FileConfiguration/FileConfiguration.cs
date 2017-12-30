@@ -55,6 +55,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public bool? ConcurrentRun { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? ApplyChanges { get; set; }
+		[XmlElement(IsNullable = true)]
+		public string TargetFramework { get; set; }
 		[XmlArrayItem(IsNullable = false)]
 		public List<Project> Projects { get; set; }
 		[XmlArrayItem("Suppress", IsNullable = false)]
@@ -85,6 +87,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		}
 		[XmlElement(IsNullable = true)]
 		public bool? ConcurrentRun { get; set; }
+		[XmlElement(IsNullable = true)]
+		public string TargetFramework { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? ApplyChanges { get; set; }
 		[XmlAttribute(AttributeName = "name")]

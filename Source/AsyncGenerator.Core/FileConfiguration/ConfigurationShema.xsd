@@ -393,6 +393,7 @@
   <xs:complexType name="Project">
       <xs:all>
         <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
+        <xs:element name="TargetFramework" type="xs:string" nillable="true" minOccurs="0"/>
         <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
         <xs:element name="Analyzation" type="Analyzation" minOccurs="0"/>
         <xs:element name="Transformation" type="Transformation" minOccurs="0"/>
@@ -416,8 +417,9 @@
   <xs:complexType name="Solution">
     <xs:all>
       <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="TargetFramework" type="xs:string" nillable="true" minOccurs="0"/>
       <xs:element name="ApplyChanges" type="xs:boolean" nillable="true" minOccurs="0" />
-      <xs:element name="SuppressDiagnosticFailures">
+      <xs:element name="SuppressDiagnosticFailures" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
             <xs:element name="Suppress" maxOccurs="unbounded" minOccurs="0">

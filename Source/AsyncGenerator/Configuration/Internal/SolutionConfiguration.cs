@@ -19,6 +19,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ApplyChanges { get; private set; }
 
+		public string TargetFramework { get; private set; }
+
 		public bool ConcurrentRun { get; private set; }
 
 		public ImmutableArray<Predicate<string>> SuppressDiagnosticFailuresPrediactes { get; private set; } = ImmutableArray<Predicate<string>>.Empty;
@@ -44,6 +46,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentSolutionConfiguration IFluentSolutionConfiguration.ApplyChanges(bool value)
 		{
 			ApplyChanges = value;
+			return this;
+		}
+
+		IFluentSolutionConfiguration IFluentSolutionConfiguration.TargetFramework(string value)
+		{
+			TargetFramework = value ?? throw new ArgumentNullException(nameof(value));
 			return this;
 		}
 

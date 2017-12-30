@@ -18,6 +18,11 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentSolutionConfiguration ApplyChanges(bool value);
 
 		/// <summary>
+		/// Set the target framework that will be used to build the solution. Use only when a project inside the solution has multiple target frameworks.
+		/// </summary>
+		IFluentSolutionConfiguration TargetFramework(string value);
+
+		/// <summary>
 		/// Add one or more regex patterns to suppress failures that occur while opening the solution. (e.g. failure for opening a not supported project inside a solution)
 		/// </summary>
 		IFluentSolutionConfiguration SuppressDiagnosticFailures(params string[] patterns);

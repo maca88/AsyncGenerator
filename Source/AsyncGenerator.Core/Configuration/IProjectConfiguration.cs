@@ -23,5 +23,7 @@
 		IProjectCompileConfiguration CompileConfiguration { get; }
 
 		bool ConcurrentRun { get; }
+
+		string TargetFramework { get; }
 	}
 }

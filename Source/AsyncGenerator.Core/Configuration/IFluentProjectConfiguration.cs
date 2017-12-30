@@ -16,6 +16,11 @@ namespace AsyncGenerator.Core.Configuration
 		/// </summary>
 		IFluentProjectConfiguration ApplyChanges(bool value);
 
+		/// <summary>
+		/// Set the target framework that will be used to build the project. Use only when the project has multiple target frameworks.
+		/// </summary>
+		IFluentProjectConfiguration TargetFramework(string value);
+
 		IFluentProjectConfiguration ConfigureParsing(Action<IFluentProjectParseConfiguration> action);
 
 		IFluentProjectConfiguration ConfigureAnalyzation(Action<IFluentProjectAnalyzeConfiguration> action);

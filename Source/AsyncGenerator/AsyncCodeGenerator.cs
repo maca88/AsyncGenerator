@@ -42,7 +42,7 @@ namespace AsyncGenerator
 
 			foreach (var config in configuration.SolutionConfigurations)
 			{
-				var workspace = CreateWorkspace();
+				var workspace = CreateWorkspace(config.TargetFramework);
 				logger.Info($"Opening solution '{config.Path}' started");
 				var solution = await OpenSolution(workspace, config.Path,
 					config.SuppressDiagnosticFailuresPrediactes, logger, cancellationToken).ConfigureAwait(false);
@@ -65,7 +65,7 @@ namespace AsyncGenerator
 
 			foreach (var config in configuration.ProjectConfigurations)
 			{
-				var workspace = CreateWorkspace();
+				var workspace = CreateWorkspace(config.TargetFramework);
 				logger.Info($"Opening project '{config.Path}' started");
 				var project = await OpenProject(workspace, config.Path, 
 					config.SuppressDiagnosticFailuresPrediactes, logger, cancellationToken).ConfigureAwait(false);
@@ -87,12 +87,16 @@ namespace AsyncGenerator
 			logger.Info("Generating async code completed");
 		}
 
-		internal static MSBuildWorkspace CreateWorkspace()
+		internal static MSBuildWorkspace CreateWorkspace(string targetFramework)
 		{
 			var props = new Dictionary<string, string>
 			{
 				["CheckForSystemRuntimeDependency"] = "true" // needed in order that project references are loaded
 			};
+			if (!string.IsNullOrEmpty(targetFramework))
+			{
+				props["TargetFramework"] = targetFramework;
+			}
 			return MSBuildWorkspace.Create(props);
 		}
 

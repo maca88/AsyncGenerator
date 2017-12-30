@@ -378,6 +378,7 @@
     <Compile Include="SimpleClassInheritance\Input\TestCase.cs" />
     <Compile Include="SimpleReference\Input\TestCase.cs" />
     <Compile Include="SynhronizedMethod\Input\TestCase.cs" />
+    <Compile Include="TargetFramework\Fixture.cs" />
     <Compile Include="TaskConflict\Fixture.cs" />
     <Compile Include="TaskConflict\Input\Task.cs" />
     <Compile Include="TaskConflict\Input\TestCase.cs" />

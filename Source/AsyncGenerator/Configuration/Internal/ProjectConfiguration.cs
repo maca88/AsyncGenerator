@@ -36,6 +36,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ConcurrentRun => _concurrentRun ?? (_solutionConfiguration?.ConcurrentRun ?? false);
 
+		public string TargetFramework { get; private set; }
+
 		public string Path { get; }
 
 		public string Name { get; }
@@ -73,6 +75,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectConfiguration IFluentProjectConfiguration.ApplyChanges(bool value)
 		{
 			_applyChanges = value;
+			return this;
+		}
+
+		IFluentProjectConfiguration IFluentProjectConfiguration.TargetFramework(string value)
+		{
+			TargetFramework = value ?? throw new ArgumentNullException(nameof(value));
 			return this;
 		}
 

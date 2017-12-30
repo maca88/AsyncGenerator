@@ -25,6 +25,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				solutionConfiguration.ConcurrentRun(solution.ConcurrentRun.Value);
 			}
+			if (!string.IsNullOrEmpty(solution.TargetFramework))
+			{
+				solutionConfiguration.TargetFramework(solution.TargetFramework);
+			}
 
 			foreach (var item in solution.SuppressDiagnosticFailures)
 			{
@@ -48,6 +52,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				projectConfiguration.ConcurrentRun(project.ConcurrentRun.Value);
 			}
+			if (!string.IsNullOrEmpty(project.TargetFramework))
+			{
+				projectConfiguration.TargetFramework(project.TargetFramework);
+			}
 
 			foreach (var item in project.SuppressDiagnosticFailures)
 			{
@@ -64,7 +72,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies()
 				.Where(o => !o.IsDynamic)
 				.Distinct()
-				.ToDictionary(o => o.GetName().Name);
+				.GroupBy(o => o.GetName().Name) // there may be multiple versions of the same assembly
+				.ToDictionary(o => o.Key, o => o.First());
 
 			foreach (var plugin in project.RegisterPlugin)
 			{

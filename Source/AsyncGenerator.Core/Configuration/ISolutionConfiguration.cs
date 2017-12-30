@@ -5,5 +5,7 @@
 		bool ConcurrentRun { get; }
 
 		bool ApplyChanges { get; }
+
+		string TargetFramework { get; }
 	}
 }
