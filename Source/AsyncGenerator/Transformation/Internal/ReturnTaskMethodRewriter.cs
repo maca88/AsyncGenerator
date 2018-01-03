@@ -285,7 +285,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				body = AddReturnStatement(body);
 			}
-			return _methodResult.WrapInTryCatch ? WrapInsideTryCatch(body) : body;
+			return _methodResult.WrapInTryCatch ? WrapInsideTryCatch(body, true) : body;
 		}
 
 		private BlockSyntax AddReturnStatement(BlockSyntax node)
@@ -329,10 +329,10 @@ namespace AsyncGenerator.Transformation.Internal
 					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 					WrapInTaskFromResult(invocation),
 					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))));
-			return WrapInsideTryCatch(block);
+			return WrapInsideTryCatch(block, false);
 		}
 
-		private BlockSyntax WrapInsideTryCatch(BlockSyntax node)
+		private BlockSyntax WrapInsideTryCatch(BlockSyntax node, bool preserveDirectives)
 		{
 			var indent = _transformResult.IndentTrivia.ToFullString();
 			var innerBodyTrivia = Whitespace(_transformResult.BodyLeadingWhitespaceTrivia.ToFullString());
@@ -343,7 +343,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithTryKeyword(Token(bodyLeadTrivia, SyntaxKind.TryKeyword, eolTrivia))
 				.WithBlock(Block(node.Statements.Skip(_methodResult.Preconditions.Count))
 					.WithOpenBraceToken(Token(bodyLeadTrivia, SyntaxKind.OpenBraceToken, eolTrivia))
-					.WithCloseBraceToken(Token(bodyLeadTrivia, SyntaxKind.CloseBraceToken, eolTrivia))
+					.WithCloseBraceToken(Token(preserveDirectives ? node.CloseBraceToken.LeadingTrivia : bodyLeadTrivia, SyntaxKind.CloseBraceToken, eolTrivia))
 				)
 				.WithCatches(SingletonList(
 					CatchClause()
@@ -365,7 +365,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 			return Block(newStatements)
 				.WithOpenBraceToken(node.OpenBraceToken)
-				.WithCloseBraceToken(node.CloseBraceToken);
+				.WithCloseBraceToken(node.CloseBraceToken
+					.WithLeadingTrivia(bodyLeadTrivia));
 		}
 
 		private BlockSyntax GetCatchBlock(SyntaxTrivia innerBodyTrivia)

@@ -30,6 +30,17 @@ namespace AsyncGenerator.Transformation.Internal
 			_subtract = subtract;
 		}
 
+		public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
+		{
+			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
+			{
+				var root = (CompilationUnitSyntax) ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
+				var body = (BlockSyntax)Visit(root.Members.OfType<MethodDeclarationSyntax>().First().Body);
+				return DisabledText(string.Join("", body.Statements.Select(o => o.ToFullString())));
+			}
+			return base.VisitTrivia(trivia);
+		}
+
 		public override SyntaxNode Visit(SyntaxNode node)
 		{
 			if (node == null || (!(node is StatementSyntax) && !_validSyntaxes.Contains(node.Kind())))
