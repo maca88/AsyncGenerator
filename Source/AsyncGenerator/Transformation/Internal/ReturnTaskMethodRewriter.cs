@@ -227,6 +227,37 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithReturnKeyword(Token(TriviaList(node.GetLeadingTrivia()), SyntaxKind.ReturnKeyword, TriviaList(Space)));
 		}
 
+		public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
+		{
+			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) && _rewritingSyntaxKind.HasValue)
+			{
+				var node = trivia.Token.Parent;
+				var method = node.Ancestors().First(o => o.IsKind(_rewritingSyntaxKind.Value));
+				var startDirective = trivia.Token.Parent.GetLastDirective();
+				var endDirective = startDirective.GetNextDirective();
+				if (endDirective == null)
+				{
+					endDirective = startDirective;
+					startDirective = trivia.Token.Parent.GetFirstDirective();
+				}
+				// We have to add a return statement to the disabled region if the compiled region has a return statement
+				if (method.DescendantNodes().Any(o =>
+					o.IsKind(SyntaxKind.ReturnStatement) &&
+					o.SpanStart > startDirective.SpanStart &&
+					o.Span.End < endDirective.SpanStart))
+				{
+					var root = (CompilationUnitSyntax)ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
+					var body = (BlockSyntax)Visit(root.Members.OfType<MethodDeclarationSyntax>().First().Body);
+					if (!body.DescendantNodes().Any(o => o.IsKind(SyntaxKind.ReturnStatement)))
+					{
+						body = AddReturnStatement(body);
+					}
+					return DisabledText(string.Join("", body.Statements.Select(o => o.ToFullString())));
+				}
+			}
+			return base.VisitTrivia(trivia);
+		}
+
 		private InvocationExpressionSyntax WrapInTaskFromResult(ExpressionSyntax node)
 		{
 			return InvocationExpression(
@@ -306,8 +337,6 @@ namespace AsyncGenerator.Transformation.Internal
 				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
 			);
 		}
-
-		
 
 		private BlockSyntax ForwardCall(BlockSyntax bodyBlock)
 		{

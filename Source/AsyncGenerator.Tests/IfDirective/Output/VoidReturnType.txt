@@ -13,27 +13,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.IfDirective.Input
 {
-	public partial class TryCatch
+	public partial class VoidReturnType
 	{
-		public Task<int> TestAsync()
+		public Task TestAsync()
 		{
-			try
-			{
 #if TEST
-				var result = new Random();
-				return Task.FromResult<int>(result.Next() + 1);
+			SimpleFile.Read();
+			return Task.CompletedTask;
 #else
-				var result = new Random();
-				return Task.FromResult<int>(result.Next());
+			return SimpleFile.ReadAsync();
 #endif
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<int>(ex);
-			}
+		}
+
+		public Task Test2Async()
+		{
+#if ASYNC
+			return SimpleFile.ReadAsync();
+#else
+			SimpleFile.Read();
+			return Task.CompletedTask;
+#endif
+		}
+
+		public Task Test3Async()
+		{
+#if TEST
+			SimpleFile.Read();
+			return Task.CompletedTask;
+#elif ASYNC
+			return SimpleFile.ReadAsync();
+#else
+			SimpleFile.Read();
+			return Task.CompletedTask;
+#endif
 		}
 	}
 }

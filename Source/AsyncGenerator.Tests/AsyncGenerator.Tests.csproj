@@ -218,6 +218,7 @@
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
+    <Compile Include="IfDirective\Input\VoidReturnType.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Input\TestCase.cs" />
     <Compile Include="ParallelFor\Fixture.cs" />
@@ -915,6 +916,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="IfDirective\Output\TryCatchForwardCall.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="IfDirective\Output\VoidReturnType.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
