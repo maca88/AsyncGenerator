@@ -218,6 +218,7 @@
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
+    <Compile Include="IfDirective\Input\Empty.cs" />
     <Compile Include="IfDirective\Input\VoidReturnType.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Input\TestCase.cs" />

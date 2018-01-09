@@ -94,5 +94,22 @@ namespace AsyncGenerator.Tests.IfDirective
 				)
 			);
 		}
+
+		[Test]
+		public Task TestEmptyAfterTransformation()
+		{
+			return ReadonlyTest("Empty", p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.ToAsync)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(0, result.Documents.Count);
+					})
+				)
+			);
+		}
 	}
 }

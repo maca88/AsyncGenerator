@@ -29,6 +29,11 @@ namespace AsyncGenerator.Transformation.Internal
 
 			void TransfromDocument(IDocumentAnalyzationResult document)
 			{
+				// Skip empty documents
+				if (document.GlobalNamespace.Types.Count == 0 && document.GlobalNamespace.NestedNamespaces.Count == 0)
+				{
+					return;
+				}
 				var docResult = TransformDocument(document);
 				result.Documents.Add(docResult);
 				if (docResult.Transformed == null)
