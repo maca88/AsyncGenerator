@@ -127,18 +127,22 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			var lastStatement = statements[0];
-			var exprs = lastStatement?
+			var exprs = lastStatement
 				.DescendantNodes(o => !(o.IsFunction() || o.IsKind(SyntaxKind.DefaultExpression)))
 				.OfType<ExpressionSyntax>()
 				.ToList();
-			if (exprs?.Count == 1)
+			if (exprs.Count == 1)
 			{
 				var expr = exprs[0];
 				if (expr is LiteralExpressionSyntax || expr is DefaultExpressionSyntax)
 					return;
 			}
-			var invocationExps = exprs?.OfType<InvocationExpressionSyntax>().ToList();
-			if (invocationExps?.Count != 1)
+			var invocationExps = exprs.OfType<InvocationExpressionSyntax>().Where(o => o.Expression.ToString() != "nameof").ToList();
+			if (invocationExps.Count == 0)
+			{
+				return;
+			}
+			if (invocationExps.Count > 1)
 			{
 				functionData.WrapInTryCatch = true;
 				return;
@@ -291,9 +295,27 @@ namespace AsyncGenerator.Analyzation.Internal
 					    !asyncMethodDatas.Contains(methodData)
 				    ))
 				{
-					functionData.Ignore(IgnoreReason.NoAsyncInvocations);
+					if (functionData.ParentFunction != null)
+					{
+						functionData.Copy();
+					}
+					else
+					{
+						functionData.Ignore(IgnoreReason.NoAsyncInvocations);
+					}
 				}
 				return;
+			}
+
+			// For copied functions only nameof and typeof body references should be converted to async
+			if (functionData.Conversion == MethodConversion.Copy)
+			{
+				foreach (var bodyReference in functionData.BodyFunctionReferences
+					.Where(o => o.GetConversion() == ReferenceConversion.ToAsync)
+					.Where(o => !o.IsNameOf && !o.IsTypeOf))
+				{
+					bodyReference.Ignore(IgnoreReason.MethodIsCopied);
+				}
 			}
 
 			if (functionData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Ignore, MethodConversion.Copy))
@@ -307,7 +329,14 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			else
 			{
-				functionData.Ignore(IgnoreReason.NoAsyncInvocations);
+				if (functionData.ParentFunction != null)
+				{
+					functionData.Copy();
+				}
+				else
+				{
+					functionData.Ignore(IgnoreReason.NoAsyncInvocations);
+				}
 			}
 		}
 
@@ -664,7 +693,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// 6. Step - For all async methods check for preconditions. Search only statements that its end location is lower that the first async method reference
 			foreach (var functionData in allTypeData.Where(o => o.Conversion != TypeConversion.Ignore)
 				.SelectMany(o => o.MethodsAndAccessors.Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync)))
-				.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
+				.SelectMany(o => o.GetSelfAndDescendantsFunctions().Where(m => m.Conversion.HasFlag(MethodConversion.ToAsync))))
 			{
 				CalculateFinalFlags(functionData);
 			}

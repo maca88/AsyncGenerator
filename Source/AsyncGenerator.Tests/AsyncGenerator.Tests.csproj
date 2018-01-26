@@ -211,6 +211,7 @@
     <Compile Include="AnonymousFunctions\Fixture.cs" />
     <Compile Include="AnonymousFunctions\Input\ArrayOfDelegates.cs" />
     <Compile Include="AnonymousFunctions\Input\MethodWithDelegate.cs" />
+    <Compile Include="AnonymousFunctions\Input\Variable.cs" />
     <Compile Include="ConfigurationOverride\Fixture.cs" />
     <Compile Include="ConfigurationOverride\Input\PartialCopy.cs" />
     <Compile Include="Diagnostics\Fixture.cs" />
@@ -222,6 +223,9 @@
     <Compile Include="IfDirective\Input\VoidReturnType.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Input\TestCase.cs" />
+    <Compile Include="Nameof\Input\ArgumentFunction.cs" />
+    <Compile Include="Nameof\Input\SelfReference.cs" />
+    <Compile Include="Nameof\Input\Variable.cs" />
     <Compile Include="ParallelFor\Fixture.cs" />
     <Compile Include="CustomReturnType\Input\SameType.cs" />
     <Compile Include="ParallelFor\Input\Formatting.cs" />
@@ -920,6 +924,18 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="IfDirective\Output\VoidReturnType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Nameof\Output\SelfReferenceNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Nameof\Output\ArgumentFunctionNewType.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\Variable.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Nameof\Output\Variable.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

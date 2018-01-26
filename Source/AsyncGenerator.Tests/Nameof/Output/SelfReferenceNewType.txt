@@ -8,34 +8,16 @@
 //------------------------------------------------------------------------------
 
 
-using System.ComponentModel;
 using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.Nameof.Input
 {
 	using System.Threading.Tasks;
-	public class MethodAsync
+	public class SelfReferenceAsync
 	{
-		[DefaultValue(nameof(WriteAsync))]
 		public Task WriteAsync()
 		{
-			return SimpleFile.WriteAsync(nameof(DoSomething));
-		}
-
-		private void DoSomething()
-		{
-			
-		}
-
-		[DefaultValue(nameof(DoSomething2))]
-		public Task ReadAsync()
-		{
-			return SimpleFile.ReadAsync();
-		}
-
-		private void DoSomething2()
-		{
-
+			return SimpleFile.WriteAsync(nameof(WriteAsync));
 		}
 	}
 }

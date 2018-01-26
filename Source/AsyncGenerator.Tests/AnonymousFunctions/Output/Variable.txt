@@ -8,24 +8,24 @@
 //------------------------------------------------------------------------------
 
 
-using System.ComponentModel;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.Nameof.Input
+namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 {
-	using System.Threading.Tasks;
-	public partial class Method
+	public partial class Variable
 	{
-		[DefaultValue(nameof(WriteAsync))]
-		public Task WriteAsync()
+		public async Task TestAsync()
 		{
-			return SimpleFile.WriteAsync(nameof(DoSomething));
-		}
-
-		[DefaultValue(nameof(DoSomething2))]
-		public Task ReadAsync()
-		{
-			return SimpleFile.ReadAsync();
+			await (SimpleFile.ReadAsync());
+			Action action = () =>
+			{
+				SimpleFile.Read();
+			};
 		}
 	}
 }

@@ -444,47 +444,35 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			var funcionSymbol = functionData.Symbol;
-			var forceAsync = functionData.MethodData.Conversion.HasFlag(MethodConversion.ToAsync);
-			var newType = functionData.MethodData.TypeData.GetSelfAndAncestorsTypeData()
-				.Any(o => o.Conversion == TypeConversion.NewType);
-			void IgnoreOrCopy(IgnoreReason reason)
+			void Copy(string reason)
 			{
-				if (newType)
+				functionData.Copy();
+				if (!string.IsNullOrEmpty(reason))
 				{
-					functionData.Copy();
-				}
-				else
-				{
-					if (forceAsync)
-					{
-						reason = reason.WithSeverity(DiagnosticSeverity.Warning);
-					}
-					functionData.Ignore(reason);
+					functionData.AddDiagnostic(reason, DiagnosticSeverity.Hidden);
 				}
 			}
 			
 			if (funcionSymbol.IsAsync)
 			{
-				IgnoreOrCopy(IgnoreReason.AlreadyAsync);
+				Copy(IgnoreReason.AlreadyAsync.Reason);
 				return;
 			}
 			if (funcionSymbol.Parameters.Any(o => o.RefKind == RefKind.Out))
 			{
-				IgnoreOrCopy(IgnoreReason.OutParameters);
+				Copy(IgnoreReason.OutParameters.Reason);
 				return;
 			}
 
 			if (!functionData.Node.Parent.IsKind(SyntaxKind.Argument))
 			{
-				IgnoreOrCopy(IgnoreReason.NotSupported(
-					$"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported"));
+				Copy($"Is not passed as an argument but instead as a {Enum.GetName(typeof(SyntaxKind), functionData.Node.Parent.Kind())} which is currently not supported");
 				return;
 			}
 			var argumentNode = (ArgumentSyntax)functionData.Node.Parent;
 			if (!argumentNode.Parent.Parent.IsKind(SyntaxKind.InvocationExpression))
 			{
-				IgnoreOrCopy(IgnoreReason.NotSupported(
-					$"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported"));
+				Copy($"Is passed as an argument to a {Enum.GetName(typeof(SyntaxKind), argumentNode.Parent.Parent.Kind())} which is currently not supported");
 				return;
 			}
 			var invocationNode = (InvocationExpressionSyntax)argumentNode.Parent.Parent;
@@ -493,7 +481,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var symbol = semanticModel.GetSymbolInfo(invocationNode.Expression).Symbol;
 			if (!(symbol is IMethodSymbol))
 			{
-				IgnoreOrCopy(IgnoreReason.NotSupported($"Is passed as an argument to a symbol {symbol} which is currently not supported"));
+				Copy($"Is passed as an argument to a symbol {symbol} which is currently not supported");
 				return;
 			}
 			FillFunctionLocks(functionData, semanticModel);
