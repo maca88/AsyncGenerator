@@ -110,5 +110,26 @@ namespace AsyncGenerator.Tests.Nameof
 				)
 			);
 		}
+
+		[Test]
+		public Task TestVariableSearchForMethodReferencesAfterTransformation()
+		{
+			return ReadonlyTest(nameof(Variable), p => p
+				.ConfigureAnalyzation(a => a
+						.MethodConversion(symbol => MethodConversion.ToAsync)
+					.SearchForMethodReferences(symbol => symbol.Name != nameof(Test))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(Variable)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

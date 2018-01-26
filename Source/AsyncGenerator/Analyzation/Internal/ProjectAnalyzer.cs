@@ -224,7 +224,18 @@ namespace AsyncGenerator.Analyzation.Internal
 				var invocation = node as InvocationExpressionSyntax;
 				if (invocation != null)
 				{
-					methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
+					if (invocation.Expression.ToString() == "nameof")
+					{
+						methodSymbol = semanticModel.GetSymbolInfo(
+							invocation.ArgumentList.Arguments.First().Expression)
+							.CandidateSymbols
+							.OfType<IMethodSymbol>()
+							.FirstOrDefault();
+					}
+					else
+					{
+						methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
+					}
 					if (invocation.Expression is SimpleNameSyntax)
 					{
 						typeSymbol = methodData.Symbol.ContainingType;
