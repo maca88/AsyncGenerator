@@ -9,23 +9,38 @@
 
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
-using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.Nameof.Input
+namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public partial class Variable
+	using System.Threading.Tasks;
+	public partial class Invocation
 	{
 		public Task TestAsync()
 		{
-			var region = nameof(TestAsync);
-			return SimpleFile.WriteAsync(region);
+			try
+			{
+				SimpleFile.Clear();
+				return Task.CompletedTask;
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
+		}
+
+		public Task<bool> Test2Async()
+		{
+			try
+			{
+				return Task.FromResult<bool>(SimpleFile.IsBusy());
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<bool>(ex);
+			}
 		}
 	}
 }

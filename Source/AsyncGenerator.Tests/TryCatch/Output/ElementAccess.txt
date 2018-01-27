@@ -9,23 +9,26 @@
 
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using AsyncGenerator.TestCases;
-using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.Nameof.Input
+namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public partial class Variable
+	public partial class ElementAccess
 	{
-		public Task TestAsync()
+
+		public Task<string> TestAsync()
 		{
-			var region = nameof(TestAsync);
-			return SimpleFile.WriteAsync(region);
+			try
+			{
+				return Task.FromResult<string>(_list[10]);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<string>(ex);
+			}
 		}
 	}
 }

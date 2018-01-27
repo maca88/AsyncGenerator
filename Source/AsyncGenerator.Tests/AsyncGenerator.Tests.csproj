@@ -392,6 +392,12 @@
     <Compile Include="TestCases\TestCase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleOmitAsync\Input\TestCase.cs" />
+    <Compile Include="TryCatch\Fixture.cs" />
+    <Compile Include="TryCatch\Input\Cast.cs" />
+    <Compile Include="TryCatch\Input\ElementAccess.cs" />
+    <Compile Include="TryCatch\Input\Invocation.cs" />
+    <Compile Include="TryCatch\Input\ObjectCreation.cs" />
+    <Compile Include="TryCatch\Input\IfStatement.cs" />
     <Compile Include="VariousTaskRunUsages\Input\TestCase.cs" />
     <Compile Include="VariousTaskRunUsages\Fixture.cs" />
     <Compile Include="Yields\Fixture.cs" />
@@ -438,7 +444,6 @@
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
-    <Folder Include="TryCatches\" />
     <Folder Include="VariousTaskRunUsages\Output\" />
   </ItemGroup>
   <ItemGroup>
@@ -936,6 +941,21 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Nameof\Output\Variable.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\ElementAccess.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\Cast.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\IfStatement.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\ObjectCreation.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\Invocation.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

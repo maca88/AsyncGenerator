@@ -99,55 +99,72 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
+		private bool ShouldWrapInTryCatch(List<StatementSyntax> statements)
+		{
+			var totalInvocations = 0;
+			for (var i = 0; i < statements.Count; i++)
+			{
+				var statement = statements[i];
+				// Do not look into child functions
+				foreach (var expression in statement.DescendantNodes(o => !o.IsFunction()).OfType<ExpressionSyntax>())
+				{
+					if (new[]
+					{
+						SyntaxKind.ElementAccessExpression,
+						SyntaxKind.CastExpression
+					}.Contains(expression.Kind()))
+					{
+						return true;
+					}
+					if (expression is InvocationExpressionSyntax invocation && 
+						invocation.Expression.ToString() != "nameof")
+					{
+						if (i != statements.Count - 1)
+						{
+							return true;
+						}
+						totalInvocations++;
+					}
+					//else if (expression is ObjectCreationExpressionSyntax objectCreation && 
+					//	objectCreation.ArgumentList.Arguments.Count > 0)
+					//{
+					//	return true;
+					//}
+				}
+			}
+			return totalInvocations > 1;
+		}
+
 		/// <summary>
-		/// Skip wrapping a method into a try/catch only when we have one statement (except preconditions) that is an invocation
-		/// which returns a Task. This statement must have only one invocation.
+		/// Skip wrapping a method into a try/catch only when we have one statement (except preconditions) that has one invocation
+		/// which is the last statement that returns a Task.
 		/// </summary>
 		private void CalculateWrapInTryCatch(FunctionData functionData)
 		{
-			var functionDataBody = functionData.GetBodyNode() as BlockSyntax;
-			if (functionDataBody == null || !functionDataBody.Statements.Any() || functionData.SplitTail)
+			if (!(functionData.GetBodyNode() is BlockSyntax functionDataBody) || !functionDataBody.Statements.Any() || functionData.SplitTail)
 			{
 				return;
 			}
-			if (functionDataBody.Statements.Count != functionData.Preconditions.Count + 1)
-			{
-				functionData.WrapInTryCatch = true;
-				return;
-			}
-			// Do not look into child functions
+			
 			var statements = functionDataBody.Statements
-				.First(o => !functionData.Preconditions.Contains(o))
-				.DescendantNodesAndSelf(o => !o.IsFunction())
-				.OfType<StatementSyntax>()
+				.Where(o => !functionData.Preconditions.Contains(o))
 				.ToList();
-			if (statements.Count != 1)
+			if (ShouldWrapInTryCatch(statements))
 			{
 				functionData.WrapInTryCatch = true;
 				return;
 			}
-			var lastStatement = statements[0];
-			var exprs = lastStatement
-				.DescendantNodes(o => !(o.IsFunction() || o.IsKind(SyntaxKind.DefaultExpression)))
-				.OfType<ExpressionSyntax>()
-				.ToList();
-			if (exprs.Count == 1)
-			{
-				var expr = exprs[0];
-				if (expr is LiteralExpressionSyntax || expr is DefaultExpressionSyntax)
-					return;
-			}
-			var invocationExps = exprs.OfType<InvocationExpressionSyntax>().Where(o => o.Expression.ToString() != "nameof").ToList();
-			if (invocationExps.Count == 0)
+
+			var lastStatement = statements.Last();
+			var invocationExpr = lastStatement
+				.DescendantNodes(o => !o.IsFunction())
+				.OfType<InvocationExpressionSyntax>()
+				.FirstOrDefault();
+
+			if (invocationExpr == null)
 			{
 				return;
 			}
-			if (invocationExps.Count > 1)
-			{
-				functionData.WrapInTryCatch = true;
-				return;
-			}
-			var invocationExpr = invocationExps[0];
 			var refData = functionData.BodyFunctionReferences.FirstOrDefault(o => o.ReferenceNode == invocationExpr);
 			if (refData == null)
 			{
