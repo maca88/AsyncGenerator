@@ -31,6 +31,8 @@ namespace AsyncGenerator.Internal
 
 		public abstract FunctionData ParentFunction { get; }
 
+		public bool UsesCustomProperties { get; set; }
+
 		public override ISymbol GetSymbol()
 		{
 			return Symbol;

@@ -3,18 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public class IfStatement
+	public class ExternalProperty
 	{
-		public bool Success;
-
-		public void Test()
+		public string Test()
 		{
-			if (Success)
-				SimpleFile.Read();
+			return typeof(AutoProperty).FullName;
 		}
 	}
 }

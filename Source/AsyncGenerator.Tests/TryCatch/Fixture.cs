@@ -112,5 +112,45 @@ namespace AsyncGenerator.Tests.TryCatch
 				)
 			);
 		}
+
+		[Test]
+		public Task TestAutoPropertyAfterTransformation()
+		{
+			return ReadonlyTest(nameof(AutoProperty), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.ToAsync)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(AutoProperty)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
+		public Task TestCustomPropertyAfterTransformation()
+		{
+			return ReadonlyTest(nameof(CustomProperty), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.ToAsync)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(CustomProperty)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

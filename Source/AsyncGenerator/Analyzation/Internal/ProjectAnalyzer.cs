@@ -258,6 +258,11 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					typeSymbol = propertySymbol.ContainingType;
 					methodSymbol = identifier.IsAssigned() ? propertySymbol.SetMethod : propertySymbol.GetMethod;
+					// Auto properties are skipped for UsesCustomProperties
+					if (!methodData.UsesCustomProperties && methodSymbol?.IsAutoPropertyAccessor() == false)
+					{
+						methodData.UsesCustomProperties = true;
+					}
 				}
 				if (methodSymbol == null)
 				{

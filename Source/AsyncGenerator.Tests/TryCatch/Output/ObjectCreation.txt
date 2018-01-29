@@ -19,20 +19,19 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 	{
 		public Task<MemoryStream> TestAsync(byte[] buffer)
 		{
-			try
-			{
-				var test = new MemoryStream(buffer);
-				return Task.FromResult<MemoryStream>(test);
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<MemoryStream>(ex);
-			}
+			var test = new MemoryStream(buffer);
+			return Task.FromResult<MemoryStream>(test);
 		}
 
 		public Task<StringBuilder> Test2Async()
 		{
 			var test = new StringBuilder();
+			return Task.FromResult<StringBuilder>(test);
+		}
+
+		public Task<StringBuilder> Test3Async()
+		{
+			var test = new StringBuilder{Length = 1};
 			return Task.FromResult<StringBuilder>(test);
 		}
 	}

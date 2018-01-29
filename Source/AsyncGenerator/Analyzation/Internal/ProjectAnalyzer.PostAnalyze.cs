@@ -111,7 +111,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (new[]
 					{
 						SyntaxKind.ElementAccessExpression,
-						SyntaxKind.CastExpression
+						SyntaxKind.CastExpression,
+						//SyntaxKind.SimpleMemberAccessExpression
 					}.Contains(expression.Kind()))
 					{
 						return true;
@@ -125,11 +126,11 @@ namespace AsyncGenerator.Analyzation.Internal
 						}
 						totalInvocations++;
 					}
-					//else if (expression is ObjectCreationExpressionSyntax objectCreation && 
-					//	objectCreation.ArgumentList.Arguments.Count > 0)
-					//{
-					//	return true;
-					//}
+					/*else if (expression is ObjectCreationExpressionSyntax objectCreation &&
+						objectCreation.ArgumentList?.Arguments.Count > 0)
+					{
+						return true;
+					}*/
 				}
 			}
 			return totalInvocations > 1;
@@ -149,7 +150,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var statements = functionDataBody.Statements
 				.Where(o => !functionData.Preconditions.Contains(o))
 				.ToList();
-			if (ShouldWrapInTryCatch(statements))
+			if (functionData.UsesCustomProperties || ShouldWrapInTryCatch(statements))
 			{
 				functionData.WrapInTryCatch = true;
 				return;
