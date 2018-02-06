@@ -6,13 +6,9 @@ using System.Threading.Tasks;
 
 namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public class CustomProperty
+	public class VirtualAutoProperty
 	{
-		public bool Success
-		{
-			get => false;
-			set => throw new NotSupportedException();
-		}
+		public virtual bool Success { get; set; }
 
 		public int Test()
 		{
@@ -24,9 +20,9 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 			Success = true;
 		}
 
-		public CustomProperty Create()
+		public VirtualAutoProperty Create()
 		{
-			return new CustomProperty { Success = true };
+			return new VirtualAutoProperty { Success = true };
 		}
 	}
 }

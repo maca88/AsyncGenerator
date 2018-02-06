@@ -13,40 +13,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public partial class CustomProperty
+	public partial class AnonymousFunction
 	{
 
-		public Task<int> TestAsync()
+		public Task TestAsync()
 		{
-			return Success ? Task.FromResult<int>(1 ): Task.FromResult<int>(0);
-		}
-
-		public Task Test2Async()
-		{
-			try
+			return Runner.RunAsync(s =>
 			{
 				Success = true;
-				return Task.CompletedTask;
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<object>(ex);
-			}
-		}
-
-		public Task<CustomProperty> CreateAsync()
-		{
-			try
-			{
-				return Task.FromResult<CustomProperty>(new CustomProperty { Success = true });
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<CustomProperty>(ex);
-			}
+			});
 		}
 	}
 }

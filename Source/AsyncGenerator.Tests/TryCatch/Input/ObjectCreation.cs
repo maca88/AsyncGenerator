@@ -20,7 +20,7 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 
 		public StringBuilder Test3()
 		{
-			var test = new StringBuilder{Length = 1};
+			var test = new StringBuilder{};
 			return test;
 		}
 	}

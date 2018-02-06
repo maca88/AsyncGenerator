@@ -6,9 +6,14 @@ using System.Threading.Tasks;
 
 namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public class AutoProperty
+	public class AbstractAutoPropertyImpl : AbstractAutoProperty
 	{
-		public bool Success { get; set; }
+		public override bool Success { get; set; }
+	}
+
+	public abstract class AbstractAutoProperty
+	{
+		public abstract bool Success { get; set; }
 
 		public int Test()
 		{
@@ -20,9 +25,9 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 			Success = true;
 		}
 
-		public AutoProperty Create()
+		public AbstractAutoProperty Create()
 		{
-			return new AutoProperty
+			return new AbstractAutoPropertyImpl
 			{
 				Success = true
 			};

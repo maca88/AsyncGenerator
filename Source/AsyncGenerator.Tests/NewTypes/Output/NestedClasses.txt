@@ -85,15 +85,8 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 		public Task Read4Async()
 		{
-			try
-			{
-				var cls = new NestedClass();
-				return cls.ReadAsync();
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<object>(ex);
-			}
+			var cls = new NestedClass();
+			return cls.ReadAsync();
 		}
 	}
 }

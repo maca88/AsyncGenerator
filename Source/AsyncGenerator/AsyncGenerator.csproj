@@ -164,6 +164,7 @@
     <Compile Include="Configuration\Internal\ProjectCancellationTokenConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectDiagnosticsConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectDocumentationCommentConfiguration.cs" />
+    <Compile Include="Configuration\Internal\ProjectExceptionHandlingConfiguration.cs" />
     <Compile Include="Configuration\Internal\ProjectParseConfiguration.cs" />
     <Compile Include="Extensions\Internal\EnumExtensions.cs" />
     <Compile Include="Extensions\Internal\ObjectExtensions.cs" />

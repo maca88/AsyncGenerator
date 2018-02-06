@@ -219,6 +219,8 @@
     <Compile Include="DocumentationComments\Input\MissingMembers.cs" />
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
+    <Compile Include="ExceptionHandling\Fixture.cs" />
+    <Compile Include="ExceptionHandling\Input\TestCase.cs" />
     <Compile Include="IfDirective\Input\Empty.cs" />
     <Compile Include="IfDirective\Input\VoidReturnType.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
@@ -393,6 +395,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleOmitAsync\Input\TestCase.cs" />
     <Compile Include="TryCatch\Fixture.cs" />
+    <Compile Include="TryCatch\Input\Precondition.cs" />
+    <Compile Include="TryCatch\Input\AnonymousFunction.cs" />
+    <Compile Include="TryCatch\Input\InterfaceAutoProperty.cs" />
+    <Compile Include="TryCatch\Input\AbstractAutoProperty.cs" />
+    <Compile Include="TryCatch\Input\VirtualAutoProperty.cs" />
     <Compile Include="TryCatch\Input\ExternalProperty.cs" />
     <Compile Include="TryCatch\Input\CustomProperty.cs" />
     <Compile Include="TryCatch\Input\Cast.cs" />
@@ -968,6 +975,33 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TryCatch\Output\ExternalProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ExceptionHandling\Output\TestCase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\AbstractAutoProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\VirtualAutoProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\InterfaceAutoProperty.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\AbstractAutoPropertyCatchGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\VirtualAutoPropertyCatchGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\InterfaceAutoPropertyCatchGetter.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\AnonymousFunction.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TryCatch\Output\Precondition.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

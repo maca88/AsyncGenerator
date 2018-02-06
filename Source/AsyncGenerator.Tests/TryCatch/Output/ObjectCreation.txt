@@ -31,7 +31,7 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 
 		public Task<StringBuilder> Test3Async()
 		{
-			var test = new StringBuilder{Length = 1};
+			var test = new StringBuilder{};
 			return Task.FromResult<StringBuilder>(test);
 		}
 	}

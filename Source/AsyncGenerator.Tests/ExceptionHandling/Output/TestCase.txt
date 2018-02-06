@@ -13,22 +13,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.TryCatch.Input
+namespace AsyncGenerator.Tests.ExceptionHandling.Input
 {
-	public partial class CustomProperty
+	public partial class TestCase
 	{
 
-		public Task<int> TestAsync()
-		{
-			return Success ? Task.FromResult<int>(1 ): Task.FromResult<int>(0);
-		}
-
-		public Task Test2Async()
+		public Task ReadAsync()
 		{
 			try
 			{
-				Success = true;
+				if (IsValid)
+				{
+					return SimpleFile.ReadAsync();
+				}
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)
@@ -37,16 +36,13 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 			}
 		}
 
-		public Task<CustomProperty> CreateAsync()
+		public Task Read2Async()
 		{
-			try
+			if (DateTime.Today.Hour > 9)
 			{
-				return Task.FromResult<CustomProperty>(new CustomProperty { Success = true });
+				return SimpleFile.ReadAsync();
 			}
-			catch (Exception ex)
-			{
-				return Task.FromException<CustomProperty>(ex);
-			}
+			return Task.CompletedTask;
 		}
 	}
 }

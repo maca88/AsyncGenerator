@@ -24,6 +24,12 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 			return Success ? Task.FromResult<int>(1 ): Task.FromResult<int>(0);
 		}
 
+		public Task Test2Async()
+		{
+			Success = true;
+			return Task.CompletedTask;
+		}
+
 		public Task<AutoProperty> CreateAsync()
 		{
 			return Task.FromResult<AutoProperty>(new AutoProperty

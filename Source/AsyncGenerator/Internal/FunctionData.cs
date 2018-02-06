@@ -31,8 +31,6 @@ namespace AsyncGenerator.Internal
 
 		public abstract FunctionData ParentFunction { get; }
 
-		public bool UsesCustomProperties { get; set; }
-
 		public override ISymbol GetSymbol()
 		{
 			return Symbol;
@@ -50,6 +48,8 @@ namespace AsyncGenerator.Internal
 		public ConcurrentDictionary<SyntaxNode, ChildFunctionData> ChildFunctions { get; } = new ConcurrentDictionary<SyntaxNode, ChildFunctionData>();
 
 		public List<LockData> Locks { get; } = new List<LockData>();
+
+		public List<IdentifierNameSyntax> CatchPropertyGetterCalls { get; } = new List<IdentifierNameSyntax>();
 
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 

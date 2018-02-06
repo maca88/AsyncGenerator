@@ -142,23 +142,32 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// </summary>
 		private void CalculateWrapInTryCatch(FunctionData functionData)
 		{
-			if (!(functionData.GetBodyNode() is BlockSyntax functionDataBody) || !functionDataBody.Statements.Any() || functionData.SplitTail)
+			if (!(functionData.GetBodyNode() is BlockSyntax functionDataBody) || 
+				!functionDataBody.Statements.Any() || 
+				functionData.SplitTail ||
+				functionData.WrapInTryCatch)
 			{
+				return;
+			}
+			var lastPrecondition = functionData.Preconditions.LastOrDefault();
+			if ((lastPrecondition == null && functionData.CatchPropertyGetterCalls.Count > 0) || 
+				(lastPrecondition != null && functionData.CatchPropertyGetterCalls.Any(o => o.SpanStart > lastPrecondition.Span.End)))
+			{
+				functionData.WrapInTryCatch = true;
 				return;
 			}
 			
 			var statements = functionDataBody.Statements
 				.Where(o => !functionData.Preconditions.Contains(o))
 				.ToList();
-			if (functionData.UsesCustomProperties || ShouldWrapInTryCatch(statements))
+			if (ShouldWrapInTryCatch(statements))
 			{
 				functionData.WrapInTryCatch = true;
 				return;
 			}
 
-			var lastStatement = statements.Last();
-			var invocationExpr = lastStatement
-				.DescendantNodes(o => !o.IsFunction())
+			var lastStatement = statements.LastOrDefault();
+			var invocationExpr = lastStatement?.DescendantNodes(o => !o.IsFunction())
 				.OfType<InvocationExpressionSyntax>()
 				.FirstOrDefault();
 
@@ -946,7 +955,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					CalculateWrapInTryCatch(functionData);
 				}
-
+			}
+			else
+			{
+				functionData.WrapInTryCatch = false;
 			}
 		}
 	}

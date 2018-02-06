@@ -16,12 +16,20 @@ using System.Threading.Tasks;
 
 namespace AsyncGenerator.Tests.TryCatch.Input
 {
-	public partial class CustomProperty
+
+	public abstract partial class AbstractAutoProperty
 	{
 
 		public Task<int> TestAsync()
 		{
-			return Success ? Task.FromResult<int>(1 ): Task.FromResult<int>(0);
+			try
+			{
+				return Success ? Task.FromResult<int>(1 ): Task.FromResult<int>(0);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<int>(ex);
+			}
 		}
 
 		public Task Test2Async()
@@ -37,16 +45,12 @@ namespace AsyncGenerator.Tests.TryCatch.Input
 			}
 		}
 
-		public Task<CustomProperty> CreateAsync()
+		public Task<AbstractAutoProperty> CreateAsync()
 		{
-			try
+			return Task.FromResult<AbstractAutoProperty>(new AbstractAutoPropertyImpl
 			{
-				return Task.FromResult<CustomProperty>(new CustomProperty { Success = true });
-			}
-			catch (Exception ex)
-			{
-				return Task.FromException<CustomProperty>(ex);
-			}
+				Success = true
+			});
 		}
 	}
 }
