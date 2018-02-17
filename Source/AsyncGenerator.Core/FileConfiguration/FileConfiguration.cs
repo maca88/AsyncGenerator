@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace AsyncGenerator.Core.FileConfiguration
@@ -142,6 +143,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public AsyncExtensionMethods AsyncExtensionMethods { get; set; }
 		[XmlElement("Diagnostics")]
 		public Diagnostics Diagnostics { get; set; }
+		[XmlElement("ExceptionHandling")]
+		public ExceptionHandling ExceptionHandling { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> PreserveReturnType { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
@@ -169,6 +172,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 		{
 			AsyncExtensionMethods = new AsyncExtensionMethods();
 			Diagnostics = new Diagnostics();
+			ExceptionHandling = new ExceptionHandling();
 			CancellationTokens = new CancellationTokens();
 			IgnoreSearchForAsyncCounterparts = new List<MethodFilter>();
 			IgnoreAsyncCounterparts = new List<MethodFilter>();
@@ -242,22 +246,6 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string HasAttribute { get; set; }
 		[XmlAttribute(AttributeName = "hasAttributeName")]
 		public string HasAttributeName { get; set; }
-
-		public bool? HasDocumentationComment
-		{
-			get
-			{
-				if (bool.TryParse(HasDocumentationCommentString, out var value))
-				{
-					return value;
-				}
-				return null;
-			}
-			set => HasDocumentationCommentString = value?.ToString();
-		}
-
-		[XmlAttribute(AttributeName = "hasDocumentationComment")]
-		internal string HasDocumentationCommentString { get; set; }
 		[XmlAttribute(AttributeName = "containingNamespace")]
 		public string ContainingNamespace { get; set; }
 		[XmlAttribute(AttributeName = "containingType")]
@@ -268,6 +256,54 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string ContainingAssemblyName { get; set; }
 		[XmlAttribute(AttributeName = "rule")]
 		public string Rule { get; set; }
+		#region HasDocumentationComment
+		[XmlAttribute(AttributeName = "hasDocumentationComment")]
+		internal string HasDocumentationCommentString { get; set; }
+		private bool? _hasDocumentationComment;
+		public bool? HasDocumentationComment
+		{
+			get => _hasDocumentationComment;
+			set
+			{
+				HasDocumentationCommentString = value?.ToString();
+				_hasDocumentationComment = bool.TryParse(HasDocumentationCommentString, out var boolean)
+					? (bool?)boolean
+					: null;
+			}
+		}
+		#endregion
+		#region IsVirtual
+		[XmlAttribute(AttributeName = "isVirtual")]
+		internal string IsVirtualString { get; set; }
+		private bool? _isVirtual;
+		public bool? IsVirtual
+		{
+			get => _isVirtual;
+			set
+			{
+				IsVirtualString = value?.ToString();
+				_isVirtual = bool.TryParse(IsVirtualString, out var boolean)
+					? (bool?)boolean
+					: null;
+			}
+		}
+		#endregion
+		#region IsAbstract
+		[XmlAttribute(AttributeName = "isAbstract")]
+		internal string IsAbstractString { get; set; }
+		private bool? _isAbstract;
+		public bool? IsAbstract
+		{
+			get => _isAbstract;
+			set
+			{
+				IsAbstractString = value?.ToString();
+				_isAbstract = bool.TryParse(IsAbstractString, out var boolean)
+					? (bool?)boolean
+					: null;
+			}
+		}
+		#endregion
 	}
 
 	[XmlInclude(typeof(TypeRule))]
@@ -417,7 +453,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
-	[XmlRoot("Transformation")]
+	[XmlRoot("Diagnostics")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Diagnostics
 	{
@@ -435,6 +471,23 @@ namespace AsyncGenerator.Core.FileConfiguration
 			DiagnoseDocument = new List<DocumentPredicateFilter>();
 			DiagnoseType = new List<TypePredicateFilter>();
 			DiagnoseMethod = new List<MethodPredicateFilter>();
+		}
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("ExceptionHandling")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class ExceptionHandling
+	{
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodPredicateFilter> CatchPropertyGetterCalls { get; set; }
+
+		public ExceptionHandling()
+		{
+			CatchPropertyGetterCalls = new List<MethodPredicateFilter>();
 		}
 	}
 
@@ -460,6 +513,23 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class CancellationTokens
 	{
+		#region Enabled
+		[XmlAttribute(AttributeName = "enabled")]
+		internal string EnabledString { get; set; }
+		private bool? _enabled;
+		public bool? Enabled
+		{
+			get => _enabled;
+			set
+			{
+				EnabledString = value?.ToString();
+				_enabled = bool.TryParse(EnabledString, out var boolean)
+					? (bool?)boolean
+					: null;
+			}
+		}
+		#endregion
+
 		[XmlElement("Guards", IsNullable = true)]
 		public bool? Guards { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
@@ -468,6 +538,12 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public List<MethodFilter> WithoutCancellationToken { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> RequiresCancellationToken { get; set; }
+
+		public bool IsEnabled =>
+			Enabled ?? Guards.HasValue ||
+			MethodParameter.Any() ||
+			WithoutCancellationToken.Any() ||
+			RequiresCancellationToken.Any();
 
 		public CancellationTokens()
 		{

@@ -141,19 +141,12 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 
 		public override Task MultiReadAsync(CancellationToken cancellationToken)
 		{
-			try
+			var num = 5;
+			if (num > 10)
 			{
-				var num = 5;
-				if (num > 10)
-				{
-					return SimpleFile.ReadAsync(cancellationToken);
-				}
-				return Task.CompletedTask;
+				return SimpleFile.ReadAsync(cancellationToken);
 			}
-			catch (Exception ex)
-			{
-				return Task.FromException<object>(ex);
-			}
+			return Task.CompletedTask;
 		}
 	}
 

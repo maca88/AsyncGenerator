@@ -165,6 +165,7 @@
     <Compile Include="Configuration\IFluentProjectConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectDiagnosticsConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectDocumentationCommentConfiguration.cs" />
+    <Compile Include="Configuration\IFluentProjectExceptionHandlingConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectParseConfiguration.cs" />
     <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />

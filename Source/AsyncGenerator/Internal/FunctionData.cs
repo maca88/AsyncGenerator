@@ -49,6 +49,8 @@ namespace AsyncGenerator.Internal
 
 		public List<LockData> Locks { get; } = new List<LockData>();
 
+		public List<IdentifierNameSyntax> CatchPropertyGetterCalls { get; } = new List<IdentifierNameSyntax>();
+
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
 
 		public abstract SyntaxNode GetBodyNode();

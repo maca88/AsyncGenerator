@@ -257,7 +257,23 @@ namespace AsyncGenerator.Analyzation.Internal
 						continue;
 					}
 					typeSymbol = propertySymbol.ContainingType;
-					methodSymbol = identifier.IsAssigned() ? propertySymbol.SetMethod : propertySymbol.GetMethod;
+					var isAssigned = identifier.IsAssigned();
+					methodSymbol = isAssigned ? propertySymbol.SetMethod : propertySymbol.GetMethod;
+					// Auto-properties are skipped as they can never throw a non fatal exception
+					if (!methodData.WrapInTryCatch &&
+						(methodSymbol?.IsVirtualAbstractOrInterface() == true || methodSymbol?.IsAutoPropertyAccessor() != true) &&
+					    node.Ancestors().First(o => o.IsFunction()) == methodData.GetNode())
+					{
+						if (isAssigned)
+						{
+							methodData.WrapInTryCatch = true;
+						}
+						// Here we don't know if there is any precondition
+						else if (_configuration.ExceptionHandling.CatchPropertyGetterCalls(methodSymbol))
+						{
+							methodData.CatchPropertyGetterCalls.Add(identifier);
+						}
+					}
 				}
 				if (methodSymbol == null)
 				{

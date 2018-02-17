@@ -41,6 +41,8 @@
     <xs:attribute name="containingTypeName" type="xs:string" />
     <xs:attribute name="containingAssemblyName" type="xs:string" />
     <xs:attribute name="rule" type="xs:string" />
+    <xs:attribute name="isVirtual" type="xs:boolean" />
+    <xs:attribute name="isAbstract" type="xs:boolean" />
   </xs:complexType>
   
   <xs:complexType name="DocumentFilter">
@@ -213,6 +215,7 @@
         </xs:complexType>
       </xs:element>
     </xs:all>
+    <xs:attribute name="enabled" type="xs:boolean" />
   </xs:complexType>
     
   <xs:complexType name="Diagnostics">
@@ -241,7 +244,19 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
-  
+    
+  <xs:complexType name="ExceptionHandling">
+    <xs:all>
+      <xs:element name="CatchPropertyGetterCalls" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodPredicateFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
   <xs:complexType name="Analyzation">
     <xs:all>
       <xs:element name="MethodConversion" minOccurs="0">
@@ -254,6 +269,7 @@
       <xs:element name="PropertyConversion" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="AsyncExtensionMethods" type="AsyncExtensionMethods" minOccurs="0"/>
       <xs:element name="Diagnostics" type="Diagnostics" minOccurs="0" />
+      <xs:element name="ExceptionHandling" type="ExceptionHandling" minOccurs="0" />
       <xs:element name="PreserveReturnType" minOccurs="0">
         <xs:complexType>
           <xs:sequence>

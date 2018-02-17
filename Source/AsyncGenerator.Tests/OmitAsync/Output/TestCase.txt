@@ -67,20 +67,13 @@ namespace AsyncGenerator.Tests.OmitAsync.Input
 
 		public Task BlockAsyncOmittedAsync(string path)
 		{
-			try
 			{
 				{
-					{
-						if(path == "")
-							return SimpleFile.ReadAsync();
-					}
+					if(path == "")
+						return SimpleFile.ReadAsync();
 				}
-				return Task.CompletedTask;
 			}
-			catch (Exception ex)
-			{
-				return Task.FromException<object>(ex);
-			}
+			return Task.CompletedTask;
 		}
 
 		public Task<bool> IfAsyncOmittedAsync(string content)

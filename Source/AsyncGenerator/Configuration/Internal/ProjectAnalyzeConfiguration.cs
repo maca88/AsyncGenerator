@@ -51,6 +51,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ProjectDiagnosticsConfiguration Diagnostics { get; } = new ProjectDiagnosticsConfiguration();
 
+		public ProjectExceptionHandlingConfiguration ExceptionHandling { get; } = new ProjectExceptionHandlingConfiguration();
+
 		public bool ScanMethodBody { get; private set; }
 
 		public Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; private set; }
@@ -158,7 +160,6 @@ namespace AsyncGenerator.Configuration.Internal
 			{
 				throw new ArgumentNullException(nameof(action));
 			}
-			CancellationTokens.Enabled = true;
 			action(AsyncExtensionMethods);
 			return this;
 		}
@@ -170,6 +171,16 @@ namespace AsyncGenerator.Configuration.Internal
 				throw new ArgumentNullException(nameof(action));
 			}
 			action(Diagnostics);
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ExceptionHandling(Action<IFluentProjectExceptionHandlingConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			action(ExceptionHandling);
 			return this;
 		}
 

@@ -80,6 +80,21 @@ namespace AsyncGenerator.Extensions.Internal
 			return symbol.MethodKind.IsPropertyAccessor();
 		}
 
+		internal static bool? IsAutoPropertyAccessor(this IMethodSymbol symbol)
+		{
+			var syntax = symbol.DeclaringSyntaxReferences.FirstOrDefault();
+			if (syntax == null)
+			{
+				return null;
+			}
+			return syntax.Span.Length == 4; // get; or set;
+		}
+
+		internal static bool? IsVirtualAbstractOrInterface(this IMethodSymbol symbol)
+		{
+			return symbol.IsVirtual || symbol.IsAbstract || symbol.ContainingType.IsAbstract;
+		}
+
 		internal static TypeSyntax CreateTypeSyntax(this ITypeSymbol symbol, bool insideCref = false, bool onlyName = false)
 		{
 			var predefinedType = symbol.SpecialType.ToPredefinedType();
