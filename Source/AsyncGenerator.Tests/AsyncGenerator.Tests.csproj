@@ -308,8 +308,6 @@
     <Compile Include="PrivateFields\Fixture.cs" />
     <Compile Include="PrivateFields\Input\UnusedField.cs" />
     <EmbeddedResource Include="PrivateFields\Output\UnusedField.txt" />
-    <Compile Include="FileComments\Fixture.cs" />
-    <Compile Include="FileComments\Input\TestCase.cs" />
     <Compile Include="Formatting\Fixture.cs" />
     <Compile Include="Formatting\Input\Async.cs" />
     <Compile Include="Formatting\Input\Await.cs" />
@@ -419,8 +417,6 @@
     </None>
     <EmbeddedResource Include="ExternalProjects\NHibernate\SolutionConfiguration.yml" />
     <EmbeddedResource Include="ExternalProjects\NHibernate\ProjectConfiguration.yml" />
-    <None Include="FileComments\TestCase.cs.xmldoc" />
-    <None Include="FileComments\Input\TestCase.cs.xmldoc" />
     <EmbeddedResource Include="TaskConflict\Output\TestCase.txt" />
     <None Include="packages.config" />
   </ItemGroup>
@@ -513,9 +509,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="IfDirective\Output\TestCase.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="FileComments\Output\TestCase.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Yields\Output\TestCase.txt" />

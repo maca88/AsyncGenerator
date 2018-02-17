@@ -236,7 +236,6 @@
     <Compile Include="Transformation\Internal\DocumentCommentTypeTransformer.cs" />
     <Compile Include="Transformation\Internal\DocumentTransformationResult.cs" />
     <Compile Include="Transformation\Internal\FunctionReferenceTransformationResult.cs" />
-    <Compile Include="Transformation\Internal\IncludeFilePathTransformer.cs" />
     <Compile Include="Transformation\Internal\MethodTransformationResult.cs" />
     <Compile Include="Transformation\Internal\NamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformationResult.cs" />

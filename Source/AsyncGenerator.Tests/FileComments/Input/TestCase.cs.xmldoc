@@ -1,8 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<members type="TestCase">
-  <member name="T:TestCase">
-    <summary>
-      Test type summary
-    </summary>
-  </member>
-</members>

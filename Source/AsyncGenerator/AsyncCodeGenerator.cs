@@ -435,7 +435,6 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new DefaultPreconditionChecker());
 
 			// Document transformers
-			configuration.RegisterPlugin(new IncludeFilePathTransformer()); // TODO: remove - make it optional
 
 			// Type transformers
 			configuration.RegisterPlugin(new DocumentCommentTypeTransformer());
