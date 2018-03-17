@@ -3,14 +3,8 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.Transformation
 {
-	public interface IMemberTransformationResult : ITransformationResult
+	public interface IMemberTransformationResult : ITransformationResult, ITransformationTrivia
 	{
 		IMemberAnalyzationResult GetAnalyzationResult();
-
-		SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
-
-		SyntaxTrivia EndOfLineTrivia { get; set; }
-
-		SyntaxTrivia IndentTrivia { get; set; }
 	}
 }

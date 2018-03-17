@@ -325,7 +325,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var methodNode = newTypeNode.GetAnnotatedNodes(methodTransform.Annotation)
 				.OfType<BaseMethodDeclarationSyntax>()
 				.First();
-			var transformedResult = TransformFunction(methodTransform.AnalyzationResult, transformResult, namespaceMetadata);
+			var transformedResult = TransformFunction(methodTransform.AnalyzationResult, transformResult, transformResult, namespaceMetadata);
 			var transformedNode = (BaseMethodDeclarationSyntax)transformedResult.Transformed;
 			if (transformedNode is ConstructorDeclarationSyntax ctorNode && transformResult.AnalyzationResult.Conversion == TypeConversion.NewType)
 			{

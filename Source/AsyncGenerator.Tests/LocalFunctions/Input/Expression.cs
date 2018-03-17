@@ -7,22 +7,12 @@ using System.Threading.Tasks;
 
 namespace AsyncGenerator.Tests.LocalFunctions.Input
 {
-	public class TestCase
+	public class Expression
 	{
-		public void Simple()
-		{
-			void Read()
-			{
-				SimpleFile.Read();
-			}
-			Read();
-		}
-
-		public void Expression()
+		public void Test()
 		{
 			void Read() => SimpleFile.Read();
 			Read();
 		}
-
 	}
 }

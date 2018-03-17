@@ -31,7 +31,7 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 	}
 
-	internal class FunctionTransformationResult : TransformationResult
+	internal class FunctionTransformationResult : TransformationResult, IFunctionTransformationResult
 	{
 		public FunctionTransformationResult(IFunctionAnalyzationResult result) : base(result.GetNode())
 		{
@@ -43,6 +43,26 @@ namespace AsyncGenerator.Transformation.Internal
 		public List<FunctionReferenceTransformationResult> TransformedFunctionReferences { get; } = new List<FunctionReferenceTransformationResult>();
 
 		public List<TransformationResult> TransformedNodes { get; } = new List<TransformationResult>();
+
+		public SyntaxTrivia LeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia BodyLeadingWhitespaceTrivia { get; set; }
+
+		public SyntaxTrivia EndOfLineTrivia { get; set; }
+
+		public SyntaxTrivia IndentTrivia { get; set; }
+
+		#region IFunctionTransformationResult
+
+		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
+		IReadOnlyList<IFunctionReferenceTransformationResult> IFunctionTransformationResult.TransformedFunctionReferences =>
+			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
+
+		SyntaxNode IFunctionTransformationResult.Transformed => Transformed;
+
+		IFunctionAnalyzationResult IFunctionTransformationResult.AnalyzationResult => AnalyzationResult;
+
+		#endregion
 	}
 
 	internal class LockTransformationResult : TransformationResult, ILockTransformationResult
@@ -146,15 +166,23 @@ namespace AsyncGenerator.Transformation.Internal
 
 		#region IMethodOrAccessorTransformationResult
 
-		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
-		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodOrAccessorTransformationResult.TransformedFunctionReferences =>
-			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
-
 		private IReadOnlyList<ILockTransformationResult> _cachedTransformedLocks;
 		IReadOnlyList<ILockTransformationResult> IMethodOrAccessorTransformationResult.TransformedLocks =>
 			_cachedTransformedLocks ?? (_cachedTransformedLocks = TransformedLocks.ToImmutableList());
 
 		IMethodOrAccessorAnalyzationResult IMethodOrAccessorTransformationResult.AnalyzationResult => AnalyzationResult;
+
+		#endregion
+
+		#region IFunctionTransformationResult
+
+		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
+		IReadOnlyList<IFunctionReferenceTransformationResult> IFunctionTransformationResult.TransformedFunctionReferences =>
+			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
+
+		SyntaxNode IFunctionTransformationResult.Transformed => Transformed;
+
+		IFunctionAnalyzationResult IFunctionTransformationResult.AnalyzationResult => AnalyzationResult;
 
 		#endregion
 
@@ -190,10 +218,6 @@ namespace AsyncGenerator.Transformation.Internal
 
 		#region IMethodOrAccessorTransformationResult
 
-		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
-		IReadOnlyList<IFunctionReferenceTransformationResult> IMethodOrAccessorTransformationResult.TransformedFunctionReferences =>
-			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
-
 		private IReadOnlyList<ILockTransformationResult> _cachedTransformedLocks;
 		IReadOnlyList<ILockTransformationResult> IMethodOrAccessorTransformationResult.TransformedLocks =>
 			_cachedTransformedLocks ?? (_cachedTransformedLocks = TransformedLocks.ToImmutableList());
@@ -202,6 +226,17 @@ namespace AsyncGenerator.Transformation.Internal
 
 		#endregion
 
+		#region IFunctionTransformationResult
+
+		private IReadOnlyList<IFunctionReferenceTransformationResult> _cachedTransformedFunctionReferences;
+		IReadOnlyList<IFunctionReferenceTransformationResult> IFunctionTransformationResult.TransformedFunctionReferences =>
+			_cachedTransformedFunctionReferences ?? (_cachedTransformedFunctionReferences = TransformedFunctionReferences.Where(o => o.Transformed != null).ToImmutableList());
+
+		SyntaxNode IFunctionTransformationResult.Transformed => Transformed;
+
+		IFunctionAnalyzationResult IFunctionTransformationResult.AnalyzationResult => AnalyzationResult;
+
+		#endregion
 
 		public void AddMethod(MethodDeclarationSyntax node)
 		{

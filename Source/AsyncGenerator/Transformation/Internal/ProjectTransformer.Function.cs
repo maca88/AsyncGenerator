@@ -20,8 +20,8 @@ namespace AsyncGenerator.Transformation.Internal
 	partial class ProjectTransformer
 	{
 
-		private RootFunctionTransformationResult TransformFunction(IFunctionAnalyzationResult rootFuncResult, 
-			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
+		private RootFunctionTransformationResult TransformFunction(IFunctionAnalyzationResult rootFuncResult,
+			ITransformationTrivia parentTransformTrivia, ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var rootFuncNode = rootFuncResult.GetNode();
 			var startRootFuncSpan = rootFuncNode.SpanStart;
@@ -39,22 +39,25 @@ namespace AsyncGenerator.Transformation.Internal
 				var funcSpanStart = origFuncNode.SpanStart - startRootFuncSpan;
 				var funcSpanLength = origFuncNode.Span.Length;
 				var funcNode = rootFuncNode.DescendantNodesAndSelf()
+					.Where(o => !o.IsKind(SyntaxKind.Argument)) // An argument can have the same span as the function
 					.First(o => o.SpanStart == funcSpanStart && o.Span.Length == funcSpanLength);
-				var leadingWhitespace = funcNode.GetLeadingWhitespace();
 				FunctionTransformationResult transformResult;
 				if (funcNode == rootFuncNode)
 				{
 					transformResult = rootTransformResult;
-					//transformResult.IndentTrivia = typeNode.GetIndent(leadingWhitespace, namespaceMetadata.LeadingWhitespaceTrivia);
+					transformResult.IndentTrivia = parentTransformTrivia.IndentTrivia;
+					transformResult.EndOfLineTrivia = parentTransformTrivia.EndOfLineTrivia;
+					transformResult.LeadingWhitespaceTrivia = Whitespace(parentTransformTrivia.LeadingWhitespaceTrivia.ToFullString() +
+					                                                     parentTransformTrivia.IndentTrivia.ToFullString());
+					transformResult.BodyLeadingWhitespaceTrivia = Whitespace(transformResult.LeadingWhitespaceTrivia.ToFullString() +
+					                                                         parentTransformTrivia.IndentTrivia.ToFullString());
 				}
 				else
 				{
-					transformResult = new FunctionTransformationResult(funcResult)
-					{
-						//IndentTrivia = typeNode.GetIndent(leadingWhitespace)
-					};
+					transformResult = new FunctionTransformationResult(funcResult);
 					rootFuncNode = rootFuncNode.ReplaceNode(funcNode, funcNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformResult.Annotation)));
 					rootTransformResult.DescendantTransformedFunctions.Add(transformResult);
+					// TODO: calculate trivias
 				}
 				if (funcResult.Conversion == MethodConversion.Ignore)
 				{
@@ -125,17 +128,30 @@ namespace AsyncGenerator.Transformation.Internal
 
 				var funcNode = rootFuncNode.GetAnnotatedNodes(transformResult.Annotation).First();
 				var newFuncNode = funcNode;
-				// The async keyword may be added only for functions marked as ToAsync 
-				if (transformResult.AnalyzationResult.Conversion.HasAnyFlag(MethodConversion.ToAsync) && !transformResult.AnalyzationResult.OmitAsync)
-				{
-					newFuncNode = newFuncNode.AddAsync();
-				}
 				transformResult.Transformed = newFuncNode;
+				newFuncNode = RunFunctionTransformers(transformResult, typeMetadata, namespaceMetadata);
 				rootFuncNode = rootFuncNode.ReplaceNode(funcNode, newFuncNode);
 			}
 
 			rootTransformResult.Transformed = rootFuncNode;
 			return rootTransformResult;
+		}
+
+		private SyntaxNode RunFunctionTransformers(
+			FunctionTransformationResult functionTransform,
+			ITypeTransformationMetadata transformResult,
+			INamespaceTransformationMetadata namespaceMetadata)
+		{
+			if (functionTransform.Transformed == null)
+			{
+				return null;
+			}
+			foreach (var transformer in _configuration.FunctionTransformers)
+			{
+				functionTransform.Transformed = transformer.Transform(functionTransform, transformResult, namespaceMetadata) ??
+				                                functionTransform.Transformed;
+			}
+			return functionTransform.Transformed;
 		}
 
 	}

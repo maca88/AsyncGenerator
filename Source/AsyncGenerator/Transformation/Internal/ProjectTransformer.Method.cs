@@ -8,6 +8,7 @@ using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
@@ -106,7 +107,7 @@ namespace AsyncGenerator.Transformation.Internal
 				var typeSpanLength = functionNode.Span.Length;
 				var funcNode = methodNode.DescendantNodesAndSelf()
 					.First(o => o.IsKind(functionKind) && o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-				var transformFuncResult = TransformFunction(childFunction, typeMetadata, namespaceMetadata);
+				var transformFuncResult = TransformFunction(childFunction, result, typeMetadata, namespaceMetadata);
 				result.TransformedFunctions.Add(transformFuncResult);
 				methodNode = methodNode.ReplaceNode(funcNode, funcNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformFuncResult.Annotation)));
 			}

@@ -199,6 +199,13 @@ namespace AsyncGenerator.Extensions.Internal
 			);
 		}
 
+		internal static LocalFunctionStatementSyntax ReturnAsTask(this LocalFunctionStatementSyntax methodNode, bool withFullName = false)
+		{
+			return methodNode.WithReturnType(
+				methodNode.ReturnType.WrapIntoTask(withFullName)
+			);
+		}
+
 		internal static TypeSyntax WrapIntoTask(this TypeSyntax typeNode, bool withFullName = false)
 		{
 			if (typeNode.ChildTokens().Any(o => o.IsKind(SyntaxKind.VoidKeyword)))
@@ -763,23 +770,39 @@ namespace AsyncGenerator.Extensions.Internal
 						SeparatedList<ArgumentSyntax>(arguments)));
 		}
 
-		internal static MethodDeclarationSyntax ConvertExpressionBodyToBlock(this MethodDeclarationSyntax methodNode,
-			IMethodOrAccessorTransformationResult transformResult)
+		internal static MethodDeclarationSyntax ConvertExpressionBodyToBlock(this MethodDeclarationSyntax node,
+			IFunctionTransformationResult transformResult)
 		{
-			if (methodNode.ExpressionBody != null)
+			if (node.ExpressionBody != null)
 			{
-				return methodNode
-					.WithBody(ConvertToBlock(methodNode.ExpressionBody.Expression, transformResult))
+				return node
+					.WithBody(ConvertToBlock(node.ExpressionBody.Expression, transformResult))
 					.WithParameterList(
-						methodNode.ParameterList.WithCloseParenToken(
-							methodNode.ParameterList.CloseParenToken.WithTrailingTrivia(transformResult.EndOfLineTrivia)))
+						node.ParameterList.WithCloseParenToken(
+							node.ParameterList.CloseParenToken.WithTrailingTrivia(transformResult.EndOfLineTrivia)))
 					.WithExpressionBody(null)
 					.WithSemicolonToken(Token(SyntaxKind.None));
 			}
-			return methodNode;
+			return node;
 		}
 
-		internal static BlockSyntax ConvertToBlock(this ExpressionSyntax expressionNode, IMethodOrAccessorTransformationResult transformResult)
+		internal static LocalFunctionStatementSyntax ConvertExpressionBodyToBlock(this LocalFunctionStatementSyntax node,
+			IFunctionTransformationResult transformResult)
+		{
+			if (node.ExpressionBody != null)
+			{
+				return node
+					.WithBody(ConvertToBlock(node.ExpressionBody.Expression, transformResult))
+					.WithParameterList(
+						node.ParameterList.WithCloseParenToken(
+							node.ParameterList.CloseParenToken.WithTrailingTrivia(transformResult.EndOfLineTrivia)))
+					.WithExpressionBody(null)
+					.WithSemicolonToken(Token(SyntaxKind.None));
+			}
+			return node;
+		}
+
+		internal static BlockSyntax ConvertToBlock(this ExpressionSyntax expressionNode, IFunctionTransformationResult transformResult)
 		{
 			var analyzeResult = transformResult.AnalyzationResult;
 			var statement = analyzeResult.Symbol.ReturnsVoid

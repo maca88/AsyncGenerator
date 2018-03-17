@@ -95,6 +95,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 					}
+					else if (depFunctionData is ChildFunctionData childFunction)
+					{
+						childFunction.GetMethodOrAccessorData().CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+					}
 				}
 			}
 		}
@@ -467,6 +471,18 @@ namespace AsyncGenerator.Analyzation.Internal
 			var postponedMethodData = new List<MethodOrAccessorData>();
 			foreach (var methodData in remainingMethodData)
 			{
+				// Start from the bottom child function in case the root function calls them
+				foreach (var childFunction in methodData.GetDescendantsChildFunctions()
+					.OrderByDescending(o => o.GetBodyNode().SpanStart)
+					.Where(o => o.Conversion != MethodConversion.Ignore && o.Conversion != MethodConversion.Copy))
+				{
+					if (childFunction.BodyFunctionReferences.Where(o => o.ArgumentOfFunctionInvocation == null)
+						.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
+					{
+						childFunction.ToAsync();
+					}
+				}
+
 				if (methodData.BodyFunctionReferences.Where(o => o.ArgumentOfFunctionInvocation == null).All(o => o.GetConversion() != ReferenceConversion.ToAsync))
 				{
 					// Postpone the conversion calculation of methods that have nested functions as one of the function may be async after all remaining methods are processed
@@ -551,7 +567,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					foreach (var functionRefData in methodData.GetSelfAndDescendantsFunctions()
 						.SelectMany(o => o.BodyFunctionReferences.Where(r => r.GetConversion() == ReferenceConversion.ToAsync)))
 					{
-						if (functionRefData.ReferenceFunctionData != null)
+						// Child functions don't need a cancellation token as they can use the one from the root method
+						if (functionRefData.ReferenceFunctionData != null && !(functionRefData.ReferenceFunctionData is ChildFunctionData))
 						{
 							var refMethodData = functionRefData.ReferenceFunctionData.GetMethodOrAccessorData();
 							functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;
@@ -946,7 +963,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (!functionData.Faulted && !functionData.PreserveReturnType && functionData.OmitAsync)
 			{
 				// For sync forwarding we will always wrap into try catch
-				if (methodData != null && methodData.BodyFunctionReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CallForwarding(functionData.Symbol))
+				if (methodData != null && methodData.BodyFunctionReferences
+					.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CallForwarding(functionData.Symbol))
 				{
 					methodData.WrapInTryCatch = true;
 					methodData.ForwardCall = true;

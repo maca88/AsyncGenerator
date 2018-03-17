@@ -196,7 +196,7 @@ namespace AsyncGenerator.Transformation.Internal
 					);
 				}
 
-				if (statement != null)
+				if (statement != null && !statement.IsKind(SyntaxKind.LocalFunctionStatement))
 				{
 					if (bodyFuncReferenceResult.UseAsReturnValue)
 					{

@@ -246,8 +246,8 @@
     <Compile Include="Transformation\Internal\ProjectTransformer.Namespace.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Property.cs" />
     <Compile Include="Transformation\Internal\ProjectTransformer.Type.cs" />
-    <Compile Include="Transformation\Internal\ReturnTaskMethodRewriter.cs" />
-    <Compile Include="Transformation\Internal\ReturnTaskMethodTransformer.cs" />
+    <Compile Include="Transformation\Internal\ReturnTaskFunctionRewriter.cs" />
+    <Compile Include="Transformation\Internal\ReturnTaskFunctionTransformer.cs" />
     <Compile Include="Transformation\Internal\RootNamespaceTransformationResult.cs" />
     <Compile Include="Transformation\Internal\RootTypeTransformationResult.cs" />
     <Compile Include="Transformation\Internal\SplitTailMethodTransformer.cs" />

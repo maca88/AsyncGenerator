@@ -207,6 +207,7 @@ namespace AsyncGenerator.Configuration.Internal
 			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
 			TryAdd(plugin, TransformConfiguration.FunctionReferenceTransformers);
 			TryAdd(plugin, TransformConfiguration.MethodTransformers);
+			TryAdd(plugin, TransformConfiguration.FunctionTransformers);
 			TryAdd(plugin, TransformConfiguration.TypeTransformers);
 			RegisteredPlugins.Add(plugin);
 		}

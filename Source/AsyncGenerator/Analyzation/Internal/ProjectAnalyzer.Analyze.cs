@@ -486,10 +486,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void PropagateCancellationToken(BodyFunctionDataReference functionReferenceData)
 		{
 			var methodData = functionReferenceData.Data.GetMethodOrAccessorData();
-			// We will set CancellationTokenRequired to true only for the method that contains this invocation
-			if (functionReferenceData.Conversion != ReferenceConversion.ToAsync || 
-				methodData != functionReferenceData.Data || 
-				methodData.ExternalRelatedMethods.Any())
+			if (functionReferenceData.Conversion != ReferenceConversion.ToAsync || methodData.ExternalRelatedMethods.Any())
 			{
 				return;
 			}

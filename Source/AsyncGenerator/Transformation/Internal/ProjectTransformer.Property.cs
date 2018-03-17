@@ -119,7 +119,7 @@ namespace AsyncGenerator.Transformation.Internal
 				var typeSpanLength = functionNode.Span.Length;
 				var funcNode = node.DescendantNodesAndSelf()
 					.First(o => o.IsKind(functionKind) && o.SpanStart == typeSpanStart && o.Span.Length == typeSpanLength);
-				var transformFuncResult = TransformFunction(childFunction, typeMetadata, namespaceMetadata);
+				var transformFuncResult = TransformFunction(childFunction, result, typeMetadata, namespaceMetadata);
 				result.TransformedFunctions.Add(transformFuncResult);
 				node = node.ReplaceNode(funcNode, funcNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformFuncResult.Annotation)));
 			}

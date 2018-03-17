@@ -9,18 +9,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Core.Transformation
 {
-	public interface IMethodOrAccessorTransformationResult : IMemberTransformationResult
+	public interface IMethodOrAccessorTransformationResult : IMemberTransformationResult, IFunctionTransformationResult
 	{
 		/// <summary>
 		/// The transformed method
 		/// </summary>
-		MethodDeclarationSyntax Transformed { get; }
+		new MethodDeclarationSyntax Transformed { get; }
 
-		IMethodOrAccessorAnalyzationResult AnalyzationResult { get; }
-
-		SyntaxTrivia BodyLeadingWhitespaceTrivia { get; }
-
-		IReadOnlyList<IFunctionReferenceTransformationResult> TransformedFunctionReferences { get; }
+		new IMethodOrAccessorAnalyzationResult AnalyzationResult { get; }
 
 		IReadOnlyList<ILockTransformationResult> TransformedLocks { get; }
 	}

@@ -15,11 +15,37 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Transformation.Internal
 {
-	internal class ReturnTaskMethodTransformer : IMethodOrAccessorTransformer
+	internal class ReturnTaskFunctionTransformer : IMethodOrAccessorTransformer, IFunctionTransformer
 	{
 		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			return Task.CompletedTask;
+		}
+
+		public SyntaxNode Transform(IFunctionTransformationResult transformResult, ITypeTransformationMetadata typeMetadata,
+			INamespaceTransformationMetadata namespaceMetadata)
+		{
+			var methodResult = transformResult.AnalyzationResult;
+			if (!methodResult.Conversion.HasFlag(MethodConversion.ToAsync))
+			{
+				return null;
+			}
+			var functionNode = transformResult.Transformed;
+			if (functionNode.GetFunctionBody() == null)
+			{
+				return Update(functionNode, methodResult, namespaceMetadata);
+			}
+			if (methodResult.SplitTail || methodResult.PreserveReturnType || !methodResult.OmitAsync)
+			{
+				if (!methodResult.OmitAsync)
+				{
+					functionNode = functionNode.AddAsync();
+				}
+				return Update(functionNode, methodResult, namespaceMetadata);
+			}
+			var rewriter = new ReturnTaskFunctionRewriter(transformResult, namespaceMetadata);
+			functionNode = rewriter.Visit(functionNode);
+			return Update(functionNode, methodResult, namespaceMetadata);
 		}
 
 		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult transformResult,
@@ -43,7 +69,7 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				return Update(methodNode, methodResult, namespaceMetadata);
 			}
-			var rewriter = new ReturnTaskMethodRewriter(transformResult, namespaceMetadata);
+			var rewriter = new ReturnTaskFunctionRewriter(transformResult, namespaceMetadata);
 			methodNode = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodNode);
 			return Update(methodNode, methodResult, namespaceMetadata);
 		}
@@ -57,6 +83,27 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
 			}
 			return MethodTransformerResult.Update(methodNode);
+		}
+
+		private LocalFunctionStatementSyntax Update(LocalFunctionStatementSyntax functionNode,
+			IFunctionAnalyzationResult analyzeResult, INamespaceTransformationMetadata namespaceMetadata)
+		{
+			functionNode = functionNode.WithIdentifier(Identifier(analyzeResult.AsyncCounterpartName));
+			if (!analyzeResult.PreserveReturnType && analyzeResult.Symbol.MethodKind != MethodKind.PropertySet)
+			{
+				functionNode = functionNode.ReturnAsTask(namespaceMetadata.TaskConflict);
+			}
+			return functionNode;
+		}
+
+		private SyntaxNode Update(SyntaxNode functionNode,
+			IFunctionAnalyzationResult methodResult, INamespaceTransformationMetadata namespaceMetadata)
+		{
+			if (functionNode is LocalFunctionStatementSyntax localFunction)
+			{
+				return Update(localFunction, methodResult, namespaceMetadata);
+			}
+			return functionNode;
 		}
 	}
 }
