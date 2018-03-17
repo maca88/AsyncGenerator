@@ -441,7 +441,7 @@ namespace AsyncGenerator
 
 			// Method transformers
 			configuration.RegisterPlugin(new YieldMethodTransformer());
-			configuration.RegisterPlugin(new ReturnTaskMethodTransformer());
+			configuration.RegisterPlugin(new ReturnTaskFunctionTransformer());
 
 			configuration.RegisterPlugin(new AsyncLockMethodTransformer());
 			configuration.RegisterPlugin(new CancellationTokenMethodTransformer());

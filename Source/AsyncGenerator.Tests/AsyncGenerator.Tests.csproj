@@ -225,6 +225,11 @@
     <Compile Include="IfDirective\Input\VoidReturnType.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Input\TestCase.cs" />
+    <Compile Include="LocalFunctions\Input\Expression.cs" />
+    <Compile Include="LocalFunctions\Input\Nested.cs" />
+    <Compile Include="LocalFunctions\Input\NestedCall.cs" />
+    <Compile Include="LocalFunctions\Input\TryCatch.cs" />
+    <Compile Include="LocalFunctions\Input\SimpleAsync.cs" />
     <Compile Include="Nameof\Input\ArgumentFunction.cs" />
     <Compile Include="Nameof\Input\SelfReference.cs" />
     <Compile Include="Nameof\Input\Variable.cs" />
@@ -318,7 +323,7 @@
     <Compile Include="Generics\Fixture.cs" />
     <Compile Include="Generics\Input\TestCase.cs" />
     <Compile Include="LocalFunctions\Fixture.cs" />
-    <Compile Include="LocalFunctions\Input\TestCase.cs" />
+    <Compile Include="LocalFunctions\Input\Simple.cs" />
     <Compile Include="LockStatement\Fixture.cs" />
     <Compile Include="LockStatement\Input\Lock.cs" />
     <Compile Include="MissingMembers\Fixture.cs" />
@@ -446,7 +451,6 @@
     <Folder Include="CastOmitAsync\Output\" />
     <Folder Include="CustomReturnType\Output\" />
     <Folder Include="IgnoreAsyncCounterparts\Output\" />
-    <Folder Include="LocalFunctions\Output\" />
     <Folder Include="MethodAsArgument\Output\" />
     <Folder Include="OverloadWithDifferentParameters\Output\" />
     <Folder Include="SimpleAnonymousFunctions\Output\" />
@@ -995,6 +999,33 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TryCatch\Output\Precondition.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\Simple.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\SimpleWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\Expression.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\ExpressionWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\Nested.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\NestedWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\SimpleAsync.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\NestedCallWithTokens.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="LocalFunctions\Output\TryCatch.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

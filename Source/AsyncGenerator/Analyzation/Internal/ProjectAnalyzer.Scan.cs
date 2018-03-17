@@ -626,25 +626,25 @@ namespace AsyncGenerator.Analyzation.Internal
 						$"but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}",
 						DiagnosticSeverity.Info);
 				}
-				var referenceMethodData = ProjectData.GetMethodOrAccessorData(methodReferenceSymbol);
+				var referenceFunctionData = ProjectData.GetFunctionData(methodReferenceSymbol);
 				// Check if the reference is a cref reference or a nameof
 				if (nameNode.IsInsideCref())
 				{
-					var crefReference = new CrefFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData, true);
+					var crefReference = new CrefFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceFunctionData, true);
 					if (!baseMethodData.References.TryAdd(crefReference))
 					{
 						_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
 					}
-					referenceMethodData?.SelfReferences.TryAdd(crefReference);
+					referenceFunctionData?.SelfReferences.TryAdd(crefReference);
 					continue; // No need to further scan a cref reference
 				}
-				var methodReferenceData = new BodyFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceMethodData);
+				var methodReferenceData = new BodyFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceFunctionData);
 				if (!baseMethodData.References.TryAdd(methodReferenceData))
 				{
 					_logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
 					continue; // Reference already processed
 				}
-				referenceMethodData?.SelfReferences.TryAdd(methodReferenceData);
+				referenceFunctionData?.SelfReferences.TryAdd(methodReferenceData);
 
 				if (baseMethodData.Conversion == MethodConversion.Ignore)
 				{
@@ -659,6 +659,12 @@ namespace AsyncGenerator.Analyzation.Internal
 				if (baseMethodData is MethodOrAccessorData methodData && !_scannedMethodOrAccessors.Contains(methodData))
 				{
 					await ScanMethodData(methodData, depth, cancellationToken).ConfigureAwait(false);
+				}
+				// Scan a local/anonymous function only if there is a chance that can be called elsewere. (e.g. saved to a variable or local function)
+				// TODO: support local variables
+				if (baseMethodData is LocalFunctionData)
+				{
+					await ScanAllMethodReferenceLocations(baseMethodData.Symbol, depth, cancellationToken).ConfigureAwait(false);
 				}
 			}
 		}

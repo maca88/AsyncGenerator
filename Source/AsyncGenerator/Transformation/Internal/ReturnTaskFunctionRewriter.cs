@@ -24,15 +24,15 @@ namespace AsyncGenerator.Transformation.Internal
 	/// Wraps all non taskable returns statements into a <see cref="Task.FromResult{TResult}"/> and conditionally wraps the method body
 	/// in a try/catch block (without preconditions) 
 	/// </summary>
-	internal class ReturnTaskMethodRewriter : CSharpSyntaxRewriter
+	internal class ReturnTaskFunctionRewriter : CSharpSyntaxRewriter
 	{
-		private readonly IMethodOrAccessorAnalyzationResult _methodResult;
-		private readonly IMethodOrAccessorTransformationResult _transformResult;
+		private readonly IFunctionAnalyzationResult _methodResult;
+		private readonly IFunctionTransformationResult _transformResult;
 		private readonly INamespaceTransformationMetadata _namespaceMetadata;
 		private SyntaxKind? _rewritingSyntaxKind;
-		private MethodDeclarationSyntax _methodNode;
+		private TypeSyntax _retunTypeSyntax;
 
-		public ReturnTaskMethodRewriter(IMethodOrAccessorTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
+		public ReturnTaskFunctionRewriter(IFunctionTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			_transformResult = transformResult;
 			_methodResult = transformResult.AnalyzationResult;
@@ -42,7 +42,7 @@ namespace AsyncGenerator.Transformation.Internal
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
 		{
 			_rewritingSyntaxKind = node.Kind();
-			_methodNode = node;
+			_retunTypeSyntax = node.ReturnType;
 			if (!_methodResult.Faulted && 
 				(
 					(_methodResult.Symbol.ReturnsVoid && node.IsReturnStatementRequired()) || 
@@ -55,6 +55,10 @@ namespace AsyncGenerator.Transformation.Internal
 			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
 			if (node.GetFunctionBody() is BlockSyntax blockBody)
 			{
+				if (_methodResult is IMethodOrAccessorAnalyzationResult analyzationResult)
+				{
+					return node.WithBody(RewriteMethodBody(node, blockBody, analyzationResult));
+				}
 				return node.WithBody(RewriteFunctionBody(blockBody));
 			}
 			return node;
@@ -68,8 +72,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 			_rewritingSyntaxKind = node.Kind();
 			node =  (AnonymousMethodExpressionSyntax)base.VisitAnonymousMethodExpression(node);
-			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
-			if (bodyBlock != null)
+			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
 			}
@@ -85,8 +88,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 			_rewritingSyntaxKind = node.Kind();
 			node = (ParenthesizedLambdaExpressionSyntax)base.VisitParenthesizedLambdaExpression(node);
-			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
-			if (bodyBlock != null)
+			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
 			}
@@ -102,8 +104,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 			_rewritingSyntaxKind = node.Kind();
 			node = (SimpleLambdaExpressionSyntax)base.VisitSimpleLambdaExpression(node);
-			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
-			if (bodyBlock != null)
+			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
 			}
@@ -118,9 +119,18 @@ namespace AsyncGenerator.Transformation.Internal
 				return node;
 			}
 			_rewritingSyntaxKind = node.Kind();
+			_retunTypeSyntax = node.ReturnType;
+			if (!_methodResult.Faulted &&
+			    (
+				    (_methodResult.Symbol.ReturnsVoid && node.IsReturnStatementRequired()) ||
+				    _methodResult.WrapInTryCatch
+			    )
+			)
+			{
+				node = node.ConvertExpressionBodyToBlock(_transformResult);
+			}
 			node = (LocalFunctionStatementSyntax)base.VisitLocalFunctionStatement(node);
-			var bodyBlock = node.GetFunctionBody() as BlockSyntax;
-			if (bodyBlock != null)
+			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
 			}
@@ -273,7 +283,7 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodNode.ReturnType.WithoutTrivia())))))
+											: _retunTypeSyntax.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
@@ -295,19 +305,24 @@ namespace AsyncGenerator.Transformation.Internal
 									SingletonSeparatedList(
 										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _methodNode.ReturnType.WithoutTrivia())))))
+											: _retunTypeSyntax.WithoutTrivia())))))
 				.WithArgumentList(
 					ArgumentList(
 						SingletonSeparatedList(
 							Argument(node.WithoutLeadingTrivia()))));
 		}
 
+		private BlockSyntax RewriteMethodBody(MethodDeclarationSyntax node, BlockSyntax body, IMethodOrAccessorAnalyzationResult methodResult)
+		{
+			if (methodResult.ForwardCall)
+			{
+				return ForwardCall(node, body);
+			}
+			return RewriteFunctionBody(body);
+		}
+
 		private BlockSyntax RewriteFunctionBody(BlockSyntax body)
 		{
-			if (_methodResult.ForwardCall)
-			{
-				return ForwardCall(body);
-			}
 			if (_methodResult.Faulted)
 			{
 				return body;
@@ -338,9 +353,8 @@ namespace AsyncGenerator.Transformation.Internal
 			);
 		}
 
-		private BlockSyntax ForwardCall(BlockSyntax bodyBlock)
+		private BlockSyntax ForwardCall(MethodDeclarationSyntax methodNode, BlockSyntax bodyBlock)
 		{
-			var methodNode = _methodNode;
 			var invocation = methodNode.ForwardCall(_methodResult.Symbol, methodNode.Identifier.ValueText);
 			var block = Block()
 				.WithCloseBraceToken(bodyBlock.CloseBraceToken)
@@ -417,7 +431,7 @@ namespace AsyncGenerator.Transformation.Internal
 														SingletonSeparatedList(
 															_methodResult.Symbol.ReturnsVoid
 																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-																: _methodNode.ReturnType.WithoutTrivia())))))
+																: _retunTypeSyntax.WithoutTrivia())))))
 									.WithArgumentList(
 										ArgumentList(
 											SingletonSeparatedList(

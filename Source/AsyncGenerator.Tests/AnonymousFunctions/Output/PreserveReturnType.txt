@@ -27,8 +27,15 @@ namespace AsyncGenerator.Tests.AnonymousFunctions.Input
 		{
 			Assert.DoesNotThrowAsync(() =>
 			{
-				Console.WriteLine();
-				return SimpleFile.ReadAsync(cancellationToken);
+				try
+				{
+					Console.WriteLine();
+					return SimpleFile.ReadAsync(cancellationToken);
+				}
+				catch (Exception ex)
+				{
+					return Task.FromException<object>(ex);
+				}
 			});
 		}
 
