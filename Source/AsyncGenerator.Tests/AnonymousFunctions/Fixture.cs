@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
+using AsyncGenerator.TestCases;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
@@ -138,6 +139,68 @@ namespace AsyncGenerator.Tests.AnonymousFunctions
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(Variable)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
+		public Task TestTryCatchAfterTransformation()
+		{
+			return ReadonlyTest(nameof(TryCatch), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(TryCatch)), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin<RunnerAsyncCountepartFinder>()
+			);
+		}
+
+		[Test]
+		public Task TestVoidTryCatchAfterTransformation()
+		{
+			return ReadonlyTest(nameof(VoidTryCatch), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(VoidTryCatch)), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin<RunnerAsyncCountepartFinder>()
+			);
+		}
+
+		[Test]
+		public Task TestReturnTypeMismatchAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ReturnTypeMismatch), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ReturnTypeMismatch)), document.Transformed.ToFullString());
 					})
 				)
 			);

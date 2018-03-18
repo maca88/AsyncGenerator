@@ -35,6 +35,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<IAsyncCounterpartsFinder> FindAsyncCounterpartsFinders { get; } = new List<IAsyncCounterpartsFinder>();
 
+		public List<IMethodExceptionHandler> MethodExceptionHandlers { get; } = new List<IMethodExceptionHandler>();
+
 		public List<Predicate<IMethodSymbol>> IgnoreAsyncCounterpartsPredicates { get; } = new List<Predicate<IMethodSymbol>>();
 
 		public List<IPreconditionChecker> PreconditionCheckers { get; } = new List<IPreconditionChecker>();
@@ -236,6 +238,8 @@ namespace AsyncGenerator.Configuration.Internal
 		#region IProjectAnalyzeConfiguration
 
 		IProjectCancellationTokenConfiguration IProjectAnalyzeConfiguration.CancellationTokens => CancellationTokens;
+
+		IProjectExceptionHandlingConfiguration IProjectAnalyzeConfiguration.ExceptionHandling => ExceptionHandling;
 
 		#endregion
 

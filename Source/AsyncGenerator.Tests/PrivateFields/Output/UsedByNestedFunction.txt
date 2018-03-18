@@ -26,7 +26,7 @@ namespace AsyncGenerator.Tests.PrivateFields.Input
 		{
 			await (Runner.RunAsync(s =>
 			{
-				return SimpleFile.WriteAsync(_content);
+				SimpleFile.Write(_content);
 			}));
 
 			var arr = new List<Action>

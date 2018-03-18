@@ -17,6 +17,16 @@ namespace AsyncGenerator.TestCases
 			return Task.CompletedTask;
 		}
 
+		public static void RunVoid(Action action)
+		{
+			action();
+		}
+
+		public static void RunGeneric<TValue>(Func<TValue> action)
+		{
+			action();
+		}
+
 		public static void RunWithParameter(Action<object> action)
 		{
 		}

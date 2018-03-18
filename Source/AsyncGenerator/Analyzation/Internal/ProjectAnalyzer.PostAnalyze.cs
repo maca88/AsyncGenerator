@@ -93,11 +93,18 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Propagate the CancellationTokenRequired for the dependency method data
 					if (depMethodData != null)
 					{
-						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						if (_configuration.CancellationTokens.RequiresCancellationToken(depMethodData.Symbol) == null)
+						{
+							depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						}
 					}
 					else if (depFunctionData is ChildFunctionData childFunction)
 					{
-						childFunction.GetMethodOrAccessorData().CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						var methodOrAccessorData = childFunction.GetMethodOrAccessorData();
+						if (_configuration.CancellationTokens.RequiresCancellationToken(methodOrAccessorData.Symbol) == null)
+						{
+							methodOrAccessorData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						}
 					}
 				}
 			}
@@ -153,6 +160,25 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return;
 			}
+
+			foreach (var handler in _configuration.MethodExceptionHandlers)
+			{
+				var result = handler.CatchMethodBody(functionData.Symbol, functionData.ArgumentOfFunctionInvocation?.ReferenceSymbol);
+				if (!result.HasValue)
+				{
+					continue;
+				}
+				functionData.WrapInTryCatch = result.Value;
+				return;
+			}
+
+			var customResult = _configuration.ExceptionHandling.CatchFunctionBody?.Invoke(functionData.Symbol);
+			if (customResult.HasValue)
+			{
+				functionData.WrapInTryCatch = customResult.Value;
+				return;
+			}
+
 			var lastPrecondition = functionData.Preconditions.LastOrDefault();
 			if ((lastPrecondition == null && functionData.CatchPropertyGetterCalls.Count > 0) || 
 				(lastPrecondition != null && functionData.CatchPropertyGetterCalls.Any(o => o.SpanStart > lastPrecondition.Span.End)))

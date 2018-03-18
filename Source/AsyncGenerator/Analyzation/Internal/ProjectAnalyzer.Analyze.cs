@@ -490,7 +490,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return;
 			}
-			
 			if (functionReferenceData.PassCancellationToken)
 			{
 				methodData.CancellationTokenRequired = true;

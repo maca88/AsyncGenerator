@@ -22,15 +22,8 @@ namespace AsyncGenerator.Tests.PrivateMethods.Input
 		{
 			await (Runner.RunAsync(s =>
 			{
-				try
-				{
-					Test();
-					return SimpleFile.WriteAsync("");
-				}
-				catch (Exception ex)
-				{
-					return Task.FromException<object>(ex);
-				}
+				Test();
+				SimpleFile.Write("");
 			}));
 
 			var arr = new List<Action>

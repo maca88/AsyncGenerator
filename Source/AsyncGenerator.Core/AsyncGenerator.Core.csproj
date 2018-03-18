@@ -170,6 +170,7 @@
     <Compile Include="Configuration\IFluentProjectTransformConfiguration.cs" />
     <Compile Include="Configuration\IFluentSolutionConfiguration.cs" />
     <Compile Include="Configuration\IProjectDiagnosticsConfiguration.cs" />
+    <Compile Include="Configuration\IProjectExceptionHandlingConfiguration.cs" />
     <Compile Include="Logging\ILogger.cs" />
     <Compile Include="Logging\ILoggerFactory.cs" />
     <Compile Include="Configuration\IProjectDocumentationCommentConfiguration.cs" />
@@ -200,6 +201,7 @@
     <Compile Include="Plugins\IFunctionReferenceTransformer.cs" />
     <Compile Include="Plugins\IFunctionTransformer.cs" />
     <Compile Include="Plugins\IInvocationExpressionAnalyzer.cs" />
+    <Compile Include="Plugins\IMethodExceptionHandler.cs" />
     <Compile Include="Plugins\IMethodOrAccessorTransformer.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPreconditionChecker.cs" />

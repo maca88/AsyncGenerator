@@ -192,6 +192,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.CatchPropertyGetterCalls(CreateMethodPredicateFunction(configuration, config.CatchPropertyGetterCalls, false));
 			}
+			if (config.CatchMethodBody.Any())
+			{
+				fluentConfig.CatchMethodBody(CreateMethodNullablePredicate(configuration, config.CatchMethodBody));
+			}
 		}
 
 		private static void Configure(AsyncGenerator configuration, CancellationTokens config, IFluentProjectCancellationTokenConfiguration fluentConfig)
@@ -377,6 +381,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 					if (CanApply(symbol, filter, rules))
 					{
 						return true;
+					}
+				}
+				return null;
+			};
+		}
+
+		private static Func<IMethodSymbol, bool?> CreateMethodNullablePredicate(AsyncGenerator globalConfig, IList<MethodPredicateFilter> filters)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.Result;
 					}
 				}
 				return null;

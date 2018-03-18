@@ -16,6 +16,11 @@ namespace AsyncGenerator.Core.Configuration
 		/// </summary>
 		IFluentProjectExceptionHandlingConfiguration CatchPropertyGetterCalls(Predicate<IMethodSymbol> predicate);
 
+		/// <summary>
+		/// Set a function that can decide whether a method body shall be wrapped inside a try/catch block.
+		/// </summary>
+		IFluentProjectExceptionHandlingConfiguration CatchMethodBody(Func<IMethodSymbol, bool?> func);
+
 		///// <summary>
 		///// Set a custom code that will be executed inside the catch block prior returning a faulted task.
 		///// <para>Default no code is added.</para>

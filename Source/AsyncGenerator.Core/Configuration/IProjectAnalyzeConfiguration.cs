@@ -14,5 +14,7 @@ namespace AsyncGenerator.Core.Configuration
 		IProjectCancellationTokenConfiguration CancellationTokens { get; }
 
 		bool ConcurrentRun { get; }
+
+		IProjectExceptionHandlingConfiguration ExceptionHandling { get; }
 	}
 }

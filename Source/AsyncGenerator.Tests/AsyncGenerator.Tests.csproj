@@ -211,6 +211,7 @@
     <Compile Include="AnonymousFunctions\Fixture.cs" />
     <Compile Include="AnonymousFunctions\Input\ArrayOfDelegates.cs" />
     <Compile Include="AnonymousFunctions\Input\MethodWithDelegate.cs" />
+    <Compile Include="AnonymousFunctions\Input\ReturnTypeMismatch.cs" />
     <Compile Include="AnonymousFunctions\Input\Variable.cs" />
     <Compile Include="ConfigurationOverride\Fixture.cs" />
     <Compile Include="ConfigurationOverride\Input\PartialCopy.cs" />
@@ -220,7 +221,8 @@
     <Compile Include="DocumentationComments\Input\Comments.cs" />
     <Compile Include="DocumentationComments\CommentsFixture.cs" />
     <Compile Include="ExceptionHandling\Fixture.cs" />
-    <Compile Include="ExceptionHandling\Input\TestCase.cs" />
+    <Compile Include="ExceptionHandling\Input\CatchProperty.cs" />
+    <Compile Include="ExceptionHandling\Input\NoCatchMethod.cs" />
     <Compile Include="IfDirective\Input\Empty.cs" />
     <Compile Include="IfDirective\Input\VoidReturnType.cs" />
     <Compile Include="IgnoreAsyncCounterparts\Fixture.cs" />
@@ -233,6 +235,12 @@
     <Compile Include="Nameof\Input\ArgumentFunction.cs" />
     <Compile Include="Nameof\Input\SelfReference.cs" />
     <Compile Include="Nameof\Input\Variable.cs" />
+    <Compile Include="NUnit\Fixture.cs" />
+    <Compile Include="AnonymousFunctions\Input\VoidTryCatch.cs" />
+    <Compile Include="AnonymousFunctions\Input\TryCatch.cs" />
+    <Compile Include="NUnit\Input\AssertThatNoToken.cs" />
+    <Compile Include="NUnit\Input\DoesNotThrowTryCatch.cs" />
+    <Compile Include="NUnit\Input\AssertThatTryCatch.cs" />
     <Compile Include="ParallelFor\Fixture.cs" />
     <Compile Include="CustomReturnType\Input\SameType.cs" />
     <Compile Include="ParallelFor\Input\Formatting.cs" />
@@ -269,7 +277,7 @@
     <Compile Include="AsyncMethodFinder\Input\CustomLinqExtensions.cs" />
     <Compile Include="AsyncMethodFinder\Input\GenericParameter.cs" />
     <Compile Include="AsyncMethodFinder\Input\IgnoreSomeAsyncMethods.cs" />
-    <Compile Include="AsyncMethodFinder\Input\NUnitAssertThat.cs" />
+    <Compile Include="NUnit\Input\AssertThat.cs" />
     <Compile Include="AsyncMethodFinder\LinqExtensions.cs" />
     <EmbeddedResource Include="AsyncMethodFinder\Output\CustomLinqExtensions.txt" />
     <Compile Include="AsyncProperites\GetterFixture.cs" />
@@ -620,7 +628,7 @@
     <EmbeddedResource Include="CancellationTokens\Output\Params.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="AsyncMethodFinder\Output\NUnitAssertThat.txt" />
+    <EmbeddedResource Include="NUnit\Output\AssertThat.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AsyncMethodFinder\Output\IgnoreSomeAsyncMethods.txt" />
@@ -974,7 +982,7 @@
     <EmbeddedResource Include="TryCatch\Output\ExternalProperty.txt" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ExceptionHandling\Output\TestCase.txt" />
+    <EmbeddedResource Include="ExceptionHandling\Output\CatchProperty.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TryCatch\Output\AbstractAutoProperty.txt" />
@@ -1026,6 +1034,27 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="LocalFunctions\Output\TryCatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\TryCatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\VoidTryCatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="AnonymousFunctions\Output\ReturnTypeMismatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NUnit\Output\AssertThatTryCatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NUnit\Output\DoesNotThrowTryCatch.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ExceptionHandling\Output\NoCatchMethod.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="NUnit\Output\AssertThatNoToken.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
