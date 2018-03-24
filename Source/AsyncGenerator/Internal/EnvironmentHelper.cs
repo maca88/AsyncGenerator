@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 #if NET46
 using Microsoft.Build.Locator;
@@ -60,9 +56,9 @@ namespace AsyncGenerator.Internal
 
 		public static  bool IsMono => Type.GetType("Mono.Runtime") != null;
 
-		public static  bool IsNetCore => RuntimeInformation.FrameworkDescription.StartsWith(".NET Core"); // .NET Core 4.6.00001.0
+		//public static  bool IsNetCore => RuntimeInformation.FrameworkDescription.StartsWith(".NET Core"); // .NET Core 4.6.00001.0
 
-		public static  bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"); // .NET Framework 4.7.2115.0
+		//public static  bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"); // .NET Framework 4.7.2115.0
 
 		// On Mono RuntimeInformation.IsOSPlatform will always retrun true for Windows
 		public static bool IsWindows => Path.DirectorySeparatorChar == '\\';
@@ -71,10 +67,10 @@ namespace AsyncGenerator.Internal
 		{
 			var name = AppDomain.CurrentDomain.FriendlyName;
 			// On .NET Core FriendlyName as only the assembly name without the extension
-			if (IsNetCore)
+			/*if (IsNetCore)
 			{
 				name += ".dll";
-			}
+			}*/
 			name += ".config";
 			var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
 			return File.Exists(path) ? path : null;

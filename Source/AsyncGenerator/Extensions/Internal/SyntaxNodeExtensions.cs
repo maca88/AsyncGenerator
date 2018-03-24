@@ -623,11 +623,11 @@ namespace AsyncGenerator.Extensions.Internal
 				node = node.ReplaceNode(directiveNode, directiveNode.WithAdditionalAnnotations(new SyntaxAnnotation(directiveAnnotation)));
 				toRemoveNode = node.GetAnnotatedNodes(annotation).First();
 			}
-			node = node.RemoveNode(toRemoveNode, SyntaxRemoveOptions.KeepUnbalancedDirectives);
-			if (node == null)
+			if (node.Equals(toRemoveNode))
 			{
 				return null; // TODO: we need to preserve or remove directives!
 			}
+			node = node.RemoveNode(toRemoveNode, SyntaxRemoveOptions.KeepUnbalancedDirectives);
 			// Workaround: When EOL is not CRLF we need to replace all CRLF that may be added by RemoveNode with LF
 			if (eol.ToFullString() != CarriageReturnLineFeed.ToFullString())
 			{
