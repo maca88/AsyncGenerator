@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-
+using System.Reflection;
 #if NET46
 using Microsoft.Build.Locator;
 #endif
@@ -12,6 +12,14 @@ namespace AsyncGenerator.Internal
 {
 	internal static class EnvironmentHelper
 	{
+		private static readonly string[] MsBuildAssemblies =
+		{
+			"Microsoft.Build",
+			"Microsoft.Build.Framework",
+			"Microsoft.Build.Tasks.Core",
+			"Microsoft.Build.Utilities.Core"
+		};
+
 		/// <summary>
 		/// Setup the environment in order MSBuild to work
 		/// </summary>
@@ -31,6 +39,17 @@ namespace AsyncGenerator.Internal
 						Environment.SetEnvironmentVariable("MSBuildExtensionsPath", Path.Combine(monoDir, "xbuild"));
 					});
 				});
+				var msbuildPath = Path.GetDirectoryName(Environment.GetEnvironmentVariable("MSBUILD_EXE_PATH"));
+				AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
+				{
+					var assemblyName = new AssemblyName(eventArgs.Name);
+					if (!MsBuildAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
+					{
+						return null;
+					}
+					var targetAssembly = Path.Combine(msbuildPath, assemblyName.Name + ".dll");
+					return File.Exists(targetAssembly) ? Assembly.LoadFrom(targetAssembly) : null;
+				};
 				return;
 			}
 			var vsInstallDir = Environment.GetEnvironmentVariable("VSINSTALLDIR");
