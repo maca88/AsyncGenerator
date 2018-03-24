@@ -16,6 +16,6 @@
   </metadata>
   <files>
     <file src="bin\Release\AsyncGenerator.CommandLine.exe.config" target="tools" />
-    <file src="bin\Release\*.dll" target="tools" />
+    <file src="bin\Release\*.dll" exclude="**\Microsoft.Build.dll;**\Microsoft.Build.Framework.dll;**\Microsoft.Build.*.Core.dll" target="tools" />
   </files>
 </package>
