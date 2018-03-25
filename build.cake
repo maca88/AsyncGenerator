@@ -86,6 +86,7 @@ Task("Clean-Packages")
 });
 
 Task("Pack-NuGet-Packages")
+    .IsDependentOn("Build") // We have to build in order to include dlls for the AsyncGenerator.CommandLine project
     .IsDependentOn("Clean-Packages")
     .Description("Creates NuGet packages")
     .Does(() =>
