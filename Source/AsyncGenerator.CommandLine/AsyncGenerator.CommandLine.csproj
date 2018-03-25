@@ -49,7 +49,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="NuGet.ProjectModel" Version="4.6.1" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
