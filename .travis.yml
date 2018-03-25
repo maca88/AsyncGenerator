@@ -9,10 +9,6 @@ script:
   - sudo ./build.sh
 git:
   submodules: false
-matrix:
-  allow_failures:
-    - os: osx
-      mono: 5.10.0
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo nuget update -self; fi
 cache:
