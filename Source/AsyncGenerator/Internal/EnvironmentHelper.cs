@@ -1,12 +1,13 @@
-﻿using System;
+﻿#if ENV
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if NET46
+#if NET46 || NET461
 using Microsoft.Build.Locator;
 #endif
 
-#if NETCOREAPP2_0 || NET46
+#if NETCOREAPP2_0 || NET46 || NET461
 
 namespace AsyncGenerator.Internal
 {
@@ -29,7 +30,7 @@ namespace AsyncGenerator.Internal
 			SetupMsBuildPath(GetNetCoreMsBuildPath);
 #endif
 
-#if NET46
+#if NET46 || NET461
 			if (IsMono)
 			{
 				SetupMsBuildPath(() =>
@@ -157,4 +158,5 @@ namespace AsyncGenerator.Internal
 	}
 }
 
+#endif
 #endif

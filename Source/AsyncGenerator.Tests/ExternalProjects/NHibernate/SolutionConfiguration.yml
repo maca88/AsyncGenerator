@@ -1,5 +1,5 @@
 ﻿solution:
-  filePath: ../../ExternalProjects/NHibernate/Source/src/NHibernate.sln
+  filePath: ../../../../ExternalProjects/NHibernate/src/NHibernate.sln
   concurrentRun: true
   applyChanges: true
   suppressDiagnosticFailures:

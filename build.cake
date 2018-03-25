@@ -70,7 +70,7 @@ Task("Run-Unit-Tests")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    NUnit3("./Source/**/bin/" + configuration + "/*.Tests.dll", new NUnit3Settings {
+    NUnit3("./Source/**/bin/" + configuration + "/net461/*.Tests.dll", new NUnit3Settings {
         NoResults = true
         });
 });
@@ -86,40 +86,29 @@ Task("Clean-Packages")
 });
 
 Task("Pack-NuGet-Packages")
-    .IsDependentOn("Build")
     .IsDependentOn("Clean-Packages")
     .Description("Creates NuGet packages")
     .Does(() =>
 {
     CreateDirectory(PACKAGE_DIR);
-    NuGetPack("Source/AsyncGenerator.Core/AsyncGenerator.Core.csproj", new NuGetPackSettings()
+
+    var projects = new string[]
     {
-        OutputDirectory = PACKAGE_DIR,
-        Symbols = true,
-        ArgumentCustomization = args => args
-            .Append("-Prop Configuration=" + configuration)
-    });
-    NuGetPack("Source/AsyncGenerator.Configuration.Yaml/AsyncGenerator.Configuration.Yaml.csproj", new NuGetPackSettings()
+        "Source/AsyncGenerator.Core/AsyncGenerator.Core.csproj",
+        "Source/AsyncGenerator.Configuration.Yaml/AsyncGenerator.Configuration.Yaml.csproj",
+        "Source/AsyncGenerator/AsyncGenerator.csproj",
+        "Source/AsyncGenerator.CommandLine/AsyncGenerator.CommandLine.csproj"
+    };
+
+    foreach(var project in projects)
     {
-        OutputDirectory = PACKAGE_DIR,
-        Symbols = true,
-        ArgumentCustomization = args => args
-            .Append("-Prop Configuration=" + configuration)
-    });
-    NuGetPack("Source/AsyncGenerator/AsyncGenerator.csproj", new NuGetPackSettings()
-    {
-        OutputDirectory = PACKAGE_DIR,
-        Symbols = true,
-        ArgumentCustomization = args => args
-            .Append("-Prop Configuration=" + configuration)
-    });
-    NuGetPack("Source/AsyncGenerator.CommandLine/AsyncGenerator.CommandLine.csproj", new NuGetPackSettings()
-    {
-        OutputDirectory = PACKAGE_DIR,
-        ArgumentCustomization = args => args
-            .Append("-Tool")
-            .Append("-Prop Configuration=" + configuration)
-    });
+        MSBuild(project, new MSBuildSettings {
+            Configuration = configuration,
+            ArgumentCustomization = args => args
+                .Append("/t:pack")
+                .Append("/p:PackageOutputPath=\"" + PACKAGE_DIR + "\"")
+        });
+    }
 });
     
 Task("Publish-NuGet-Packages")

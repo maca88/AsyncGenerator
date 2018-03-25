@@ -1,5 +1,5 @@
 ﻿projects:
-- filePath: ../../ExternalProjects/NHibernate/Source/src/NHibernate/NHibernate.csproj
+- filePath: ../../../../ExternalProjects/NHibernate/src/NHibernate/NHibernate.csproj
   concurrentRun: true
   applyChanges: true
   analyzation:
@@ -158,7 +158,7 @@
     assemblyName: AsyncGenerator.Core
   - type: AsyncGenerator.Core.Plugins.EmptyRegionRemover
     assemblyName: AsyncGenerator.Core
-- filePath: ../../ExternalProjects/NHibernate/Source/src/NHibernate.DomainModel/NHibernate.DomainModel.csproj
+- filePath: ../../../../ExternalProjects/NHibernate/Source/src/NHibernate.DomainModel/NHibernate.DomainModel.csproj
   concurrentRun: true
   applyChanges: true
   analyzation:
@@ -173,7 +173,7 @@
               /// <content>
               /// Contains generated async methods
               /// </content>
-- filePath: ../../ExternalProjects/NHibernate/Source/src/NHibernate.Test/NHibernate.Test.csproj
+- filePath: ../../../../ExternalProjects/NHibernate/Source/src/NHibernate.Test/NHibernate.Test.csproj
   concurrentRun: true
   applyChanges: true
   analyzation:
