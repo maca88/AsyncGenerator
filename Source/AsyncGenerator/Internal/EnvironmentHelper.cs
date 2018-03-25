@@ -21,6 +21,20 @@ namespace AsyncGenerator.Internal
 			"Microsoft.Build.Utilities.Core"
 		};
 
+		private static readonly string[] NuGetAssemblies =
+		{
+			"NuGet.Common",
+			"NuGet.Configuration",
+			"NuGet.DependencyResolver.Core",
+			"NuGet.Frameworks",
+			"NuGet.LibraryModel",
+			"NuGet.Packaging.Core",
+			"NuGet.Packaging",
+			"NuGet.ProjectModel",
+			"NuGet.Protocol",
+			"NuGet.Versioning"
+		};
+
 		/// <summary>
 		/// Setup the environment in order MSBuild to work
 		/// </summary>
@@ -47,6 +61,18 @@ namespace AsyncGenerator.Internal
 					var dest = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{assembly}.dll"));
 					File.Copy(src, dest, true);
 				}
+				// On OSX mono 5.10.0 NuGet assemblies are not loaded, use a custom resolver that loads them.
+				var sdkPath = Path.Combine(msbuildPath, "Sdks", "Microsoft.NET.Sdk", "tools", "net46");
+				AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
+				{
+					var assemblyName = new AssemblyName(eventArgs.Name);
+					if (!NuGetAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
+					{
+						return null;
+					}
+					var path = Path.Combine(sdkPath, $"{assemblyName.Name}.dll");
+					return File.Exists(path) ? Assembly.LoadFile(Path.Combine(sdkPath, $"{assemblyName.Name}.dll")) : null;
+				};
 				return;
 			}
 			var vsInstallDir = Environment.GetEnvironmentVariable("VSINSTALLDIR");
