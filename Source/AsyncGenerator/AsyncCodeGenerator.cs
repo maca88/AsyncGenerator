@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using AsyncGenerator.Analyzation.Internal;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
@@ -17,7 +18,6 @@ using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
 using AsyncGenerator.Plugins.Internal;
 using AsyncGenerator.Transformation.Internal;
-using Microsoft.Build.Construction;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -205,8 +205,9 @@ namespace AsyncGenerator
 			{
 				logger.Info($"Applying project '{projectChanges.NewProject.FilePath}' changes started");
 
-				var xml = ProjectRootElement.Open(projectChanges.NewProject.FilePath);
-				var isNewCsproj = xml?.Sdk == "Microsoft.NET.Sdk";
+				var xml = new XmlDocument();
+				xml.Load(projectChanges.NewProject.FilePath);
+				var isNewCsproj = xml.DocumentElement?.GetAttribute("Sdk") == "Microsoft.NET.Sdk";
 
 				var addedDocuments = projectChanges
 					.GetAddedDocuments()

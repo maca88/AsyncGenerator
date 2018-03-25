@@ -55,14 +55,19 @@ namespace AsyncGenerator.Tests
 			return AppDomain.CurrentDomain.BaseDirectory;
 		}
 
+		public static string GetExternalProjectDirectory(string name)
+		{
+			return Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "ExternalProjects", name));
+		}
+
 		public static string GetTestProjectPath(string name)
 		{
-			return Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.TestProjects", name, $"{name}.csproj"));
+			return Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "AsyncGenerator.TestProjects", name, $"{name}.csproj"));
 		}
 
 		public static string GetTestSolutionPath(string name)
 		{
-			return Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.TestProjects", $"{name}.sln"));
+			return Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "AsyncGenerator.TestProjects", $"{name}.sln"));
 		}
 
 		public async Task ReadonlyTest(Action<IFluentProjectConfiguration> action = null)
@@ -110,7 +115,7 @@ namespace AsyncGenerator.Tests
 
 		public virtual AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
-			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.Tests.csproj"));
 			
 			return AsyncCodeConfiguration.Create()
 				.ConfigureProject(filePath, p =>
@@ -137,7 +142,7 @@ namespace AsyncGenerator.Tests
 
 		public AsyncCodeConfiguration Configure(string fileName, Action<IFluentProjectConfiguration> action = null)
 		{
-			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.sln"));
+			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "AsyncGenerator.sln"));
 			return AsyncCodeConfiguration.Create()
 				.ConfigureSolution(slnFilePath, c => c
 					.ConfigureProject("AsyncGenerator.Tests", p =>
@@ -246,14 +251,14 @@ namespace AsyncGenerator.Tests
 
 		private static Microsoft.CodeAnalysis.Project OpenProject()
 		{
-			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.Tests.csproj"));
 			var workspace = AsyncCodeGenerator.CreateWorkspace(null);
 			return AsyncCodeGenerator.OpenProject(workspace, filePath, ImmutableArray<Predicate<string>>.Empty, Logger).GetAwaiter().GetResult();
 		}
 
 		private static Microsoft.CodeAnalysis.Solution OpenSolution()
 		{
-			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.sln"));
+			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "..", "AsyncGenerator.sln"));
 			var workspace = AsyncCodeGenerator.CreateWorkspace(null);
 			return AsyncCodeGenerator.OpenSolution(workspace, filePath, ImmutableArray<Predicate<string>>.Empty, Logger).GetAwaiter().GetResult();
 		}
@@ -299,7 +304,7 @@ namespace AsyncGenerator.Tests
 				var config = _realConfigurator.Parse(content);
 				foreach (var testProject in config.Projects.Where(o => o.FilePath == "AsyncGenerator.Tests.csproj"))
 				{
-					testProject.FilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "AsyncGenerator.Tests.csproj"));
+					testProject.FilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.Tests.csproj"));
 				}
 				return config;
 			}

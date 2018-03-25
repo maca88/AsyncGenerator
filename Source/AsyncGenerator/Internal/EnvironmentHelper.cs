@@ -1,21 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#if ENV
+using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-#if NET46
+using System.Reflection;
+#if NET461
 using Microsoft.Build.Locator;
 #endif
 
-#if NETCOREAPP2_0 || NET46
+#if NETCOREAPP2_0 || NET461
 
 namespace AsyncGenerator.Internal
 {
 	internal static class EnvironmentHelper
 	{
+		private static readonly string[] MsBuildAssemblies =
+		{
+			"Microsoft.Build",
+			"Microsoft.Build.Framework",
+			"Microsoft.Build.Tasks.Core",
+			"Microsoft.Build.Utilities.Core"
+		};
+
+		private static readonly string[] NuGetAssemblies =
+		{
+			"NuGet.Common",
+			"NuGet.Configuration",
+			"NuGet.DependencyResolver.Core",
+			"NuGet.Frameworks",
+			"NuGet.LibraryModel",
+			"NuGet.Packaging.Core",
+			"NuGet.Packaging",
+			"NuGet.ProjectModel",
+			"NuGet.Protocol",
+			"NuGet.Versioning"
+		};
+
 		/// <summary>
 		/// Setup the environment in order MSBuild to work
 		/// </summary>
@@ -25,7 +44,7 @@ namespace AsyncGenerator.Internal
 			SetupMsBuildPath(GetNetCoreMsBuildPath);
 #endif
 
-#if NET46
+#if NET461
 			if (IsMono)
 			{
 				SetupMsBuildPath(() =>
@@ -35,6 +54,25 @@ namespace AsyncGenerator.Internal
 						Environment.SetEnvironmentVariable("MSBuildExtensionsPath", Path.Combine(monoDir, "xbuild"));
 					});
 				});
+				var msbuildPath = Path.GetDirectoryName(Environment.GetEnvironmentVariable("MSBUILD_EXE_PATH"));
+				foreach (var assembly in MsBuildAssemblies)
+				{
+					var src = Path.GetFullPath(Path.Combine(msbuildPath, $"{assembly}.dll"));
+					var dest = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{assembly}.dll"));
+					File.Copy(src, dest, true);
+				}
+				// On OSX mono 5.10.0 NuGet assemblies are not loaded, use a custom resolver that loads them.
+				var sdkPath = Path.Combine(msbuildPath, "Sdks", "Microsoft.NET.Sdk", "tools", "net46");
+				AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
+				{
+					var assemblyName = new AssemblyName(eventArgs.Name);
+					if (!NuGetAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
+					{
+						return null;
+					}
+					var path = Path.Combine(sdkPath, $"{assemblyName.Name}.dll");
+					return File.Exists(path) ? Assembly.LoadFile(Path.Combine(sdkPath, $"{assemblyName.Name}.dll")) : null;
+				};
 				return;
 			}
 			var vsInstallDir = Environment.GetEnvironmentVariable("VSINSTALLDIR");
@@ -60,9 +98,9 @@ namespace AsyncGenerator.Internal
 
 		public static  bool IsMono => Type.GetType("Mono.Runtime") != null;
 
-		public static  bool IsNetCore => RuntimeInformation.FrameworkDescription.StartsWith(".NET Core"); // .NET Core 4.6.00001.0
+		//public static  bool IsNetCore => RuntimeInformation.FrameworkDescription.StartsWith(".NET Core"); // .NET Core 4.6.00001.0
 
-		public static  bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"); // .NET Framework 4.7.2115.0
+		//public static  bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"); // .NET Framework 4.7.2115.0
 
 		// On Mono RuntimeInformation.IsOSPlatform will always retrun true for Windows
 		public static bool IsWindows => Path.DirectorySeparatorChar == '\\';
@@ -71,10 +109,10 @@ namespace AsyncGenerator.Internal
 		{
 			var name = AppDomain.CurrentDomain.FriendlyName;
 			// On .NET Core FriendlyName as only the assembly name without the extension
-			if (IsNetCore)
+			/*if (IsNetCore)
 			{
 				name += ".dll";
-			}
+			}*/
 			name += ".config";
 			var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
 			return File.Exists(path) ? path : null;
@@ -142,4 +180,5 @@ namespace AsyncGenerator.Internal
 	}
 }
 
+#endif
 #endif

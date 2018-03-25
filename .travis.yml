@@ -1,10 +1,10 @@
 language: csharp
-matrix:
-  include:
-    - os: linux
-      mono: latest
-    - os: osx
-      mono: latest
+mono:
+  - 5.8.0
+  - 5.10.0
+os:
+  - osx
+  - linux
 script:
   - sudo ./build.sh
 git:

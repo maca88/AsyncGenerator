@@ -67,7 +67,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		[Test]
 		public Task TestYamlAfterTransformation()
 		{
-			var configPath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate","Source","src","AsyncGenerator.yml"));
+			var configPath = Path.GetFullPath(Path.Combine(GetExternalProjectDirectory("NHibernate"), "src", "AsyncGenerator.yml"));
 			
 			var config = AsyncCodeConfiguration.Create()
 				.LoggerFactory(new Log4NetLoggerFactory())
@@ -79,7 +79,7 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		[Test]
 		public Task TestAfterTransformation()
 		{
-			var slnFilePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "ExternalProjects", "NHibernate", "Source", "src", "NHibernate.sln"));
+			var slnFilePath = Path.GetFullPath(Path.Combine(GetExternalProjectDirectory("NHibernate"), "src", "NHibernate.sln"));
 			
 			var config = AsyncCodeConfiguration.Create()
 				.LoggerFactory(new Log4NetLoggerFactory())

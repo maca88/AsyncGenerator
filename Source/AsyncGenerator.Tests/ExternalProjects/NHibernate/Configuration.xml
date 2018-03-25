@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <AsyncGenerator xmlns="https://github.com/maca88/AsyncGenerator">
-  <Solution filePath="../../ExternalProjects/NHibernate/Source/src/NHibernate.sln">
+  <Solution filePath="../../../../ExternalProjects/NHibernate/Source/src/NHibernate.sln">
     <Projects>
       <Project name="NHibernate">
         <Analyzation>
