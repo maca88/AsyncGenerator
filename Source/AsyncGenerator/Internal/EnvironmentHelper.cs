@@ -41,16 +41,12 @@ namespace AsyncGenerator.Internal
 					});
 				});
 				var msbuildPath = Path.GetDirectoryName(Environment.GetEnvironmentVariable("MSBUILD_EXE_PATH"));
-				AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
+				foreach (var assembly in MsBuildAssemblies)
 				{
-					var assemblyName = new AssemblyName(eventArgs.Name);
-					if (!MsBuildAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
-					{
-						return null;
-					}
-					var targetAssembly = Path.Combine(msbuildPath, assemblyName.Name + ".dll");
-					return File.Exists(targetAssembly) ? Assembly.LoadFrom(targetAssembly) : null;
-				};
+					var src = Path.GetFullPath(Path.Combine(msbuildPath, $"{assembly}.dll"));
+					var dest = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{assembly}.dll"));
+					File.Copy(src, dest, true);
+				}
 				return;
 			}
 			var vsInstallDir = Environment.GetEnvironmentVariable("VSINSTALLDIR");
