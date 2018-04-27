@@ -162,5 +162,58 @@ namespace AsyncGenerator.Tests.CancellationTokens
 				)
 			);
 		}
+
+		[Test]
+		public Task TestCancellationTokensLocalMethodsGuardedAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ClassWithLocalAsyncMethods), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.Guards(true)
+						.ParameterGeneration(symbolInfo =>
+						{
+							return MethodCancellationToken.Required;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Console.WriteLine(document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile("ClassWithLocalAsyncMethodsGuarded"), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
+		public Task TestCancellationTokensLocalMethodsUnGuardedAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ClassWithLocalAsyncMethods), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.ParameterGeneration(symbolInfo =>
+						{
+							return MethodCancellationToken.Required;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Console.WriteLine(document.Transformed.ToFullString());
+						Assert.AreEqual(GetOutputFile("ClassWithLocalAsyncMethodsUnGuarded"), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

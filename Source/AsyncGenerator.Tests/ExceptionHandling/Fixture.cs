@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 using AsyncGenerator.Tests.ExceptionHandling.Input;
+using System.Threading;
 
 namespace AsyncGenerator.Tests.ExceptionHandling
 {
@@ -164,6 +165,36 @@ namespace AsyncGenerator.Tests.ExceptionHandling
 			var document = result.Documents[0];
 			Assert.NotNull(document.OriginalModified);
 			Assert.AreEqual(GetOutputFile(nameof(NoCatchMethod)), document.Transformed.ToFullString());
+		}
+
+		#endregion
+
+		#region PropagateOperationCanceledException
+		[Test]
+		public Task TestOperationCanceledExceptionPropagationAfterTransformation()
+		{
+			return ReadonlyTest(nameof(PropagateOperationCanceledException), p => p
+				.ConfigureAnalyzation(a => a
+					.ScanMethodBody(true)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.ParameterGeneration(symbolInfo => MethodCancellationToken.Required))
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(AfterPropagateOperationCanceledExceptionTransfromation)
+				)
+			);
+		}
+
+		private void AfterPropagateOperationCanceledExceptionTransfromation(IProjectTransformationResult result)
+		{
+			AssertValidAnnotations(result);
+			Assert.AreEqual(1, result.Documents.Count);
+			var document = result.Documents[0];
+			Assert.NotNull(document.OriginalModified);
+			Console.WriteLine(document.Transformed.ToFullString());
+			Assert.AreEqual(GetOutputFile(nameof(PropagateOperationCanceledException)), document.Transformed.ToFullString());
 		}
 
 		#endregion
