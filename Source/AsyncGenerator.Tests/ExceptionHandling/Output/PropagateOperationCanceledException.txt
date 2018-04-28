@@ -31,6 +31,19 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 			}
 		}
 
+		public async Task MethodThatCatchesExceptionsNoDeclarationAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				await (SimpleFile.ReadAsync(cancellationToken));
+			}
+			catch (OperationCanceledException) { throw; }
+			catch
+			{
+				throw new Exception("My exception");
+			}
+		}
+
 		public async Task MethodThatCatchesExceptionsNestedAsync(CancellationToken cancellationToken)
 		{
 			try

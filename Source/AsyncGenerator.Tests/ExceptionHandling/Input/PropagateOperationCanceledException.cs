@@ -20,6 +20,18 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 			}
 		}
 
+		public void MethodThatCatchesExceptionsNoDeclaration()
+		{
+			try
+			{
+				SimpleFile.Read();
+			}
+			catch
+			{
+				throw new Exception("My exception");
+			}
+		}
+
 		public void MethodThatCatchesExceptionsNested()
 		{
 			try
