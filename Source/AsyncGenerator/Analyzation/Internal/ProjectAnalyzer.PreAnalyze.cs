@@ -392,6 +392,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				)
 				{
 					IgnoreOrCopy(IgnoreReason.AsyncCounterpartExists);
+					methodData.CancellationTokenRequired = methodData.AsyncCounterpartWithTokenSymbol != null;
 					return;
 				}
 			}

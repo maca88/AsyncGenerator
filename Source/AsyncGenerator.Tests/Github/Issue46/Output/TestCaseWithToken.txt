@@ -38,7 +38,7 @@ namespace AsyncGenerator.Tests.Github.Issue46.Input
 	{
 		public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
 		{
-			await (base.ReadAsync());
+			await (base.ReadAsync(cancellationToken));
 			return false;
 		}
 	}
