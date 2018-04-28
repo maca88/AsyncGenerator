@@ -1,45 +1,50 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.ExceptionHandling.Input
 {
-	public class PropagateOperationCanceledException
+	public class DoNotPropagateOperationCanceledException
 	{
-		public void MethodThatCatchesExceptions()
+		public void MethodThatCatchesTargetInvocationException()
 		{
 			try
 			{
 				SimpleFile.Read();
 			}
-			catch (Exception ex)
+			catch (TargetInvocationException ex)
 			{
 				throw new Exception("My wrapped exception", ex);
 			}
 		}
 
-		public void MethodThatCatchesExceptionsNested()
+		public void MethodThatCatchesOperationCanceledException()
 		{
 			try
 			{
-				try
-				{
-					SimpleFile.Read();
-				}
-				catch (Exception ex)
-				{
-					throw new Exception("My wrapped exception", ex);
-				}
+				SimpleFile.Read();
 			}
-			catch (Exception ex)
+			catch (OperationCanceledException ex)
 			{
 				throw new Exception("My wrapped exception", ex);
 			}
 		}
 
-		public void LocalFunctionThatCatchesExceptions()
+		public void MethodWithoutCatch()
+		{
+			try
+			{
+				SimpleFile.Read();
+			}
+			finally
+			{
+			}
+		}
+
+		public void LocalFunctionThatCatchesOperationCanceledException()
 		{
 			Internal();
 
@@ -49,7 +54,7 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 				{
 					SimpleFile.Read();
 				}
-				catch (Exception ex)
+				catch (OperationCanceledException ex)
 				{
 					throw new Exception("My wrapped exception", ex);
 				}

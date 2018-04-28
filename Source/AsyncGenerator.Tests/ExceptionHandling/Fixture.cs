@@ -170,31 +170,45 @@ namespace AsyncGenerator.Tests.ExceptionHandling
 		#endregion
 
 		#region PropagateOperationCanceledException
+
 		[Test]
 		public Task TestOperationCanceledExceptionPropagationAfterTransformation()
 		{
 			return ReadonlyTest(nameof(PropagateOperationCanceledException), p => p
 				.ConfigureAnalyzation(a => a
-					.ScanMethodBody(true)
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.CancellationTokens(t => t
 						.ParameterGeneration(symbolInfo => MethodCancellationToken.Required))
 				)
 				.ConfigureTransformation(t => t
-					.LocalFunctions(true)
-					.AfterTransformation(AfterPropagateOperationCanceledExceptionTransfromation)
+					.AfterTransformation(r => AfterPropagateOperationCanceledExceptionTransfromation(r, nameof(PropagateOperationCanceledException)))
 				)
 			);
 		}
 
-		private void AfterPropagateOperationCanceledExceptionTransfromation(IProjectTransformationResult result)
+		[Test]
+		public Task TestDoNotPropagateOperationCanceledExceptionAfterTransformation()
+		{
+			return ReadonlyTest(nameof(DoNotPropagateOperationCanceledException), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(t => t
+						.ParameterGeneration(symbolInfo => MethodCancellationToken.Required))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(r => AfterPropagateOperationCanceledExceptionTransfromation(r, nameof(DoNotPropagateOperationCanceledException)))
+				)
+			);
+		}
+
+		private void AfterPropagateOperationCanceledExceptionTransfromation(IProjectTransformationResult result, string fileName)
 		{
 			AssertValidAnnotations(result);
 			Assert.AreEqual(1, result.Documents.Count);
 			var document = result.Documents[0];
 			Assert.NotNull(document.OriginalModified);
 			Console.WriteLine(document.Transformed.ToFullString());
-			Assert.AreEqual(GetOutputFile(nameof(PropagateOperationCanceledException)), document.Transformed.ToFullString());
+			Assert.AreEqual(GetOutputFile(fileName), document.Transformed.ToFullString());
 		}
 
 		#endregion

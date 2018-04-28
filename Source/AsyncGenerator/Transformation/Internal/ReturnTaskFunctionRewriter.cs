@@ -24,12 +24,11 @@ namespace AsyncGenerator.Transformation.Internal
 	/// Wraps all non taskable returns statements into a <see cref="Task.FromResult{TResult}"/> and conditionally wraps the method body
 	/// in a try/catch block (without preconditions) 
 	/// </summary>
-	internal class ReturnTaskFunctionRewriter : CSharpSyntaxRewriter
+	internal class ReturnTaskFunctionRewriter : FunctionRewriter
 	{
 		private readonly IFunctionAnalyzationResult _methodResult;
 		private readonly IFunctionTransformationResult _transformResult;
 		private readonly INamespaceTransformationMetadata _namespaceMetadata;
-		private SyntaxKind? _rewritingSyntaxKind;
 		private TypeSyntax _retunTypeSyntax;
 
 		public ReturnTaskFunctionRewriter(IFunctionTransformationResult transformResult, INamespaceTransformationMetadata namespaceMetadata)
@@ -39,9 +38,8 @@ namespace AsyncGenerator.Transformation.Internal
 			_namespaceMetadata = namespaceMetadata;
 		}
 
-		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
+		protected override SyntaxNode OnVisitMethodDeclaration(MethodDeclarationSyntax node)
 		{
-			_rewritingSyntaxKind = node.Kind();
 			_retunTypeSyntax = !_methodResult.Symbol.ReturnsVoid ? node.ReturnType : null;
 			if (!_methodResult.Faulted && 
 				(
@@ -52,7 +50,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				node = node.ConvertExpressionBodyToBlock(_transformResult);
 			}
-			node = (MethodDeclarationSyntax)base.VisitMethodDeclaration(node);
+			node = (MethodDeclarationSyntax)base.OnVisitMethodDeclaration(node);
 			if (node.GetFunctionBody() is BlockSyntax blockBody)
 			{
 				if (_methodResult is IMethodOrAccessorAnalyzationResult analyzationResult)
@@ -64,15 +62,10 @@ namespace AsyncGenerator.Transformation.Internal
 			return node;
 		}
 
-		public override SyntaxNode VisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)
+		protected override SyntaxNode OnVisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)
 		{
-			if (_rewritingSyntaxKind.HasValue)
-			{
-				return node;
-			}
-			_rewritingSyntaxKind = node.Kind();
 			SetupReturnType();
-			node =  (AnonymousMethodExpressionSyntax)base.VisitAnonymousMethodExpression(node);
+			node =  (AnonymousMethodExpressionSyntax)base.OnVisitAnonymousMethodExpression(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
@@ -81,15 +74,10 @@ namespace AsyncGenerator.Transformation.Internal
 			return node;
 		}
 
-		public override SyntaxNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
+		protected override SyntaxNode OnVisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
 		{
-			if (_rewritingSyntaxKind.HasValue)
-			{
-				return node;
-			}
-			_rewritingSyntaxKind = node.Kind();
 			SetupReturnType();
-			node = (ParenthesizedLambdaExpressionSyntax)base.VisitParenthesizedLambdaExpression(node);
+			node = (ParenthesizedLambdaExpressionSyntax)base.OnVisitParenthesizedLambdaExpression(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
@@ -98,15 +86,10 @@ namespace AsyncGenerator.Transformation.Internal
 			return node;
 		}
 
-		public override SyntaxNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
+		protected override SyntaxNode OnVisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
 		{
-			if (_rewritingSyntaxKind.HasValue)
-			{
-				return node;
-			}
-			_rewritingSyntaxKind = node.Kind();
 			SetupReturnType();
-			node = (SimpleLambdaExpressionSyntax)base.VisitSimpleLambdaExpression(node);
+			node = (SimpleLambdaExpressionSyntax)base.OnVisitSimpleLambdaExpression(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
@@ -115,13 +98,8 @@ namespace AsyncGenerator.Transformation.Internal
 			return node;
 		}
 
-		public override SyntaxNode VisitLocalFunctionStatement(LocalFunctionStatementSyntax node)
+		protected override SyntaxNode OnVisitLocalFunctionStatement(LocalFunctionStatementSyntax node)
 		{
-			if (_rewritingSyntaxKind.HasValue)
-			{
-				return node;
-			}
-			_rewritingSyntaxKind = node.Kind();
 			_retunTypeSyntax = !_methodResult.Symbol.ReturnsVoid ? node.ReturnType : null;
 			if (!_methodResult.Faulted &&
 			    (
@@ -132,7 +110,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				node = node.ConvertExpressionBodyToBlock(_transformResult);
 			}
-			node = (LocalFunctionStatementSyntax)base.VisitLocalFunctionStatement(node);
+			node = (LocalFunctionStatementSyntax)base.OnVisitLocalFunctionStatement(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
 				return node.WithBody(RewriteFunctionBody(bodyBlock));
@@ -169,7 +147,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var statement = node as StatementSyntax;
 				// First parent shall be the BlockSyntax (body) and second parent shall be the method
-				if (statement != null && statement.Parent?.Parent?.IsKind(_rewritingSyntaxKind.GetValueOrDefault()) == true)
+				if (statement != null && statement.Parent?.Parent?.IsKind(RewritingSyntaxKind.GetValueOrDefault()) == true)
 				{
 					// Here we can safe cast to BlockSyntax as if there is a StatementSyntax is also a BlockSyntax
 					var body = (BlockSyntax)statement.Parent;
@@ -242,10 +220,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
 		{
-			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) && _rewritingSyntaxKind.HasValue)
+			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) && RewritingSyntaxKind.HasValue)
 			{
 				var node = trivia.Token.Parent;
-				var method = node.Ancestors().First(o => o.IsKind(_rewritingSyntaxKind.Value));
+				var method = node.Ancestors().First(o => o.IsKind(RewritingSyntaxKind.Value));
 				var startDirective = trivia.Token.Parent.GetLastDirective();
 				var endDirective = startDirective.GetNextDirective();
 				if (endDirective == null)

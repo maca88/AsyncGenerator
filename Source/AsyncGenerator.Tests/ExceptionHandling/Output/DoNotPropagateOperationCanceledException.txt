@@ -10,49 +10,51 @@
 
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.ExceptionHandling.Input
 {
-	public partial class PropagateOperationCanceledException
+	public partial class DoNotPropagateOperationCanceledException
 	{
-		public async Task MethodThatCatchesExceptionsAsync(CancellationToken cancellationToken)
+		public async Task MethodThatCatchesTargetInvocationExceptionAsync(CancellationToken cancellationToken)
 		{
 			try
 			{
 				await (SimpleFile.ReadAsync(cancellationToken));
 			}
-			catch (OperationCanceledException) { throw; }
-			catch (Exception ex)
+			catch (TargetInvocationException ex)
 			{
 				throw new Exception("My wrapped exception", ex);
 			}
 		}
 
-		public async Task MethodThatCatchesExceptionsNestedAsync(CancellationToken cancellationToken)
+		public async Task MethodThatCatchesOperationCanceledExceptionAsync(CancellationToken cancellationToken)
 		{
 			try
 			{
-				try
-				{
-					await (SimpleFile.ReadAsync(cancellationToken));
-				}
-				catch (OperationCanceledException) { throw; }
-				catch (Exception ex)
-				{
-					throw new Exception("My wrapped exception", ex);
-				}
+				await (SimpleFile.ReadAsync(cancellationToken));
 			}
-			catch (OperationCanceledException) { throw; }
-			catch (Exception ex)
+			catch (OperationCanceledException ex)
 			{
 				throw new Exception("My wrapped exception", ex);
 			}
 		}
 
-		public async Task LocalFunctionThatCatchesExceptionsAsync(CancellationToken cancellationToken)
+		public async Task MethodWithoutCatchAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				await (SimpleFile.ReadAsync(cancellationToken));
+			}
+			finally
+			{
+			}
+		}
+
+		public async Task LocalFunctionThatCatchesOperationCanceledExceptionAsync(CancellationToken cancellationToken)
 		{
 			await (InternalAsync());
 
@@ -62,8 +64,7 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 				{
 					await (SimpleFile.ReadAsync(cancellationToken));
 				}
-				catch (OperationCanceledException) { throw; }
-				catch (Exception ex)
+				catch (OperationCanceledException ex)
 				{
 					throw new Exception("My wrapped exception", ex);
 				}
