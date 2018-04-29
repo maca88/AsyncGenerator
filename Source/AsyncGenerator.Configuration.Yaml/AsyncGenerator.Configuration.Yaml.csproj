@@ -1,18 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="..\..\Common.props" />
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
     <PackageId>CSharpAsyncGenerator.Configuration.Yaml</PackageId>
-    <Version>0.10.0</Version>
-    <Authors>maca88</Authors>
-    <Company />
     <Product>CSharpAsyncGenerator.Configuration.Yaml</Product>
     <Description>Configuration via yaml file</Description>
-    <Copyright>Copyright ©  2017</Copyright>
-    <PackageLicenseUrl>https://github.com/maca88/AsyncGenerator/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/maca88/AsyncGenerator</PackageProjectUrl>
-    <PackageTags>Async Generator Roslyn</PackageTags>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
 

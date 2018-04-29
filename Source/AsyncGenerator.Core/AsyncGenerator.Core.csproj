@@ -1,18 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="..\..\Common.props" />
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
     <PackageId>CSharpAsyncGenerator.Core</PackageId>
-    <Version>0.10.0</Version>
-    <Authors>maca88</Authors>
-    <Company />
     <Product>CSharpAsyncGenerator.Core</Product>
     <Description>Contains various plugins and public api for creating custom plugins</Description>
-    <Copyright>Copyright 2017</Copyright>
-    <PackageProjectUrl>https://github.com/maca88/AsyncGenerator</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/maca88/AsyncGenerator/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageTags>Async Generator Roslyn</PackageTags>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
 

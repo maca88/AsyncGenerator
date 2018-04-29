@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.10.0</Version>
+    <Authors>maca88</Authors>
+    <Company />
+    <Copyright>Copyright ©  2017</Copyright>
+    <PackageLicenseUrl>https://github.com/maca88/AsyncGenerator/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/maca88/AsyncGenerator</PackageProjectUrl>
+    <PackageTags>Async Generator Roslyn</PackageTags>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatSpecificWarningsAsErrors />
+  </PropertyGroup>
+</Project>
