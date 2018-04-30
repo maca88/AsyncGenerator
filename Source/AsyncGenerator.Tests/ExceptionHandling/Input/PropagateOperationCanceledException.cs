@@ -20,6 +20,22 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 			}
 		}
 
+		public void MethodThatCatchesMultipleExceptions()
+		{
+			try
+			{
+				SimpleFile.Read();
+			}
+			catch (InvalidOperationException ex)
+			{
+				throw new Exception("My wrapped exception", ex);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("My wrapped exception", ex);
+			}
+		}
+
 		public void MethodThatCatchesExceptionsNoDeclaration()
 		{
 			try

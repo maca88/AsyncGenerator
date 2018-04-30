@@ -21,7 +21,7 @@ namespace AsyncGenerator.Transformation.Internal
 		private readonly SyntaxTrivia _eolTrivia;
 		private readonly INamespaceTransformationMetadata _namespaceMetadata;
 
-		private static HashSet<string> _validExceptions = new HashSet<string>
+		private static readonly HashSet<string> IncludeExceptions = new HashSet<string>
 		{
 			$"{nameof(SystemException)}",
 			$"{nameof(System)}.{nameof(SystemException)}",
@@ -30,7 +30,7 @@ namespace AsyncGenerator.Transformation.Internal
 			$"{nameof(System)}.{nameof(Exception)}",
 		};
 
-		private static HashSet<string> _skipExceptions = new HashSet<string>
+		private static readonly HashSet<string> SkipExceptions = new HashSet<string>
 		{
 			$"{nameof(OperationCanceledException)}",
 			$"{nameof(System)}.{nameof(OperationCanceledException)}"
@@ -44,16 +44,14 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public override SyntaxNode VisitTryStatement(TryStatementSyntax node)
 		{
-			// Do not add a OperationCanceledException catch block if:
+			// Do not add an OperationCanceledException catch block if:
 			// - there are no catch blocks (only finally)
-			// - there already exists a OperationCanceledException catch block
+			// - there already exists an OperationCanceledException catch block
 			// - there are no ancestors of OperationCanceledException being catched
 			if (node.Catches.Count == 0 ||
-			    node.Catches.Any(o => o.Declaration != null &&
-			                          (
-				                          _skipExceptions.Contains(o.Declaration.Type.ToString()) ||
-				                          !_validExceptions.Contains(o.Declaration.Type.ToString())
-			                          )))
+			    node.Catches.Any(o => o.Declaration != null && SkipExceptions.Contains(o.Declaration.Type.ToString())) ||
+			    node.Catches.All(o => o.Declaration != null && !IncludeExceptions.Contains(o.Declaration.Type.ToString()))
+				)
 			{
 				return base.VisitTryStatement(node);
 			}

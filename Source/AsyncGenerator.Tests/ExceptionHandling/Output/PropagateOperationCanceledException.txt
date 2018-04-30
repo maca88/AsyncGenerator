@@ -31,6 +31,23 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 			}
 		}
 
+		public async Task MethodThatCatchesMultipleExceptionsAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				await (SimpleFile.ReadAsync(cancellationToken));
+			}
+			catch (OperationCanceledException) { throw; }
+			catch (InvalidOperationException ex)
+			{
+				throw new Exception("My wrapped exception", ex);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("My wrapped exception", ex);
+			}
+		}
+
 		public async Task MethodThatCatchesExceptionsNoDeclarationAsync(CancellationToken cancellationToken)
 		{
 			try
