@@ -66,7 +66,7 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 			SimpleFile.Read();
 			try
 			{
-				;
+				; //no async calls here
 			}
 			catch
 			{
