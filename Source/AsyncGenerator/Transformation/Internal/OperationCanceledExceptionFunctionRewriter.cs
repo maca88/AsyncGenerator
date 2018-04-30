@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Transformation;
+using AsyncGenerator.Extensions.Internal;
+using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -48,10 +50,11 @@ namespace AsyncGenerator.Transformation.Internal
 			// - there are no catch blocks (only finally)
 			// - there already exists an OperationCanceledException catch block
 			// - there are no ancestors of OperationCanceledException being catched
+			// - there are no async calls that have a cancellation token argument and there are no guards added
 			if (node.Catches.Count == 0 ||
 			    node.Catches.Any(o => o.Declaration != null && SkipExceptions.Contains(o.Declaration.Type.ToString())) ||
-			    node.Catches.All(o => o.Declaration != null && !IncludeExceptions.Contains(o.Declaration.Type.ToString()))
-				)
+			    node.Catches.All(o => o.Declaration != null && !IncludeExceptions.Contains(o.Declaration.Type.ToString())) ||
+			    !node.Block.DescendantNodes(o => !o.IsFunction()).Any(o => o.HasAnnotations(Annotations.AsyncCallWithTokenOrGuard)))
 			{
 				return base.VisitTryStatement(node);
 			}

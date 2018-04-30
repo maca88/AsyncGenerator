@@ -9,5 +9,6 @@ namespace AsyncGenerator.Internal
 	internal static class Annotations
 	{
 		public const string TaskReturned = "TaskReturned";
+		public const string AsyncCallWithTokenOrGuard = "AsyncCallWithTokenOrGuard";
 	}
 }
