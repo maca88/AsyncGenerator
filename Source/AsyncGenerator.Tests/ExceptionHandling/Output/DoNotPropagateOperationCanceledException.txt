@@ -70,5 +70,17 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 				}
 			}
 		}
+
+		public async Task MethodCatchNotWrappingAsyncCallAsync(CancellationToken cancellationToken)
+		{
+			await (SimpleFile.ReadAsync(cancellationToken));
+			try
+			{
+				; //no async calls here
+			}
+			catch
+			{
+			}
+		}
 	}
 }

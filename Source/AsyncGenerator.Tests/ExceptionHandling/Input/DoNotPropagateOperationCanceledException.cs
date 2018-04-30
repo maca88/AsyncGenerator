@@ -60,5 +60,17 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 				}
 			}
 		}
+
+		public void MethodCatchNotWrappingAsyncCall()
+		{
+			SimpleFile.Read();
+			try
+			{
+				;
+			}
+			catch
+			{
+			}
+		}
 	}
 }
