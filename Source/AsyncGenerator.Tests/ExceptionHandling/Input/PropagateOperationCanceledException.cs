@@ -36,6 +36,23 @@ namespace AsyncGenerator.Tests.ExceptionHandling.Input
 			}
 		}
 
+		public void MethodThatCatchesExceptionsWithExtraTrivias()
+		{
+			    
+			try
+			{
+				SimpleFile.Read();
+			}
+			catch (InvalidOperationException ex)
+			{
+				throw new Exception("My wrapped exception", ex);
+			}
+			catch
+			{
+				throw new Exception("My wrapped exception");
+			}
+		}
+
 		public void MethodThatCatchesExceptionsNoDeclaration()
 		{
 			try

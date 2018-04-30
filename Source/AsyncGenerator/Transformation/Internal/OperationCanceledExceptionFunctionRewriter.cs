@@ -57,7 +57,8 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			var catchClause = CatchClause()
-				.WithCatchKeyword(Token(TriviaList(node.GetLeadingTrivia()), SyntaxKind.CatchKeyword, TriviaList(Space)))
+				.WithCatchKeyword(
+					Token(TriviaList(node.GetLeadingTrivia().LastOrDefault(o => o.IsKind(SyntaxKind.WhitespaceTrivia))), SyntaxKind.CatchKeyword, TriviaList(Space)))
 				.WithDeclaration(
 					CatchDeclaration(_namespaceMetadata.UsingSystem
 							? IdentifierName(nameof(OperationCanceledException))
