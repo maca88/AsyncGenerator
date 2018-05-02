@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Xml;
+using System.Xml.Schema;
 using System.Xml.Serialization;
 
 namespace AsyncGenerator.Core.FileConfiguration
@@ -147,6 +149,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public ExceptionHandling ExceptionHandling { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> PreserveReturnType { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodFilter> AlwaysAwait { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
 		public List<TypeConversionFilter> TypeConversion { get; set; }
 		[XmlArrayItem("Document", IsNullable = false)]
@@ -180,6 +184,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			IgnoreDocuments = new List<DocumentFilter>();
 			TypeConversion = new List<TypeConversionFilter>();
 			PreserveReturnType = new List<MethodFilter>();
+			AlwaysAwait = new List<MethodFilter>();
 			MethodConversion = new List<MethodConversionFilter>();
 			ScanForMissingAsyncMembers = new List<TypeFilter>();
 		}
@@ -220,6 +225,19 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodFilter : MemberFilter
 	{
+		#region ReturnsVoid
+		[XmlAttribute(AttributeName = "returnsVoid")]
+		public string ReturnsVoidString
+		{
+			get => ReturnsVoid?.ToString();
+			set => ReturnsVoid = bool.TryParse(value, out var boolean)
+				? (bool?)boolean
+				: null;
+		}
+
+		[XmlIgnore]
+		public bool? ReturnsVoid { get; private set; }
+		#endregion
 	}
 
 	[XmlInclude(typeof(TypeFilter))]
@@ -258,51 +276,42 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string Rule { get; set; }
 		#region HasDocumentationComment
 		[XmlAttribute(AttributeName = "hasDocumentationComment")]
-		internal string HasDocumentationCommentString { get; set; }
-		private bool? _hasDocumentationComment;
-		public bool? HasDocumentationComment
+		public string HasDocumentationCommentString
 		{
-			get => _hasDocumentationComment;
-			set
-			{
-				HasDocumentationCommentString = value?.ToString();
-				_hasDocumentationComment = bool.TryParse(HasDocumentationCommentString, out var boolean)
-					? (bool?)boolean
-					: null;
-			}
+			get => HasDocumentationComment?.ToString();
+			set => HasDocumentationComment = bool.TryParse(value, out var boolean)
+				? (bool?)boolean
+				: null;
 		}
+
+		[XmlIgnore]
+		public bool? HasDocumentationComment { get; private set; }
 		#endregion
 		#region IsVirtual
 		[XmlAttribute(AttributeName = "isVirtual")]
-		internal string IsVirtualString { get; set; }
-		private bool? _isVirtual;
-		public bool? IsVirtual
+		public string IsVirtualString
 		{
-			get => _isVirtual;
-			set
-			{
-				IsVirtualString = value?.ToString();
-				_isVirtual = bool.TryParse(IsVirtualString, out var boolean)
-					? (bool?)boolean
-					: null;
-			}
+			get => IsVirtual?.ToString();
+			set => IsVirtual = bool.TryParse(value, out var boolean)
+				? (bool?)boolean
+				: null;
 		}
+
+		[XmlIgnore]
+		public bool? IsVirtual { get; private set; }
 		#endregion
 		#region IsAbstract
 		[XmlAttribute(AttributeName = "isAbstract")]
-		internal string IsAbstractString { get; set; }
-		private bool? _isAbstract;
-		public bool? IsAbstract
+		public string IsAbstractString
 		{
-			get => _isAbstract;
-			set
-			{
-				IsAbstractString = value?.ToString();
-				_isAbstract = bool.TryParse(IsAbstractString, out var boolean)
-					? (bool?)boolean
-					: null;
-			}
+			get => IsAbstract?.ToString();
+			set => IsAbstract = bool.TryParse(value, out var boolean)
+				? (bool?)boolean
+				: null;
 		}
+
+		[XmlIgnore]
+		public bool? IsAbstract { get; private set; }
 		#endregion
 	}
 
@@ -519,20 +528,18 @@ namespace AsyncGenerator.Core.FileConfiguration
 	{
 		#region Enabled
 		[XmlAttribute(AttributeName = "enabled")]
-		internal string EnabledString { get; set; }
-		private bool? _enabled;
-		public bool? Enabled
+		public string EnabledString
 		{
-			get => _enabled;
-			set
-			{
-				EnabledString = value?.ToString();
-				_enabled = bool.TryParse(EnabledString, out var boolean)
-					? (bool?)boolean
-					: null;
-			}
+			get => Enabled?.ToString();
+			set => Enabled = bool.TryParse(value, out var boolean)
+				? (bool?)boolean
+				: null;
 		}
+
+		[XmlIgnore]
+		public bool? Enabled { get; private set; }
 		#endregion
+
 
 		[XmlElement("Guards", IsNullable = true)]
 		public bool? Guards { get; set; }

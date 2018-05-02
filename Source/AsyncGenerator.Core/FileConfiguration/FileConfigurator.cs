@@ -140,6 +140,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.PreserveReturnType(CreateMethodPredicate(configuration, config.PreserveReturnType, true));
 			}
+			if (config.AlwaysAwait.Any())
+			{
+				fluentConfig.AlwaysAwait(CreateMethodPredicate(configuration, config.AlwaysAwait, true));
+			}
 			if (config.IgnoreSearchForAsyncCounterparts.Any())
 			{
 				fluentConfig.SearchForAsyncCounterparts(CreateMethodPredicate(configuration, config.IgnoreSearchForAsyncCounterparts, false));
@@ -514,6 +518,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 				return true;
 			}
 			if (!CanApply(symbol, filter))
+			{
+				return false;
+			}
+			if (filter.ReturnsVoid.HasValue && filter.ReturnsVoid.Value != symbol.ReturnsVoid)
 			{
 				return false;
 			}
