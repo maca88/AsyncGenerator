@@ -36,13 +36,26 @@ namespace AsyncGenerator.Analyzation.Internal
 					foreach (var typeData in namespaceData.Types.Values.SelectMany(o => o.GetSelfAndDescendantsTypeData())
 						.Where(o => config.CanDiagnoseType(o.Symbol)))
 					{
-						foreach (var methodData in typeData.Methods.Values.Where(o => config.CanDiagnoseMethod(o.Symbol)))
+						var diagnosedFunctions = new List<FunctionData>(typeData.Methods.Count);
+						foreach (var functionData in typeData.Methods.Values.Where(o => config.CanDiagnoseMethod(o.Symbol))
+							.OrderBy(o => o.Node.SpanStart)
+							.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
 						{
-							DiagnoseFunction(methodData);
+							DiagnoseFunction(functionData);
+							diagnosedFunctions.Add(functionData);
+						}
+						foreach (var functionData in diagnosedFunctions)
+						{
+							if (functionData is MethodData methodData)
+							{
+								LogDiagnostics("Method", methodData, logs);
+							}
+							else
+							{
+								LogDiagnostics("Function", functionData, logs);
+							}
 
-							LogDiagnostics("Method", methodData, logs);
-
-							foreach (var bodyReference in methodData.BodyFunctionReferences)
+							foreach (var bodyReference in functionData.BodyFunctionReferences)
 							{
 								LogReferenceDiagnostics(bodyReference, logs);
 							}
@@ -115,14 +128,24 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return;
 			}
-			if (functionData.BodyFunctionReferences.Any(o =>
+			var asyncInvocations = functionData.BodyFunctionReferences.Where(o =>
 				o.ReferenceFunctionData?.Conversion.HasFlag(Core.MethodConversion.ToAsync) == true ||
-				GetAsyncCounterparts(o.ReferenceSymbol, _searchOptions).Any()))
+				GetAsyncCounterparts(o.ReferenceSymbol, _searchOptions).Any()).ToList();
+			if (asyncInvocations.Count <= 0)
 			{
-				functionData.SetIgnoreSeverity(DiagnosticSeverity.Warning);
-				functionData.AddDiagnostic(
-					"Contains at least one async invocation",
-					DiagnosticSeverity.Warning);
+				return;
+			}
+
+			var methodData = functionData.GetMethodOrAccessorData();
+			if (methodData.IgnoredReason != null)
+			{
+				methodData.SetIgnoreSeverity(DiagnosticSeverity.Warning);
+			}
+			functionData.SetIgnoreSeverity(DiagnosticSeverity.Warning);
+			foreach (var asyncInvocation in asyncInvocations)
+			{
+				asyncInvocation.SetIgnoreSeverity(DiagnosticSeverity.Warning);
+				asyncInvocation.AddDiagnostic("Has an async counterpart that could't been used", DiagnosticSeverity.Warning);
 			}
 		}
 

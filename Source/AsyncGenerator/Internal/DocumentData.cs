@@ -331,10 +331,26 @@ namespace AsyncGenerator.Internal
 			{
 				return null;
 			}
-			return GetAllTypeDatas()
+
+			FunctionData closestFunctionData = null;
+			foreach (var functionData in GetAllTypeDatas()
 				.SelectMany(o => o.MethodsAndAccessors)
-				.SelectMany(o => o.GetSelfAndDescendantsFunctions())
-				.FirstOrDefault(o => o.GetNode().Span.Equals(syntaxReference.Span));
+				.SelectMany(o => o.GetSelfAndDescendantsFunctions()))
+			{
+				var node = functionData.GetNode();
+				if (node.Span.Equals(syntaxReference.Span))
+				{
+					return functionData;
+				}
+				// If the syntaxReference refers to a lambda method e.g. from o in array select AsyncMethod()
+				// return the method that contains it
+				if (node.Span.Contains(syntaxReference.Span))
+				{
+					closestFunctionData = functionData;
+				}
+			}
+
+			return closestFunctionData;
 		}
 
 		public PropertyData GetPropertyData(IPropertySymbol propertySymbol)

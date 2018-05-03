@@ -37,6 +37,11 @@ namespace AsyncGenerator.Internal
 
 		public IgnoreReason IgnoredReason { get; private set; }
 
+		public void SetIgnoreSeverity(DiagnosticSeverity severity)
+		{
+			IgnoredReason = IgnoredReason?.WithSeverity(severity);
+		}
+
 		/// <summary>
 		/// Can be null
 		/// </summary>
