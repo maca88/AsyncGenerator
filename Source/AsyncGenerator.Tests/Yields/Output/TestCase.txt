@@ -44,14 +44,21 @@ namespace AsyncGenerator.Tests.Yields.Input
 
 		public Task<IEnumerable<long>> GetLongsAsync(bool value)
 		{
-			var yields = new List<long>();
-			if (!value)
+			try
 			{
+				var yields = new List<long>();
+				if (!value)
+				{
+					return Task.FromResult<IEnumerable<long>>(yields);
+				}
+				yields.Add(1);
+				yields.Add(2);
 				return Task.FromResult<IEnumerable<long>>(yields);
 			}
-			yields.Add(1);
-			yields.Add(2);
-			return Task.FromResult<IEnumerable<long>>(yields);
+			catch (Exception ex)
+			{
+				return Task.FromException<IEnumerable<long>>(ex);
+			}
 		}
 	}
 }

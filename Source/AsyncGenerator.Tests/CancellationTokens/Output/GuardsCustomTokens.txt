@@ -166,12 +166,19 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 			{
 				return Task.FromCanceled<object>(cancellationToken);
 			}
-			var num = 5;
-			if (num > 10)
+			try
 			{
-				return SimpleFile.ReadAsync(cancellationToken);
+				var num = 5;
+				if (num > 10)
+				{
+					return SimpleFile.ReadAsync(cancellationToken);
+				}
+				return Task.CompletedTask;
 			}
-			return Task.CompletedTask;
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 	}
 

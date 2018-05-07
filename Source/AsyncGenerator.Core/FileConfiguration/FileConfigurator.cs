@@ -120,13 +120,9 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.ScanForMissingAsyncMembers(CreateTypePredicate(configuration, config.ScanForMissingAsyncMembers));
 			}
-			if (config.CancellationTokens.IsEnabled)
-			{
-				fluentConfig.CancellationTokens(o => Configure(configuration, config.CancellationTokens, o));
-			}
+			fluentConfig.CancellationTokens(o => Configure(configuration, config.CancellationTokens, o));
 			fluentConfig.AsyncExtensionMethods(o => Configure(config.AsyncExtensionMethods, o));
 			fluentConfig.Diagnostics(o => Configure(configuration, config.Diagnostics, o));
-			fluentConfig.ExceptionHandling(o => Configure(configuration, config.ExceptionHandling, o));
 
 			if (config.IgnoreDocuments.Any())
 			{
@@ -183,14 +179,6 @@ namespace AsyncGenerator.Core.FileConfiguration
 			if (config.DiagnoseMethod.Any())
 			{
 				fluentConfig.DiagnoseMethod(CreateMethodPredicateFunction(configuration, config.DiagnoseMethod, true));
-			}
-		}
-
-		private static void Configure(AsyncGenerator configuration, ExceptionHandling config, IFluentProjectExceptionHandlingConfiguration fluentConfig)
-		{
-			if (config.CatchPropertyGetterCalls.Any())
-			{
-				fluentConfig.CatchPropertyGetterCalls(CreateMethodPredicateFunction(configuration, config.CatchPropertyGetterCalls, false));
 			}
 		}
 
@@ -560,14 +548,6 @@ namespace AsyncGenerator.Core.FileConfiguration
 				return false;
 			}
 			if (filter.HasDocumentationComment.HasValue && filter.HasDocumentationComment.Value == string.IsNullOrEmpty(symbol.GetDocumentationCommentXml()))
-			{
-				return false;
-			}
-			if (filter.IsVirtual.HasValue && filter.IsVirtual.Value == symbol.IsVirtual)
-			{
-				return false;
-			}
-			if (filter.IsAbstract.HasValue && filter.IsAbstract.Value == symbol.IsAbstract)
 			{
 				return false;
 			}

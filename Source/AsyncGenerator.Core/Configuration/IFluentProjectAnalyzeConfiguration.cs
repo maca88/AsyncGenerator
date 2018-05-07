@@ -94,11 +94,6 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration Diagnostics(Action<IFluentProjectDiagnosticsConfiguration> action);
 
 		/// <summary>
-		/// Setup the exception handling for synchronous methods that return a <see cref="Task"/>.
-		/// </summary>
-		IFluentProjectAnalyzeConfiguration ExceptionHandling(Action<IFluentProjectExceptionHandlingConfiguration> action);
-
-		/// <summary>
 		/// Set the predicate that will decide whether the return type of an async method should be preserved or not.
 		/// The predicate will be called only for methods that do not have any async invocation that returns a <see cref="Task"/>
 		/// <para>Default false is choosen for all methods.</para>

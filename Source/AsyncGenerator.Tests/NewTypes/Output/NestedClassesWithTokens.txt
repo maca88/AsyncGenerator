@@ -86,8 +86,15 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 		public Task Read4Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			var cls = new NestedClass();
-			return cls.ReadAsync(cancellationToken);
+			try
+			{
+				var cls = new NestedClass();
+				return cls.ReadAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 	}
 }

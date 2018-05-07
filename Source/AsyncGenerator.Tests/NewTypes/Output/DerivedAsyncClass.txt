@@ -26,15 +26,22 @@ namespace AsyncGenerator.Tests.NewTypes.Input
 
 		public Task ReadAsync()
 		{
-			if (BaseTypeField == null)
+			try
 			{
-				BaseTypeField = new BaseNonAsyncClass();
+				if (BaseTypeField == null)
+				{
+					BaseTypeField = new BaseNonAsyncClass();
+				}
+				if (BaseTypeProperty != null)
+				{
+					return SimpleFile.ReadAsync();
+				}
+				return Task.CompletedTask;
 			}
-			if (BaseTypeProperty != null)
+			catch (Exception ex)
 			{
-				return SimpleFile.ReadAsync();
+				return Task.FromException<object>(ex);
 			}
-			return Task.CompletedTask;
 		}
 	}
 }

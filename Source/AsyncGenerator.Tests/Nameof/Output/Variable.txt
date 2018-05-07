@@ -24,8 +24,15 @@ namespace AsyncGenerator.Tests.Nameof.Input
 	{
 		public Task TestAsync()
 		{
-			var region = nameof(TestAsync);
-			return SimpleFile.WriteAsync(region);
+			try
+			{
+				var region = nameof(TestAsync);
+				return SimpleFile.WriteAsync(region);
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 	}
 }

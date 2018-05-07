@@ -21,12 +21,19 @@ namespace AsyncGenerator.Tests.ParallelFor.Input
 	{
 		public Task ReadAsync()
 		{
-			var start = 5;
-			var end = 10;
-			return Task.WhenAll(Enumerable.Range(start, end - start).Select(i =>
+			try
 			{
-				return SimpleFile.ReadAsync();
-			}));
+				var start = 5;
+				var end = 10;
+				return Task.WhenAll(Enumerable.Range(start, end - start).Select(i =>
+				{
+					return SimpleFile.ReadAsync();
+				}));
+			}
+			catch (Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 
 		public Task Read2Async(int start, int end)
