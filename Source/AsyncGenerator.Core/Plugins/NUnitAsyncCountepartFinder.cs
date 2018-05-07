@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.Plugins
 {
-	public class NUnitAsyncCounterpartsFinder : IAsyncCounterpartsFinder, IMethodExceptionHandler
+	public class NUnitAsyncCounterpartsFinder : IAsyncCounterpartsFinder
 	{
 		private Dictionary<IMethodSymbol, IMethodSymbol> _thatAsyncCounterparts;
 
@@ -39,17 +39,8 @@ namespace AsyncGenerator.Core.Plugins
 			// FirstOrDefault just in case if there will be a new sync overload without an async counterpart in the future
 			_thatAsyncCounterparts = thatMethods.Where(o => !o.IsGenericMethod)
 				.ToDictionary(o => o, o => asyncThatMethods.FirstOrDefault(a => MatchParameters(o, a)));
-
+				
 			return Task.CompletedTask;
-		}
-
-		public bool? CatchMethodBody(IMethodSymbol methodSymbol, IMethodSymbol argumentOfMethodSymbol)
-		{
-			if (argumentOfMethodSymbol != null && argumentOfMethodSymbol.ContainingAssembly.Name == "nunit.framework")
-			{
-				return false;
-			}
-			return null;
 		}
 
 		public IEnumerable<IMethodSymbol> FindAsyncCounterparts(IMethodSymbol syncMethodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options)

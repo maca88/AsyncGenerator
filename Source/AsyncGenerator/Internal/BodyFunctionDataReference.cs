@@ -185,11 +185,6 @@ namespace AsyncGenerator.Internal
 					return;
 				}
 
-				if (asyncDelegateFunc.ReturnsVoid)
-				{
-					functionArgument.FunctionData?.Copy();
-				}
-
 				// If the argument types are the same, we can skip. The argument does not need to be async, in order
 				// to convert the reference. This applies only for external refernces as for internal, the async and sync are the same.
 				// We need to check the original definition as the async counterpart may not have TypeArguments set.

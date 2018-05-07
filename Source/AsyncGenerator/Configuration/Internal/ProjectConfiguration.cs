@@ -203,7 +203,6 @@ namespace AsyncGenerator.Configuration.Internal
 			TryAdd(plugin, AnalyzeConfiguration.FindAsyncCounterpartsFinders);
 			TryAdd(plugin, AnalyzeConfiguration.InvocationExpressionAnalyzers);
 			TryAdd(plugin, AnalyzeConfiguration.BodyFunctionReferencePostAnalyzers);
-			TryAdd(plugin, AnalyzeConfiguration.MethodExceptionHandlers);
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
 			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
 			TryAdd(plugin, TransformConfiguration.FunctionReferenceTransformers);

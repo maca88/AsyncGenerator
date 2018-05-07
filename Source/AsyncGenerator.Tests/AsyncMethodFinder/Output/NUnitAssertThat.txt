@@ -16,17 +16,40 @@ using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.NUnit.Input
+namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 {
-	public partial class AssertThatTryCatch
+	public partial class NUnitAssertThat
 	{
 		public void TestAsync()
 		{
+			Assert.That(1, Is.EqualTo(1));
+
+			Assert.That(async () =>
+			{
+				await (SimpleFile.ReadAsync());
+				return true;
+			}, Is.EqualTo(true));
+
 			Assert.That(() =>
 			{
-				SimpleFile.Clear();
-				return SimpleFile.WriteAsync("");
+				SimpleFile.Read();
+				return true;
+			});
+
+			Assert.That(() =>
+			{
+				return SimpleFile.ReadAsync();
 			}, Throws.Nothing);
+
+			Assert.That(() =>
+			{
+				Console.WriteLine("");
+			}, Throws.Nothing);
+
+			var result = false;
+			Assert.That(async () => result = await (SimpleFile.WriteAsync("")), Throws.Nothing);
+			Assert.IsTrue(result);
+
 		}
 	}
 }

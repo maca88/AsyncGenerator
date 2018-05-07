@@ -17,27 +17,25 @@ namespace AsyncGenerator.Tests.ExceptionHandling
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
-		#region CatchProperty
-
 		[Test]
-		public Task TestCatchPropertyAfterTransformation()
+		public Task TestAfterTransformation()
 		{
-			return ReadonlyTest(nameof(CatchProperty), p => p
+			return ReadonlyTest(nameof(TestCase), p => p
 				.ConfigureAnalyzation(a => a
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.ExceptionHandling(e => e
 						.CatchPropertyGetterCalls(symbol => symbol.Name == "get_IsValid"))
 				)
 				.ConfigureTransformation(t => t
-					.AfterTransformation(AfterCatchPropertyTransfromation)
+					.AfterTransformation(AfterTransfromation)
 				)
 			);
 		}
 
 		[Test]
-		public Task TestYamlCatchPropertyAfterTransformation()
+		public Task TestYamlAfterTransformation()
 		{
-			return YamlReadonlyTest(nameof(CatchProperty),
+			return YamlReadonlyTest(nameof(TestCase),
 				@"projects:
 - filePath: AsyncGenerator.Tests.csproj
   analyzation:
@@ -50,14 +48,14 @@ namespace AsyncGenerator.Tests.ExceptionHandling
         result: true
 ",
 				p => p
-					.ConfigureTransformation(t => t.AfterTransformation(AfterCatchPropertyTransfromation))
+					.ConfigureTransformation(t => t.AfterTransformation(AfterTransfromation))
 			);
 		}
 
 		[Test]
-		public Task TestXmlCatchPropertyAfterTransformation()
+		public Task TestXmlAfterTransformation()
 		{
-			return XmlReadonlyTest(nameof(CatchProperty),
+			return XmlReadonlyTest(nameof(TestCase),
 				@"
 <AsyncGenerator xmlns=""https://github.com/maca88/AsyncGenerator"">
   <Projects>
@@ -78,98 +76,18 @@ namespace AsyncGenerator.Tests.ExceptionHandling
 ",
 				p => p
 					.ConfigureTransformation(t => t
-					 .AfterTransformation(AfterCatchPropertyTransfromation))
+					 .AfterTransformation(AfterTransfromation))
 			);
 		}
 
-		private void AfterCatchPropertyTransfromation(IProjectTransformationResult result)
+		private void AfterTransfromation(IProjectTransformationResult result)
 		{
 			AssertValidAnnotations(result);
 			Assert.AreEqual(1, result.Documents.Count);
 			var document = result.Documents[0];
 			Assert.NotNull(document.OriginalModified);
-			Assert.AreEqual(GetOutputFile(nameof(CatchProperty)), document.Transformed.ToFullString());
+			Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
 		}
-
-		#endregion
-
-		#region NoCatchMethod
-
-		[Test]
-		public Task TestNoCatchMethodAfterTransformation()
-		{
-			return ReadonlyTest(nameof(NoCatchMethod), p => p
-				.ConfigureAnalyzation(a => a
-					.MethodConversion(symbol => MethodConversion.Smart)
-					.ExceptionHandling(e => e
-						.CatchMethodBody(symbol => symbol.Name == "Test" ? false : (bool?)null))
-				)
-				.ConfigureTransformation(t => t
-					.AfterTransformation(AfterNoCatchMethodTransfromation)
-				)
-			);
-		}
-
-		[Test]
-		public Task TestYamlNoCatchMethodAfterTransformation()
-		{
-			return YamlReadonlyTest(nameof(NoCatchMethod),
-				@"projects:
-- filePath: AsyncGenerator.Tests.csproj
-  analyzation:
-    methodConversion:
-    - conversion: Smart
-      all: true
-    exceptionHandling:
-      catchMethodBody:
-      - name: Test
-        result: false
-",
-				p => p
-					.ConfigureTransformation(t => t.AfterTransformation(AfterNoCatchMethodTransfromation))
-			);
-		}
-
-		[Test]
-		public Task TestXmlNoCatchMethodAfterTransformation()
-		{
-			return XmlReadonlyTest(nameof(NoCatchMethod),
-				@"
-<AsyncGenerator xmlns=""https://github.com/maca88/AsyncGenerator"">
-  <Projects>
-    <Project filePath=""AsyncGenerator.Tests.csproj"">
-      <Analyzation>
-        <MethodConversion>
-          <Method conversion=""Smart"" all=""true"" />
-        </MethodConversion>
-        <ExceptionHandling>
-          <CatchMethodBody>
-            <Method name=""Test"" result=""false""/>
-          </CatchMethodBody>
-        </ExceptionHandling>
-      </Analyzation>
-    </Project>
-  </Projects>
-</AsyncGenerator>
-",
-				p => p
-					.ConfigureTransformation(t => t
-						.AfterTransformation(AfterNoCatchMethodTransfromation))
-			);
-		}
-
-		private void AfterNoCatchMethodTransfromation(IProjectTransformationResult result)
-		{
-			AssertValidAnnotations(result);
-			Assert.AreEqual(1, result.Documents.Count);
-			var document = result.Documents[0];
-			Assert.NotNull(document.OriginalModified);
-			Assert.AreEqual(GetOutputFile(nameof(NoCatchMethod)), document.Transformed.ToFullString());
-		}
-
-		#endregion
-
-		#region PropagateOperationCanceledException
 
 		[Test]
 		public Task TestOperationCanceledExceptionPropagationAfterTransformation()
@@ -210,7 +128,5 @@ namespace AsyncGenerator.Tests.ExceptionHandling
 			Console.WriteLine(document.Transformed.ToFullString());
 			Assert.AreEqual(GetOutputFile(fileName), document.Transformed.ToFullString());
 		}
-
-		#endregion
 	}
 }

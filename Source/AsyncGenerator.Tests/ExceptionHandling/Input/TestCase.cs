@@ -7,7 +7,7 @@ using AsyncGenerator.TestCases;
 
 namespace AsyncGenerator.Tests.ExceptionHandling.Input
 {
-	public class CatchProperty
+	public class TestCase
 	{
 		public bool IsValid => Validate();
 

@@ -40,7 +40,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		protected override SyntaxNode OnVisitMethodDeclaration(MethodDeclarationSyntax node)
 		{
-			_retunTypeSyntax = !_methodResult.Symbol.ReturnsVoid ? node.ReturnType : null;
+			_retunTypeSyntax = node.ReturnType;
 			if (!_methodResult.Faulted && 
 				(
 					(_methodResult.Symbol.ReturnsVoid && node.IsReturnStatementRequired()) || 
@@ -64,7 +64,6 @@ namespace AsyncGenerator.Transformation.Internal
 
 		protected override SyntaxNode OnVisitAnonymousMethodExpression(AnonymousMethodExpressionSyntax node)
 		{
-			SetupReturnType();
 			node =  (AnonymousMethodExpressionSyntax)base.OnVisitAnonymousMethodExpression(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
@@ -76,7 +75,6 @@ namespace AsyncGenerator.Transformation.Internal
 
 		protected override SyntaxNode OnVisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
 		{
-			SetupReturnType();
 			node = (ParenthesizedLambdaExpressionSyntax)base.OnVisitParenthesizedLambdaExpression(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
@@ -88,7 +86,6 @@ namespace AsyncGenerator.Transformation.Internal
 
 		protected override SyntaxNode OnVisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
 		{
-			SetupReturnType();
 			node = (SimpleLambdaExpressionSyntax)base.OnVisitSimpleLambdaExpression(node);
 			if (node.GetFunctionBody() is BlockSyntax bodyBlock)
 			{
@@ -100,7 +97,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		protected override SyntaxNode OnVisitLocalFunctionStatement(LocalFunctionStatementSyntax node)
 		{
-			_retunTypeSyntax = !_methodResult.Symbol.ReturnsVoid ? node.ReturnType : null;
+			_retunTypeSyntax = node.ReturnType;
 			if (!_methodResult.Faulted &&
 			    (
 				    (_methodResult.Symbol.ReturnsVoid && node.IsReturnStatementRequired()) ||
@@ -249,26 +246,6 @@ namespace AsyncGenerator.Transformation.Internal
 			return base.VisitTrivia(trivia);
 		}
 
-		private void SetupReturnType()
-		{
-			if (_methodResult.Symbol.ReturnsVoid)
-			{
-				var bodyRef = _methodResult.BodyFunctionReferences.FirstOrDefault(o => o.UseAsReturnValue);
-				var symbol = bodyRef?.ReferenceSymbol;
-				if (symbol?.ReturnsVoid == false)
-				{
-					_retunTypeSyntax = symbol.ReturnType.CreateTypeSyntax(false,
-						_namespaceMetadata.AnalyzationResult.IsIncluded(symbol.ReturnType.ContainingNamespace?.ToString()));
-				}
-			}
-			else
-			{
-				var returnType = _methodResult.Symbol.ReturnType;
-				_retunTypeSyntax = returnType.CreateTypeSyntax(false,
-					_namespaceMetadata.AnalyzationResult.IsIncluded(returnType.ContainingNamespace?.ToString()));
-			}
-		}
-
 		private InvocationExpressionSyntax WrapInTaskFromResult(ExpressionSyntax node)
 		{
 			return InvocationExpression(
@@ -282,7 +259,7 @@ namespace AsyncGenerator.Transformation.Internal
 							.WithTypeArgumentList(
 								TypeArgumentList(
 									SingletonSeparatedList(
-										_retunTypeSyntax == null
+										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
 											: _retunTypeSyntax.WithoutTrivia())))))
 				.WithArgumentList(
@@ -304,7 +281,7 @@ namespace AsyncGenerator.Transformation.Internal
 							.WithTypeArgumentList(
 								TypeArgumentList(
 									SingletonSeparatedList(
-										_retunTypeSyntax == null
+										_methodResult.Symbol.ReturnsVoid
 											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
 											: _retunTypeSyntax.WithoutTrivia())))))
 				.WithArgumentList(
@@ -430,7 +407,7 @@ namespace AsyncGenerator.Transformation.Internal
 												.WithTypeArgumentList(
 													TypeArgumentList(
 														SingletonSeparatedList(
-															_retunTypeSyntax == null
+															_methodResult.Symbol.ReturnsVoid
 																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
 																: _retunTypeSyntax.WithoutTrivia())))))
 									.WithArgumentList(

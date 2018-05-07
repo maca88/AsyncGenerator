@@ -15,32 +15,34 @@ using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.AnonymousFunctions.Input
+namespace AsyncGenerator.Tests.ExceptionHandling.Input
 {
-	public partial class VoidTryCatch
+	public partial class TestCase
 	{
-		public Task TestAsync()
+
+		public Task ReadAsync()
 		{
 			try
 			{
-				Runner.RunGeneric(() =>
+				if (IsValid)
 				{
-					try
-					{
-						SimpleFile.Clear();
-						return SimpleFile.WriteAsync("");
-					}
-					catch (Exception ex)
-					{
-						return Task.FromException<bool>(ex);
-					}
-				});
+					return SimpleFile.ReadAsync();
+				}
 				return Task.CompletedTask;
 			}
 			catch (Exception ex)
 			{
 				return Task.FromException<object>(ex);
 			}
+		}
+
+		public Task Read2Async()
+		{
+			if (DateTime.Today.Hour > 9)
+			{
+				return SimpleFile.ReadAsync();
+			}
+			return Task.CompletedTask;
 		}
 	}
 }

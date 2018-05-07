@@ -485,13 +485,9 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodPredicateFilter> CatchPropertyGetterCalls { get; set; }
 
-		[XmlArrayItem("Method", IsNullable = false)]
-		public List<MethodPredicateFilter> CatchMethodBody { get; set; }
-
 		public ExceptionHandling()
 		{
 			CatchPropertyGetterCalls = new List<MethodPredicateFilter>();
-			CatchMethodBody = new List<MethodPredicateFilter>();
 		}
 	}
 

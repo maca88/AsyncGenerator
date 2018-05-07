@@ -36,6 +36,28 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 		}
 
 		[Test]
+		public Task TestNUnitAssertThatAfterTransformation()
+		{
+			return ReadonlyTest(nameof(NUnitAssertThat), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(o => true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(NUnitAssertThat)), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+			);
+		}
+
+		[Test]
 		public Task TestIgnoreSomeAsyncMethodsAfterTransformation()
 		{
 			return ReadonlyTest(nameof(IgnoreSomeAsyncMethods), p => p

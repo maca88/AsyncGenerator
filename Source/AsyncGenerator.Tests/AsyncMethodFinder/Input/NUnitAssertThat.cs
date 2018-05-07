@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using AsyncGenerator.TestCases;
 using NUnit.Framework;
 
-namespace AsyncGenerator.Tests.NUnit.Input
+namespace AsyncGenerator.Tests.AsyncMethodFinder.Input
 {
-	public class AssertThat
+	public class NUnitAssertThat
 	{
 		public void Test()
 		{
@@ -42,14 +42,14 @@ namespace AsyncGenerator.Tests.NUnit.Input
 
 		}
 
-		public void That()
+		public void AssertThat()
 		{
 			Assert.That(() => Console.WriteLine(""), Throws.Nothing);
 			Assert.That(() => SimpleFile.Clear(), Throws.Nothing);
 			Assert.That(() => Read(), Throws.Nothing);
 		}
 
-		public void ThatWithReturn()
+		public void AssertThatWithReturn()
 		{
 			Assert.That(() => Console.Read(), Throws.Nothing);
 			Assert.That(() => SimpleFile.IsBusy(), Throws.Nothing);
