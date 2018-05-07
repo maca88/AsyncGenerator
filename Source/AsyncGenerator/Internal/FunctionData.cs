@@ -29,8 +29,6 @@ namespace AsyncGenerator.Internal
 
 		public bool ForceAsync { get; set; }
 
-		public abstract FunctionData ParentFunction { get; }
-
 		public override ISymbol GetSymbol()
 		{
 			return Symbol;

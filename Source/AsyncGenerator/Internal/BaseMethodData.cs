@@ -43,8 +43,6 @@ namespace AsyncGenerator.Internal
 
 		public override TypeData TypeData { get; }
 
-		public override FunctionData ParentFunction => null;
-
 		public override SyntaxNode GetNode()
 		{
 			return _node;

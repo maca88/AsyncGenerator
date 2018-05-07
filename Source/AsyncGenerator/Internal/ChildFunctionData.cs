@@ -17,7 +17,7 @@ namespace AsyncGenerator.Internal
 			ParentFunction = parentFunction;
 		}
 
-		public override FunctionData ParentFunction { get; }
+		public FunctionData ParentFunction { get; }
 
 		#region IChildFunctionAnalyzationResult
 

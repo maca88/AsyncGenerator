@@ -87,7 +87,7 @@ namespace AsyncGenerator.Plugins.Internal
 				return;
 			}
 			var delegateArgument = functionReferenceAnalyzation.DelegateArguments.FirstOrDefault(o => o.Function != null);
-			if (delegateArgument?.Function.Conversion.HasAnyFlag(MethodConversion.Ignore, MethodConversion.Copy) == true)
+			if (delegateArgument?.Function.Conversion == MethodConversion.Ignore)
 			{
 				functionReferenceAnalyzation.Ignore("Delegate argument is not async");
 			}

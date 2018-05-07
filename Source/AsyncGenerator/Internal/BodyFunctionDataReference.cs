@@ -195,7 +195,7 @@ namespace AsyncGenerator.Internal
 				}
 				if (
 					functionArgument.FunctionReference?.GetConversion() == ReferenceConversion.Ignore ||
-					functionArgument.FunctionData?.Conversion.HasAnyFlag(MethodConversion.Ignore, MethodConversion.Copy) == true
+					functionArgument.FunctionData?.Conversion.HasFlag(MethodConversion.Ignore) == true
 					)
 				{
 					Ignore(IgnoreReason.Custom($"Argument at index '{functionArgument.Index}' cannot be converted to async", DiagnosticSeverity.Hidden));

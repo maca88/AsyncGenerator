@@ -82,7 +82,14 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync.Input
 
 		public Task<decimal> ReturnDecimalConstructorAsync()
 		{
-			return Task.FromResult<decimal>(new decimal(25));
+			try
+			{
+				return Task.FromResult<decimal>(new decimal(25));
+			}
+			catch (System.Exception ex)
+			{
+				return Task.FromException<decimal>(ex);
+			}
 		}
 	}
 }

@@ -19,7 +19,14 @@ namespace AsyncGenerator.Tests.Nameof.Input
 		[DefaultValue(nameof(WriteAsync))]
 		public Task WriteAsync()
 		{
-			return SimpleFile.WriteAsync(nameof(DoSomething));
+			try
+			{
+				return SimpleFile.WriteAsync(nameof(DoSomething));
+			}
+			catch (System.Exception ex)
+			{
+				return Task.FromException<object>(ex);
+			}
 		}
 
 		[DefaultValue(nameof(DoSomething2))]

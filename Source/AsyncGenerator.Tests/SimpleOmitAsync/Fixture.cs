@@ -160,7 +160,7 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				method = methods[returnDecimalConstructor];
 				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
 				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
+				Assert.IsTrue(method.WrapInTryCatch);
 				Assert.IsFalse(method.SplitTail);
 				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
 			}
