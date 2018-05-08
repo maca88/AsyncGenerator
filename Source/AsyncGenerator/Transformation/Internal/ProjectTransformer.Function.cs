@@ -78,11 +78,6 @@ namespace AsyncGenerator.Transformation.Internal
 					rootFuncNode = rootFuncNode.ReplaceNode(nameNode, nameNode.WithAdditionalAnnotations(new SyntaxAnnotation(transformedNode.Annotation)));
 				}
 
-				if (funcResult.Conversion == MethodConversion.Copy)
-				{
-					continue;
-				}
-
 				// TODO: unify with method in order to avoid duplicate code
 				foreach (var referenceResult in funcResult.FunctionReferences.Where(o => o.GetConversion() == ReferenceConversion.ToAsync))
 				{
@@ -107,8 +102,6 @@ namespace AsyncGenerator.Transformation.Internal
 						rootFuncNode = rootFuncNode.ReplaceNode(referenceNode, referenceNode.WithAdditionalAnnotations(new SyntaxAnnotation(Annotations.TaskReturned)));
 					}
 				}
-				
-
 			}
 
 			foreach (var transformResult in rootTransformResult.GetSelfAndDescendantTransformedFunctions().OrderByDescending(o => o.OriginalStartSpan))

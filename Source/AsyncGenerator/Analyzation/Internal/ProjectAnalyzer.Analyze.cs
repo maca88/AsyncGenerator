@@ -179,27 +179,21 @@ namespace AsyncGenerator.Analyzation.Internal
 					if (parentFunction.BodyFunctionReferences.All(
 						o => !invocationNode.Expression.Span.Contains(o.ReferenceNameNode.Span)))
 					{
+						// A child function can be ignored only when the method that contains it is ignored
+						functionData.Copy();
 						if (functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 						{
-							functionData.Ignore(IgnoreReason.Custom("Function is passed as an argument to a non async invocation", DiagnosticSeverity.Hidden));
-						}
-						else
-						{
-							functionData.Copy();
+							functionData.AddDiagnostic("Function is passed as an argument to a non async invocation", DiagnosticSeverity.Hidden);
 						}
 						return;
 					}
 				}
 				else
 				{
-					// TODO: find examples and add support
+					functionData.Copy();
 					if (functionData.TypeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.NewType))
 					{
-						functionData.Ignore(IgnoreReason.NotSupported($"Anonymous function is passed as argument to a non supported node {callNode}"));
-					}
-					else
-					{
-						functionData.Copy();
+						functionData.AddDiagnostic($"Anonymous function is passed as argument to a non supported node {callNode}", DiagnosticSeverity.Hidden);
 					}
 					return;
 				}
