@@ -93,11 +93,18 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Propagate the CancellationTokenRequired for the dependency method data
 					if (depMethodData != null)
 					{
-						depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						if (_configuration.CancellationTokens.RequiresCancellationToken(depMethodData.Symbol) == null)
+						{
+							depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						}
 					}
 					else if (depFunctionData is ChildFunctionData childFunction)
 					{
-						childFunction.GetMethodOrAccessorData().CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						var methodOrAccessorData = childFunction.GetMethodOrAccessorData();
+						if (_configuration.CancellationTokens.RequiresCancellationToken(methodOrAccessorData.Symbol) == null)
+						{
+							methodOrAccessorData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						}
 					}
 				}
 			}
