@@ -109,6 +109,11 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// </summary>
 		private void CalculateWrapInTryCatch(FunctionData functionData)
 		{
+			// Backward compatibility
+			if (!(functionData is MethodData))
+			{
+				return;
+			}
 			var functionDataBody = functionData.GetBodyNode() as BlockSyntax;
 			if (functionDataBody == null || !functionDataBody.Statements.Any() || functionData.SplitTail)
 			{
@@ -142,11 +147,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					return;
 			}
 			var invocationExps = exprs.OfType<InvocationExpressionSyntax>().Where(o => o.Expression.ToString() != "nameof").ToList();
-			if (invocationExps.Count == 0)
-			{
-				return;
-			}
-			if (invocationExps.Count > 1)
+			if (invocationExps.Count != 1)
 			{
 				functionData.WrapInTryCatch = true;
 				return;
