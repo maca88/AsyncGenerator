@@ -16,5 +16,7 @@ namespace AsyncGenerator.Core.Configuration
 		bool ConcurrentRun { get; }
 
 		IProjectExceptionHandlingConfiguration ExceptionHandling { get; }
+
+		Predicate<IMethodSymbol> AlwaysAwait { get; }
 	}
 }
