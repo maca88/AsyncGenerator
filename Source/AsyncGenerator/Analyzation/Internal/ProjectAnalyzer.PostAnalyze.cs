@@ -800,7 +800,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
 			// or we have only one async invocation that is the last to be invoked
 			// Invocations in synchronized methods must be awaited to mimic the same behavior as their sync counterparts
-			if (methodData == null || !methodData.MustRunSynchronized)
+			if (!_configuration.AlwaysAwait(functionData.Symbol) && (methodData == null || !methodData.MustRunSynchronized))
 			{
 				var canSkipAwaits = true;
 				// Skip functions that are passed as arguments 

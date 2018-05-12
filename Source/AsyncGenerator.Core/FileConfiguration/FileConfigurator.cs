@@ -120,7 +120,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.ScanForMissingAsyncMembers(CreateTypePredicate(configuration, config.ScanForMissingAsyncMembers));
 			}
-			fluentConfig.CancellationTokens(o => Configure(configuration, config.CancellationTokens, o));
+			if (config.CancellationTokens.IsEnabled)
+			{
+				fluentConfig.CancellationTokens(o => Configure(configuration, config.CancellationTokens, o));
+			}
 			fluentConfig.AsyncExtensionMethods(o => Configure(config.AsyncExtensionMethods, o));
 			fluentConfig.Diagnostics(o => Configure(configuration, config.Diagnostics, o));
 
@@ -135,6 +138,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			if (config.PreserveReturnType.Any())
 			{
 				fluentConfig.PreserveReturnType(CreateMethodPredicate(configuration, config.PreserveReturnType, true));
+			}
+			if (config.AlwaysAwait.Any())
+			{
+				fluentConfig.AlwaysAwait(CreateMethodPredicate(configuration, config.AlwaysAwait, true));
 			}
 			if (config.IgnoreSearchForAsyncCounterparts.Any())
 			{
@@ -482,6 +489,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 				return true;
 			}
 			if (!CanApply(symbol, filter))
+			{
+				return false;
+			}
+			if (filter.ReturnsVoid.HasValue && filter.ReturnsVoid.Value != symbol.ReturnsVoid)
 			{
 				return false;
 			}

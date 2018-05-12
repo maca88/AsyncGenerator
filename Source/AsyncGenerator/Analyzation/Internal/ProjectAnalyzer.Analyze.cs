@@ -581,10 +581,13 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 			functionReferenceData.LastInvocation = true;
-			functionReferenceData.UseAsReturnValue = !methodSymbol.ReturnsVoid; // here we don't now if the method will be converted to async or not
 			if (functionReferenceData.ReferenceFunctionData == null && functionReferenceData.AsyncCounterpartSymbol != null)
 			{
-				functionReferenceData.UseAsReturnValue = functionReferenceData.AsyncCounterpartSymbol.ReturnType.IsTaskType();
+				functionReferenceData.UseAsReturnValue = !_configuration.AlwaysAwait(methodSymbol) && functionReferenceData.AsyncCounterpartSymbol.ReturnType.IsTaskType();
+			}
+			else if (!methodSymbol.ReturnsVoid)
+			{
+				functionReferenceData.UseAsReturnValue = !_configuration.AlwaysAwait(methodSymbol); // here we don't now if the method will be converted to async or not
 			}
 		}
 

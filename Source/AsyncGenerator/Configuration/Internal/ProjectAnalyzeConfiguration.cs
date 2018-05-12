@@ -53,6 +53,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public bool ScanMethodBody { get; private set; }
 
+		public Predicate<IMethodSymbol> AlwaysAwait { get; private set; } = symbol => false;
+
 		public Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; private set; }
 
 		public bool UseCancellationTokens => CancellationTokens.Enabled;
@@ -131,7 +133,19 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.CallForwarding(Predicate<IMethodSymbol> predicate)
 		{
-			CallForwarding = predicate;
+			CallForwarding = predicate ?? throw new ArgumentNullException(nameof(predicate));
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AlwaysAwait(bool value)
+		{
+			AlwaysAwait = symbol => value;
+			return this; 
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AlwaysAwait(Predicate<IMethodSymbol> predicate)
+		{
+			AlwaysAwait = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 
@@ -158,7 +172,6 @@ namespace AsyncGenerator.Configuration.Internal
 			{
 				throw new ArgumentNullException(nameof(action));
 			}
-			CancellationTokens.Enabled = true;
 			action(AsyncExtensionMethods);
 			return this;
 		}
@@ -206,7 +219,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanForMissingAsyncMembers(Predicate<INamedTypeSymbol> predicate)
 		{
-			ScanForMissingAsyncMembers = predicate;
+			ScanForMissingAsyncMembers = predicate ?? throw new ArgumentNullException(nameof(predicate));
 			return this;
 		}
 

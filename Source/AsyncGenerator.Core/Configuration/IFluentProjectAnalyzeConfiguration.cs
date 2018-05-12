@@ -69,6 +69,18 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration CallForwarding(Predicate<IMethodSymbol> predicate);
 
 		/// <summary>
+		/// Enable or disable whether to await async calls that can be returned as a task.
+		/// <para>Default is set to false.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration AlwaysAwait(bool value);
+
+		/// <summary>
+		/// Set a predicate that will decide whether to await async calls that can be returned as a task.
+		/// <para>Default is set to false for all methods.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration AlwaysAwait(Predicate<IMethodSymbol> predicate);
+
+		/// <summary>
 		/// Enable or disable scanning and generating async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
 		/// When true, the <see cref="AsyncCounterpartsSearchOptions.HasCancellationToken"/> option will be passed for all registered async counterpart finders.
 		/// For more control over the generation use the overload with the action parameter.
