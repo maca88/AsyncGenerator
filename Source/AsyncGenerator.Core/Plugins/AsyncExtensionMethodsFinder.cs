@@ -15,8 +15,8 @@ namespace AsyncGenerator.Core.Plugins
 {
 	public class AsyncExtensionMethodsFinder : IAsyncCounterpartsFinder, IDocumentTransformer
 	{
-		private HashSet<IMethodSymbol> _linqMethods;
-		private ILookup<string, IMethodSymbol> _linqMethodsLookup;
+		private HashSet<IMethodSymbol> _extensionMethods;
+		private ILookup<string, IMethodSymbol> _extensionMethodsLookup;
 		private readonly string _fileName;
 		private readonly string _projectName;
 
@@ -32,18 +32,20 @@ namespace AsyncGenerator.Core.Plugins
 			var doc = extProject.Documents.First(o => o.Name == _fileName);
 			var rootNode = await doc.GetSyntaxRootAsync().ConfigureAwait(false);
 			var semanticModel = await doc.GetSemanticModelAsync().ConfigureAwait(false);
-			_linqMethods = new HashSet<IMethodSymbol>(rootNode.DescendantNodes()
+			_extensionMethods = new HashSet<IMethodSymbol>(rootNode.DescendantNodes()
 				.OfType<MethodDeclarationSyntax>()
 				.Where(o => o.Identifier.ValueText.EndsWith("Async"))
 				.Select(o => semanticModel.GetDeclaredSymbol(o)));
-			_linqMethodsLookup = _linqMethods.ToLookup(o => o.Name);
+			_extensionMethodsLookup = _extensionMethods.ToLookup(o => o.Name);
 		}
 
 		public CompilationUnitSyntax Transform(IDocumentTransformationResult transformationResult)
 		{
 			var requiredNamespaces = transformationResult.AnalyzationResult.AllTypes
 				.SelectMany(o => o.GetSelfAndDescendantsTypes())
-				.SelectMany(o => o.MethodsAndAccessors.SelectMany(m => m.FunctionReferences.Where(r => _linqMethods.Contains(r.AsyncCounterpartSymbol))))
+				.SelectMany(o => o.MethodsAndAccessors
+					.SelectMany(m => m.GetSelfAndDescendantsFunctions()
+						.SelectMany(f =>  f.FunctionReferences.Where(r => _extensionMethods.Contains(r.AsyncCounterpartSymbol)))))
 				.Select(o => o.AsyncCounterpartSymbol.ContainingNamespace.ToString())
 				.Distinct()
 				.ToList();
@@ -73,7 +75,7 @@ namespace AsyncGenerator.Core.Plugins
 				yield break;
 			}
 			var asyncName = symbol.GetAsyncName();
-			foreach (var asyncCandidate in _linqMethodsLookup[asyncName])
+			foreach (var asyncCandidate in _extensionMethodsLookup[asyncName])
 			{
 				if (!symbol.IsAsyncCounterpart(invokedFromType, asyncCandidate, true, true, false))
 				{
