@@ -223,5 +223,26 @@ namespace AsyncGenerator.Tests.LocalFunctions
 				)
 			);
 		}
+
+		[Test]
+		public Task TestExtensionMethodAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ExtensionMethod), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.AsyncExtensionMethods(e => e.ProjectFile("AsyncGenerator.Tests", "LinqExtensions.cs"))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ExtensionMethod)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }
