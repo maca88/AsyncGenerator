@@ -377,6 +377,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				)
 				.ToLookup(o => o.Symbol.GetAsyncName());
 
+			var asyncMethods = typeData.Node.Members
+				.OfType<MethodDeclarationSyntax>()
+				.Where(o => o.Identifier.ValueText.EndsWith("Async"))
+				.Select(o => new
+				{
+					Node = (SyntaxNode) o,
+					Symbol = documentData.SemanticModel.GetDeclaredSymbol(o)
+				})
+				.ToLookup(o => o.Symbol.Name);
+
 			foreach (var asyncMember in typeData.Symbol.AllInterfaces
 												  .SelectMany(o => o.GetMembers().OfType<IMethodSymbol>()
 												  .Where(m => m.Name.EndsWith("Async"))))
@@ -395,6 +405,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				var nonAsyncMember = syncMethods[asyncMember.Name].First(o => o.Symbol.IsAsyncCounterpart(null, asyncMember, true, true, false)); // TODO: what to do if there are more than one?
 				var methodData = documentData.GetMethodOrAccessorData(nonAsyncMember.Node);
+				if (methodData.Conversion == MethodConversion.Ignore)
+				{
+					methodData.AddDiagnostic("Overriding conversion from Ignore to ToAsync in order to avoid having an invalid code generated.", DiagnosticSeverity.Hidden);
+				}
 				methodData.ToAsync();
 				methodData.Missing = true;
 				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
@@ -408,17 +422,13 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 
-			// Find all abstract non implemented async methods. Descend base types until we find a non abstract one.
+			// Find all abstract and virtual non implemented async methods in all descend base types.
 			var baseType = typeData.Symbol.BaseType;
 			while (baseType != null)
 			{
-				if (!baseType.IsAbstract)
-				{
-					break;
-				}
 				foreach (var asyncMember in baseType.GetMembers()
 					.OfType<IMethodSymbol>()
-					.Where(o => o.IsAbstract && o.Name.EndsWith("Async")))
+					.Where(o => (o.IsAbstract || o.IsVirtual) && o.Name.EndsWith("Async")))
 				{
 					if (!syncMethods.Contains(asyncMember.Name))
 					{
@@ -431,7 +441,21 @@ namespace AsyncGenerator.Analyzation.Internal
 						documentData.AddDiagnostic($"Abstract sync counterpart of async member {asyncMember} not found", DiagnosticSeverity.Hidden);
 						continue;
 					}
+					// Skip if the type already implements the method
+					if (asyncMethods[asyncMember.Name].Any(o => o.Symbol.MatchesDefinition(asyncMember)))
+					{
+						continue;
+					}
 					var methodData = documentData.GetMethodOrAccessorData(nonAsyncMember.Node);
+					if (methodData.Conversion == MethodConversion.Ignore)
+					{
+						// An ignored virtual method can be ignored as it will not produce a compilation error
+						if (!asyncMember.IsAbstract)
+						{
+							continue;
+						}
+						methodData.AddDiagnostic("Overriding conversion from Ignore to ToAsync in order to avoid having an invalid code generated.", DiagnosticSeverity.Hidden);
+					}
 					methodData.ToAsync();
 					methodData.Missing = true;
 					// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
