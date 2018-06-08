@@ -101,6 +101,14 @@ namespace AsyncGenerator.Internal
 			Conversion |= MethodConversion.Copy;
 		}
 
+		public void Smart()
+		{
+			Conversion &= ~MethodConversion.Ignore;
+			Conversion &= ~MethodConversion.Unknown;
+			Conversion &= ~MethodConversion.ToAsync;
+			Conversion |= MethodConversion.Smart;
+		}
+
 		public override void Copy()
 		{
 			base.Copy();

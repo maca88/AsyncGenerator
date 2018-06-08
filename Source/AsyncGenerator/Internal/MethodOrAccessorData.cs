@@ -100,6 +100,11 @@ namespace AsyncGenerator.Internal
 		IReadOnlyList<IMethodOrAccessorAnalyzationResult> IMethodOrAccessorAnalyzationResult.RelatedMethods =>
 			_cachedRelatedMethods ?? (_cachedRelatedMethods = RelatedMethods.ToImmutableArray());
 
+		IReadOnlyList<IMethodSymbol> IMethodOrAccessorAnalyzationResult.ImplementedInterfaces =>
+			_cachedImplementedInterfaces ?? (_cachedImplementedInterfaces = ImplementedInterfaces.ToImmutableArray());
+
+		IMethodSymbol IMethodOrAccessorAnalyzationResult.AsyncCounterpartSymbol => AsyncCounterpartWithTokenSymbol ?? AsyncCounterpartSymbol;
+
 		#endregion
 
 		#region IMethodSymbolInfo

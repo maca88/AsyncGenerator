@@ -21,6 +21,11 @@ namespace AsyncGenerator.Core.Analyzation
 		IMethodSymbol BaseOverriddenMethod { get; }
 
 		/// <summary>
+		/// All interface methods that this method or accessor implements.
+		/// </summary>
+		IReadOnlyList<IMethodSymbol> ImplementedInterfaces { get; }
+
+		/// <summary>
 		/// Reference to the async counterpart for this method
 		/// </summary>
 		IMethodSymbol AsyncCounterpartSymbol { get; }
