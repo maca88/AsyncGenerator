@@ -409,15 +409,21 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.SoftCopy();
 				}
 
+				var relatedAsyncMember = methodData.RelatedAsyncMethods
+					.First(o => o.IsVirtual || o.IsAbstract);
+				// Copy the obsolete attribute if any exists on the related method while the method itself does not have one
+				var relatedObsolete = relatedAsyncMember.GetAttributes().FirstOrDefault(a => a.AttributeClass.Name == nameof(ObsoleteAttribute));
+				if (relatedObsolete != null && !methodData.Symbol.GetAttributes().Any(a => a.AttributeClass.Name == nameof(ObsoleteAttribute)))
+				{
+					//methodData.
+				}
+
 				// We have to generate the cancellation token parameter if the async member has more parameters that the sync counterpart
-				var asyncMember = methodData.RelatedAsyncMethods
-					.Where(o => o.IsVirtual || o.IsAbstract)
-					.FirstOrDefault(o => o.Parameters.Length > methodData.Symbol.Parameters.Length);
-				if (asyncMember != null)
+				if (relatedAsyncMember.Parameters.Length > methodData.Symbol.Parameters.Length)
 				{
 					methodData.CancellationTokenRequired = true;
 					// We suppose that the cancellation token is the last parameter
-					methodData.MethodCancellationToken = asyncMember.Parameters.Last().HasExplicitDefaultValue
+					methodData.MethodCancellationToken = relatedAsyncMember.Parameters.Last().HasExplicitDefaultValue
 						? MethodCancellationToken.Optional
 						: MethodCancellationToken.Required;
 				}
