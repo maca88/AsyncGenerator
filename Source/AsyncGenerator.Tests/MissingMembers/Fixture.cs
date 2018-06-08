@@ -105,5 +105,28 @@ namespace AsyncGenerator.Tests.MissingMembers
 				)
 			);
 		}
+
+		[Test]
+		public Task TestAbstractBaseAfterTransformation()
+		{
+			return ReadonlyTest(nameof(AbstractBase), o => o
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureAnalyzation(a => a
+					.ScanForMissingAsyncMembers(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(AbstractBase)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

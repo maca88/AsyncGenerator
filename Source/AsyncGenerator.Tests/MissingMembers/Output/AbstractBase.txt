@@ -23,37 +23,37 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	#endif
 
-	public partial class TestCase : IInterface
+	public partial class TestAbstract : AbstractBase
 	{
-		public Task MethodAsync()
+		public override Task MethodAsync()
 		{
 			return Task.CompletedTask;
 		}
 
-		public Task<bool> Method2Async(CancellationToken cancellationToken)
+		protected override Task<bool> Method2Async(CancellationToken cancellationToken)
 		{
 			return Task.FromResult<bool>(true);
 		}
 
-		public Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
+		internal override Task<bool> Method3Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return Task.FromResult<bool>(true);
 		}
 
 		[Obsolete]
-		public Task<bool> Method4Async(CancellationToken cancellationToken = default(CancellationToken))
+		public override Task<bool> Method4Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return Task.FromResult<bool>(true);
 		}
 
 		[Obsolete("Obsolete attribute should be copied to concrete implementation")]
-		public Task<bool> Method5Async(CancellationToken cancellationToken = default(CancellationToken))
+		public override Task<bool> Method5Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return Task.FromResult<bool>(true);
 		}
 
 		[Obsolete("Obsolete sync")]
-		public Task<bool> Method6Async(CancellationToken cancellationToken = default(CancellationToken))
+		public override Task<bool> Method6Async(CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return Task.FromResult<bool>(true);
 		}

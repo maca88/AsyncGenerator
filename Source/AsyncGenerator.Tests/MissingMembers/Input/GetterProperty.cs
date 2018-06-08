@@ -16,6 +16,15 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		Task<bool> GetWriteSuccess2Async();
 
 		Task<bool> GetWriteSuccess3Async();
+
+		[Obsolete]
+		Task<bool> GetWriteSuccess4Async();
+
+		[Obsolete("Obsolete attribute should be copied to concrete implementation")]
+		Task<bool> GetWriteSuccess5Async();
+
+		[Obsolete("Obsolete async interface")]
+		Task<bool> GetWriteSuccess6Async();
 	}
 #endif
 
@@ -24,6 +33,13 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		bool WriteSuccess { get; }
 
 		bool WriteSuccess2 { get; }
+
+		bool WriteSuccess4 { get; }
+
+		bool WriteSuccess5 { get; }
+
+		[Obsolete("Obsolete sync interface")]
+		bool WriteSuccess6 { get; }
 	}
 
 	public class GetterProperty : IGetterProperty
@@ -33,5 +49,12 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		public bool WriteSuccess2 => SimpleFile.Write("2");
 
 		public bool WriteSuccess3 { get => SimpleFile.Write("3"); }
+
+		public bool WriteSuccess4 => true;
+
+		public bool WriteSuccess5 => false;
+
+		[Obsolete("Obsolete sync")]
+		public bool WriteSuccess6 => true;
 	}
 }
