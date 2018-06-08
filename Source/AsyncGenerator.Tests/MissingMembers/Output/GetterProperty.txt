@@ -32,5 +32,14 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		public Task<bool> GetWriteSuccess2Async() => SimpleFile.WriteAsync("2");
 
 		public Task<bool> GetWriteSuccess3Async() => SimpleFile.WriteAsync("3");
+
+		[Obsolete]
+		public Task<bool> GetWriteSuccess4Async() => Task.FromResult<bool>(true);
+
+		[Obsolete("Obsolete attribute should be copied to concrete implementation")]
+		public Task<bool> GetWriteSuccess5Async() => Task.FromResult<bool>(false);
+
+		[Obsolete("Obsolete sync")]
+		public Task<bool> GetWriteSuccess6Async() => Task.FromResult<bool>(true);
 	}
 }
