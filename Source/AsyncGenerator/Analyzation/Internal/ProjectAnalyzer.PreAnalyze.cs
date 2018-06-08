@@ -402,8 +402,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (methodData.RelatedAsyncMethods.Any(o => o.IsVirtual || o.IsAbstract) &&
 			    _configuration.ScanForMissingAsyncMembers?.Invoke(methodData.TypeData.Symbol) == true)
 			{
-				methodData.Missing = true;
-				methodData.ToAsync();
+				if (!methodData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart))
+				{
+					methodData.Smart();
+				}
 				if (newType)
 				{
 					methodData.SoftCopy();
