@@ -350,10 +350,10 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			var asyncContainingType = funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType;
 			var syncContainingType = funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType;
-			// If the async counterpart is from another type that is not inherited e.g. Thread.Sleep -> Task.Delay, we need to change also the type
+			// If the async counterpart is from another type that is static e.g. Thread.Sleep -> Task.Delay, we need to change also the type
 			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
 			    !asyncContainingType.Equals(syncContainingType) &&
-			    !syncContainingType.InheritsFromOrEquals(asyncContainingType, true) &&
+			    funcReferenceResult.ReferenceSymbol.IsStatic &&
 				node.Expression is MemberAccessExpressionSyntax memberAccess)
 			{
 				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;
@@ -369,10 +369,10 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			var asyncContainingType = funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType;
 			var syncContainingType = funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType;
-			// If the async counterpart is from another type  that is not inherited e.g. Thread.Sleep -> Task.Delay, we need to change also the type
+			// If the async counterpart is from another type that is static e.g. Thread.Sleep -> Task.Delay, we need to change also the type
 			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
 			    !asyncContainingType.Equals(syncContainingType) &&
-			    !syncContainingType.InheritsFromOrEquals(asyncContainingType, true))
+			    funcReferenceResult.ReferenceSymbol.IsStatic)
 			{
 				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;
 				node = updateTypeFunc(type, namespaceMetadata.AnalyzationResult.IsIncluded(type.ContainingNamespace?.ToString()));
