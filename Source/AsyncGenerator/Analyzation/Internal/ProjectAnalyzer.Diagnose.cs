@@ -91,7 +91,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				var highestSeverity = logs.Select(o => o.Key).OrderByDescending(o => o).First();
 				logs.Insert(0, new KeyValuePair<DiagnosticSeverity, string>(highestSeverity,
-					$"Diagnostics for document: {Path.Combine(document.Document.Folders.Union(new[] {document.Document.Name}).ToArray())}"));
+					$"Diagnostics for document: {Path.Combine(document.Document.Folders.Concat(new[] {document.Document.Name}).ToArray())}"));
 				foreach (var log in logs)
 				{
 					switch (log.Key)

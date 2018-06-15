@@ -169,6 +169,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public CancellationTokens CancellationTokens { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? ScanMethodBody { get; set; }
+		[XmlElement(IsNullable = true)]
+		public bool? SearchAsyncCounterpartsInInheritedTypes { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
 		public List<TypeFilter> ScanForMissingAsyncMembers { get; set; }
 

@@ -78,7 +78,7 @@ namespace AsyncGenerator.Internal
 
 		public IEnumerable<MethodOrAccessorData> MethodsAndAccessors
 		{
-			get { return Methods.Values.Cast<MethodOrAccessorData>().Union(Properties.Values.SelectMany(o => o.GetAccessors())); }
+			get { return Methods.Values.Cast<MethodOrAccessorData>().Concat(Properties.Values.SelectMany(o => o.GetAccessors())); }
 		}
 
 		public override SyntaxNode GetNode()

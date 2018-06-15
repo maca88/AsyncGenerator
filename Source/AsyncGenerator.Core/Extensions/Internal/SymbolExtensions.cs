@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -24,8 +25,24 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			       //parameterSymbol.TypeParameterKind == candParamType.TypeParameterKind && we do not care if the type parameter is form a method or a type
 			       //parameterSymbol.Ordinal == candParamType.Ordinal && // we do not care about the position index of the type parameter
 			       parameterSymbol.Variance == candParamType.Variance &&
-			       parameterSymbol.ConstraintTypes.Length == candParamType.ConstraintTypes.Length &&
-			       parameterSymbol.ConstraintTypes.All(o => candParamType.ConstraintTypes.Contains(o));
+			       AreEqual(parameterSymbol.ConstraintTypes, candParamType.ConstraintTypes);
+		}
+
+		private static bool AreEqual(ImmutableArray<ITypeSymbol> types, ImmutableArray<ITypeSymbol> toCompareTypes)
+		{
+			if (types.Length != toCompareTypes.Length)
+			{
+				return false;
+			}
+
+			for (var i = 0; i < types.Length; i++)
+			{
+				if (!types[i].AreEqual(toCompareTypes[i]))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		/// <summary>
@@ -115,7 +132,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			var equals = typeNamedType.OriginalDefinition.Equals(toCompareNamedType.OriginalDefinition);
 			if (!equals && canBeDerivedFromType != null)
 			{
-				equals = new []{ canBeDerivedFromType }.Union(canBeDerivedFromType.AllInterfaces).Any(o => toCompareNamedType.OriginalDefinition.Equals(o.OriginalDefinition));
+				equals = new []{ canBeDerivedFromType }.Concat(canBeDerivedFromType.AllInterfaces).Any(o => toCompareNamedType.OriginalDefinition.Equals(o.OriginalDefinition));
 			}
 			return equals;
 		}

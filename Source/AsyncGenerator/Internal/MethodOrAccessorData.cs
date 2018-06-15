@@ -49,7 +49,7 @@ namespace AsyncGenerator.Internal
 		/// <summary>
 		/// Contains all (internal/external) implemented or explicitly implemented interfaces and all overrides
 		/// </summary>
-		public IEnumerable<IMethodSymbol> AllRelatedMethods => ImplementedInterfaces.Union(OverridenMethods).Union(ExternalRelatedMethods);
+		public IEnumerable<IMethodSymbol> AllRelatedMethods => ImplementedInterfaces.Concat(OverridenMethods).Concat(ExternalRelatedMethods);
 
 		/// <summary>
 		/// The base method that is overriden

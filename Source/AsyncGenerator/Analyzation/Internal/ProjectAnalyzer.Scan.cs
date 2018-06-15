@@ -353,7 +353,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					Symbol = documentData.SemanticModel.GetDeclaredSymbol(o)
 				})
 				// Expression properties
-				.Union(
+				.Concat(
 					typeData.Node.Members
 						.OfType<PropertyDeclarationSyntax>()
 						.Where(o => o.ExpressionBody != null)
@@ -364,7 +364,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						})
 				)
 				// Non expression properties
-				.Union(
+				.Concat(
 					typeData.Node.Members
 						.OfType<PropertyDeclarationSyntax>()
 						.Where(o => o.ExpressionBody == null)

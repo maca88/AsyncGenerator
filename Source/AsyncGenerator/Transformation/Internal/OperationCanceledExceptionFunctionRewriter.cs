@@ -74,7 +74,7 @@ namespace AsyncGenerator.Transformation.Internal
 					.WithOpenBraceToken(Token(TriviaList(), SyntaxKind.OpenBraceToken, TriviaList(Space)))
 					.WithCloseBraceToken(Token(TriviaList(), SyntaxKind.CloseBraceToken, TriviaList(_eolTrivia)))
 				);
-			node = node.WithCatches(new SyntaxList<CatchClauseSyntax>(new[] {catchClause}.Union(node.Catches)));
+			node = node.WithCatches(new SyntaxList<CatchClauseSyntax>(new[] {catchClause}.Concat(node.Catches)));
 			return base.VisitTryStatement(node);
 		}
 	}

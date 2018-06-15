@@ -41,7 +41,7 @@ namespace AsyncGenerator.Core.Plugins
 					SyntaxFactory.IdentifierName("TransactionScopeAsyncFlowOption"),
 					SyntaxFactory.IdentifierName("Enabled")));
 			var arguments = node.ArgumentList.Arguments.GetWithSeparators()
-				.Union(node.ArgumentList.Arguments.Count > 0
+				.Concat(node.ArgumentList.Arguments.Count > 0
 					? new SyntaxNodeOrToken[] { SyntaxFactory.Token(SyntaxFactory.TriviaList(), SyntaxKind.CommaToken, SyntaxFactory.TriviaList(SyntaxFactory.Space)), argument }
 					: new SyntaxNodeOrToken[] { argument });
 			return node.WithArgumentList(

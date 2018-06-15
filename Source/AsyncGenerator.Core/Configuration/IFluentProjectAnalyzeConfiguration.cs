@@ -56,6 +56,12 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration ScanMethodBody(bool value);
 
 		/// <summary>
+		/// Enable or disable scanning for async counterparts in inherted types.
+		/// <para>Default is set to false.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration SearchAsyncCounterpartsInInheritedTypes(bool value);
+
+		/// <summary>
 		/// Enable or disable forwarding the call to the synchronous method instead of copying the whole body when the method does not have any async invocations.
 		/// For fine tuning use the overload with a predicate.
 		/// <para>Default is set to false.</para>

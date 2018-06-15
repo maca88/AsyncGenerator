@@ -330,6 +330,7 @@
       <xs:element name="CallForwarding" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="CancellationTokens" type="CancellationTokens" minOccurs="0" />
       <xs:element name="ScanMethodBody" type="xs:boolean" nillable="true" minOccurs="0"/>
+      <xs:element name="SearchAsyncCounterpartsInInheritedTypes" type="xs:boolean" nillable="true" minOccurs="0"/>
       <xs:element name="ScanForMissingAsyncMembers" minOccurs="0">
         <xs:complexType>
           <xs:sequence>

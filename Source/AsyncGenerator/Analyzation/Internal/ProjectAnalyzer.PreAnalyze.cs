@@ -30,6 +30,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				_preAnalyzeSearchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
+			if (_configuration.SearchAsyncCounterpartsInInheritedTypes)
+			{
+				_preAnalyzeSearchOptions |= AsyncCounterpartsSearchOptions.SearchInheritedTypes;
+			}
 
 			foreach (var typeNode in documentData.Node
 				.DescendantNodes()
@@ -386,7 +390,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 				}
 				// TODO: define a better logic
-				if (asyncCounterparts.Any()
+				// We should not ignore if none of the async counterparts is in the sync method type.
+				if (asyncCounterparts.Any(o => o.ContainingType.Equals(methodSymbol.ContainingType))
 				/*(_configuration.UseCancellationTokens && asyncCounterparts.Count == 2) ||
 			(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)*/
 				)

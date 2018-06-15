@@ -75,7 +75,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					project = project.GetDocument(document.Document.Id).WithSyntaxRoot(docResult.OriginalModified).Project;
 				}
-				var folders = new List<string> { _configuration.AsyncFolder }.Union(document.Document.Folders);
+				var folders = new List<string> { _configuration.AsyncFolder }.Concat(document.Document.Folders);
 				project = project.AddDocument(document.Document.Name, docResult.Transformed.GetText(Encoding.UTF8), folders, GetDocumentAsyncPath(document.Document)).Project;
 			}
 			result.Project = project;

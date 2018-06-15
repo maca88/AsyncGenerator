@@ -343,6 +343,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				_searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
 			}
+			if (_configuration.SearchAsyncCounterpartsInInheritedTypes)
+			{
+				_searchOptions |= AsyncCounterpartsSearchOptions.SearchInheritedTypes;
+			}
 		}
 	}
 }
