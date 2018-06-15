@@ -290,8 +290,8 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			foreach (var transform in transformResult.TransformedMethods
 				.Cast<AnnotatedNode>()
-				.Union(transformResult.TransformedProperties)
-				.Union(transformResult.TransformedSpecialMethods)
+				.Concat(transformResult.TransformedProperties)
+				.Concat(transformResult.TransformedSpecialMethods)
 				.OrderByDescending(o => o.OriginalStartSpan))
 			{
 				if (transform is MethodTransformationResult methodTransform)

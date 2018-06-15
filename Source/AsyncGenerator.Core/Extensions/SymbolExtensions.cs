@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading;
 using AsyncGenerator.Core.Extensions.Internal;
 using Microsoft.CodeAnalysis;
@@ -8,6 +12,41 @@ namespace AsyncGenerator.Core.Extensions
 {
 	public static class SymbolExtensions
 	{
+		private static readonly Func<IMethodSymbol, IEnumerable> GetHiddenMembersFunc;
+
+		static SymbolExtensions()
+		{
+			const string methodSymbolFullName = "Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol, Microsoft.CodeAnalysis.CSharp";
+			var type = Type.GetType(methodSymbolFullName);
+			if (type == null)
+			{
+				throw new InvalidOperationException($"Type {methodSymbolFullName} does not exist");
+			}
+			var overriddenOrHiddenMembersGetter = type.GetProperty("OverriddenOrHiddenMembers", BindingFlags.NonPublic | BindingFlags.Instance)?.GetMethod;
+			if (overriddenOrHiddenMembersGetter == null)
+			{
+				throw new InvalidOperationException($"Property OverriddenOrHiddenMembers of type {methodSymbolFullName} does not exist.");
+			}
+
+			var hiddenMembersGetter = overriddenOrHiddenMembersGetter.ReturnType.GetProperty("HiddenMembers")?.GetMethod;
+			if (hiddenMembersGetter == null)
+			{
+				throw new InvalidOperationException($"Property HiddenMembers of type {overriddenOrHiddenMembersGetter.ReturnType} does not exist.");
+			}
+
+			var param1 = Expression.Parameter(typeof(IMethodSymbol), "methodSymbol");
+			var convertToMethodSymbol = Expression.Convert(param1, type);
+			var callOverriddenOrHiddenMembersGetter = Expression.Call(convertToMethodSymbol, overriddenOrHiddenMembersGetter);
+			var callHiddenMembersGetter = Expression.Call(callOverriddenOrHiddenMembersGetter, hiddenMembersGetter);
+			var lambdaParams = new List<ParameterExpression>
+			{
+				param1
+			};
+			GetHiddenMembersFunc = Expression.Lambda<Func<IMethodSymbol, IEnumerable>>(
+					Expression.Convert(callHiddenMembersGetter, typeof(IEnumerable)), lambdaParams)
+				.Compile();
+		}
+
 		/// <summary>
 		/// Check if the definition (excluding method name) of both methods matches
 		/// </summary>
@@ -66,6 +105,11 @@ namespace AsyncGenerator.Core.Extensions
 			{
 				// System.Linq extensions
 				syncMethod = syncMethod.ReducedFrom ?? syncMethod;
+			}
+
+			if (syncMethod.OverriddenMethod != null && candidateAsyncMethod.Equals(syncMethod.OverriddenMethod))
+			{
+				return false;
 			}
 
 			// Check if the length of the parameters matches
@@ -179,6 +223,11 @@ namespace AsyncGenerator.Core.Extensions
 			return candidateAsyncMethod.Parameters.Last().Type.Name == nameof(CancellationToken) && result;
 		}
 
+		internal static IEnumerable<IMethodSymbol> GetHiddenMethods(this IMethodSymbol methodSymbol)
+		{
+			return GetHiddenMembersFunc(methodSymbol).OfType<IMethodSymbol>();
+		}
+
 		/// <summary>
 		/// Searches for an async counterpart methods within containing and its bases types
 		/// </summary>
@@ -195,14 +244,44 @@ namespace AsyncGenerator.Core.Extensions
 			var asyncName = methodSymbol.GetAsyncName();
 			if (searchInheritedTypes)
 			{
-				return methodSymbol.ContainingType.GetBaseTypesAndThis()
+				// If the containing type is not an interface we don't have to search in interfaces as all interface members
+				// should be defined in one of the types.
+				var types = methodSymbol.ContainingType.TypeKind == TypeKind.Interface
+					? new ITypeSymbol[] {methodSymbol.ContainingType}.Concat(methodSymbol.ContainingType.AllInterfaces)
+					: methodSymbol.ContainingType.GetBaseTypesAndThis();
+				var asyncCounterparts = types
 					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
 					.OfType<IMethodSymbol>()
 					.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
+				// We have to return only unique async counterparts, skip overriden and hidden methods
+				return FilterOutHiddenAndOverridenMethods(asyncCounterparts);
 			}
+
 			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
 				.OfType<IMethodSymbol>()
 				.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
+		}
+
+		private static IEnumerable<IMethodSymbol> FilterOutHiddenAndOverridenMethods(IEnumerable<IMethodSymbol> methodSymbols)
+		{
+			var overridenOrHiddenMethods = new HashSet<IMethodSymbol>();
+			foreach (var methodSymbol in methodSymbols)
+			{
+				if (overridenOrHiddenMethods.Contains(methodSymbol))
+				{
+					continue;
+				}
+				foreach (var hiddenMethod in methodSymbol.GetHiddenMethods())
+				{
+					overridenOrHiddenMethods.Add(hiddenMethod);
+				}
+				if (methodSymbol.OverriddenMethod != null)
+				{
+					overridenOrHiddenMethods.Add(methodSymbol.OverriddenMethod);
+				}
+
+				yield return methodSymbol;
+			}
 		}
 
 		/// <summary>

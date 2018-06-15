@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core.Analyzation;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
@@ -347,11 +348,13 @@ namespace AsyncGenerator.Transformation.Internal
 			INamespaceTransformationMetadata namespaceMetadata,
 			Func<MemberAccessExpressionSyntax, INamedTypeSymbol, bool, MemberAccessExpressionSyntax> updateTypeFunc)
 		{
-			// If the async counterpart is from another type e.g. Thread.Sleep -> Task.Delay, we need to change also the type
+			var asyncContainingType = funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType;
+			var syncContainingType = funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType;
+			// If the async counterpart is from another type that is not inherited e.g. Thread.Sleep -> Task.Delay, we need to change also the type
 			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
-			    !funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
-				    funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType) &&
-			    node.Expression is MemberAccessExpressionSyntax memberAccess)
+			    !asyncContainingType.Equals(syncContainingType) &&
+			    !syncContainingType.InheritsFromOrEquals(asyncContainingType, true) &&
+				node.Expression is MemberAccessExpressionSyntax memberAccess)
 			{
 				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;
 				node = node.WithExpression(updateTypeFunc(memberAccess, type, 
@@ -364,10 +367,12 @@ namespace AsyncGenerator.Transformation.Internal
 			INamespaceTransformationMetadata namespaceMetadata, Func<INamedTypeSymbol, bool, T> updateTypeFunc)
 			where T : SyntaxNode
 		{
-			// If the async counterpart is from another type e.g. Thread.Sleep -> Task.Delay, we need to change also the type
+			var asyncContainingType = funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType;
+			var syncContainingType = funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType;
+			// If the async counterpart is from another type  that is not inherited e.g. Thread.Sleep -> Task.Delay, we need to change also the type
 			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
-			    !funcReferenceResult.AsyncCounterpartSymbol.OriginalDefinition.ContainingType.Equals(
-				    funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType))
+			    !asyncContainingType.Equals(syncContainingType) &&
+			    !syncContainingType.InheritsFromOrEquals(asyncContainingType, true))
 			{
 				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;
 				node = updateTypeFunc(type, namespaceMetadata.AnalyzationResult.IsIncluded(type.ContainingNamespace?.ToString()));

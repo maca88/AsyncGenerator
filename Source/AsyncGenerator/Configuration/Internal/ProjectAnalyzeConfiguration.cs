@@ -51,6 +51,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ProjectDiagnosticsConfiguration Diagnostics { get; } = new ProjectDiagnosticsConfiguration();
 
+		public bool SearchAsyncCounterpartsInInheritedTypes { get; private set; }
+
 		public bool ScanMethodBody { get; private set; }
 
 		public Predicate<IMethodSymbol> AlwaysAwait { get; private set; } = symbol => false;
@@ -122,6 +124,12 @@ namespace AsyncGenerator.Configuration.Internal
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.ScanMethodBody(bool value)
 		{
 			ScanMethodBody = value;
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.SearchAsyncCounterpartsInInheritedTypes(bool value)
+		{
+			SearchAsyncCounterpartsInInheritedTypes = value;
 			return this;
 		}
 

@@ -651,12 +651,12 @@ namespace AsyncGenerator.Extensions.Internal
 			if (node is TypeDeclarationSyntax typeNode)
 			{
 				return typeNode.GetLeadingTrivia().Where(o => o.IsDirective)
-					.Union(typeNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
+					.Concat(typeNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
 			}
 			if (node is NamespaceDeclarationSyntax nsNode)
 			{
 				return nsNode.GetLeadingTrivia().Where(o => o.IsDirective)
-					.Union(nsNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
+					.Concat(nsNode.CloseBraceToken.LeadingTrivia.Where(o => o.IsDirective));
 			}
 			return node.GetLeadingTrivia().Where(o => o.IsDirective);
 		}
@@ -759,7 +759,7 @@ namespace AsyncGenerator.Extensions.Internal
 			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
 			var arguments = methodNode.ParameterList.Parameters
 				.Select(o => Argument(IdentifierName(o.Identifier.Text)))
-				.Union(additionalArgs)
+				.Concat(additionalArgs)
 				.SelectMany((o, i) => i == 0
 					? new SyntaxNodeOrToken[] {o}
 					: new SyntaxNodeOrToken[] {comma, o});
@@ -907,7 +907,7 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 
 			var parameters = node.ParameterList.Parameters.GetWithSeparators()
-				.Union(node.ParameterList.Parameters.Count > 0 
+				.Concat(node.ParameterList.Parameters.Count > 0 
 					? new SyntaxNodeOrToken[]
 					{
 						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),

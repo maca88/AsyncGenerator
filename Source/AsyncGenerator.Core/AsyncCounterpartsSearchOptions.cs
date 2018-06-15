@@ -24,7 +24,7 @@ namespace AsyncGenerator.Core
 		/// With this option a method should be qualified as an async counterpart if it is defined in an inherited type.
 		/// This option should extend the <see cref="Default"/> constraints.
 		/// </summary>
-		SearchInheritTypes = 4,
+		SearchInheritedTypes = 4,
 		/// <summary>
 		/// With this option a method should be qualified as an async counterpart if has an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
 		/// This options should extend the <see cref="Default"/> constraints.

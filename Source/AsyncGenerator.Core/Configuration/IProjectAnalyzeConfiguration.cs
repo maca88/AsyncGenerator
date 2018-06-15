@@ -5,6 +5,8 @@ namespace AsyncGenerator.Core.Configuration
 {
 	public interface IProjectAnalyzeConfiguration
 	{
+		bool SearchAsyncCounterpartsInInheritedTypes { get; }
+
 		bool ScanMethodBody { get; }
 
 		Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; }

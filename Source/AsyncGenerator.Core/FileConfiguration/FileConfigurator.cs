@@ -116,6 +116,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.ScanMethodBody(config.ScanMethodBody.Value);
 			}
+			if (config.SearchAsyncCounterpartsInInheritedTypes.HasValue)
+			{
+				fluentConfig.SearchAsyncCounterpartsInInheritedTypes(config.SearchAsyncCounterpartsInInheritedTypes.Value);
+			}
 			if (config.ScanForMissingAsyncMembers.Any())
 			{
 				fluentConfig.ScanForMissingAsyncMembers(CreateTypePredicate(configuration, config.ScanForMissingAsyncMembers));
@@ -496,9 +500,16 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				return false;
 			}
-			if (!string.IsNullOrEmpty(filter.Rule) && !rules[filter.Rule].Any(o => CanApply(symbol, o, rules)))
+			if (!string.IsNullOrEmpty(filter.Rule))
 			{
-				return false;
+				if (!rules.TryGetValue(filter.Rule, out var rule))
+				{
+					throw new InvalidOperationException($"Method rule {filter.Rule} do not exist");
+				}
+				if (!rule.Any(o => CanApply(symbol, o, rules)))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -521,9 +532,16 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				return false;
 			}
-			if (!string.IsNullOrEmpty(filter.Rule) && !rules[filter.Rule].Any(o => CanApply(symbol, o, rules)))
+			if (!string.IsNullOrEmpty(filter.Rule))
 			{
-				return false;
+				if (!rules.TryGetValue(filter.Rule, out var rule))
+				{
+					throw new InvalidOperationException($"Type rule {filter.Rule} do not exist");
+				}
+				if (!rule.Any(o => CanApply(symbol, o, rules)))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
