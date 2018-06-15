@@ -244,11 +244,22 @@ namespace AsyncGenerator.Core.Extensions
 			var asyncName = methodSymbol.GetAsyncName();
 			if (searchInheritedTypes)
 			{
+				// If the method was invoked in an upper type use it as a root type.
+				ITypeSymbol rootType;
+				if (invokedFromType != null && invokedFromType.InheritsFromOrEquals(methodSymbol.ContainingType, true))
+				{
+					rootType = invokedFromType;
+				}
+				else
+				{
+					rootType = methodSymbol.ContainingType;
+				}
+
 				// If the containing type is not an interface we don't have to search in interfaces as all interface members
 				// should be defined in one of the types.
-				var types = methodSymbol.ContainingType.TypeKind == TypeKind.Interface
-					? new ITypeSymbol[] {methodSymbol.ContainingType}.Concat(methodSymbol.ContainingType.AllInterfaces)
-					: methodSymbol.ContainingType.GetBaseTypesAndThis();
+				var types = rootType.TypeKind == TypeKind.Interface
+					? new[] {rootType}.Concat(rootType.AllInterfaces)
+					: rootType.GetBaseTypesAndThis();
 				var asyncCounterparts = types
 					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
 					.OfType<IMethodSymbol>()
