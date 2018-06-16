@@ -115,7 +115,10 @@ namespace AsyncGenerator.Tests.Github.Issue46
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("TestCaseWoMissingMembersWithToken"), document.Transformed.ToFullString());
 					})
 				)
 			);
