@@ -178,8 +178,10 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return onlyNew ? Enumerable.Empty<IMethodSymbol>() : asyncMethodSymbols;
 			}
-			asyncMethodSymbols = new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartsFinders
-				.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, invokedFromType, options)));
+			asyncMethodSymbols = _configuration.SearchForAsyncCounterparts(methodSymbol)
+				? new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartsFinders
+					.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, invokedFromType, options)))
+				: new HashSet<IMethodSymbol>();
 			return dict.AddOrUpdate(
 				options,
 				asyncMethodSymbols,
@@ -280,10 +282,6 @@ namespace AsyncGenerator.Analyzation.Internal
 						DiagnosticSeverity.Info);
 				}
 
-				if (!_configuration.SearchForAsyncCounterparts(methodSymbol))
-				{
-					continue;
-				}
 				// Add method only if new
 				if (GetAsyncCounterparts(methodSymbol, typeSymbol, _searchOptions, true).Any())
 				{
