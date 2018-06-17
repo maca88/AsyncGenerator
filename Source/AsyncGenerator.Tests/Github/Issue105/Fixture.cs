@@ -61,5 +61,28 @@ namespace AsyncGenerator.Tests.Github.Issue105
 				.AddPreprocessorSymbolName("ASYNC"))
 			);
 		}
+
+		[Test]
+		public Task TestCase3AfterTransformation()
+		{
+			return ReadonlyTest(nameof(TestCase3), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.Name == "Test" ? MethodConversion.Smart : MethodConversion.Unknown)
+					.SearchAsyncCounterpartsInInheritedTypes(true)
+					.ScanForMissingAsyncMembers(true)
+					.SearchForAsyncCounterparts(symbol => symbol.Name != "IsDBNull")
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(0, result.Documents.Count);
+					})
+				)
+				.ConfigureParsing(pp => pp
+					.AddPreprocessorSymbolName("TEST")
+					.AddPreprocessorSymbolName("ASYNC"))
+			);
+		}
 	}
 }
