@@ -48,14 +48,6 @@ namespace AsyncGenerator.Analyzation.Internal
 						"Cancellation token parameter will not be added, because the last parameter is declared as an array which is currently not supported",
 						DiagnosticSeverity.Hidden);
 				}
-				if (currentMethodData.CancellationTokenRequired)
-				{
-					if (!currentMethodData.Missing)
-					{
-						currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
-					}
-					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
-				}
 
 				CalculatePreserveReturnType(currentMethodData);
 
@@ -86,26 +78,42 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					depFunctionData.ToAsync();
 
-					if (!currentMethodData.CancellationTokenRequired)
-					{
-						continue;
-					}
-					// Propagate the CancellationTokenRequired for the dependency method data
+					// Propagate the CancellationTokenRequired for the dependency method data or
+					// from the dependency method to the current one
 					if (depMethodData != null)
 					{
-						if (_configuration.CancellationTokens.RequiresCancellationToken(depMethodData.Symbol) == null)
+						var requiresToken = _configuration.CancellationTokens.RequiresCancellationToken(depMethodData.Symbol);
+						if (!requiresToken.HasValue)
 						{
 							depMethodData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
+						}
+						else
+						{
+							currentMethodData.CancellationTokenRequired |= requiresToken.Value;
 						}
 					}
 					else if (depFunctionData is ChildFunctionData childFunction)
 					{
 						var methodOrAccessorData = childFunction.GetMethodOrAccessorData();
-						if (_configuration.CancellationTokens.RequiresCancellationToken(methodOrAccessorData.Symbol) == null)
+						var requiresToken = _configuration.CancellationTokens.RequiresCancellationToken(methodOrAccessorData.Symbol);
+						if (requiresToken == null)
 						{
 							methodOrAccessorData.CancellationTokenRequired |= currentMethodData.CancellationTokenRequired;
 						}
+						else
+						{
+							currentMethodData.CancellationTokenRequired |= requiresToken.Value;
+						}
 					}
+				}
+
+				if (currentMethodData.CancellationTokenRequired)
+				{
+					if (!currentMethodData.Missing)
+					{
+						currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
+					}
+					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
 				}
 			}
 		}

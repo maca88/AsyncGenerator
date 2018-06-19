@@ -215,5 +215,34 @@ namespace AsyncGenerator.Tests.CancellationTokens
 				)
 			);
 		}
+
+		[Test]
+		public Task TestAbstractClassRequiresCancellationTokenAfterTransformation()
+		{
+			return ReadonlyTest(nameof(AbstractClass), p => p
+				.ConfigureAnalyzation(a => a
+					.ScanMethodBody(true)
+					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(AbstractClass) ? MethodConversion.Smart : MethodConversion.Unknown)
+					.CancellationTokens(t => t
+						.Guards(true)
+						.RequiresCancellationToken(o => o.ContainingType.Name == nameof(AbstractClass) ? true : (bool?)null)
+						.ParameterGeneration(symbolInfo =>
+						{
+							return MethodCancellationToken.Required;
+						}))
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(AbstractClass) + "RequiresToken"), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }
