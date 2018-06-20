@@ -152,10 +152,26 @@ namespace AsyncGenerator.Internal
 				{
 					functionArgument.FunctionReference?.CalculateWrapInsideFunction(asyncDelegateFunc);
 				}
+				else
+				{
+					// Ignore if the parameter type is an expression, as they cannot be async
+					if (functionArgument.FunctionData != null &&
+					    functionArgument.FunctionData.Conversion != MethodConversion.Ignore)
+					{
+						functionArgument.FunctionData.Ignore(IgnoreReason.Custom(
+							$"Parameter {asyncParamType} is not invokable.", DiagnosticSeverity.Hidden));
+					}
+					else if (functionArgument.FunctionReference != null &&
+					         functionArgument.FunctionReference.Conversion != ReferenceConversion.Ignore)
+					{
+						functionArgument.FunctionReference.Ignore(IgnoreReason.Custom(
+							$"Parameter {asyncParamType} is not invokable.", DiagnosticSeverity.Hidden));
+					}
+					continue;
+				}
 
 				// If the reference is an internal method we need to ignore the argument, as currently we do not support async parameter conversion
-				// Ignore if the parameter type is an expression, as they cannot be async
-				if (Data.Symbol.ContainingAssembly.Equals(ReferenceSymbol.ContainingAssembly) || asyncDelegateFunc == null)
+				if (Data.Symbol.ContainingAssembly.Equals(ReferenceSymbol.ContainingAssembly) && ReferenceAsyncSymbols.Count == 0)
 				{
 					// TODO: support for parameter conversion e.g. Action -> Func<Task>
 					if (functionArgument.FunctionData != null && functionArgument.FunctionData.Conversion != MethodConversion.Ignore)

@@ -559,8 +559,13 @@ namespace AsyncGenerator.Analyzation.Internal
 						// Child functions don't need a cancellation token as they can use the one from the root method
 						if (functionRefData.ReferenceFunctionData != null && !(functionRefData.ReferenceFunctionData is ChildFunctionData))
 						{
-							var refMethodData = functionRefData.ReferenceFunctionData.GetMethodOrAccessorData();
-							functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;
+							// Only update if AsyncCounterpartSymbol is the sync version of method.
+							if (functionRefData.AsyncCounterpartSymbol.OriginalDefinition
+								.Equals(functionRefData.ReferenceFunctionData.Symbol.OriginalDefinition))
+							{
+								var refMethodData = functionRefData.ReferenceFunctionData.GetMethodOrAccessorData();
+								functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;
+							}
 						}
 						if (!methodData.CancellationTokenRequired && functionRefData.CanSkipCancellationTokenArgument() == true)
 						{
