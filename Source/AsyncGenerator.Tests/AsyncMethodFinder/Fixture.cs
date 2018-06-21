@@ -100,6 +100,29 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 		}
 
 		[Test]
+		public Task TestGuardsAfterTransformation()
+		{
+			return ReadonlyTest(nameof(Guards), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(o => o
+						.RequiresCancellationToken(symbol => true)
+						.Guards(true))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(Guards)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
 		public Task TestGenericTypeParameterAfterTransformation()
 		{
 			return ReadonlyTest(nameof(GenericTypeParameter), p => p

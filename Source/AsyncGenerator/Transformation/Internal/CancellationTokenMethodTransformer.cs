@@ -23,12 +23,34 @@ namespace AsyncGenerator.Transformation.Internal
 	internal class CancellationTokenMethodTransformer : IMethodOrAccessorTransformer
 	{
 		private IProjectCancellationTokenConfiguration _configuration;
+		private const string CancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
 
 		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			_configuration = configuration.AnalyzeConfiguration.CancellationTokens;
 			return Task.CompletedTask;
 		}
+
+		// TODO: should we always add guards in anonymous methods?
+		//public SyntaxNode Transform(IFunctionTransformationResult functionTransformResult, ITypeTransformationMetadata typeMetadata,
+		//	INamespaceTransformationMetadata namespaceMetadata)
+		//{
+		//	var methodResult = functionTransformResult.AnalyzationResult.GetMethodOrAccessor();
+		//	if (methodResult == null || !methodResult.CancellationTokenRequired)
+		//	{
+		//		return null;
+		//	}
+
+		//	var functionNode = functionTransformResult.Transformed;
+		//	var functionBody = functionNode.GetFunctionBody() as BlockSyntax; // TODO: support expressions
+		//	if (functionBody != null)
+		//	{
+		//		functionNode = functionNode.ReplaceNode(functionBody,
+		//			AddGuards(functionTransformResult, functionBody, functionTransformResult.AnalyzationResult, CancellationTokenParamName));
+		//	}
+
+		//	return functionNode;
+		//}
 
 		public MethodTransformerResult Transform(IMethodOrAccessorTransformationResult transformResult,
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
@@ -39,70 +61,16 @@ namespace AsyncGenerator.Transformation.Internal
 				return MethodTransformerResult.Skip;
 			}
 			var originalNode = methodResult.GetNode();
-			var cancellationTokenParamName = "cancellationToken"; // TODO: handle variable collision for token
 			var generationOptions = methodResult.MethodCancellationToken.GetValueOrDefault();
 			var methodNode = transformResult.Transformed;
 			methodNode = methodNode
-				.AddCancellationTokenParameter(cancellationTokenParamName,
+				.AddCancellationTokenParameter(CancellationTokenParamName,
 					generationOptions.HasFlag(MethodCancellationToken.Optional),
 					transformResult.LeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia);
 
 			var methodBody = methodNode.Body;
-			if (_configuration.Guards && methodBody != null && !methodResult.Faulted)
-			{
-				var startGuard = methodResult.OmitAsync
-					? GetSyncGuard(methodResult, cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
-						transformResult.EndOfLineTrivia, transformResult.IndentTrivia)
-					: GetAsyncGuard(cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
-						transformResult.EndOfLineTrivia);
-
-				methodNode = methodNode.WithBody(
-					methodBody.WithStatements(
-						methodBody.Statements.Insert(methodResult.Preconditions.Count, startGuard))
-					);
-				// We need to get all statements that have at least one async invocation without a cancellation token argument, to prepend an extra guard
-				var statements = new Dictionary<int, string>();
-				foreach (var functionReference in transformResult.TransformedFunctionReferences)
-				{
-					if (!(functionReference.AnalyzationResult is IBodyFunctionReferenceAnalyzationResult bodyFunctionReference))
-					{
-						continue;
-					}
-					if (bodyFunctionReference.GetConversion() != ReferenceConversion.ToAsync || bodyFunctionReference.PassCancellationToken)
-					{
-						continue;
-					}
-					var statement = methodNode
-						.GetAnnotatedNodes(functionReference.Annotation)
-						.First().Ancestors().OfType<StatementSyntax>().First();
-					if (statements.ContainsKey(statement.SpanStart))
-					{
-						continue;
-					}
-					var annotation = Guid.NewGuid().ToString();
-					methodNode = methodNode
-						.ReplaceNode(statement, statement.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
-					statements.Add(statement.SpanStart, annotation);
-				}
-				// For each statement we need to find the index where is located in the block.
-				// TODO: Add support when the parent is not a block syntax
-				foreach (var pair in statements)
-				{
-					var statement = methodNode.GetAnnotatedNodes(pair.Value).OfType<StatementSyntax>().First();
-					var parentBlock = statement.Parent as BlockSyntax;
-					if (parentBlock == null)
-					{
-						continue; // Currently not supported
-					}
-					var index = parentBlock.Statements.IndexOf(statement);
-					var newParentBlock = parentBlock
-						.WithStatements(parentBlock.Statements
-							.Insert(index, GetAsyncGuard(cancellationTokenParamName, statement.GetLeadingWhitespace(), transformResult.EndOfLineTrivia)));
-					methodNode = methodNode
-						.ReplaceNode(parentBlock, newParentBlock);
-				}
-			}
+			methodNode = methodNode.WithBody(AddGuards(transformResult, methodBody, methodResult, CancellationTokenParamName));
 
 			var originalMethodNode = originalNode as MethodDeclarationSyntax;
 
@@ -188,6 +156,90 @@ namespace AsyncGenerator.Transformation.Internal
 				.AddMethod(overloadNode);
 		}
 
+		private BlockSyntax AddGuards(IFunctionTransformationResult transformResult, BlockSyntax methodBody,
+			IFunctionAnalyzationResult methodResult, string cancellationTokenParamName)
+		{
+			if (!_configuration.Guards || methodBody == null || methodResult.Faulted)
+			{
+				return methodBody;
+			}
+
+			// Avoid duplicate guards if the first statement also needs a guard
+			var afterGuardIndex = methodBody.Statements.Count > methodResult.Preconditions.Count
+				? (int?) methodResult.Preconditions.Count
+				: null;
+			int? afterGuardStatementSpan = null;
+			if (afterGuardIndex.HasValue)
+			{
+				// We have to update the methodBody node in order to have correct spans
+				var afterGuardStatement = methodBody.Statements[afterGuardIndex.Value];
+				methodBody = methodBody.ReplaceNode(afterGuardStatement,
+					afterGuardStatement.WithAdditionalAnnotations(new SyntaxAnnotation("AfterGuardStatement")));
+				afterGuardStatementSpan = methodBody.Statements[afterGuardIndex.Value].SpanStart;
+			}
+
+			// We need to get all statements that have at least one async invocation without a cancellation token argument, to prepend an extra guard
+			var statements = new Dictionary<int, string>();
+			foreach (var functionReference in transformResult.TransformedFunctionReferences)
+			{
+				if (!(functionReference.AnalyzationResult is IBodyFunctionReferenceAnalyzationResult bodyFunctionReference))
+				{
+					continue;
+				}
+
+				if (bodyFunctionReference.GetConversion() != ReferenceConversion.ToAsync ||
+				    bodyFunctionReference.PassCancellationToken)
+				{
+					continue;
+				}
+
+				var statement = methodBody
+					.GetAnnotatedNodes(functionReference.Annotation)
+					.First().Ancestors().OfType<StatementSyntax>().First();
+				if (statements.ContainsKey(statement.SpanStart) ||
+				    (afterGuardStatementSpan.HasValue && afterGuardStatementSpan.Value == statement.SpanStart))
+				{
+					continue;
+				}
+
+				var annotation = Guid.NewGuid().ToString();
+				methodBody = methodBody
+					.ReplaceNode(statement, statement.WithAdditionalAnnotations(new SyntaxAnnotation(annotation)));
+				statements.Add(statement.SpanStart, annotation);
+			}
+
+			var startGuard = methodResult.OmitAsync
+				? GetSyncGuard(methodResult, cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
+					transformResult.EndOfLineTrivia, transformResult.IndentTrivia)
+				: GetAsyncGuard(cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
+					transformResult.EndOfLineTrivia);
+
+			methodBody = methodBody.WithStatements(methodBody.Statements.Insert(methodResult.Preconditions.Count, startGuard));
+
+			// For each statement we need to find the index where is located in the block.
+			// TODO: Add support when the parent is not a block syntax
+			foreach (var pair in statements)
+			{
+				var statement = methodBody.GetAnnotatedNodes(pair.Value).OfType<StatementSyntax>().First();
+				var parentBlock = statement.Parent as BlockSyntax;
+				if (parentBlock == null)
+				{
+					continue; // Currently not supported
+				}
+
+				var index = parentBlock.Statements.IndexOf(statement);
+				var newParentBlock = parentBlock
+					.WithStatements(parentBlock.Statements
+						.Insert(index,
+							GetAsyncGuard(cancellationTokenParamName, statement.GetLeadingWhitespace(),
+								transformResult.EndOfLineTrivia)));
+				methodBody = methodBody
+					.ReplaceNode(parentBlock, newParentBlock);
+			}
+
+			return methodBody;
+		}
+
 		private ExpressionStatementSyntax GetAsyncGuard(string parameterName, SyntaxTrivia leadingWhitespace, SyntaxTrivia endOfLine)
 		{
 			return ExpressionStatement(
@@ -208,13 +260,13 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 
-		private StatementSyntax GetSyncGuard(IMethodOrAccessorAnalyzationResult methodResult, string parameterName, SyntaxTrivia leadingWhitespace, 
+		private StatementSyntax GetSyncGuard(IFunctionAnalyzationResult methodResult, string parameterName, SyntaxTrivia leadingWhitespace, 
 			SyntaxTrivia endOfLine, SyntaxTrivia indent)
 		{
 			return IfStatement(
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
-						IdentifierName("cancellationToken"),
+						IdentifierName(parameterName),
 						IdentifierName("IsCancellationRequested")),
 					Block(
 						SingletonList<StatementSyntax>(
