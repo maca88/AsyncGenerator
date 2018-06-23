@@ -698,6 +698,19 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					functionReferenceData.Conversion = ReferenceConversion.ToAsync;
 				}
+				// Ignore the method if we found its async counterpart
+				if (functionReferenceData.ReferenceFunctionData is MethodOrAccessorData methodOrAccessorData)
+				{
+					if (passToken)
+					{
+						methodOrAccessorData.AsyncCounterpartWithTokenSymbol = asyncCounterpart;
+					}
+					else
+					{
+						methodOrAccessorData.AsyncCounterpartSymbol = asyncCounterpart;
+					}
+					methodOrAccessorData.Ignore(IgnoreReason.AsyncCounterpartExists);
+				}
 			}
 			else if (!ProjectData.Contains(methodSymbol))
 			{
