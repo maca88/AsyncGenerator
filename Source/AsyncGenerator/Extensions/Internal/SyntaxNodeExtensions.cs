@@ -330,6 +330,8 @@ namespace AsyncGenerator.Extensions.Internal
 				case SyntaxKind.ParenthesizedLambdaExpression:
 				case SyntaxKind.LocalFunctionStatement:
 				case SyntaxKind.MethodDeclaration:
+				case SyntaxKind.GetAccessorDeclaration:
+				case SyntaxKind.SetAccessorDeclaration:
 					return true;
 				default:
 					return false;

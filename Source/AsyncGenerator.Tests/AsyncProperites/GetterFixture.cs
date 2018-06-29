@@ -309,5 +309,28 @@ namespace AsyncGenerator.Tests.AsyncProperites
 				)
 			);
 		}
+
+		[Test]
+		public Task TestGetAccessorAfterTransformation()
+		{
+			return ReadonlyTest(nameof(GetAccessor), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.ScanForMissingAsyncMembers(true)
+				)
+				.ConfigureParsing(pp => pp
+					.AddPreprocessorSymbolName("TEST"))
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(GetAccessor)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }
