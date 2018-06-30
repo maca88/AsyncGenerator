@@ -1230,6 +1230,16 @@ namespace AsyncGenerator.Extensions.Internal
 				.WithTypeArgumentList(typeArgList);
 		}
 
+		internal static FileLinePositionSpan GetLineSpan(this SyntaxNode node)
+		{
+			return node.SyntaxTree.GetLineSpan(node.Span);
+		}
+
+		internal static LinePositionSpan GetLinePosition(this SyntaxNode node)
+		{
+			return node.GetLineSpan().Span;
+		}
+
 		/// <summary>
 		/// Prints the actual line positions
 		/// </summary>

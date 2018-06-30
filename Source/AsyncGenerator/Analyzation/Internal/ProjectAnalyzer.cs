@@ -226,6 +226,15 @@ namespace AsyncGenerator.Analyzation.Internal
 				var invocation = node as InvocationExpressionSyntax;
 				if (invocation != null)
 				{
+					if (invocation.Expression is SimpleNameSyntax)
+					{
+						typeSymbol = methodData.Symbol.ContainingType;
+					}
+					else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
+					{
+						typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+					}
+
 					if (invocation.Expression.ToString() == "nameof")
 					{
 						methodSymbol = semanticModel.GetSymbolInfo(
@@ -236,15 +245,21 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 					else
 					{
-						methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
-					}
-					if (invocation.Expression is SimpleNameSyntax)
-					{
-						typeSymbol = methodData.Symbol.ContainingType;
-					}
-					else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
-					{
-						typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+						var symbolInfo = semanticModel.GetSymbolInfo(invocation.Expression);
+						// Will happen for dynamic
+						if (symbolInfo.Symbol == null)
+						{
+							var candidates = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().ToList();
+							methodSymbol = candidates.FirstOrDefault();
+							foreach (var candidateSymbol in candidates.Skip(1))
+							{
+								ProcessMethod(candidateSymbol, typeSymbol, invocation);
+							}
+						}
+						else
+						{
+							methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
+						}
 					}
 				}
 				else if (node is IdentifierNameSyntax identifier)
@@ -277,20 +292,46 @@ namespace AsyncGenerator.Analyzation.Internal
 						}
 					}
 				}
-				if (methodSymbol == null)
+
+				if (!ProcessMethod(methodSymbol, typeSymbol, invocation))
 				{
 					continue;
+				}
+
+				// Check if there is any method passed as argument that have also an async counterpart
+				// ReSharper disable once PossibleNullReferenceException
+				foreach (var argument in invocation.ArgumentList.Arguments
+					.Where(o => o.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression) || o.Expression.IsKind(SyntaxKind.IdentifierName)))
+				{
+					if (!(semanticModel.GetSymbolInfo(argument.Expression).Symbol is IMethodSymbol argMethodSymbol))
+					{
+						continue;
+					}
+					if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, _searchOptions, true).Any())
+					{
+						result.Add(argMethodSymbol);
+					}
+				}
+			}
+			return result;
+
+
+			bool ProcessMethod(IMethodSymbol methodSymbol, ITypeSymbol typeSymbol, InvocationExpressionSyntax invocation)
+			{
+				if (methodSymbol == null)
+				{
+					return false;
 				}
 
 				methodSymbol = methodSymbol.OriginalDefinition;
 				if (result.Contains(methodSymbol))
 				{
-					continue;
+					return false;
 				}
 				// If an internal method was ignored from searching its references but we found out that it is used inside the project,
 				// we must override the user setting and search for its references in order to prevent generating an invalid code
 				if (!_configuration.SearchForMethodReferences(methodSymbol) && ProjectData.Contains(methodSymbol) &&
-					_mustScanForMethodReferences.TryAdd(methodSymbol))
+				    _mustScanForMethodReferences.TryAdd(methodSymbol))
 				{
 					searchReferences.Add(methodSymbol);
 					ProjectData.GetFunctionData(methodSymbol).AddDiagnostic(
@@ -305,25 +346,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				if (invocation == null || !GetAsyncCounterparts(methodSymbol, typeSymbol, _searchOptions).Any())
 				{
-					continue;
+					return false;
 				}
 
-				// Check if there is any method passed as argument that have also an async counterpart
-				foreach (var argument in invocation.ArgumentList.Arguments
-					.Where(o => o.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression) || o.Expression.IsKind(SyntaxKind.IdentifierName)))
-				{
-					var argMethodSymbol = semanticModel.GetSymbolInfo(argument.Expression).Symbol as IMethodSymbol;
-					if (argMethodSymbol == null)
-					{
-						continue;
-					}
-					if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, _searchOptions, true).Any())
-					{
-						result.Add(argMethodSymbol);
-					}
-				}
+				return true;
 			}
-			return result;
 		}
 
 		private void Setup()
