@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
@@ -9,6 +12,46 @@ namespace AsyncGenerator.Core.Extensions.Internal
 {
 	internal static class SymbolExtensions
 	{
+		private static readonly Func<IMethodSymbol, IEnumerable> GetHiddenMembersFunc;
+
+		static SymbolExtensions()
+		{
+			const string methodSymbolFullName = "Microsoft.CodeAnalysis.CSharp.Symbols.MethodSymbol, Microsoft.CodeAnalysis.CSharp";
+			var type = Type.GetType(methodSymbolFullName);
+			if (type == null)
+			{
+				throw new InvalidOperationException($"Type {methodSymbolFullName} does not exist");
+			}
+			var overriddenOrHiddenMembersGetter = type.GetProperty("OverriddenOrHiddenMembers", BindingFlags.NonPublic | BindingFlags.Instance)?.GetMethod;
+			if (overriddenOrHiddenMembersGetter == null)
+			{
+				throw new InvalidOperationException($"Property OverriddenOrHiddenMembers of type {methodSymbolFullName} does not exist.");
+			}
+
+			var hiddenMembersGetter = overriddenOrHiddenMembersGetter.ReturnType.GetProperty("HiddenMembers")?.GetMethod;
+			if (hiddenMembersGetter == null)
+			{
+				throw new InvalidOperationException($"Property HiddenMembers of type {overriddenOrHiddenMembersGetter.ReturnType} does not exist.");
+			}
+
+			var param1 = Expression.Parameter(typeof(IMethodSymbol), "methodSymbol");
+			var convertToMethodSymbol = Expression.Convert(param1, type);
+			var callOverriddenOrHiddenMembersGetter = Expression.Call(convertToMethodSymbol, overriddenOrHiddenMembersGetter);
+			var callHiddenMembersGetter = Expression.Call(callOverriddenOrHiddenMembersGetter, hiddenMembersGetter);
+			var lambdaParams = new List<ParameterExpression>
+			{
+				param1
+			};
+			GetHiddenMembersFunc = Expression.Lambda<Func<IMethodSymbol, IEnumerable>>(
+					Expression.Convert(callHiddenMembersGetter, typeof(IEnumerable)), lambdaParams)
+				.Compile();
+		}
+
+		internal static IEnumerable<IMethodSymbol> GetHiddenMethods(this IMethodSymbol methodSymbol)
+		{
+			return GetHiddenMembersFunc(methodSymbol).OfType<IMethodSymbol>();
+		}
+
 		/// <summary>
 		/// Check if the type parameters are equals
 		/// </summary>

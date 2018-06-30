@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,10 +37,31 @@ namespace AsyncGenerator.Internal
 			}
 		}
 
+		protected ConcurrentSet<MethodOrAccessorData> DerivedRelatedMethods;
+		protected ConcurrentDictionary<MethodOrAccessorData, ConcurrentSet<MethodOrAccessorData>> BaseRelatedMethods;
+
 		/// <summary>
 		/// Implementation/derived/base/interface methods inside the same project
 		/// </summary>
-		public ConcurrentSet<MethodOrAccessorData> RelatedMethods { get; } = new ConcurrentSet<MethodOrAccessorData>();
+		public IEnumerable<MethodOrAccessorData> RelatedMethods
+		{
+			get
+			{
+				if (DerivedRelatedMethods != null && BaseRelatedMethods != null)
+				{
+					throw new InvalidOperationException("Invalid state for RelatedMethods");
+				}
+				if (DerivedRelatedMethods != null)
+				{
+					return DerivedRelatedMethods;
+				}
+				if (BaseRelatedMethods != null)
+				{
+					return BaseRelatedMethods.Keys.Concat(BaseRelatedMethods.Values.SelectMany(o => o).Where(o => o != this));
+				}
+				return Enumerable.Empty<MethodOrAccessorData>();
+			}
+		}
 
 		public override TypeData TypeData { get; }
 

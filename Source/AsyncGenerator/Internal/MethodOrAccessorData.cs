@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -81,6 +82,25 @@ namespace AsyncGenerator.Internal
 		#region Scanning step
 
 		public bool Missing { get; set; }
+
+		/// <summary>
+		/// This method should be called on the base/interface method
+		/// </summary>
+		/// <param name="relatedMethod"></param>
+		public void AddRelatedMethod(MethodOrAccessorData relatedMethod)
+		{
+			if (DerivedRelatedMethods == null)
+			{
+				DerivedRelatedMethods = new ConcurrentSet<MethodOrAccessorData>();
+			}
+			DerivedRelatedMethods.TryAdd(relatedMethod);
+
+			if (relatedMethod.BaseRelatedMethods == null)
+			{
+				relatedMethod.BaseRelatedMethods = new ConcurrentDictionary<MethodOrAccessorData, ConcurrentSet<MethodOrAccessorData>>();
+			}
+			relatedMethod.BaseRelatedMethods.TryAdd(this, DerivedRelatedMethods);
+		}
 
 		#endregion
 

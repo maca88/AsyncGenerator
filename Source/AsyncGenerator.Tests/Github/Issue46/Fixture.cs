@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Tests.Github.Issue46.Input;
-using AsyncGenerator.Tests.NewTypes.Input;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 
 namespace AsyncGenerator.Tests.Github.Issue46
 {

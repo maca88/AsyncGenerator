@@ -200,9 +200,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				// In this case we will get only the abstract/virtual method so we have to find all overrides for it manually
 				await FindImplementations(interfaceMethod, async (implMethod, implMethodData) =>
 				{
-					interfaceMethodData.RelatedMethods.TryAdd(implMethodData);
-					implMethodData.RelatedMethods.TryAdd(interfaceMethodData);
-
+					interfaceMethodData.AddRelatedMethod(implMethodData);
 					if (_configuration.ScanMethodBody || implMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 					{
 						bodyScanMethodDatas.Add(implMethodData);
@@ -214,10 +212,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Find all overrides
 					await FindOverrides(implMethod, (overrideSymbol, overrideMethodData) =>
 					{
-						overrideMethodData.RelatedMethods.TryAdd(interfaceMethodData);
-						interfaceMethodData.RelatedMethods.TryAdd(overrideMethodData);
-						implMethodData.RelatedMethods.TryAdd(overrideMethodData);
-						overrideMethodData.RelatedMethods.TryAdd(implMethodData);
+						interfaceMethodData.AddRelatedMethod(overrideMethodData);
 						if (_configuration.ScanMethodBody || overrideMethodData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 						{
 							bodyScanMethodDatas.Add(overrideMethodData);
@@ -266,8 +261,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						if (baseMethodData != null)
 						{
-							overrideMethodData.RelatedMethods.TryAdd(baseMethodData);
-							baseMethodData.RelatedMethods.TryAdd(overrideMethodData);
+							baseMethodData.AddRelatedMethod(overrideMethodData);
 						}
 						else
 						{
