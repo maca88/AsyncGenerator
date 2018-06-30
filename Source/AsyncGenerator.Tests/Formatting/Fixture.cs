@@ -149,5 +149,25 @@ namespace AsyncGenerator.Tests.Formatting
 				)
 			);
 		}
+
+		[Test]
+		public Task TestNestedClassesAfterTransformation()
+		{
+			return ReadonlyTest(nameof(NestedClasses), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(NestedClasses)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }
