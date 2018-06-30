@@ -72,21 +72,41 @@ namespace AsyncGenerator.Extensions.Internal
 			return typeDeclaration;
 		}
 
+		public static TypeDeclarationSyntax AddModifier(this TypeDeclarationSyntax typeDeclaration, SyntaxToken modifier)
+		{
+			switch (typeDeclaration)
+			{
+				case InterfaceDeclarationSyntax interfaceDeclaration:
+				{
+					return interfaceDeclaration.AddModifiers(modifier);
+				}
+				case ClassDeclarationSyntax classDeclaration:
+				{
+					return classDeclaration.AddModifiers(modifier);
+				}
+				case StructDeclarationSyntax classDeclaration:
+				{
+					return classDeclaration.AddModifiers(modifier);
+				}
+			}
+			throw new InvalidOperationException($"Invalid TypeDeclarationSyntax {typeDeclaration}");
+		}
+
 		public static TypeDeclarationSyntax AddPartial(this TypeDeclarationSyntax typeDeclaration, bool trailingWhitespace = true)
 		{
-			var interfaceDeclaration = typeDeclaration as InterfaceDeclarationSyntax;
-			if (interfaceDeclaration != null && !typeDeclaration.Modifiers.Any(o => o.IsKind(SyntaxKind.PartialKeyword)))
+			if (typeDeclaration.Modifiers.Any(o => o.IsKind(SyntaxKind.PartialKeyword)))
 			{
-				var token = Token(TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? TriviaList(Space) : TriviaList());
-				return interfaceDeclaration.AddModifiers(token);
+				// Modify the node for consistency so that the Parent node will be always null
+				return typeDeclaration.WithLeadingTrivia(typeDeclaration.GetLeadingTrivia()); 
 			}
-			var classDeclaration = typeDeclaration as ClassDeclarationSyntax;
-			if (classDeclaration != null && !classDeclaration.Modifiers.Any(o => o.IsKind(SyntaxKind.PartialKeyword)))
+			if (typeDeclaration.Modifiers.Count > 0)
 			{
-				var token = Token(TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? TriviaList(Space) : TriviaList());
-				return classDeclaration.AddModifiers(token);
+				return typeDeclaration.AddModifier(Token(TriviaList(), SyntaxKind.PartialKeyword, trailingWhitespace ? TriviaList(Space) : TriviaList()));
 			}
-			return typeDeclaration.WithLeadingTrivia(typeDeclaration.GetLeadingTrivia()); // Modify the node for consistency so that the Parent node will be always null
+			var leadingTrivia = typeDeclaration.GetLeadingTrivia();
+			return typeDeclaration
+				.WithoutLeadingTrivia()
+				.AddModifier(Token(leadingTrivia, SyntaxKind.PartialKeyword, trailingWhitespace ? TriviaList(Space) : TriviaList()));
 		}
 
 		public static TypeDeclarationSyntax WithMembers(this TypeDeclarationSyntax typeDeclaration, SyntaxList<MemberDeclarationSyntax> members)
