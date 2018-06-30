@@ -10,6 +10,7 @@ using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -78,6 +79,26 @@ namespace AsyncGenerator.Transformation.Internal
 			IMethodOrAccessorAnalyzationResult methodResult, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			methodNode = methodNode.WithIdentifier(Identifier(methodResult.AsyncCounterpartName));
+
+			// Remove the new modifier
+			if (methodNode.Modifiers.Any(o => o.IsKind(SyntaxKind.NewKeyword)))
+			{
+				var newMofidier = methodNode.Modifiers.First(o => o.IsKind(SyntaxKind.NewKeyword));
+				if (methodNode.GetFirstToken(true).IsKind(SyntaxKind.NewKeyword))
+				{
+					methodNode = methodNode
+						.WithModifiers(TokenList(methodNode.Modifiers.Where(o => !o.IsKind(SyntaxKind.NewKeyword))))
+						.WithLeadingTrivia(newMofidier.LeadingTrivia);
+				}
+				else
+				{
+					var nextToken = newMofidier.GetNextToken(true);
+					methodNode = methodNode
+						.ReplaceToken(nextToken, nextToken.WithLeadingTrivia(newMofidier.LeadingTrivia))
+						.WithModifiers(TokenList(methodNode.Modifiers.Where(o => !o.IsKind(SyntaxKind.NewKeyword))));
+				}
+			}
+
 			if (!methodResult.PreserveReturnType && methodResult.Symbol.MethodKind != MethodKind.PropertySet)
 			{
 				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);

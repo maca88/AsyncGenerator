@@ -18,6 +18,14 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.Github.Issue46.Input
 {
 
+	public partial class TestCaseWithToken : InternalReaderWithToken
+	{
+		public override Task<bool> ReadAsync(CancellationToken cancellationToken = default(CancellationToken))
+		{
+			return Task.FromResult<bool>(false);
+		}
+	}
+
 	public partial class TestCaseBaseCallWithToken : InternalReaderWithToken
 	{
 		public override async Task<bool> ReadAsync(CancellationToken cancellationToken = default(CancellationToken))

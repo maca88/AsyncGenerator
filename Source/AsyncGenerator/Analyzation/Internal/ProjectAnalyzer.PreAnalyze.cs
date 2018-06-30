@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Extensions;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
@@ -325,24 +326,32 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Check if the method is implementing an external interface, if true skip as we cannot modify externals
 			// FindImplementationForInterfaceMember will find the first implementation method starting from the deepest base class
 			var type = methodSymbol.ContainingType;
-			foreach (var interfaceMember in type.AllInterfaces
-												.SelectMany(
-													o => o.GetMembers(methodSymbol.Name)
-														  .Where(
-															  m =>
-															  {
-																  // Find out if the method implements the interface member or an override 
-																  // method that implements it
-																  var impl = type.FindImplementationForInterfaceMember(m);
-																  return methodSymbol.Equals(impl) || methodData.OverridenMethods.Any(ov => ov.Equals(impl));
-															  }
-															))
-														  .OfType<IMethodSymbol>())
+			var interfaceMembers = type.AllInterfaces
+				.SelectMany(
+					o => o.GetMembers(methodSymbol.Name)
+						.Where(
+							m =>
+							{
+								// Find out if the method implements the interface member or an override 
+								// method that implements it
+								var impl = type.FindImplementationForInterfaceMember(m);
+								return methodSymbol.Equals(impl) || methodData.OverridenMethods.Any(ov => ov.Equals(impl));
+							}
+						))
+				.OfType<IMethodSymbol>()
+				.ToList();
+			foreach (var interfaceMember in interfaceMembers)
 			{
 				// Check if the member has an async counterpart that is not implemented in the current type (missing member)
 				var asyncConterparts = FillRelatedAsyncMethods(methodData, interfaceMember);
 				if (methodSymbol.ContainingAssembly.Name != interfaceMember.ContainingAssembly.Name)
 				{
+					// Check if there is an internal interface member that hides this method
+					if (interfaceMembers.Where(o => o.ContainingAssembly.Name == methodSymbol.ContainingAssembly.Name)
+						.Any(o => o.GetHiddenMethods().Any(hm => hm.Equals(interfaceMember))))
+					{
+						continue;
+					}
 					methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
 					if (!asyncConterparts.Any())
 					{
