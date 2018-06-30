@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Extensions;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
@@ -643,11 +644,12 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodReferenceSymbol = TryFindCandidate(nameNode, referenceSymbolInfo, documentData.SemanticModel);
 					if (methodReferenceSymbol == null)
 					{
-						throw new InvalidOperationException($"Unable to find symbol for node {nameNode} inside function {baseMethodData.Symbol}");
+						baseMethodData.AddDiagnostic($"Unable to find symbol for node {nameNode} ({nameNode.GetLinePosition().Format()})",
+							DiagnosticSeverity.Info);
+						continue;
 					}
-					documentData.AddDiagnostic(
-						$"GetSymbolInfo did not successfully resolved symbol for node {nameNode} inside function " +
-						$"{baseMethodData.Symbol.Name} {baseMethodData.GetLineSpan().Span.Format()}, " +
+					baseMethodData.AddDiagnostic(
+						$"GetSymbolInfo did not successfully resolved symbol for node {nameNode} ({nameNode.GetLinePosition().Format()})" +
 						$"but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}",
 						DiagnosticSeverity.Info);
 				}
@@ -739,7 +741,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private IMethodSymbol TryFindCandidate(SyntaxNode nameNode, SymbolInfo symbolInfo, SemanticModel semanticModel)
+		private IMethodSymbol TryFindCandidate(SyntaxNode nameNode, SymbolInfo symbolInfo, SemanticModel semanticModel, bool ascend = true)
 		{
 			if (!symbolInfo.CandidateSymbols.Any())
 			{
@@ -753,8 +755,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Try to figure out which is the correct one by finding the symbol of the parent node
 			// eg. new Ctor(GetList, GetListAsync) -> if we get multiple candidates for GetList, try to find the symbol for the Ctor.ctor.
 			// If found (only one Ctor.ctor symbol) we can figure out which is the correct GetList candidate
-			var ascend = true;
-			var currNode = nameNode.Parent;
+			//var ascend = true;
+			var currNode = ascend ? nameNode.Parent : nameNode;
 			int? argumentIndex = null;
 			while (ascend)
 			{
@@ -775,12 +777,91 @@ namespace AsyncGenerator.Analyzation.Internal
 					currNode = currNode.Parent;
 				}
 			}
-			var parentSymbolInfo = semanticModel.GetSymbolInfo(currNode);
+
+			// Dynamic calls e.g. Database.Save("test", (dynamic)"test")
+			if (symbolInfo.CandidateReason == CandidateReason.LateBound &&
+			    currNode is InvocationExpressionSyntax invocationExpression)
+			{
+				var methodCandidates = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().ToList();
+				var arguments = invocationExpression.ArgumentList.Arguments;
+				for (var i = 0; i < arguments.Count; i++)
+				{
+					if (methodCandidates.Count == 0)
+					{
+						break;
+					}
+					var argument = arguments[i];
+					ITypeSymbol type = null;
+					var argumentType = semanticModel.GetTypeInfo(argument.Expression);
+					if (argumentType.ConvertedType.TypeKind == TypeKind.Dynamic)
+					{
+						// It can be a dynamic value or an expression that contains it.
+						var argSymbolInfo = semanticModel.GetSymbolInfo(argument.Expression);
+						var symbol = argSymbolInfo.Symbol ?? TryFindCandidate(argument.Expression, argSymbolInfo, semanticModel, false);
+						if (symbol == null)
+						{
+							continue;
+						}
+						switch (symbol.Kind)
+						{
+							case SymbolKind.Method:
+								var argMethod = (IMethodSymbol) symbol;
+								if (argument.Expression.IsKind(SyntaxKind.InvocationExpression))
+								{
+									type = argMethod.ReturnType;
+								}
+								break;
+							default:
+								continue;
+						}
+					}
+					else
+					{
+						type = argumentType.ConvertedType;
+					}
+					if (type == null)
+					{
+						continue;
+					}
+
+					var toRemoveMethods = new List<IMethodSymbol>();
+					foreach (var methodCandidate in methodCandidates)
+					{
+						var candidateType = methodCandidate.Parameters[i].Type;
+						bool areEqual;
+						switch (candidateType.TypeKind)
+						{
+							case TypeKind.TypeParameter:
+								var typeParameter = (ITypeParameterSymbol) candidateType;
+								areEqual = typeParameter.CanApply(type);
+								break;
+							default:
+								areEqual = candidateType.Equals(type);
+								break;
+						}
+						if (!areEqual)
+						{
+							toRemoveMethods.Add(methodCandidate);
+						}
+					}
+					foreach (var toRemoveMethod in toRemoveMethods)
+					{
+						methodCandidates.Remove(toRemoveMethod);
+					}
+
+					if (methodCandidates.Count == 1)
+					{
+						return methodCandidates[0];
+					}
+				}
+			}
+
 
 			if (!argumentIndex.HasValue)
 			{
 				return null;
 			}
+			var parentSymbolInfo = semanticModel.GetSymbolInfo(currNode);
 			IParameterSymbol parameterSymbol = null;
 			if (parentSymbolInfo.CandidateSymbols.Length == 0)
 			{

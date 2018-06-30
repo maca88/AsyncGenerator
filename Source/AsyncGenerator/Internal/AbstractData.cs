@@ -85,7 +85,7 @@ namespace AsyncGenerator.Internal
 
 		public FileLinePositionSpan GetLineSpan()
 		{
-			return GetNode()?.SyntaxTree.GetLineSpan(GetNode().Span) ?? default(FileLinePositionSpan);
+			return GetNode()?.GetLineSpan() ?? default(FileLinePositionSpan);
 		}
 
 		/// <summary>
