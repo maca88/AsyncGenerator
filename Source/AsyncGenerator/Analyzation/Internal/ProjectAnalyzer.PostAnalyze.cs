@@ -326,6 +326,18 @@ namespace AsyncGenerator.Analyzation.Internal
 					DiagnosticSeverity.Info);
 				return;
 			}
+
+			if (methodGeneration.HasFlag(MethodCancellationToken.Required) && methodData.Symbol.Parameters.LastOrDefault()?.IsOptional == true)
+			{
+				methodData.MethodCancellationToken &= ~MethodCancellationToken.Required;
+				methodData.MethodCancellationToken |= MethodCancellationToken.Optional;
+				methodData.AddDiagnostic(
+					$"Invalid ParameterGeneration option '{methodGeneration}' for method '{methodData.Symbol}'. " +
+					$"Method can not have '{MethodCancellationToken.Required}' when the last parameter is optional. " +
+					$"The ParameterGeneration will be set to '{methodData.MethodCancellationToken}'",
+					DiagnosticSeverity.Info);
+				return;
+			}
 			methodData.MethodCancellationToken = methodGeneration;
 		}
 

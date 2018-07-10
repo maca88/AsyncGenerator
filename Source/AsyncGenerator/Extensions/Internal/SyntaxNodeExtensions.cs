@@ -712,7 +712,8 @@ namespace AsyncGenerator.Extensions.Internal
 			var argument = Argument(argExpression);
 			if (colonRequired)
 			{
-				argument = argument.WithNameColon(NameColon("cancellationToken")); // TODO: dynamic
+				argument = argument.WithNameColon(
+					NameColon(IdentifierName("cancellationToken"), Token(TriviaList(), SyntaxKind.ColonToken, TriviaList(Space)))); // TODO: dynamic
 			}
 
 			if (!node.ArgumentList.Arguments.Any())
