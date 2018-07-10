@@ -20,7 +20,7 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 	using System.Threading;
 	public partial class DefaultParameter
 	{
-		public async Task ReadAsync(string test = "Test", CancellationToken cancellationToken)
+		public async Task ReadAsync(string test = "Test", CancellationToken cancellationToken = default(CancellationToken))
 		{
 			await (Read3Async(cancellationToken));
 			await (SimpleFile.ReadAsync(cancellationToken));
@@ -28,12 +28,12 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 
 		public Task Read2Async(CancellationToken cancellationToken)
 		{
-			return ReadAsync(cancellationToken:cancellationToken);
+			return ReadAsync(cancellationToken: cancellationToken);
 		}
 
 		public Task<bool> WriteAsync(CancellationToken cancellationToken)
 		{
-			return SimpleFile.FastWriteAsync(cancellationToken:cancellationToken);
+			return SimpleFile.FastWriteAsync(cancellationToken: cancellationToken);
 		}
 
 		public Task Read3Async(CancellationToken cancellationToken)
