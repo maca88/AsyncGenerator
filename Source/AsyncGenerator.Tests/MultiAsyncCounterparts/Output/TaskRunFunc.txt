@@ -43,11 +43,18 @@ namespace AsyncGenerator.Tests.MultiAsyncCounterparts.Input
 		{
 			return Task.Run(() =>
 			{
-				Assert.DoesNotThrowAsync(() =>
+				try
 				{
-					return SimpleFile.ReadAsync(cancellationToken);
-				});
-				return true;
+					Assert.DoesNotThrowAsync(() =>
+					{
+						return SimpleFile.ReadAsync(cancellationToken);
+					});
+					return Task.FromResult<bool>(true);
+				}
+				catch (Exception ex)
+				{
+					return Task.FromException<bool>(ex);
+				}
 			}, cancellationToken);
 		}
 

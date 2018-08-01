@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using AsyncGenerator.Core;
+using AsyncGenerator.Core.Extensions;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
@@ -664,30 +666,34 @@ namespace AsyncGenerator.Analyzation.Internal
 					functionReferenceData.AwaitInvocation = false;
 					functionReferenceData.AddDiagnostic("Cannot await method that is either void or do not return a Task", DiagnosticSeverity.Hidden);
 				}
-				IMethodSymbol asyncCounterpart = null;
-				var passToken = useTokens;
-				if (useTokens)
+
+				var passToken = false;
+				var analyzationResult = AnalyzeAsyncCandidates(functionReferenceData, functionReferenceData.ReferenceAsyncSymbols.ToList(), useTokens);
+				if (analyzationResult.AsyncCandidate != null)
 				{
-					var asyncCandidates = functionReferenceData.ReferenceAsyncSymbols
-						.Where(o => o.Parameters.Length > methodSymbol.Parameters.Length)
-						.ToList();
-					asyncCounterpart = FindAsyncCandidate(functionReferenceData, asyncCandidates);
-					if (asyncCandidates.Count > 1 && asyncCounterpart == null)
+					passToken = analyzationResult.AsyncCandidate.Parameters.Any(o => o.Type.IsCancellationToken());
+				}
+
+				if (analyzationResult.IgnoreDelegateArgumentsReason != null)
+				{
+					foreach (var delegateArgument in functionReferenceData.DelegateArguments)
 					{
-						return false;
+						delegateArgument.FunctionData?.Copy();
+						delegateArgument.FunctionReference?.Ignore(analyzationResult.IgnoreDelegateArgumentsReason);
 					}
 				}
-				// If token overload (optionally) was not found try to find a counterpart without token parameter
-				if (asyncCounterpart == null)
+
+				if (analyzationResult.IgnoreBodyFunctionDataReferenceReason != null)
 				{
-					asyncCounterpart = FindAsyncCandidate(functionReferenceData, functionReferenceData.ReferenceAsyncSymbols.ToList());
-					passToken = false;
+					functionReferenceData.Ignore(analyzationResult.IgnoreBodyFunctionDataReferenceReason);
+					return false;
 				}
-				if (asyncCounterpart != null)
+
+				if (analyzationResult.AsyncCandidate != null)
 				{
 					functionReferenceData.PassCancellationToken = passToken;
-					functionReferenceData.AsyncCounterpartSymbol = asyncCounterpart;
-					functionReferenceData.AsyncCounterpartName = asyncCounterpart.Name;
+					functionReferenceData.AsyncCounterpartSymbol = analyzationResult.AsyncCandidate;
+					functionReferenceData.AsyncCounterpartName = analyzationResult.AsyncCandidate.Name;
 				}
 				else
 				{
@@ -695,18 +701,23 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				if (functionReferenceData.AsyncCounterpartSymbol != null)
 				{
-					functionReferenceData.Conversion = ReferenceConversion.ToAsync;
+					if (functionReferenceData.ArgumentOfFunctionInvocation == null)
+					{
+						functionReferenceData.Conversion = analyzationResult.CanBeAsync
+							? ReferenceConversion.ToAsync
+							: ReferenceConversion.Unknown;
+					}
 				}
 				// Ignore the method if we found its async counterpart
 				if (functionReferenceData.ReferenceFunctionData is MethodOrAccessorData methodOrAccessorData)
 				{
 					if (passToken)
 					{
-						methodOrAccessorData.AsyncCounterpartWithTokenSymbol = asyncCounterpart;
+						methodOrAccessorData.AsyncCounterpartWithTokenSymbol = analyzationResult.AsyncCandidate;
 					}
 					else
 					{
-						methodOrAccessorData.AsyncCounterpartSymbol = asyncCounterpart;
+						methodOrAccessorData.AsyncCounterpartSymbol = analyzationResult.AsyncCandidate;
 					}
 					methodOrAccessorData.Ignore(IgnoreReason.AsyncCounterpartExists);
 				}
@@ -725,58 +736,227 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			return true;
 		}
-
-
-		private IMethodSymbol FindAsyncCandidate(BodyFunctionDataReference functionReferenceData, IList<IMethodSymbol> asyncCandidates)
+		
+		internal class AnalyzationCandidateResult
 		{
-			if (asyncCandidates.Count == 0)
+			public IMethodSymbol AsyncCandidate { get; set; }
+
+			public bool CanBeAsync { get; set; }
+
+			public IgnoreReason IgnoreDelegateArgumentsReason { get; set; }
+
+			public IgnoreReason IgnoreBodyFunctionDataReferenceReason { get; set; }
+
+
+		}
+
+		private AnalyzationCandidateResult AnalyzeAsyncCandidate(BodyFunctionDataReference functionReferenceData,
+			IMethodSymbol asyncCandidate, bool useCancellationToken)
+		{
+			var canBeAsync = true;
+			var asnycDelegateIndexes = functionReferenceData.ReferenceSymbol.GetAsyncDelegateArgumentIndexes(asyncCandidate);
+
+			if (asnycDelegateIndexes != null)
 			{
-				return null;
+				if (asnycDelegateIndexes.Count == 0 && functionReferenceData.DelegateArguments != null)
+				{
+					return new AnalyzationCandidateResult
+					{
+						AsyncCandidate = asyncCandidate,
+						CanBeAsync = true,
+						IgnoreDelegateArgumentsReason =
+							IgnoreReason.Custom("Argument is not async.", DiagnosticSeverity.Hidden)
+					};
+				}
+				if (asnycDelegateIndexes.Count > 0 && functionReferenceData.DelegateArguments == null)
+				{
+					return new AnalyzationCandidateResult
+					{
+						AsyncCandidate = null,
+						CanBeAsync = false,
+						IgnoreBodyFunctionDataReferenceReason =
+							IgnoreReason.Custom("Delegate argument is not async.", DiagnosticSeverity.Hidden)
+					};
+				}
+
 			}
-			if (asyncCandidates.Count == 1)
+
+			if (functionReferenceData.DelegateArguments == null)
 			{
-				return asyncCandidates[0];
+				return new AnalyzationCandidateResult
+				{
+					AsyncCandidate = asyncCandidate,
+					CanBeAsync = true
+				};
 			}
-			// More than one
-			// By default we will get here when there are multiple overloads of an async function (e.g. Task.Run<T>(Func<T>, CancellationToken) and Task.Run<T>(Func<Task<T>>, CancellationToken))
-			// In the Task.Run case we have to check the delegate argument if it can be asnyc or not (the delegate argument will be processed before the invocation)
-			if (!functionReferenceData.DelegateArguments.Any())
+
+			if (asnycDelegateIndexes != null)
 			{
-				functionReferenceData.Ignore(IgnoreReason.Custom("Multiple async counterparts without delegate arguments.", DiagnosticSeverity.Info));
-				return null;
+				var delegateIndexes = functionReferenceData.DelegateArguments.Select(o => o.Index).ToList();
+				if (delegateIndexes.Count != asnycDelegateIndexes.Count ||
+				    asnycDelegateIndexes.Any(o => !delegateIndexes.Contains(o)))
+				{
+					return new AnalyzationCandidateResult
+					{
+						AsyncCandidate = null,
+						CanBeAsync = false,
+						IgnoreBodyFunctionDataReferenceReason =
+							IgnoreReason.Custom("Delegate arguments do not match with the async counterpart.", DiagnosticSeverity.Hidden)
+					};
+				}
 			}
+
 			foreach (var functionArgument in functionReferenceData.DelegateArguments)
 			{
 				var funcData = functionArgument.FunctionData;
-				if (funcData != null) // Anonymous function as argument
+				
+				if (funcData == null)
 				{
-					if (funcData.BodyFunctionReferences.All(o => o.GetConversion() != ReferenceConversion.ToAsync))
+					var bodyRef = functionArgument.FunctionReference;
+					funcData = bodyRef.ReferenceFunctionData;
+					
+					//if (!result.CanBeAsync)
+					//{
+					//	return new AnalyzationCandidateResult
+					//	{
+					//		AsyncCandidate = null,
+					//		CanBeAsync = false,
+					//		IgnoreBodyFunctionDataReferenceReason =
+					//			IgnoreReason.Custom("Delegate argument cannot be async.", DiagnosticSeverity.Hidden)
+					//	};
+					//}
+
+					if (funcData == null)
 					{
-						return null;
-					}
-					CalculatePreserveReturnType(funcData);
-					var validOverloads = new List<IMethodSymbol>();
-					foreach (var tokenOverload in asyncCandidates)
-					{
-						// Check if the return type of the delegate parameter matches with the calculated return type of the anonymous function
-						var delegateSymbol = (IMethodSymbol)tokenOverload.Parameters[functionArgument.Index].Type.GetMembers("Invoke").First();
-						if (
-							(delegateSymbol.ReturnType.IsTaskType() && !funcData.PreserveReturnType) ||
-							(!delegateSymbol.ReturnType.IsTaskType() && funcData.PreserveReturnType && !funcData.Symbol.ReturnType.IsTaskType())
-						)
+						var result = AnalyzeAsyncCandidates(bodyRef, bodyRef.ReferenceAsyncSymbols.ToList(), useCancellationToken);
+						if (result.AsyncCandidate != null && functionArgument.Index < asyncCandidate.Parameters.Length)
 						{
-							validOverloads.Add(tokenOverload);
+							var delegateSymbol = (IMethodSymbol)asyncCandidate.Parameters[functionArgument.Index].Type.GetMembers("Invoke").First();
+							if (!delegateSymbol.MatchesDefinition(result.AsyncCandidate, true))
+							{
+								return new AnalyzationCandidateResult
+								{
+									AsyncCandidate = null,
+									CanBeAsync = false,
+									IgnoreBodyFunctionDataReferenceReason =
+										IgnoreReason.Custom("Delegate argument async counterpart does not match.", DiagnosticSeverity.Hidden)
+								};
+							}
 						}
+
+						continue;
 					}
-					asyncCandidates = validOverloads;
 				}
-				else
+				if (funcData.BodyFunctionReferences.All(o => o.GetConversion() == ReferenceConversion.Ignore))
 				{
-					// TODO
-					return null;
+					return new AnalyzationCandidateResult
+					{
+						AsyncCandidate = null,
+						CanBeAsync = false,
+						IgnoreBodyFunctionDataReferenceReason =
+							IgnoreReason.Custom("The delegate argument does not have any async invocation.", DiagnosticSeverity.Hidden)
+					};
+				}
+
+				canBeAsync &= funcData.BodyFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync);
+				//if (funcData.Symbol.MethodKind != MethodKind.AnonymousFunction)
+				//{
+				//	CalculatePreserveReturnType(funcData);
+				//}
+
+				//// Check if the return type of the delegate parameter matches with the calculated return type of the anonymous function
+				//if (
+				//	(delegateSymbol.ReturnType.SupportsTaskType() && !funcData.PreserveReturnType) ||
+				//	(!delegateSymbol.ReturnType.SupportsTaskType() && funcData.PreserveReturnType && !funcData.Symbol.ReturnType.SupportsTaskType())
+				//)
+				//{
+				//	continue;
+				//}
+
+				//return new AnalyzationCandidateResult
+				//{
+				//	AsyncCandidate = null,
+				//	CanBeAsync = false,
+				//	IgnoreBodyFunctionDataReferenceReason =
+				//		IgnoreReason.Custom("Return type of the delegate argument does not match.", DiagnosticSeverity.Hidden)
+				//};
+			}
+
+			return new AnalyzationCandidateResult
+			{
+				AsyncCandidate = asyncCandidate,
+				CanBeAsync = canBeAsync
+			};
+		}
+
+
+		private class MethodCancellationTokenComparer : IComparer<IMethodSymbol>
+		{
+			public static readonly MethodCancellationTokenComparer Instance = new MethodCancellationTokenComparer();
+
+			public int Compare(IMethodSymbol x, IMethodSymbol y)
+			{
+				var xHasToken = x.Parameters.Any(p => p.Type.IsCancellationToken());
+				var yHasToken = y.Parameters.Any(p => p.Type.IsCancellationToken());
+				if (xHasToken == yHasToken)
+				{
+					return 0;
+				}
+
+				return xHasToken ? -1 : 1;
+			}
+		}
+
+		private AnalyzationCandidateResult AnalyzeAsyncCandidates(BodyFunctionDataReference functionReferenceData, IEnumerable<IMethodSymbol> asyncCandidates, bool preferCancellationToken)
+		{
+			var orderedCandidates = preferCancellationToken
+				? asyncCandidates.OrderBy(o => o, MethodCancellationTokenComparer.Instance).ToList()
+				: asyncCandidates.OrderByDescending(o => o, MethodCancellationTokenComparer.Instance).ToList();
+
+			if (orderedCandidates.Count == 0)
+			{
+				return new AnalyzationCandidateResult
+				{
+					AsyncCandidate = null,
+					CanBeAsync = false,
+					IgnoreBodyFunctionDataReferenceReason = IgnoreReason.NoAsyncCounterparts
+				};
+			}
+
+			// More than one
+			// By default we will get here when there are multiple overloads of an async function (e.g. Task.Run<T>(Func<T>, CancellationToken) and Task.Run<T>(Func<Task<T>>, CancellationToken))
+			// In the Task.Run case we have to check the delegate argument if it can be async or not (the delegate argument will be processed before the invocation)
+			//if (functionReferenceData.DelegateArguments == null)
+			//{
+			//	return new AnalyzationCandidateResult
+			//	{
+			//		AsyncCandidate = null,
+			//		CanBeAsync = false,
+			//		IgnoreBodyFunctionDataReferenceReason = IgnoreReason.Custom("Multiple async counterparts without delegate arguments.", DiagnosticSeverity.Info)
+			//	};
+			//}
+
+			var validCandidates = new List<AnalyzationCandidateResult>();
+			foreach (var asyncCandidate in orderedCandidates)
+			{
+				var result = AnalyzeAsyncCandidate(functionReferenceData, asyncCandidate, preferCancellationToken);
+				if (result.AsyncCandidate != null)
+				{
+					validCandidates.Add(result);
 				}
 			}
-			return asyncCandidates[0];
+
+			if (validCandidates.Count == 0)
+			{
+				return new AnalyzationCandidateResult
+				{
+					AsyncCandidate = null,
+					CanBeAsync = false,
+					IgnoreBodyFunctionDataReferenceReason = IgnoreReason.Custom("No async counterparts matches delegate arguments.", DiagnosticSeverity.Info)
+				};
+			}
+
+			return validCandidates[0];
 		}
 	}
 }

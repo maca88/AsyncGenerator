@@ -104,5 +104,25 @@ namespace AsyncGenerator.Tests.NUnit
 				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
 			);
 		}
+
+		[Test]
+		public Task TestNestedAssertThatAfterTransformation()
+		{
+			return ReadonlyTest(nameof(NestedAssertThat), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(o => true)
+					.AlwaysAwait(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(0, result.Documents.Count);
+					})
+				)
+				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+			);
+		}
 	}
 }

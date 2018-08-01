@@ -20,36 +20,7 @@ namespace AsyncGenerator.Core.Extensions
 		/// <returns></returns>
 		public static bool MatchesDefinition(this IMethodSymbol method, IMethodSymbol toMatch)
 		{
-			if (method.IsExtensionMethod)
-			{
-				// System.Linq extensions
-				method = method.ReducedFrom ?? method;
-			}
-			if (method.Parameters.Length != toMatch.Parameters.Length ||
-				!method.ReturnType.AreEqual(toMatch.ReturnType, method.ReturnType.OriginalDefinition)) // Here the generic arguments will be checked if any.
-																									   // The return type of the toMatch parameter can be a base type of the return type
-																									   // of the method parameter
-			{
-				return false;
-			}
-			// Do not check the method type parameters as toMatch method may have the type parameters from the type
-			// (the generic arguments will be checked for the return type and parameters separately)
-			for (var i = 0; i < method.Parameters.Length; i++)
-			{
-				var param = method.Parameters[i];
-				var candidateParam = toMatch.Parameters[i];
-				if (param.IsOptional != candidateParam.IsOptional ||
-				    param.IsParams != candidateParam.IsParams ||
-				    param.RefKind != candidateParam.RefKind)
-				{
-					return false;
-				}
-				if (!param.Type.AreEqual(candidateParam.Type)) // Here the generic arguments will be checked if any
-				{
-					return false;
-				}
-			}
-			return true;
+			return method.MatchesDefinition(toMatch, false);
 		}
 
 		/// <summary>

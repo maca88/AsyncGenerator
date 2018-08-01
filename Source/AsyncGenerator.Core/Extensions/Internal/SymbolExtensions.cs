@@ -53,6 +53,64 @@ namespace AsyncGenerator.Core.Extensions.Internal
 		}
 
 		/// <summary>
+		/// Check if the definition (excluding method name) of both methods matches
+		/// </summary>
+		/// <param name="method"></param>
+		/// <param name="toMatch"></param>
+		/// <param name="skipCancellationToken"></param>
+		/// <returns></returns>
+		internal static bool MatchesDefinition(this IMethodSymbol method, IMethodSymbol toMatch, bool skipCancellationToken)
+		{
+			if (method.IsExtensionMethod)
+			{
+				// System.Linq extensions
+				method = method.ReducedFrom ?? method;
+			}
+
+			if (method.Parameters.Length != toMatch.Parameters.Length)
+			{
+				if (!skipCancellationToken || method.Parameters.Length != toMatch.Parameters.Length - 1)
+				{
+					return false;
+				}
+			}
+
+			if (!method.ReturnType.AreEqual(toMatch.ReturnType, method.ReturnType.OriginalDefinition)) // Here the generic arguments will be checked if any.
+				// The return type of the toMatch parameter can be a base type of the return type
+				// of the method parameter
+			{
+				return false;
+			}
+			// Do not check the method type parameters as toMatch method may have the type parameters from the type
+			// (the generic arguments will be checked for the return type and parameters separately)
+			for (var i = 0; i < method.Parameters.Length; i++)
+			{
+				var param = method.Parameters[i];
+				var candidateParam = toMatch.Parameters[i];
+				if (skipCancellationToken && candidateParam.Type.IsCancellationToken())
+				{
+					continue;
+				}
+				if (param.IsOptional != candidateParam.IsOptional ||
+					param.IsParams != candidateParam.IsParams ||
+					param.RefKind != candidateParam.RefKind)
+				{
+					return false;
+				}
+				if (!param.Type.AreEqual(candidateParam.Type)) // Here the generic arguments will be checked if any
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public static bool IsCancellationToken(this ITypeSymbol typeSymbol)
+		{
+			return typeSymbol.ToString() == "System.Threading.CancellationToken";
+		}
+
+		/// <summary>
 		/// Check if the type parameters are equals
 		/// </summary>
 		private static bool AreEqual(this ITypeParameterSymbol parameterSymbol, ITypeSymbol typeSymbol)
@@ -133,6 +191,43 @@ namespace AsyncGenerator.Core.Extensions.Internal
 				}
 			}
 			return true;
+		}
+
+		internal static List<int> GetAsyncDelegateArgumentIndexes(this IMethodSymbol syncMethod, IMethodSymbol asyncMethod)
+		{
+			// Parallel.For -> Task.WaitAll
+			if (syncMethod.Parameters.Length > asyncMethod.Parameters.Length)
+			{
+				return null;
+			}
+			var result = new List<int>();
+			for (var i = 0; i < syncMethod.Parameters.Length; i++)
+			{
+				var param = syncMethod.Parameters[i];
+				var candidateParam = asyncMethod.Parameters[i];
+				if (!(param.Type is INamedTypeSymbol typeSymbol))
+				{
+					continue;
+				}
+				var origDelegate = typeSymbol.DelegateInvokeMethod;
+				if (origDelegate == null)
+				{
+					continue;
+				}
+				// Candidate delegate argument must be equal or has to be an async candidate
+				if (!(candidateParam.Type is INamedTypeSymbol candidateTypeSymbol))
+				{
+					continue;
+				}
+				var candidateDelegate = candidateTypeSymbol.DelegateInvokeMethod;
+				if (origDelegate.Equals(candidateDelegate))
+				{
+					continue;
+				}
+				result.Add(i);
+			}
+
+			return result;
 		}
 
 		/// <summary>

@@ -18,6 +18,17 @@ namespace AsyncGenerator.Extensions.Internal
 			       typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
 		}
 
+		internal static bool SupportsTaskType(this ITypeSymbol typeSymbol)
+		{
+			if (typeSymbol is ITypeParameterSymbol typeParameterSymbol)
+			{
+				return typeParameterSymbol.ConstraintTypes.All(o => o.IsTaskType()) &&
+				       !typeParameterSymbol.HasValueTypeConstraint;
+			}
+
+			return IsTaskType(typeSymbol);
+		}
+
 		/// <summary>
 		/// Check if the retrived type can be returned without having an await. We need to consider that the given types will be wrapped in a <see cref="Task{T}"/>.
 		/// Also when dealing with type parameters we need to check if the they can be applied to the given type
