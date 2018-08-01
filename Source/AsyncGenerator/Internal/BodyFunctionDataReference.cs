@@ -120,15 +120,38 @@ namespace AsyncGenerator.Internal
 			{
 				return Conversion;
 			}
-			var methodConversion = ReferenceFunctionData?.Conversion ?? MethodConversion.Unknown;
+
+			var methodConversion = MethodConversion.Unknown;
+			if (ReferenceFunctionData != null)
+			{
+				methodConversion =
+					ReferenceFunctionData.Conversion == MethodConversion.Ignore &&
+					ReferenceFunctionData.IgnoredReason == IgnoreReason.AsyncCounterpartExists
+						? MethodConversion.Unknown
+						: ReferenceFunctionData.Conversion;
+			}
+			
 			var conversion = Conversion;
+			
 			if (methodConversion.HasFlag(MethodConversion.ToAsync))
 			{
-				conversion = ReferenceConversion.ToAsync;
+				return ReferenceConversion.ToAsync;
 			}
-			else if (methodConversion == MethodConversion.Ignore || methodConversion == MethodConversion.Copy)
+			if (methodConversion == MethodConversion.Ignore || methodConversion == MethodConversion.Copy)
 			{
-				conversion = ReferenceConversion.Ignore;
+				return ReferenceConversion.Ignore;
+			}
+			if (AsyncCounterpartSymbol != null && DelegateArguments?.All(o =>
+					o.FunctionData?.Conversion == MethodConversion.ToAsync ||
+					o.FunctionReference?.GetConversion() == ReferenceConversion.ToAsync) == true)
+			{
+				return ReferenceConversion.ToAsync;
+			}
+
+			if (ReferenceFunctionData == null && ArgumentOfFunctionInvocation == null && DelegateArguments == null &&
+			    AsyncCounterpartSymbol != null)
+			{
+				return ReferenceConversion.ToAsync;
 			}
 			return conversion;
 		}
