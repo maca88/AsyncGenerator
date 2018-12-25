@@ -1059,6 +1059,27 @@ namespace AsyncGenerator.Extensions.Internal
 			return TriviaList(triviaList);
 		}
 
+		internal static InvocationExpressionSyntax WrapInTaskFromResult(this ExpressionSyntax node, TypeSyntax retunTypeSyntax, bool useFullName, bool useTypeArgument = true)
+		{
+			return InvocationExpression(
+					MemberAccessExpression(
+						SyntaxKind.SimpleMemberAccessExpression,
+						useFullName
+							? ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
+							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
+						useTypeArgument
+							? GenericName(Identifier("FromResult"))
+								.WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(
+									retunTypeSyntax == null
+										? PredefinedType(Token(SyntaxKind.ObjectKeyword))
+										: retunTypeSyntax.WithoutTrivia())))
+							: (SimpleNameSyntax) IdentifierName("FromResult")
+					))
+				.WithArgumentList(
+					ArgumentList(
+						SingletonSeparatedList(
+							Argument(node.WithoutLeadingTrivia()))));
+		}
 
 		internal static TypeDeclarationSyntax RemoveCommentTrivias(this TypeDeclarationSyntax node)
 		{
