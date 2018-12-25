@@ -169,15 +169,15 @@ namespace AsyncGenerator.Transformation.Internal
 					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(Annotations.TaskReturned).Any();
 					var whenFalse = isWhenFalseTask
 						? conditionalExpression.WhenFalse
-						: WrapInTaskFromResult(conditionalExpression.WhenFalse);
+						: conditionalExpression.WhenFalse.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict);
 					var whenTrue = isWhenTrueTask
 						? conditionalExpression.WhenTrue
-						: WrapInTaskFromResult(conditionalExpression.WhenTrue);
+						: conditionalExpression.WhenTrue.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict);
 					return conditionalExpression
 						.WithWhenFalse(whenFalse)
 						.WithWhenTrue(whenTrue);
 				}
-				return WrapInTaskFromResult(expression);
+				return expression.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict);
 			}
 			return base.Visit(node);
 		}
@@ -244,28 +244,6 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 			}
 			return base.VisitTrivia(trivia);
-		}
-
-		private InvocationExpressionSyntax WrapInTaskFromResult(ExpressionSyntax node)
-		{
-			return InvocationExpression(
-					MemberAccessExpression(
-						SyntaxKind.SimpleMemberAccessExpression,
-						_namespaceMetadata.TaskConflict 
-							? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
-							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
-						GenericName(
-								Identifier("FromResult"))
-							.WithTypeArgumentList(
-								TypeArgumentList(
-									SingletonSeparatedList(
-										_methodResult.Symbol.ReturnsVoid
-											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _retunTypeSyntax.WithoutTrivia())))))
-				.WithArgumentList(
-					ArgumentList(
-						SingletonSeparatedList(
-							Argument(node.WithoutLeadingTrivia()))));
 		}
 
 		private InvocationExpressionSyntax WrapInTaskFromException(ExpressionSyntax node)
@@ -348,7 +326,7 @@ namespace AsyncGenerator.Transformation.Internal
 					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))))
 				: block.AddStatements(ReturnStatement(
 					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
-					WrapInTaskFromResult(invocation),
+					invocation.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict),
 					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))));
 			return WrapInsideTryCatch(block, false);
 		}

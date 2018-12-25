@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Extensions.Internal;
@@ -239,99 +240,23 @@ namespace AsyncGenerator.Transformation.Internal
 
 				invokeNode = node.GetAnnotatedNodes(invokeAnnotation).OfType<InvocationExpressionSyntax>().First();
 
+				// Check if the invocation has a ?.
 				var conditionalAccessNode = invokeNode.Ancestors()
 					.TakeWhile(o => !(o is StatementSyntax))
 					.OfType<ConditionalAccessExpressionSyntax>()
-					.FirstOrDefault();
+					.FirstOrDefault(o => o.WhenNotNull.Contains(invokeNode));
 				if (conditionalAccessNode != null) // ?. syntax
 				{
-					var statement = (StatementSyntax)invokeNode.Ancestors().FirstOrDefault(o => o is StatementSyntax);
-					var block = statement?.Parent as BlockSyntax;
-					if (statement == null || block == null)
+					// We have to find out which strategy to use, if we have a non assignable expression, we are force to use if statements
+					// otherwise a ternary condition will be used
+					if (!conditionalAccessNode.Parent.IsKind(SyntaxKind.ExpressionStatement) || !invokeNode.Equals(conditionalAccessNode.WhenNotNull))
 					{
-						// TODO: convert arrow method/property/function to a normal one
-						// TODO: convert to block if there is no block
-						node = node.ReplaceNode(conditionalAccessNode,
-							conditionalAccessNode.AddAwait(_configuration.ConfigureAwaitArgument));
+						node = TransformConditionalAccessToConditionalExpressions(node, nameNode, funReferenceResult, typeMetadata,
+							conditionalAccessNode, invokeNode);
 					}
 					else
 					{
-						var fnName = nameNode.Identifier.ValueText;
-						// TODO: handle name collisions
-						var variableName = $"{char.ToLowerInvariant(fnName[0])}{fnName.Substring(1)}Task";
-						var leadingTrivia = statement.GetLeadingTrivia();
-						var newConditionalAccessNode = ConditionalAccessExpression(
-								conditionalAccessNode.Expression,
-								invokeNode)
-							.WithTriviaFrom(conditionalAccessNode);
-						var localVar = LocalDeclarationStatement(
-							VariableDeclaration(
-								IdentifierName(Identifier(leadingTrivia, "var", TriviaList(Space))),
-								SingletonSeparatedList(
-									VariableDeclarator(
-											Identifier(TriviaList(), variableName, TriviaList(Space)))
-										.WithInitializer(
-											EqualsValueClause(newConditionalAccessNode.WithoutTrivia())
-												.WithEqualsToken(Token(TriviaList(), SyntaxKind.EqualsToken, TriviaList(Space)))
-										)
-								)))
-								.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(typeMetadata.EndOfLineTrivia)));
-						var index = block.Statements.IndexOf(statement);
-
-						var lastReturnNode = block.DescendantNodes()
-							.Where(o => o.SpanStart >= statement.SpanStart)
-							.OfType<ReturnStatementSyntax>()
-							.LastOrDefault();
-
-						var variableAnnotation = Guid.NewGuid().ToString();
-						var newBlock = block.ReplaceNode(conditionalAccessNode,
-							conditionalAccessNode.WhenNotNull.ReplaceNode(invokeNode,
-								IdentifierName(variableName)
-									.WithAdditionalAnnotations(new SyntaxAnnotation(variableAnnotation))
-									.WithLeadingTrivia(conditionalAccessNode.GetLeadingTrivia())
-									.WithTrailingTrivia(conditionalAccessNode.GetTrailingTrivia())
-							));
-
-						var variable = newBlock.GetAnnotatedNodes(variableAnnotation).OfType<IdentifierNameSyntax>().First();
-						newBlock = newBlock.ReplaceNode(variable, variable.AddAwait(_configuration.ConfigureAwaitArgument));
-
-						var ifBlock = Block()
-							.WithOpenBraceToken(
-								Token(TriviaList(leadingTrivia), SyntaxKind.OpenBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
-							.WithCloseBraceToken(
-								Token(TriviaList(leadingTrivia), SyntaxKind.CloseBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
-							.WithStatements(new SyntaxList<StatementSyntax>()
-								.AddRange(newBlock.AppendIndent(typeMetadata.IndentTrivia.ToFullString()).Statements.Skip(index)));
-
-						var ifStatement = IfStatement(
-								BinaryExpression(
-										SyntaxKind.NotEqualsExpression,
-										IdentifierName(Identifier(TriviaList(), variableName, TriviaList(Space))),
-										LiteralExpression(SyntaxKind.NullLiteralExpression))
-									.WithOperatorToken(
-										Token(TriviaList(), SyntaxKind.ExclamationEqualsToken, TriviaList(Space))),
-								ifBlock
-							)
-							.WithIfKeyword(
-								Token(TriviaList(leadingTrivia), SyntaxKind.IfKeyword, TriviaList(Space)))
-							.WithCloseParenToken(
-								Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(typeMetadata.EndOfLineTrivia)));
-
-						var statements = new SyntaxList<StatementSyntax>()
-							.AddRange(newBlock.Statements.Take(index))
-							.Add(localVar)
-							.Add(ifStatement);
-						if (lastReturnNode?.Expression != null)
-						{
-							// Check if the variable is defined otherwise return default return type value
-							if (lastReturnNode.Expression is IdentifierNameSyntax idNode &&
-							    statements.OfType<VariableDeclaratorSyntax>().All(o => o.Identifier.ToString() != idNode.Identifier.ValueText))
-							{
-								lastReturnNode = lastReturnNode.WithExpression(DefaultExpression(funcResult.GetNode().GetReturnType().WithoutTrivia()));
-							}
-							statements = statements.Add(lastReturnNode);
-						}
-						node = node.ReplaceNode(block, newBlock.WithStatements(statements));
+						node = TransformConditionalAccessToIfStatements(node, nameNode, typeMetadata, conditionalAccessNode, invokeNode);
 					}
 				}
 				else
@@ -342,6 +267,209 @@ namespace AsyncGenerator.Transformation.Internal
 			return node;
 		}
 
+		private T TransformConditionalAccessToConditionalExpressions<T>(
+			T node,
+			SimpleNameSyntax nameNode,
+			IFunctionReferenceAnalyzationResult funReferenceResult,
+			ITypeTransformationMetadata typeMetadata,
+			ConditionalAccessExpressionSyntax conditionalAccessNode,
+			InvocationExpressionSyntax invokeNode) where T : SyntaxNode
+		{
+			// TODO: we should check the async symbol instead
+			var returnType = funReferenceResult.ReferenceSymbol.ReturnType;
+			var type = returnType.CreateTypeSyntax();
+			var canSkipCast = !returnType.IsValueType && !returnType.IsNullable();
+			if (returnType.IsValueType && !returnType.IsNullable())
+			{
+				type = NullableType(type);
+			}
+
+			ExpressionSyntax whenNotNullNode = null;
+			if (invokeNode.Parent is MemberAccessExpressionSyntax memberAccessParent)
+			{
+				whenNotNullNode = conditionalAccessNode.WhenNotNull
+					.ReplaceNode(memberAccessParent,
+						MemberBindingExpression(Token(SyntaxKind.DotToken), memberAccessParent.Name));
+			}
+			else if (invokeNode.Parent is ElementAccessExpressionSyntax elementAccessParent)
+			{
+				whenNotNullNode = conditionalAccessNode.WhenNotNull
+					.ReplaceNode(elementAccessParent,
+						ElementBindingExpression(elementAccessParent.ArgumentList));
+			}
+
+			var valueNode = conditionalAccessNode.Expression.WithoutTrivia();
+			StatementSyntax variableStatement = null;
+			BlockSyntax statementBlock = null;
+			var statementIndex = 0;
+			// We have to save the value in a variable when the expression is an invocation, index accessor or property in
+			// order to prevent double calls
+			// TODO: find a more robust solution
+			if (!(conditionalAccessNode.Expression is SimpleNameSyntax simpleName) || char.IsUpper(simpleName.ToString()[0]))
+			{
+				var statement = (StatementSyntax)conditionalAccessNode.Ancestors().FirstOrDefault(o => o is StatementSyntax);
+				if (statement == null || !(statement.Parent is BlockSyntax block))
+				{
+					// TODO: convert arrow method/property/function to a normal one
+					// TODO: convert to block if there is no block
+					throw new NotSupportedException(
+						$"Arrow method with null-conditional is not supported. Node: {conditionalAccessNode}");
+				}
+
+				var leadingTrivia = statement.GetLeadingTrivia();
+				var fnName = nameNode.Identifier.ValueText;
+				statementIndex = block.Statements.IndexOf(statement);
+				statementBlock = block;
+				// TODO: handle name collisions
+				var variableName = $"{char.ToLowerInvariant(fnName[0])}{fnName.Substring(1)}{statementIndex}";
+				variableStatement = LocalDeclarationStatement(
+						VariableDeclaration(
+							IdentifierName(Identifier(leadingTrivia, "var", TriviaList(Space))),
+							SingletonSeparatedList(
+								VariableDeclarator(
+										Identifier(TriviaList(), variableName, TriviaList(Space)))
+									.WithInitializer(
+										EqualsValueClause(valueNode)
+											.WithEqualsToken(Token(TriviaList(), SyntaxKind.EqualsToken, TriviaList(Space)))
+									)
+							)))
+					.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(typeMetadata.EndOfLineTrivia)));
+
+				valueNode = IdentifierName(variableName);
+			}
+
+			var invocationAnnotation = Guid.NewGuid().ToString();
+			var nullNode = LiteralExpression(
+				SyntaxKind.NullLiteralExpression,
+				Token(TriviaList(), SyntaxKind.NullKeyword, TriviaList(Space)));
+			var ifNullCondition = BinaryExpression(
+					SyntaxKind.EqualsExpression,
+					valueNode.WithTrailingTrivia(TriviaList(Space)),
+					nullNode)
+				.WithOperatorToken(
+					Token(TriviaList(), SyntaxKind.EqualsEqualsToken, TriviaList(Space)));
+
+			ExpressionSyntax wrappedNode = ParenthesizedExpression(
+				ConditionalExpression(
+						ifNullCondition,
+						canSkipCast
+							? (ExpressionSyntax) nullNode
+							: CastExpression(
+								Token(SyntaxKind.OpenParenToken),
+								type,
+								Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(Space)),
+								nullNode),
+						InvocationExpression(
+								MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+									valueNode,
+									((MemberBindingExpressionSyntax) invokeNode.Expression).Name))
+							.WithAdditionalAnnotations(new SyntaxAnnotation(invocationAnnotation))
+							.WithArgumentList(invokeNode.ArgumentList.WithoutTrailingTrivia())
+					)
+					.WithColonToken(Token(TriviaList(), SyntaxKind.ColonToken, TriviaList(Space)))
+					.WithQuestionToken(Token(TriviaList(), SyntaxKind.QuestionToken, TriviaList(Space)))
+			);
+
+			if (whenNotNullNode != null)
+			{
+				wrappedNode = conditionalAccessNode
+					.WithExpression(wrappedNode)
+					.WithWhenNotNull(whenNotNullNode);
+			}
+
+			wrappedNode = wrappedNode.WithTriviaFrom(conditionalAccessNode);
+			invokeNode = (InvocationExpressionSyntax) wrappedNode.GetAnnotatedNodes(invocationAnnotation).First();
+			wrappedNode = wrappedNode.ReplaceNode(invokeNode, invokeNode.AddAwait(_configuration.ConfigureAwaitArgument));
+			if (statementBlock != null)
+			{
+				var newBlock = statementBlock.ReplaceNode(conditionalAccessNode, wrappedNode);
+				newBlock = newBlock.WithStatements(newBlock.Statements.Insert(statementIndex, variableStatement));
+
+				return node.ReplaceNode(statementBlock, newBlock);
+			}
+
+			return node.ReplaceNode(conditionalAccessNode, wrappedNode);
+		}
+
+		private T TransformConditionalAccessToIfStatements<T>(
+			T node,
+			SimpleNameSyntax nameNode,
+			ITypeTransformationMetadata typeMetadata,
+			ConditionalAccessExpressionSyntax conditionalAccessNode,
+			InvocationExpressionSyntax invokeNode) where T : SyntaxNode
+		{
+			var statement = (StatementSyntax)conditionalAccessNode.Ancestors().FirstOrDefault(o => o is StatementSyntax);
+			if (statement == null || !(statement.Parent is BlockSyntax block))
+			{
+				// TODO: convert arrow method/property/function to a normal one
+				// TODO: convert to block if there is no block
+				throw new NotSupportedException(
+					$"Arrow method with null-conditional is not supported. Node: {conditionalAccessNode}");
+			}
+
+			var fnName = nameNode.Identifier.ValueText;
+			// TODO: handle name collisions
+			var variableName = $"{char.ToLowerInvariant(fnName[0])}{fnName.Substring(1)}Task";
+			var leadingTrivia = statement.GetLeadingTrivia();
+			var newConditionalAccessNode = ConditionalAccessExpression(
+					conditionalAccessNode.Expression,
+					invokeNode)
+				.WithTriviaFrom(conditionalAccessNode);
+			var localVar = LocalDeclarationStatement(
+				VariableDeclaration(
+					IdentifierName(Identifier(leadingTrivia, "var", TriviaList(Space))),
+					SingletonSeparatedList(
+						VariableDeclarator(
+								Identifier(TriviaList(), variableName, TriviaList(Space)))
+							.WithInitializer(
+								EqualsValueClause(newConditionalAccessNode.WithoutTrivia())
+									.WithEqualsToken(Token(TriviaList(), SyntaxKind.EqualsToken, TriviaList(Space)))
+							)
+					)))
+					.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(typeMetadata.EndOfLineTrivia)));
+			var index = block.Statements.IndexOf(statement);
+
+			var variableAnnotation = Guid.NewGuid().ToString();
+			var newBlock = block.ReplaceNode(conditionalAccessNode,
+				conditionalAccessNode.WhenNotNull.ReplaceNode(invokeNode,
+					IdentifierName(variableName)
+						.WithAdditionalAnnotations(new SyntaxAnnotation(variableAnnotation))
+						.WithLeadingTrivia(conditionalAccessNode.GetLeadingTrivia())
+						.WithTrailingTrivia(conditionalAccessNode.GetTrailingTrivia())
+				));
+
+			var variable = newBlock.GetAnnotatedNodes(variableAnnotation).OfType<IdentifierNameSyntax>().First();
+			newBlock = newBlock.ReplaceNode(variable, variable.AddAwait(_configuration.ConfigureAwaitArgument));
+
+			var ifBlock = Block()
+				.WithOpenBraceToken(
+					Token(TriviaList(leadingTrivia), SyntaxKind.OpenBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
+				.WithCloseBraceToken(
+					Token(TriviaList(leadingTrivia), SyntaxKind.CloseBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
+				.WithStatements(SingletonList(newBlock.Statements[index].AppendIndent(typeMetadata.IndentTrivia.ToFullString())));
+
+			var ifStatement = IfStatement(
+					BinaryExpression(
+							SyntaxKind.NotEqualsExpression,
+							IdentifierName(Identifier(TriviaList(), variableName, TriviaList(Space))),
+							LiteralExpression(SyntaxKind.NullLiteralExpression))
+						.WithOperatorToken(
+							Token(TriviaList(), SyntaxKind.ExclamationEqualsToken, TriviaList(Space))),
+					ifBlock
+				)
+				.WithIfKeyword(
+					Token(TriviaList(leadingTrivia), SyntaxKind.IfKeyword, TriviaList(Space)))
+				.WithCloseParenToken(
+					Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(typeMetadata.EndOfLineTrivia)));
+
+			newBlock = block.WithStatements(
+				block.Statements
+					.RemoveAt(index)
+					.InsertRange(index, new StatementSyntax[] {localVar, ifStatement})
+			);
+
+			return node.ReplaceNode(block, newBlock);
+		}
 
 		private InvocationExpressionSyntax UpdateTypeAndRunReferenceTransformers(InvocationExpressionSyntax node, IFunctionAnalyzationResult funcResult,
 			IFunctionReferenceAnalyzationResult funcReferenceResult,

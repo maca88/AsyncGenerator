@@ -23,27 +23,49 @@ namespace AsyncGenerator.Tests.CSharpFeatures.Input
 		public async Task<object> ReturnVariableAsync()
 		{
 			var reader = GetReader();
-			var readContentAsObjectTask = reader?.ReadContentAsObjectAsync();
-			if (readContentAsObjectTask != null)
+			var result = (reader == null ? null : await (reader.ReadContentAsObjectAsync()))?.ToString().ToUpper();
+			if (result == "Test")
 			{
-				var result = (await (readContentAsObjectTask)).ToString().ToUpper();
-				if (result == "Test")
-				{
-					return null;
-				}
-				return result;
+				return null;
 			}
-			return default(object);
+			return result;
 		}
 
 		public async Task<bool> ExpressionAsync()
 		{
 			var reader = GetReader();
-			var readContentAsObjectTask = reader?.ReadContentAsObjectAsync();
-			if (readContentAsObjectTask != null)
+			(reader == null ? null : await (reader.ReadContentAsObjectAsync()))?.ToString();
+			return true;
+		}
+
+		public async Task<bool> ArgumentAsync()
+		{
+			var reader = GetReader();
+			Transform((reader == null ? null : await (reader.ReadContentAsObjectAsync())));
+			return true;
+		}
+
+		public async Task<bool> ValueTypeAsync()
+		{
+			var reader = GetReader();
+			var val = (reader == null ? (int?) null : await (reader.ReadContentAsBase64Async(new byte[0], 0, 0)))?.ToString();
+			return val == "1";
+		}
+
+		public async Task<bool> VoidAsync()
+		{
+			var reader = GetReader();
+			(reader == null ? null : await (reader.ReadContentAsStringAsync()))?.CopyTo(0, new char[0], 0, 0);
+			return true;
+		}
+
+		public async Task<bool> Void2Async()
+		{
+			var reader = GetReader();
+			var readContentAsStringTask = reader?.ReadContentAsStringAsync();
+			if (readContentAsStringTask != null)
 			{
-				(await (readContentAsObjectTask)).ToString();
-				return true;
+				await (readContentAsStringTask);
 			}
 			return true;
 		}
