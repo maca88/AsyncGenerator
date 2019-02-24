@@ -9,6 +9,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -52,6 +53,24 @@ namespace AsyncGenerator.Tests.Yields.Input
 			yields.Add(1);
 			yields.Add(2);
 			return Task.FromResult<IEnumerable<long>>(yields);
+		}
+
+		public Task<IEnumerable> NonGenericAsync(bool value)
+		{
+			var yields = new List<object>();
+			if (!value)
+			{
+				return Task.FromResult<IEnumerable>(yields);
+			}
+
+			for (var i = 0; i < 5; i++)
+			{
+				yields.Add(i);
+			}
+
+			yields.Add("1");
+			yields.Add(3m);
+			return Task.FromResult<IEnumerable>(yields);
 		}
 	}
 }

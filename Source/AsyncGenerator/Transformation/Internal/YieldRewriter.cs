@@ -26,8 +26,15 @@ namespace AsyncGenerator.Transformation.Internal
 		// TODO: handle name collision
 		public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
 		{
-			var enumerableReturnType = (GenericNameSyntax)node.ReturnType; // IEnumerable<T>
-			var yieldType = enumerableReturnType.TypeArgumentList.Arguments.First();
+			TypeSyntax yieldType;
+			if (node.ReturnType is GenericNameSyntax enumerableReturnType) // IEnumerable<T>
+			{
+				yieldType = enumerableReturnType.TypeArgumentList.Arguments.First();
+			}
+			else // IEnumerable
+			{
+				yieldType = PredefinedType(Token(SyntaxKind.ObjectKeyword));
+			}
 
 			var variable = LocalDeclarationStatement(
 				VariableDeclaration(
@@ -42,7 +49,7 @@ namespace AsyncGenerator.Transformation.Internal
 														Identifier(TriviaList(), "List", TriviaList()))
 													.WithTypeArgumentList(
 														TypeArgumentList(
-															SingletonSeparatedList<TypeSyntax>(yieldType))))
+															SingletonSeparatedList(yieldType))))
 											.WithNewKeyword(
 												Token(TriviaList(), SyntaxKind.NewKeyword, TriviaList(Space)))
 											.WithArgumentList(ArgumentList()))
@@ -68,7 +75,7 @@ namespace AsyncGenerator.Transformation.Internal
 				InvocationExpression(
 						MemberAccessExpression(
 							SyntaxKind.SimpleMemberAccessExpression,
-							IdentifierName(Identifier(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), "yields", TriviaList())),
+							IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), "yields", TriviaList())),
 							IdentifierName("Add")))
 					.WithArgumentList(
 						ArgumentList(

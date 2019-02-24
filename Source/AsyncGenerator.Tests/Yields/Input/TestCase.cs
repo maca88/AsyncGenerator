@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,6 +37,22 @@ namespace AsyncGenerator.Tests.Yields.Input
 			}
 			yield return 1;
 			yield return 2;
+		}
+
+		public IEnumerable NonGeneric(bool value)
+		{
+			if (!value)
+			{
+				yield break;
+			}
+
+			for (var i = 0; i < 5; i++)
+			{
+				yield return i;
+			}
+
+			yield return "1";
+			yield return 3m;
 		}
 	}
 }
