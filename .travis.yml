@@ -1,7 +1,5 @@
 language: csharp
-mono:
-  - 5.8.0
-  - 5.10.0
+mono: latest
 os:
   - osx
   - linux
