@@ -444,6 +444,7 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new YieldMethodTransformer());
 			configuration.RegisterPlugin(new OperationCanceledExceptionFunctionTransformer());
 			configuration.RegisterPlugin(new ReturnTaskFunctionTransformer());
+			configuration.RegisterPlugin(new InModifierRemovalTransformer());
 			configuration.RegisterPlugin(new ObsoleteMissingMethodTransformer());
 
 			configuration.RegisterPlugin(new AsyncLockMethodTransformer());
