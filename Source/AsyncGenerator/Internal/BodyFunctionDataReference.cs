@@ -84,6 +84,8 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public List<DelegateArgumentData> DelegateArguments { get; set; }
 
+		public ConcurrentSet<LocalVariableDataReference> RelatedLocalVariableReferences { get; } = new ConcurrentSet<LocalVariableDataReference>();
+
 		public void AddDelegateArgument(DelegateArgumentData functionArgument)
 		{
 			DelegateArguments = DelegateArguments ?? new List<DelegateArgumentData>();

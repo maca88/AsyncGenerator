@@ -7,12 +7,12 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal abstract class AbstractFunctionDataReference<TData> : AbstractDataReference<TData, IMethodSymbol, FunctionData>, IFunctionReferenceAnalyzationResult
+	internal abstract class AbstractFunctionDataReference<TData> : AbstractDataReference<TData, IMethodSymbol>, IFunctionReferenceAnalyzationResult
 		where TData : AbstractData
 	{
 		protected AbstractFunctionDataReference(TData data, ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode,
 			IMethodSymbol referenceSymbol, FunctionData referenceFunctionData, bool insideMethodBody)
-			: base(data, referenceLocation, referenceNameNode, referenceSymbol, referenceFunctionData)
+			: base(data, referenceLocation, referenceNameNode, referenceSymbol)
 		{
 			ReferenceFunctionData = referenceFunctionData;
 			InsideMethodBody = insideMethodBody;

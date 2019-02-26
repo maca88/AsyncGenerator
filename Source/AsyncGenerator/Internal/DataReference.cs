@@ -10,13 +10,12 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal abstract class DataReference<TData, TReferenceSymbol, TReferenceData> : AbstractDataReference<TData, TReferenceSymbol, TReferenceData>
+	internal abstract class DataReference<TData, TReferenceSymbol> : AbstractDataReference<TData, TReferenceSymbol>
 		where TReferenceSymbol : ISymbol
 		where TData : AbstractData
-		where TReferenceData : AbstractData
 	{
 		protected DataReference(TData data, ReferenceLocation referenceLocation, SimpleNameSyntax referenceNameNode, TReferenceSymbol referenceSymbol,
-			TReferenceData referenceData = null, bool? isTypeOf = null) : base(data, referenceLocation, referenceNameNode, referenceSymbol, referenceData)
+			bool? isTypeOf = null) : base(data, referenceLocation, referenceNameNode, referenceSymbol)
 		{
 			IsCref = referenceNameNode.IsInsideCref();
 			IsNameOf = referenceNameNode.IsInsideNameOf();

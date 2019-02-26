@@ -11,6 +11,21 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
+	internal class LocalVariableDataReference : AbstractDataReference<FunctionData, ILocalSymbol>
+	{
+		public LocalVariableDataReference(FunctionData data, ReferenceLocation referenceLocation,
+			SimpleNameSyntax referenceNameNode, ILocalSymbol referenceSymbol)
+			: base(data, referenceLocation, referenceNameNode, referenceSymbol)
+		{
+		}
+
+		public ConcurrentSet<BodyFunctionDataReference> RelatedBodyFunctionReferences { get; } = new ConcurrentSet<BodyFunctionDataReference>();
+
+		public override bool IsCref => false;
+		public override bool IsTypeOf => false;
+		public override bool IsNameOf => false;
+	}
+
 	internal class NameofFunctionDataReference : AbstractFunctionDataReference<AbstractData>
 	{
 		public NameofFunctionDataReference(AbstractData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
@@ -20,7 +35,7 @@ namespace AsyncGenerator.Internal
 			ReferencedFunctions = references;
 		}
 
-		public Dictionary<IMethodSymbol, FunctionData> ReferencedFunctions { get; set; }
+		public Dictionary<IMethodSymbol, FunctionData> ReferencedFunctions { get; }
 
 		public List<BodyFunctionDataReference> RelatedBodyFunctionReferences { get; } = new List<BodyFunctionDataReference>();
 

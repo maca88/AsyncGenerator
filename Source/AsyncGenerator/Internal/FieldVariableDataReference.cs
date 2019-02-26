@@ -9,11 +9,10 @@ using Microsoft.CodeAnalysis.FindSymbols;
 
 namespace AsyncGenerator.Internal
 {
-	internal class FieldVariableDataReference : DataReference<AbstractData, ISymbol, FieldVariableDeclaratorData>
+	internal class FieldVariableDataReference : DataReference<AbstractData, ISymbol>
 	{
-		public FieldVariableDataReference(AbstractData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode,
-			ISymbol referenceSymbol, FieldVariableDeclaratorData referenceData)
-			: base(data, reference, referenceNameNode, referenceSymbol, referenceData, false)
+		public FieldVariableDataReference(AbstractData data, ReferenceLocation reference, SimpleNameSyntax referenceNameNode, ISymbol referenceSymbol)
+			: base(data, reference, referenceNameNode, referenceSymbol, false)
 		{
 		}
 	}

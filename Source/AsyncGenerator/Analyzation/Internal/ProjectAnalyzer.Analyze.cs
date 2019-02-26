@@ -126,6 +126,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				AnalyzeMethodReference(documentData, reference);
 			}
 
+			foreach (var localVariable in methodAccessorData.LocalVariables.Values)
+			{
+				AnalyzeLocalVariable(documentData, localVariable);
+			}
+
 			foreach (var reference in methodAccessorData.CrefFunctionReferences)
 			{
 				AnalyzeCrefMethodReference(documentData, methodAccessorData, reference);
@@ -207,6 +212,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				AnalyzeMethodReference(documentData, reference);
 			}
 
+			foreach (var localVariable in functionData.LocalVariables.Values)
+			{
+				AnalyzeLocalVariable(documentData, localVariable);
+			}
+
 			// Ignore all candidate arguments that are not an argument of an async invocation candidate
 			foreach (var reference in functionData.BodyFunctionReferences
 				.Where(o => !o.ReferenceSymbol.IsPropertyAccessor() && o.ReferenceNode.IsKind(SyntaxKind.Argument) && o.ArgumentOfFunctionInvocation == null))
@@ -254,6 +264,10 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					case SyntaxKind.ConditionalExpression:
 						break;
+					case SyntaxKind.SimpleAssignmentExpression:
+					case SyntaxKind.VariableDeclarator:
+						refData.AwaitInvocation = false;
+						break;
 					case SyntaxKind.InvocationExpression:
 						AnalyzeInvocationExpression(documentData, (InvocationExpressionSyntax)currNode, refData);
 						break;
@@ -267,9 +281,6 @@ namespace AsyncGenerator.Analyzation.Internal
 					case SyntaxKind.SubtractAssignmentExpression:
 						refData.Ignore(IgnoreReason.Custom($"Cannot detach an async method to an event", DiagnosticSeverity.Info));
 						break;
-					case SyntaxKind.VariableDeclaration:
-						refData.Ignore(IgnoreReason.NotSupported($"Assigning async method to a variable is not supported"));
-						break;
 					case SyntaxKind.CastExpression:
 						refData.AwaitInvocation = true;
 						ascend = true;
@@ -282,7 +293,6 @@ namespace AsyncGenerator.Analyzation.Internal
 						refData.Ignore(IgnoreReason.NotSupported($"Async method inside an array/collection initializer is not supported"));
 						break;
 					// skip
-					case SyntaxKind.VariableDeclarator:
 					case SyntaxKind.EqualsValueClause:
 					case SyntaxKind.SimpleMemberAccessExpression:
 					case SyntaxKind.ArgumentList:
@@ -304,6 +314,33 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (!refData.AwaitInvocation.HasValue)
 			{
 				refData.AwaitInvocation = refData.Conversion != ReferenceConversion.Ignore;
+			}
+		}
+
+		private void AnalyzeLocalVariable(DocumentData documentData, LocalVariableData localVariable)
+		{
+			foreach (var reference in localVariable.SelfReferences)
+			{
+				if (!(reference is LocalVariableDataReference localVariableReference))
+				{
+					continue;
+				}
+
+				if (localVariableReference.RelatedBodyFunctionReferences.Any(o => o.Conversion == ReferenceConversion.Ignore))
+				{
+					localVariable.Ignore(IgnoreReason.Custom("One of the related body function reference is ignored", DiagnosticSeverity.Info));
+					return;
+				}
+
+				if (reference.ReferenceNameNode.Parent is AssignmentExpressionSyntax assignmentNode)
+				{
+					var symbol = documentData.SemanticModel.GetSymbolInfo(assignmentNode.Right).Symbol;
+					if (!assignmentNode.Right.IsKind(SyntaxKind.NullLiteralExpression) && !(symbol is IMethodSymbol))
+					{
+						localVariable.Ignore(IgnoreReason.NotSupported("One of the local variable references has an unsupported assignment"));
+						return;
+					}
+				}
 			}
 		}
 

@@ -58,7 +58,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					await ScanForReferences(fieldVariableData, fieldVariableData.Symbol,
 							(data, location, nameNode) =>
-								new FieldVariableDataReference(data, location, nameNode, fieldVariableData.Symbol, fieldVariableData),
+								new FieldVariableDataReference(data, location, nameNode, fieldVariableData.Symbol),
 							cancellationToken)
 						.ConfigureAwait(false);
 				}
@@ -474,6 +474,8 @@ namespace AsyncGenerator.Analyzation.Internal
 
 		private readonly ConcurrentSet<ReferenceLocation> _scannedLocationsSymbols = new ConcurrentSet<ReferenceLocation>();
 
+		private readonly ConcurrentSet<ILocalSymbol> _searchedLocalSymbols = new ConcurrentSet<ILocalSymbol>();
+
 		private int _maxScanningDepth;
 
 		private IEnumerable<IMethodSymbol> GetAllRelatedMethods(IMethodSymbol methodSymbol)
@@ -508,6 +510,27 @@ namespace AsyncGenerator.Analyzation.Internal
 				relatedSymbols.Add(interfaceMethod);
 			}
 			return relatedSymbols;
+		}
+
+		private async Task ScanLocalVariable(LocalVariableData localVariable, SemanticModel semanticModel, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (cancellationToken.IsCancellationRequested)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+			}
+
+			if (!_searchedLocalSymbols.TryAdd(localVariable.Symbol))
+			{
+				return;
+			}
+
+			var functionData = localVariable.FunctionData;
+			var references = await SymbolFinder.FindReferencesAsync(localVariable.Symbol, _solution, _analyzeDocuments, cancellationToken).ConfigureAwait(false);
+			foreach (var refLocation in references.SelectMany(o => o.Locations))
+			{
+				var nameNode = functionData.GetNode().GetSimpleName(refLocation.Location.SourceSpan);
+				localVariable.SelfReferences.Add(new LocalVariableDataReference(functionData, refLocation, nameNode, localVariable.Symbol));
+			}
 		}
 
 		private async Task ScanAllMethodReferenceLocations(IMethodSymbol methodSymbol, int depth, CancellationToken cancellationToken = default(CancellationToken))
@@ -612,29 +635,29 @@ namespace AsyncGenerator.Analyzation.Internal
 						? propertyReferenceSymbol.SetMethod 
 						: propertyReferenceSymbol.GetMethod;
 				}
+				// Check if the node is inside a nameof keyword as GetSymbolInfo will never return a symbol for it only candidates
+				else if (methodReferenceSymbol == null && nameNode.IsInsideNameOf())
+				{
+					var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>();
+					foreach (var candidateSymbol in referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
+					{
+						var nameofReferenceData = ProjectData.GetFunctionData(candidateSymbol);
+						referencedFuncs.Add(candidateSymbol, nameofReferenceData);
+					}
+					var nameofReference = new NameofFunctionDataReference(baseMethodData, refLocation, nameNode, referencedFuncs, true);
+					if (!baseMethodData.References.TryAdd(nameofReference))
+					{
+						_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
+					}
+					foreach (var referencedFun in referencedFuncs.Values.Where(o => o != null))
+					{
+						referencedFun.SelfReferences.TryAdd(nameofReference);
+					}
+					continue;
+				}
+
 				if (methodReferenceSymbol == null)
 				{
-					// Check if the node is inside a nameof keyword as GetSymbolInfo will never return a symbol for it only candidates
-					if (nameNode.IsInsideNameOf())
-					{
-						var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>();
-						foreach (var candidateSymbol in referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
-						{
-							var nameofReferenceData = ProjectData.GetFunctionData(candidateSymbol);
-							referencedFuncs.Add(candidateSymbol, nameofReferenceData);
-						}
-						var nameofReference = new NameofFunctionDataReference(baseMethodData, refLocation, nameNode, referencedFuncs, true);
-						if (!baseMethodData.References.TryAdd(nameofReference))
-						{
-							_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
-						}
-						foreach (var referencedFun in referencedFuncs.Values.Where(o => o != null))
-						{
-							referencedFun.SelfReferences.TryAdd(nameofReference);
-						}
-						continue;
-					}
-
 					methodReferenceSymbol = TryFindCandidate(nameNode, referenceSymbolInfo, documentData.SemanticModel);
 					if (methodReferenceSymbol == null)
 					{
@@ -647,6 +670,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						$"but we got a candidate instead. CandidateReason: {referenceSymbolInfo.CandidateReason}",
 						DiagnosticSeverity.Info);
 				}
+
 				var referenceFunctionData = ProjectData.GetFunctionData(methodReferenceSymbol);
 				// Check if the reference is a cref reference or a nameof
 				if (nameNode.IsInsideCref())
@@ -659,30 +683,63 @@ namespace AsyncGenerator.Analyzation.Internal
 					referenceFunctionData?.SelfReferences.TryAdd(crefReference);
 					continue; // No need to further scan a cref reference
 				}
+
 				var methodReferenceData = new BodyFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceFunctionData);
 				if (!baseMethodData.References.TryAdd(methodReferenceData))
 				{
 					_logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
 					continue; // Reference already processed
 				}
-				referenceFunctionData?.SelfReferences.TryAdd(methodReferenceData);
 
+				referenceFunctionData?.SelfReferences.TryAdd(methodReferenceData);
 				if (baseMethodData.Conversion == MethodConversion.Ignore)
 				{
 					continue;
 				}
+
 				// Do not scan for method that will be only copied (e.g. the containing type is a new type). 
 				if (baseMethodData.Conversion == MethodConversion.Copy)
 				{
 					continue;
 				}
 
+				var localVariableNode = nameNode.GetRelatedLocalVariable();
+				if (localVariableNode != null)
+				{
+					ILocalSymbol localSymbol;
+					LocalVariableData localVariable;
+					ExpressionSyntax leftAssignment = null;
+					switch (localVariableNode)
+					{
+						case AssignmentExpressionSyntax assignmentNode:
+							localSymbol = documentData.SemanticModel.GetSymbolInfo(assignmentNode.Left).Symbol as ILocalSymbol;
+							localVariable = baseMethodData.GetRelatedLocalVariable(localSymbol, true);
+							leftAssignment = assignmentNode.Left;
+							break;
+						case VariableDeclaratorSyntax declaratorNode:
+							localSymbol = documentData.SemanticModel.GetDeclaredSymbol(declaratorNode) as ILocalSymbol;
+							localVariable = baseMethodData.GetRelatedLocalVariable(localSymbol, declaratorNode, true);
+							break;
+						default:
+							throw new InvalidOperationException($"Invalid node for a local variable: {localVariableNode}");
+					}
+					await ScanLocalVariable(localVariable, documentData.SemanticModel, cancellationToken).ConfigureAwait(false);
+					localVariable.References.Add(methodReferenceData);
+					if (leftAssignment != null)
+					{
+						var localReference = localVariable.SelfReferences.OfType<LocalVariableDataReference>()
+							.FirstOrDefault(o => o.ReferenceNameNode.Equals(leftAssignment));
+						localReference?.RelatedBodyFunctionReferences.TryAdd(methodReferenceData);
+						methodReferenceData.RelatedLocalVariableReferences.TryAdd(localReference);
+					}
+				}
+
 				if (baseMethodData is MethodOrAccessorData methodData && !_scannedMethodOrAccessors.Contains(methodData))
 				{
 					await ScanMethodData(methodData, depth, cancellationToken).ConfigureAwait(false);
 				}
+
 				// Scan a local/anonymous function only if there is a chance that can be called elsewere. (e.g. saved to a variable or local function)
-				// TODO: support local variables
 				if (baseMethodData is LocalFunctionData)
 				{
 					await ScanAllMethodReferenceLocations(baseMethodData.Symbol, depth, cancellationToken).ConfigureAwait(false);

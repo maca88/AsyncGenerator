@@ -389,6 +389,80 @@ namespace AsyncGenerator.Extensions.Internal
 			// Check if the assignement belongs to the current identifier
 			return statement != null && statement.DescendantTokens().Any(o => o.SpanStart == identifier.Span.End + 1 && o.IsKind(SyntaxKind.EqualsToken));
 		}
+
+		internal static bool GetAssignmentExpressionFromRight(this SimpleNameSyntax identifier)
+		{
+			var statement = identifier.Ancestors()
+				.TakeWhile(o => !(o is StatementSyntax) && !(o is ArrowExpressionClauseSyntax))
+				.OfType<AssignmentExpressionSyntax>()
+				.FirstOrDefault();
+
+			if (statement?.Right == null)
+			{
+				return false;
+			}
+
+			if (statement.Right is MemberAccessExpressionSyntax memberAccessNode)
+			{
+				return memberAccessNode.Name.Equals(identifier);
+			}
+			if (statement.Right is IdentifierNameSyntax identifierNode)
+			{
+				return identifierNode.Equals(identifier);
+			}
+
+			return false;
+		}
+
+		internal static VariableDeclaratorSyntax GetVariableDeclaratorFromInitializer(this SimpleNameSyntax initializerIdentifier)
+		{
+			var statement = initializerIdentifier.Ancestors()
+				.TakeWhile(o => !(o is StatementSyntax) && !(o is ArrowExpressionClauseSyntax))
+				.OfType<VariableDeclaratorSyntax>()
+				.FirstOrDefault();
+
+			if (statement?.Initializer == null)
+			{
+				return null;
+			}
+
+			if (statement.Initializer.Value is MemberAccessExpressionSyntax memberAccessNode && memberAccessNode.Name.Equals(initializerIdentifier))
+			{
+				return statement;
+			}
+			if (statement.Initializer.Value is IdentifierNameSyntax identifierNode && identifierNode.Equals(initializerIdentifier))
+			{
+				return statement;
+			}
+
+			return null;
+		}
+
+		public static SyntaxNode GetRelatedLocalVariable(this SimpleNameSyntax node)
+		{
+			var currNode = node.Parent;
+			var ascend = true;
+			while (ascend && !(currNode is StatementSyntax) && !(currNode is ArrowExpressionClauseSyntax))
+			{
+				switch (currNode.Kind())
+				{
+					case SyntaxKind.SimpleMemberAccessExpression:
+					case SyntaxKind.EqualsValueClause:
+						break;
+					case SyntaxKind.SimpleAssignmentExpression:
+					case SyntaxKind.VariableDeclarator:
+						return currNode;
+					default:
+						ascend = false;
+						break;
+				}
+
+				currNode = currNode.Parent;
+			}
+
+			return null;
+		}
+
 		/// <summary>
 		/// Get the whole expression for the accessor
 		/// eg: Property => Property

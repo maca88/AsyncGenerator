@@ -11,7 +11,5 @@ namespace AsyncGenerator.Internal
 	internal interface IDataReference : IReferenceAnalyzationResult
 	{
 		AbstractData Data { get; }
-
-		AbstractData ReferenceData { get; }
 	}
 }

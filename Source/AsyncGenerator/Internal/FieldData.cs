@@ -11,6 +11,54 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
 {
+	internal class LocalVariableData : AbstractData
+	{
+		public LocalVariableData(FunctionData functionData, ILocalSymbol symbol, VariableDeclaratorSyntax node, IMethodSymbol declaredMethodSymbol, FunctionData declaredFunctionData)
+		{
+			FunctionData = functionData;
+			Symbol = symbol;
+			Node = node;
+			DeclaredMethodSymbol = declaredMethodSymbol;
+			DeclaredFunctionData = declaredFunctionData;
+		}
+
+		public VariableDeclaratorSyntax Node { get; }
+
+		public IMethodSymbol DeclaredMethodSymbol { get; }
+
+		public FunctionData DeclaredFunctionData { get; set; }
+
+		public ILocalSymbol Symbol { get; }
+
+		public FunctionData FunctionData { get; }
+
+		protected override void Ignore()
+		{
+			base.Ignore();
+			foreach (var selfReference in SelfReferences)
+			{
+				if (!(selfReference is LocalVariableDataReference localVariableReference))
+				{
+					continue;
+				}
+				foreach (var bodyFunctionReference in localVariableReference.RelatedBodyFunctionReferences)
+				{
+					bodyFunctionReference.Ignore(IgnoreReason.Cascade);
+				}
+			}
+		}
+
+		public override SyntaxNode GetNode()
+		{
+			return Node;
+		}
+
+		public override ISymbol GetSymbol()
+		{
+			return Symbol;
+		}
+	}
+
 	internal class BaseFieldData : AbstractData, IFieldAnalyzationResult
 	{
 		public BaseFieldData(TypeData typeData, BaseFieldDeclarationSyntax node, SemanticModel semanticModel)

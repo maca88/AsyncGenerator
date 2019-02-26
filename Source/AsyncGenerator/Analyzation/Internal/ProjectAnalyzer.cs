@@ -205,116 +205,145 @@ namespace AsyncGenerator.Analyzation.Internal
 		/// <returns>Collection of invoked methods that have an async counterpart</returns>
 		private IEnumerable<IMethodSymbol> FindNewlyInvokedMethodsWithAsyncCounterpart(FunctionData methodData, ISet<IMethodSymbol> searchReferences)
 		{
-			if (!_scannedMethodBodies.TryAdd(methodData))
+			if (!_scannedMethodBodies.TryAdd(methodData) || methodData.GetBodyNode() == null)
 			{
 				return Enumerable.Empty<IMethodSymbol>();
 			}
 
 			var result = new HashSet<IMethodSymbol>();
-			var methodDataBody = methodData.GetBodyNode();
-			if (methodDataBody == null)
-			{
-				return result;
-			}
 			var documentData = methodData.TypeData.NamespaceData.DocumentData;
 			var semanticModel = documentData.SemanticModel;
 
-			foreach (var node in methodDataBody.DescendantNodes().Where(o => o.IsKind(SyntaxKind.InvocationExpression) || o.IsKind(SyntaxKind.IdentifierName)))
+			foreach (var functionData in methodData.GetSelfAndDescendantsFunctions())
 			{
-				IMethodSymbol methodSymbol = null;
-				ITypeSymbol typeSymbol = null;
-				var invocation = node as InvocationExpressionSyntax;
-				if (invocation != null)
-				{
-					if (invocation.Expression is SimpleNameSyntax)
-					{
-						typeSymbol = methodData.Symbol.ContainingType;
-					}
-					else if (invocation.Expression is MemberAccessExpressionSyntax memberAccessExpression)
-					{
-						typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
-					}
+				ProcessFunctionData(functionData);
+			}
 
-					if (invocation.Expression.ToString() == "nameof")
+			return result;
+
+			void ProcessFunctionData(FunctionData functionData)
+			{
+				var bodyNode = functionData.GetBodyNode();
+				if (bodyNode == null)
+				{
+					return;
+				}
+
+				foreach (var node in bodyNode.DescendantNodes(o => !o.IsFunction())
+					.Where(o => o.IsKind(SyntaxKind.InvocationExpression) || o.IsKind(SyntaxKind.IdentifierName)))
+				{
+					IMethodSymbol methodSymbol = null;
+					ITypeSymbol typeSymbol = null;
+					var invocation = node as InvocationExpressionSyntax;
+					if (invocation != null)
 					{
-						methodSymbol = semanticModel.GetSymbolInfo(
-							invocation.ArgumentList.Arguments.First().Expression)
-							.CandidateSymbols
-							.OfType<IMethodSymbol>()
-							.FirstOrDefault();
-					}
-					else
-					{
-						var symbolInfo = semanticModel.GetSymbolInfo(invocation.Expression);
-						// Will happen for dynamic
-						if (symbolInfo.Symbol == null)
+						switch (invocation.Expression)
 						{
-							var candidates = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().ToList();
-							methodSymbol = candidates.FirstOrDefault();
-							foreach (var candidateSymbol in candidates.Skip(1))
+							case SimpleNameSyntax _:
+								typeSymbol = functionData.Symbol.ContainingType;
+								break;
+							case MemberAccessExpressionSyntax memberAccessExpression:
+								typeSymbol = semanticModel.GetTypeInfo(memberAccessExpression.Expression).Type;
+								break;
+						}
+
+						if (invocation.Expression.ToString() == "nameof")
+						{
+							methodSymbol = semanticModel.GetSymbolInfo(
+								invocation.ArgumentList.Arguments.First().Expression)
+								.CandidateSymbols
+								.OfType<IMethodSymbol>()
+								.FirstOrDefault();
+						}
+						else
+						{
+							var symbolInfo = semanticModel.GetSymbolInfo(invocation.Expression);
+							// Will happen for dynamic
+							if (symbolInfo.Symbol == null)
 							{
-								ProcessMethod(candidateSymbol, typeSymbol, invocation);
+								var candidates = symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().ToList();
+								methodSymbol = candidates.FirstOrDefault();
+								foreach (var candidateSymbol in candidates.Skip(1))
+								{
+									ProcessMethod(candidateSymbol, typeSymbol, invocation);
+								}
+							}
+							else
+							{
+								switch (symbolInfo.Symbol)
+								{
+									case IMethodSymbol mSymbol:
+										methodSymbol = mSymbol;
+										break;
+									//case ILocalSymbol localSymbol:
+									//	break;
+								}
+							}
+						}
+					}
+					else if (node is IdentifierNameSyntax identifier)
+					{
+						if (identifier.Identifier.ToString() == "var")
+						{
+							continue;
+						}
+
+						var symbol = semanticModel.GetSymbolInfo(identifier).Symbol;
+						if (symbol is IMethodSymbol mSymbol)
+						{
+							methodSymbol = mSymbol;
+							typeSymbol = methodSymbol.ContainingType;
+						}
+						else if (symbol is IPropertySymbol propertySymbol)
+						{
+							typeSymbol = propertySymbol.ContainingType;
+							var isAssigned = identifier.IsAssigned();
+							methodSymbol = isAssigned ? propertySymbol.SetMethod : propertySymbol.GetMethod;
+							// Auto-properties are skipped as they can never throw a non fatal exception
+							if (!functionData.WrapInTryCatch &&
+								(methodSymbol?.IsVirtualAbstractOrInterface() == true || methodSymbol?.IsAutoPropertyAccessor() != true) &&
+								node.Ancestors().First(o => o.IsFunction()) == functionData.GetNode())
+							{
+								if (isAssigned)
+								{
+									functionData.WrapInTryCatch = true;
+								}
+								// Here we don't know if there is any precondition
+								else if (_configuration.ExceptionHandling.CatchPropertyGetterCalls(methodSymbol))
+								{
+									// TODO: move elsewhere
+									functionData.CatchPropertyGetterCalls.Add(identifier);
+								}
 							}
 						}
 						else
 						{
-							methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression).Symbol as IMethodSymbol;
+							continue;
 						}
-					}
-				}
-				else if (node is IdentifierNameSyntax identifier)
-				{
-					if (identifier.Identifier.ToString() == "var")
-					{
-						continue;
-					}
-					var propertySymbol = semanticModel.GetSymbolInfo(identifier).Symbol as IPropertySymbol;
-					if (propertySymbol == null)
-					{
-						continue;
-					}
-					typeSymbol = propertySymbol.ContainingType;
-					var isAssigned = identifier.IsAssigned();
-					methodSymbol = isAssigned ? propertySymbol.SetMethod : propertySymbol.GetMethod;
-					// Auto-properties are skipped as they can never throw a non fatal exception
-					if (!methodData.WrapInTryCatch &&
-						(methodSymbol?.IsVirtualAbstractOrInterface() == true || methodSymbol?.IsAutoPropertyAccessor() != true) &&
-					    node.Ancestors().First(o => o.IsFunction()) == methodData.GetNode())
-					{
-						if (isAssigned)
-						{
-							methodData.WrapInTryCatch = true;
-						}
-						// Here we don't know if there is any precondition
-						else if (_configuration.ExceptionHandling.CatchPropertyGetterCalls(methodSymbol))
-						{
-							methodData.CatchPropertyGetterCalls.Add(identifier);
-						}
-					}
-				}
 
-				if (!ProcessMethod(methodSymbol, typeSymbol, invocation))
-				{
-					continue;
-				}
+					}
 
-				// Check if there is any method passed as argument that have also an async counterpart
-				// ReSharper disable once PossibleNullReferenceException
-				foreach (var argument in invocation.ArgumentList.Arguments
-					.Where(o => o.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression) || o.Expression.IsKind(SyntaxKind.IdentifierName)))
-				{
-					if (!(semanticModel.GetSymbolInfo(argument.Expression).Symbol is IMethodSymbol argMethodSymbol))
+					if (!ProcessMethod(methodSymbol, typeSymbol, invocation))
 					{
 						continue;
 					}
-					if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, _searchOptions, true).Any())
+
+					// Check if there is any method passed as argument that have also an async counterpart
+					// ReSharper disable once PossibleNullReferenceException
+					foreach (var argument in invocation.ArgumentList.Arguments
+						.Where(o => o.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression) || o.Expression.IsKind(SyntaxKind.IdentifierName)))
 					{
-						result.Add(argMethodSymbol);
+						if (!(semanticModel.GetSymbolInfo(argument.Expression).Symbol is IMethodSymbol argMethodSymbol))
+						{
+							continue;
+						}
+						if (GetAsyncCounterparts(argMethodSymbol.OriginalDefinition, _searchOptions, true).Any())
+						{
+							result.Add(argMethodSymbol);
+						}
 					}
 				}
 			}
-			return result;
-
 
 			bool ProcessMethod(IMethodSymbol methodSymbol, ITypeSymbol typeSymbol, InvocationExpressionSyntax invocation)
 			{

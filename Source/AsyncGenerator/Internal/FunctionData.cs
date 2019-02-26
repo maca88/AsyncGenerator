@@ -7,6 +7,7 @@ using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Internal
@@ -49,6 +50,8 @@ namespace AsyncGenerator.Internal
 
 		public List<LockData> Locks { get; } = new List<LockData>();
 
+		public ConcurrentDictionary<VariableDeclaratorSyntax, LocalVariableData> LocalVariables { get; } = new ConcurrentDictionary<VariableDeclaratorSyntax, LocalVariableData>();
+
 		public List<IdentifierNameSyntax> CatchPropertyGetterCalls { get; } = new List<IdentifierNameSyntax>();
 
 		public List<StatementSyntax> Preconditions { get; } = new List<StatementSyntax>();
@@ -82,6 +85,25 @@ namespace AsyncGenerator.Internal
 				return ChildFunctions.GetOrAdd(node, syntax => OnChildCreated(new LocalFunctionData(GetBaseMethodData(), symbol, localFunc, this)));
 			}
 			throw new InvalidOperationException($"Cannot get a ChildFunctionData from syntax node {node}");
+		}
+
+		public LocalVariableData GetRelatedLocalVariable(ILocalSymbol symbol, bool create = false)
+		{
+			var node = (VariableDeclaratorSyntax)symbol.DeclaringSyntaxReferences.First().GetSyntax();
+			return GetRelatedLocalVariable(symbol, node, create);
+		}
+
+		public LocalVariableData GetRelatedLocalVariable(ILocalSymbol symbol, VariableDeclaratorSyntax node, bool create = false)
+		{
+			IMethodSymbol declaredMethodSymbol = null;
+			var documentData = TypeData.NamespaceData.DocumentData;
+			if (node.Initializer != null)
+			{
+				declaredMethodSymbol = documentData.SemanticModel.GetSymbolInfo(node.Initializer.Value).Symbol as IMethodSymbol;
+			}
+
+			return LocalVariables.GetOrAdd(node,
+				syntax => new LocalVariableData(this, symbol, node, declaredMethodSymbol, documentData.ProjectData.GetFunctionData(declaredMethodSymbol)));
 		}
 
 		public IEnumerable<FunctionData> GetSelfAndDescendantsFunctions(Func<FunctionData, bool> predicate = null)
