@@ -28,9 +28,19 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 			return null;
 		}
 
-		public static Task<double> AverageAsync<TSource>(this IQueryable<TSource> source,Expression<Func<TSource, int>> selector)
+		public static Task<double> AverageAsync<TSource>(this IQueryable<TSource> source, Expression<Func<TSource, int>> selector)
 		{
 			return null;
+		}
+
+		public static int Delete<TSource>(this IQueryable<TSource> source)
+		{
+			return 0;
+		}
+
+		public static Task<int> DeleteAsync<TSource>(this IQueryable<TSource> source, CancellationToken cancellationToken)
+		{
+			return Task.FromResult(0);
 		}
 	}
 }

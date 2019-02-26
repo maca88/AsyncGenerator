@@ -129,7 +129,7 @@ namespace AsyncGenerator.Core.Extensions
 				var origDelegate = typeSymbol.DelegateInvokeMethod;
 				if (origDelegate == null)
 				{
-					if (param.Type.Equals(candidateParam.Type))
+					if (param.Type.AreEqual(candidateParam.Type))
 					{
 						continue;
 					}
