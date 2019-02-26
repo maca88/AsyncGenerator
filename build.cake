@@ -121,7 +121,7 @@ Task("Publish-NuGet-Packages")
     {
         NuGetPush(package, new NuGetPushSettings()
         {
-            Source = "https://www.nuget.org/api/v2/package"
+            Source = "https://api.nuget.org/v3/index.json"
         });
     }
 });
