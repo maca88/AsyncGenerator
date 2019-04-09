@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.0.7-preview-ge60d679b53">
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.6.0">
