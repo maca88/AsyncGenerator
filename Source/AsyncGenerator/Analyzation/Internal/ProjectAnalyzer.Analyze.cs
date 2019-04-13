@@ -584,11 +584,11 @@ namespace AsyncGenerator.Analyzation.Internal
 			functionReferenceData.LastInvocation = true;
 			if (functionReferenceData.ReferenceFunctionData == null && functionReferenceData.AsyncCounterpartSymbol != null)
 			{
-				functionReferenceData.UseAsReturnValue = !_configuration.AlwaysAwait(methodSymbol) && functionReferenceData.AsyncCounterpartSymbol.ReturnType.IsTaskType();
+				functionReferenceData.UseAsReturnValue = !_configuration.CanAlwaysAwait(methodSymbol) && functionReferenceData.AsyncCounterpartSymbol.ReturnType.IsTaskType();
 			}
 			else if (!methodSymbol.ReturnsVoid)
 			{
-				functionReferenceData.UseAsReturnValue = !_configuration.AlwaysAwait(methodSymbol); // here we don't now if the method will be converted to async or not
+				functionReferenceData.UseAsReturnValue = !_configuration.CanAlwaysAwait(methodSymbol); // here we don't now if the method will be converted to async or not
 			}
 		}
 
@@ -658,7 +658,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			methodSymbol = methodSymbol.ReducedFrom ?? methodSymbol; // System.Linq extensions
-			var useTokens = _configuration.UseCancellationTokens | _configuration.ScanForMissingAsyncMembers != null;
+			var useTokens = _configuration.UseCancellationTokens | _configuration.CanScanForMissingAsyncMembers != null;
 			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
 				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))

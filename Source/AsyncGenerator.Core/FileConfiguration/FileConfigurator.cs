@@ -93,11 +93,41 @@ namespace AsyncGenerator.Core.FileConfiguration
 				{
 					throw new InvalidOperationException($"Type {plugin.Type} was not found inside assembly {plugin.AssemblyName}. Hint: Make sure that the type is public.");
 				}
-				var pluginInstance = Activator.CreateInstance(type) as IPlugin;
+
+				IPlugin pluginInstance;
+				if (plugin.Parameters.Count > 0)
+				{
+					var arguments = plugin.Parameters.ToDictionary(o => o.Name, o => o.Value);
+					var constructor = type.GetConstructors()
+						.Where(o => o.GetParameters().Length == plugin.Parameters.Count)
+						.FirstOrDefault(o => o.GetParameters().All(p => arguments.ContainsKey(p.Name)));
+					if (constructor == null)
+					{
+						throw new InvalidOperationException(
+							$"Type {plugin.Type} from assembly {plugin.AssemblyName} does not contain a constructor with the provided parameter names.");
+					}
+
+					var argumentValues = new object[arguments.Count];
+					var parameters = constructor.GetParameters();
+					for (var i = 0; i < parameters.Length; i++)
+					{
+						var parameter = parameters[i];
+						argumentValues[i] = Convert.ChangeType(arguments[parameter.Name], parameter.ParameterType);
+					}
+
+					pluginInstance = constructor.Invoke(argumentValues) as IPlugin;
+				}
+				else
+				{
+					pluginInstance = Activator.CreateInstance(type) as IPlugin;
+					
+				}
+
 				if (pluginInstance == null)
 				{
-					throw new InvalidOperationException($"Type {plugin.Type} from assembly {plugin.AssemblyName} does not implement IPlugin interaface");
+					throw new InvalidOperationException($"Type {plugin.Type} from assembly {plugin.AssemblyName} does not implement IPlugin interface");
 				}
+
 				projectConfiguration.RegisterPlugin(pluginInstance);
 			}
 		}

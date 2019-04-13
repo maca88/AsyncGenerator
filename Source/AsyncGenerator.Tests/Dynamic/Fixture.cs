@@ -31,7 +31,7 @@ namespace AsyncGenerator.Tests.Dynamic
 						Assert.AreEqual(GetOutputFile(nameof(TypeArgument)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+				.RegisterPlugin(new NUnitPlugin(false))
 			);
 		}
 	}

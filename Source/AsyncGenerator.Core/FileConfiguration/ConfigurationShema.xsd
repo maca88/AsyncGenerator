@@ -173,6 +173,11 @@
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
+    
+  <xs:complexType name="Parameter">
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="value" type="xs:string" />
+  </xs:complexType>
 
   <xs:complexType name="ProjectFile">
     <xs:attribute name="projectName" type="xs:string" use="required"/>
@@ -434,6 +439,15 @@
             <xs:sequence>
               <xs:element name="Plugin" maxOccurs="unbounded" minOccurs="0">
                 <xs:complexType>
+                  <xs:all>
+                    <xs:element name="Parameters" minOccurs="0">
+                      <xs:complexType>
+                        <xs:sequence>
+                           <xs:element name="Parameter" type="Parameter" maxOccurs="unbounded" minOccurs="0"/>
+                         </xs:sequence>
+                       </xs:complexType>
+                     </xs:element>
+                  </xs:all>
                   <xs:attribute name="type" type="xs:string" use="required" />
                   <xs:attribute name="assemblyName" type="xs:string" />
                 </xs:complexType>

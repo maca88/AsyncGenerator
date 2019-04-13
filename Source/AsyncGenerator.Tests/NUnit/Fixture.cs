@@ -1,12 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
+﻿using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Plugins;
-using AsyncGenerator.TestCases;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 using AsyncGenerator.Tests.NUnit.Input;
 
@@ -33,7 +27,7 @@ namespace AsyncGenerator.Tests.NUnit
 						Assert.AreEqual(GetOutputFile(nameof(AssertThat)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+				.RegisterPlugin(new NUnitPlugin(false))
 			);
 		}
 
@@ -55,7 +49,7 @@ namespace AsyncGenerator.Tests.NUnit
 						Assert.AreEqual(GetOutputFile(nameof(AssertThatTryCatch)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+				.RegisterPlugin(new NUnitPlugin(false))
 			);
 		}
 
@@ -77,7 +71,7 @@ namespace AsyncGenerator.Tests.NUnit
 						Assert.AreEqual(GetOutputFile(nameof(DoesNotThrowTryCatch)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+				.RegisterPlugin(new NUnitPlugin(false))
 			);
 		}
 
@@ -101,7 +95,7 @@ namespace AsyncGenerator.Tests.NUnit
 						Assert.AreEqual(GetOutputFile(nameof(AssertThatNoToken)), document.Transformed.ToFullString());
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+				.RegisterPlugin(new NUnitPlugin(false))
 			);
 		}
 
@@ -121,7 +115,28 @@ namespace AsyncGenerator.Tests.NUnit
 						Assert.AreEqual(0, result.Documents.Count);
 					})
 				)
-				.RegisterPlugin<NUnitAsyncCounterpartsFinder>()
+				.RegisterPlugin(new NUnitPlugin(false))
+			);
+		}
+
+		[TestCase(false)]
+		[TestCase(true)]
+		public Task TestSimpleFixtureAfterTransformation(bool createNewTypes)
+		{
+			return ReadonlyTest("SimpleFixture", o => o
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.AreEqual(GetOutputFile(createNewTypes ? "SimpleFixtureNewType" : "SimpleFixturePartial"), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin(new NUnitPlugin(createNewTypes))
 			);
 		}
 	}

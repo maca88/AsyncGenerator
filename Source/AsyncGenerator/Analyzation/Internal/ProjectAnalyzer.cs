@@ -178,8 +178,8 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return onlyNew ? Enumerable.Empty<IMethodSymbol>() : asyncMethodSymbols;
 			}
-			asyncMethodSymbols = _configuration.SearchForAsyncCounterparts(methodSymbol)
-				? new HashSet<IMethodSymbol>(_configuration.FindAsyncCounterpartsFinders
+			asyncMethodSymbols = _configuration.CanSearchForAsyncCounterparts(methodSymbol)
+				? new HashSet<IMethodSymbol>(_configuration.AsyncCounterpartsFinders
 					.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, invokedFromType, options)))
 				: new HashSet<IMethodSymbol>();
 			return dict.AddOrUpdate(
@@ -330,7 +330,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				// If an internal method was ignored from searching its references but we found out that it is used inside the project,
 				// we must override the user setting and search for its references in order to prevent generating an invalid code
-				if (!_configuration.SearchForMethodReferences(methodSymbol) && ProjectData.Contains(methodSymbol) &&
+				if (!_configuration.CanSearchForMethodReferences(methodSymbol) && ProjectData.Contains(methodSymbol) &&
 				    _mustScanForMethodReferences.TryAdd(methodSymbol))
 				{
 					searchReferences.Add(methodSymbol);
@@ -358,12 +358,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			_configuration = ProjectData.Configuration.AnalyzeConfiguration;
 			_solution = ProjectData.Project.Solution;
 			_analyzeDocuments = ProjectData.Project.Documents
-				.Where(o => _configuration.DocumentSelectionPredicate(o))
+				.Where(o => _configuration.CanSelectDocument(o))
 				.ToImmutableHashSet();
 			_analyzeProjects = new[] { ProjectData.Project }
 				.ToImmutableHashSet();
 			_searchOptions = AsyncCounterpartsSearchOptions.Default;
-			var useTokens = _configuration.UseCancellationTokens | _configuration.ScanForMissingAsyncMembers != null;
+			var useTokens = _configuration.UseCancellationTokens | _configuration.CanScanForMissingAsyncMembers != null;
 			if (useTokens)
 			{
 				_searchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;

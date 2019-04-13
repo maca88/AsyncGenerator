@@ -21,7 +21,7 @@ namespace AsyncGenerator.Tests.TargetFramework
 					.TargetFramework("net461")
 					.ApplyChanges(false)
 					.ConfigureProject("MultiTargetFrameworks", p => p
-						.RegisterPlugin<NUnitAsyncCounterpartsFinder>()));
+						.RegisterPlugin(new NUnitPlugin(false))));
 
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
@@ -33,7 +33,7 @@ namespace AsyncGenerator.Tests.TargetFramework
 				.ConfigureProject(GetTestProjectPath("MultiTargetFrameworks"), p => p
 					.TargetFramework("net461")
 					.ApplyChanges(false)
-					.RegisterPlugin<NUnitAsyncCounterpartsFinder>());
+					.RegisterPlugin(new NUnitPlugin(false)));
 
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
@@ -50,7 +50,10 @@ solution:
   projects:
   - name: MultiTargetFrameworks
     registerPlugin:
-    - type: AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder
+    - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+      parameters:
+      - name: createNewTypes
+        value: false
       assemblyName: AsyncGenerator.Core
 ");
 
@@ -67,7 +70,10 @@ projects:
   targetFramework: net461
   applyChanges: false
   registerPlugin:
-  - type: AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: false
     assemblyName: AsyncGenerator.Core
 ");
 
@@ -86,7 +92,11 @@ $@"
     <Projects>
       <Project name=""MultiTargetFrameworks"">
         <RegisterPlugin>
-          <Plugin type=""AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder"" assemblyName=""AsyncGenerator.Core"" />
+          <Plugin type=""AsyncGenerator.Core.Plugins.NUnitPlugin"" assemblyName=""AsyncGenerator.Core"">
+            <Parameters>
+              <Parameter name=""createNewTypes"" value=""false"" />
+            </Parameters>
+        </Plugin>
         </RegisterPlugin>
       </Project>
     </Projects>
@@ -108,7 +118,11 @@ $@"
       <ApplyChanges>false</ApplyChanges>
       <TargetFramework>net461</TargetFramework>
       <RegisterPlugin>
-        <Plugin type=""AsyncGenerator.Core.Plugins.NUnitAsyncCounterpartsFinder"" assemblyName=""AsyncGenerator.Core"" />
+        <Plugin type=""AsyncGenerator.Core.Plugins.NUnitPlugin"" assemblyName=""AsyncGenerator.Core"">
+          <Parameters>
+            <Parameter name=""createNewTypes"" value=""false"" />
+          </Parameters>
+        </Plugin>
       </RegisterPlugin>
     </Project>
   </Projects>
