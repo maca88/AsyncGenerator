@@ -200,11 +200,17 @@ namespace AsyncGenerator.Configuration.Internal
 
 		private void RegisterPlugin(IPlugin plugin)
 		{
-			TryAdd(plugin, AnalyzeConfiguration.FindAsyncCounterpartsFinders);
+			TryAdd(plugin, AnalyzeConfiguration.AsyncCounterpartsFinders);
 			TryAdd(plugin, AnalyzeConfiguration.InvocationExpressionAnalyzers);
 			TryAdd(plugin, AnalyzeConfiguration.BodyFunctionReferencePostAnalyzers);
 			TryAdd(plugin, AnalyzeConfiguration.MethodExceptionHandlers);
 			TryAdd(plugin, AnalyzeConfiguration.PreconditionCheckers);
+			TryAdd(plugin, AnalyzeConfiguration.PreserveMethodReturnTypeProviders);
+			TryAdd(plugin, AnalyzeConfiguration.MethodConversionProviders);
+			TryAdd(plugin, AnalyzeConfiguration.TypeConversionProviders);
+			TryAdd(plugin, AnalyzeConfiguration.AlwaysAwaitMethodProviders);
+			TryAdd(plugin, AnalyzeConfiguration.SearchForMethodReferencesProviders);
+			TryAdd(plugin, AnalyzeConfiguration.CancellationTokens.MethodRequiresCancellationTokenProviders);
 			TryAdd(plugin, TransformConfiguration.DocumentTransformers);
 			TryAdd(plugin, TransformConfiguration.FunctionReferenceTransformers);
 			TryAdd(plugin, TransformConfiguration.MethodTransformers);
@@ -215,12 +221,10 @@ namespace AsyncGenerator.Configuration.Internal
 
 		private void TryAdd<T>(IPlugin plugin, ICollection<T> list) where T : class
 		{
-			var obj = plugin as T;
-			if (obj != null)
+			if (plugin is T obj)
 			{
 				list.Add(obj);
 			}
 		}
-
 	}
 }

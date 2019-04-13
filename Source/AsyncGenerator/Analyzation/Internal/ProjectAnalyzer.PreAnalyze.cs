@@ -26,7 +26,7 @@ namespace AsyncGenerator.Analyzation.Internal
 		{
 			_preAnalyzeSearchOptions = AsyncCounterpartsSearchOptions.EqualParameters | AsyncCounterpartsSearchOptions.IgnoreReturnType;
 			// When searhing for missing async member we have to search also for overloads with a cancellation token
-			var searchWithTokens = _configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null;
+			var searchWithTokens = _configuration.UseCancellationTokens || _configuration.CanScanForMissingAsyncMembers != null;
 			if (searchWithTokens)
 			{
 				_preAnalyzeSearchOptions |= AsyncCounterpartsSearchOptions.HasCancellationToken;
@@ -41,7 +41,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				.OfType<TypeDeclarationSyntax>())
 			{
 				var typeData = documentData.GetOrCreateTypeData(typeNode);
-				typeData.Conversion = _configuration.TypeConversionFunction(typeData.Symbol);
+				typeData.Conversion = _configuration.GetTypeConversion(typeData.Symbol);
 				PreAnalyzeType(typeData);
 
 				var typeIgnored = typeData.GetSelfAndAncestorsTypeData().Any(o => o.Conversion == TypeConversion.Ignore);
@@ -200,7 +200,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			functionData.Conversion = _configuration.MethodConversionFunction(methodSymbol);
+			functionData.Conversion = _configuration.GetMethodConversion(methodSymbol);
 			// TODO: validate conversion
 			if (functionData.Conversion == MethodConversion.Ignore)
 			{
@@ -414,7 +414,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Create an override async method if any of the related async methods is virtual or abstract
 			// We need to do this here so that the method body will get scanned for async counterparts
 			if (methodData.RelatedAsyncMethods.Any(o => o.IsVirtual || o.IsAbstract) &&
-			    _configuration.ScanForMissingAsyncMembers?.Invoke(methodData.TypeData.Symbol) == true)
+			    _configuration.CanScanForMissingAsyncMembers?.Invoke(methodData.TypeData.Symbol) == true)
 			{
 				if (!methodData.Conversion.HasAnyFlag(MethodConversion.ToAsync, MethodConversion.Smart))
 				{

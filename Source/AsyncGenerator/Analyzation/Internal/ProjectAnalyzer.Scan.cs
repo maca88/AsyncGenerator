@@ -37,7 +37,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				FillBaseTypes(typeData, documentData.ProjectData);
 
-				if (_configuration.ScanForMissingAsyncMembers != null && _configuration.ScanForMissingAsyncMembers(typeData.Symbol))
+				if (_configuration.CanScanForMissingAsyncMembers != null && _configuration.CanScanForMissingAsyncMembers(typeData.Symbol))
 				{
 					ScanForTypeMissingAsyncMethods(typeData);
 				}
@@ -517,7 +517,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 			methodSymbol = methodSymbol.OriginalDefinition;
-			if ((!_configuration.SearchForMethodReferences(methodSymbol) && !_mustScanForMethodReferences.Contains(methodSymbol)) || 
+			if ((!_configuration.CanSearchForMethodReferences(methodSymbol) && !_mustScanForMethodReferences.Contains(methodSymbol)) || 
 				!_searchedMethodReferences.TryAdd(methodSymbol))
 			{
 				return;

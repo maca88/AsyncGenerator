@@ -7,9 +7,45 @@ using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.Plugins
 {
-	public class NUnitAsyncCounterpartsFinder : IAsyncCounterpartsFinder, IMethodExceptionHandler
+	public class NUnitPlugin :
+		IAsyncCounterpartsFinder,
+		ITypeConversionProvider,
+		IMethodConversionProvider,
+		IAlwaysAwaitMethodProvider,
+		IPreserveMethodReturnTypeProvider,
+		IMethodRequiresCancellationTokenProvider,
+		IMethodExceptionHandler,
+		ISearchForMethodReferencesProvider
 	{
+		private const string IgnoreAttribute = "NUnit.Framework.IgnoreAttribute";
+		private static readonly HashSet<string> TypeTestAttributes = new HashSet<string>
+		{
+			"NUnit.Framework.TestFixtureAttribute",
+			"NUnit.Framework.TestFixtureSourceAttribute"
+		};
+		private static readonly HashSet<string> MethodTestAttributes = new HashSet<string>
+		{
+			"NUnit.Framework.TestAttribute",
+			"NUnit.Framework.TheoryAttribute",
+			"NUnit.Framework.TestCaseAttribute",
+			"NUnit.Framework.TestCaseSourceAttribute"
+		};
+		private static readonly HashSet<string> SetupAttributes = new HashSet<string>
+		{
+			"NUnit.Framework.OneTimeSetUpAttribute",
+			"NUnit.Framework.OneTimeTearDownAttribute",
+			"NUnit.Framework.SetUpAttribute",
+			"NUnit.Framework.TearDownAttribute"
+		};
+
+
+		private readonly bool _createNewTypes;
 		private Dictionary<IMethodSymbol, IMethodSymbol> _thatAsyncCounterparts;
+
+		public NUnitPlugin(bool createNewTypes)
+		{
+			_createNewTypes = createNewTypes;
+		}
 
 		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
@@ -75,8 +111,90 @@ namespace AsyncGenerator.Core.Plugins
 					break;
 			}
 		}
-		
-		private bool MatchParameters(IMethodSymbol thatMethod, IMethodSymbol asyncThatMethod)
+
+		public TypeConversion? GetConversion(INamedTypeSymbol typeSymbol)
+		{
+			var currentType = typeSymbol;
+			TypeConversion? result = null;
+			while (currentType != null)
+			{
+				foreach (var attribute in currentType.GetAttributes())
+				{
+					var fullName = attribute.AttributeClass.ToString();
+					if (IgnoreAttribute == fullName)
+					{
+						return TypeConversion.Ignore;
+					}
+
+					if (_createNewTypes && TypeTestAttributes.Contains(fullName))
+					{
+						result = TypeConversion.NewType;
+					}
+				}
+
+				currentType = currentType.BaseType;
+			}
+
+			return result;
+		}
+
+		public MethodConversion? GetConversion(IMethodSymbol methodSymbol)
+		{
+			MethodConversion? result = null;
+			foreach (var attribute in methodSymbol.GetAttributes())
+			{
+				var fullName = attribute.AttributeClass.ToString();
+				if (methodSymbol.OverriddenMethod == null && IgnoreAttribute == fullName)
+				{
+					return MethodConversion.Ignore;
+				}
+
+				if (MethodTestAttributes.Contains(fullName))
+				{
+					result = MethodConversion.Smart;
+				}
+				else if (SetupAttributes.Contains(fullName))
+				{
+					result = _createNewTypes ? MethodConversion.Copy : MethodConversion.Ignore;
+				}
+			}
+
+			return result;
+		}
+
+		public bool? AlwaysAwait(IMethodSymbol methodSymbol)
+		{
+			return methodSymbol.GetAttributes()
+				.Any(o => MethodTestAttributes.Contains(o.AttributeClass.ToString()))
+				? true
+				: (bool?) null;
+		}
+
+		public bool? PreserveReturnType(IMethodSymbol methodSymbol)
+		{
+			return methodSymbol.GetAttributes()
+				.Any(o => MethodTestAttributes.Contains(o.AttributeClass.ToString()))
+				? true
+				: (bool?) null;
+		}
+
+		public bool? RequiresCancellationToken(IMethodSymbol methodSymbol)
+		{
+			return methodSymbol.GetAttributes()
+				.Any(o => MethodTestAttributes.Contains(o.AttributeClass.ToString()))
+				? false
+				: (bool?) null;
+		}
+
+		public bool? SearchForMethodReferences(IMethodSymbol methodSymbol)
+		{
+			return methodSymbol.GetAttributes()
+				.Any(o => MethodTestAttributes.Contains(o.AttributeClass.ToString()))
+				? false
+				: (bool?) null;
+		}
+
+		private static bool MatchParameters(IMethodSymbol thatMethod, IMethodSymbol asyncThatMethod)
 		{
 			if (thatMethod.Parameters.Length != asyncThatMethod.Parameters.Length)
 			{

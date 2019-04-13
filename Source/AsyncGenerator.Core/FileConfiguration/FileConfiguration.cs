@@ -691,6 +691,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("Parameter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class Parameter
+	{
+		[XmlAttribute(AttributeName = "name")]
+		public string Name { get; set; }
+
+		[XmlAttribute(AttributeName = "value")]
+		public string Value { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(AnonymousType = true, Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("ProjectPlugin")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class ProjectPlugin
@@ -699,6 +714,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string Type { get; set; }
 		[XmlAttribute(AttributeName = "assemblyName")]
 		public string AssemblyName { get; set; }
+		[XmlArrayItem("Parameter", IsNullable = false)]
+		public List<Parameter> Parameters { get; set; }
+
+		public ProjectPlugin()
+		{
+			Parameters = new List<Parameter>();
+		}
 	}
 
 	[Serializable]

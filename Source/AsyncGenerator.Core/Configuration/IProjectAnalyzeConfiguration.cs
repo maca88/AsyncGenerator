@@ -9,7 +9,7 @@ namespace AsyncGenerator.Core.Configuration
 
 		bool ScanMethodBody { get; }
 
-		Predicate<INamedTypeSymbol> ScanForMissingAsyncMembers { get; }
+		Predicate<INamedTypeSymbol> CanScanForMissingAsyncMembers { get; }
 
 		bool UseCancellationTokens { get; }
 
@@ -19,6 +19,6 @@ namespace AsyncGenerator.Core.Configuration
 
 		IProjectExceptionHandlingConfiguration ExceptionHandling { get; }
 
-		Predicate<IMethodSymbol> AlwaysAwait { get; }
+		Predicate<IMethodSymbol> CanAlwaysAwait { get; }
 	}
 }

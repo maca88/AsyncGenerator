@@ -254,7 +254,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					)
 					))
 			{
-				methodData.PreserveReturnType = _configuration.PreserveReturnType(methodData.Symbol);
+				methodData.PreserveReturnType = _configuration.CanPreserveReturnType(methodData.Symbol);
 			}
 		}
 
@@ -493,7 +493,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			// 0. Step - If cancellation tokens are enabled we should start from methods that requires a cancellation token in order to correctly propagate CancellationTokenRequired
 			// to dependency methods
-			if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
+			if (_configuration.UseCancellationTokens || _configuration.CanScanForMissingAsyncMembers != null)
 			{
 				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired).ToList();
 				foreach (var tokenMethodData in tokenMethodDatas)
@@ -614,7 +614,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 
 				// Update PassCancellationToken for all body function references that requires a cancellation token
-				if (_configuration.UseCancellationTokens || _configuration.ScanForMissingAsyncMembers != null)
+				if (_configuration.UseCancellationTokens || _configuration.CanScanForMissingAsyncMembers != null)
 				{
 					ValidateMethodCancellationToken(methodData);
 
@@ -880,7 +880,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// Calculate the final reference AwaitInvocation, we can skip await if all async invocations are returned and the return type matches
 			// or we have only one async invocation that is the last to be invoked
 			// Invocations in synchronized methods must be awaited to mimic the same behavior as their sync counterparts
-			if (!_configuration.AlwaysAwait(functionData.Symbol) && (methodData == null || !methodData.MustRunSynchronized))
+			if (!_configuration.CanAlwaysAwait(functionData.Symbol) && (methodData == null || !methodData.MustRunSynchronized))
 			{
 				var canSkipAwaits = true;
 				// Skip functions that are passed as arguments 
@@ -1025,7 +1025,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				// For sync forwarding we will always wrap into try catch
 				if (methodData != null && methodData.BodyFunctionReferences
-					.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CallForwarding(functionData.Symbol))
+					.All(o => o.GetConversion() == ReferenceConversion.Ignore) && _configuration.CanForwardCall(functionData.Symbol))
 				{
 					methodData.WrapInTryCatch = true;
 					methodData.ForwardCall = true;
