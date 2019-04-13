@@ -1,10 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
+﻿#if !NETCOREAPP2_1
 using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
-using AsyncGenerator.Core;
 using AsyncGenerator.Core.Plugins;
 using NUnit.Framework;
 
@@ -133,3 +129,4 @@ $@"
 		}
 	}
 }
+#endif

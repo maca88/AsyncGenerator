@@ -13,11 +13,27 @@ namespace AsyncGenerator.CommandLine
 {
 	static class Program
 	{
-		private static readonly ILog Logger = LogManager.GetLogger($"{nameof(AsyncGenerator)}.{nameof(CommandLine)}");
+		private static readonly ILog Logger;
+
+		static Program()
+		{
+#if NETCOREAPP2_1
+			var configPath = EnvironmentHelper.GetConfigurationFilePath();
+			if (!string.IsNullOrEmpty(configPath))
+			{
+				var logRepository = LogManager.GetRepository(typeof(Program).Assembly);
+				Logger = LogManager.GetLogger(logRepository.Name, $"{nameof(AsyncGenerator)}.{nameof(CommandLine)}");
+				XmlConfigurator.Configure(logRepository, File.OpenRead(configPath));
+			}
+#endif
+#if NET472 || NET461
+			Logger = LogManager.GetLogger($"{nameof(AsyncGenerator)}.{nameof(CommandLine)}");
+			XmlConfigurator.Configure();
+#endif
+		}
 
 		public static int Main(string[] args)
 		{
-			XmlConfigurator.Configure();
 			Logger.Info($"AsyncGenerator{Environment.NewLine}");
 			var cancellationSource = new CancellationTokenSource();
 			Console.CancelKeyPress += (sender, e) =>

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#if NET461
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -29,3 +26,4 @@ namespace AsyncGenerator.Internal
 		}
 	}
 }
+#endif

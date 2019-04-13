@@ -21,10 +21,9 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 	///		- Restore nuget packages for the NHibernate solution
 	///		- Run the test
 	/// </summary>
-	[TestFixture]
+	[Explicit, TestFixture]
 	public class Fixture : BaseFixture
 	{
-		[Explicit]
 		[Test]
 		public Task TestXmlConfigurationAfterTransformation()
 		{
@@ -37,7 +36,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
-		[Explicit]
 		[Test]
 		public Task TestYamlSolutionConfigurationAfterTransformation()
 		{
@@ -50,7 +48,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
-		[Explicit]
 		[Test]
 		public Task TestYamlProjectConfigurationAfterTransformation()
 		{
@@ -63,7 +60,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
-		[Explicit]
 		[Test]
 		public Task TestYamlAfterTransformation()
 		{
@@ -75,7 +71,6 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 			return AsyncCodeGenerator.GenerateAsync(config);
 		}
 
-		[Explicit]
 		[Test]
 		public Task TestAfterTransformation()
 		{

@@ -1,12 +1,20 @@
 language: csharp
-mono:
-  - 5.10.0
-  - 5.16.0
-os:
-  - osx
-  - linux
 script:
-  - sudo ./build.sh
+  - sudo ./build.sh -t $TARGET
+matrix:
+  include:
+    - dotnet: 2.1.502
+      env: TARGET=TestCore
+      os: osx
+    - dotnet: 2.1.502
+      env: TARGET=TestCore
+      os: linux
+    - mono: 5.18.1
+      env: TARGET=Test
+      os: osx
+    - mono: 5.18.1
+      env: TARGET=Test
+      os: linux
 git:
   submodules: false
 install:

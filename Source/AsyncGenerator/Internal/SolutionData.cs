@@ -2,7 +2,6 @@
 using System.Linq;
 using AsyncGenerator.Configuration.Internal;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
 
 namespace AsyncGenerator.Internal
 {

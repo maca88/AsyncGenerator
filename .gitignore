@@ -245,3 +245,4 @@ ModelManifest.xml
 .fake/
 Tools/**
 .idea/
+*.dev.props
