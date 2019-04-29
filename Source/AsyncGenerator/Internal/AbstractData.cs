@@ -56,9 +56,9 @@ namespace AsyncGenerator.Internal
 						return true;
 					}
 				}
-				else if (data is BaseFieldData field)
+				else if (data is FieldVariableDeclaratorData field)
 				{
-					if (field.Variables.Any(o => o.Conversion == FieldVariableConversion.Copy))
+					if (field.Conversion == FieldVariableConversion.Copy)
 					{
 						return true;
 					}

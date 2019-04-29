@@ -23,9 +23,9 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public List<TransformationResult> TransformedNodes { get; } = new List<TransformationResult>();
 
-		public Dictionary<string, SyntaxToken> TransformedTokens { get; } = new Dictionary<string, SyntaxToken>();
-
 		public List<MethodTransformationResult> TransformedMethods { get; } = new List<MethodTransformationResult>();
+
+		public List<FieldTransformationResult> TransformedFields { get; } = new List<FieldTransformationResult>();
 
 		public List<FunctionTransformationResult> TransformedSpecialMethods { get; } = new List<FunctionTransformationResult>();
 

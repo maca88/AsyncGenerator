@@ -12,6 +12,8 @@ namespace AsyncGenerator.Core.Analyzation
 	/// </summary>
 	public interface IBodyFunctionReferenceAnalyzation : IBodyFunctionReferenceAnalyzationResult
 	{
+		IFunctionAnalyzationResult FunctionData { get; }
+
 		IFunctionAnalyzationResult ReferenceFunctionData { get; }
 
 		void Ignore(string reason);

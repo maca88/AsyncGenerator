@@ -329,9 +329,16 @@ namespace AsyncGenerator
 			return transformer.Transform(analyzationResult);
 		}
 
-		internal static ProjectData CreateProjectData(Project project, ProjectConfiguration configuration)
+		internal static ProjectData CreateProjectData(Project project, ProjectConfiguration configuration, SolutionData solutionData = null)
 		{
-			var projectData = new ProjectData(project, configuration);
+			foreach (var configurator in configuration.RegisteredConfigurators)
+			{
+				configurator.Configure(project, configuration);
+			}
+
+			var projectData = solutionData == null
+				? new ProjectData(project, configuration)
+				: new ProjectData(solutionData, project.Id, configuration);
 			RemoveGeneratedDocuments(projectData);
 			return projectData;
 		}
@@ -377,8 +384,7 @@ namespace AsyncGenerator
 					throw new InvalidOperationException($"Project '{config.Name}' does not exist in solution '{solution.FilePath}'");
 				}
 				var project = projects[config.Name];
-				var projectData = new ProjectData(solutionData, project.Id, config);
-				RemoveGeneratedDocuments(projectData);
+				var projectData = CreateProjectData(project, config, solutionData);
 				solutionData.ProjectData.Add(project.Id, projectData);
 			}
 			return solutionData;

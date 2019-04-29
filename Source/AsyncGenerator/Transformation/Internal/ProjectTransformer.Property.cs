@@ -156,7 +156,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var nameNode = node.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
 				node = node
-					.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
+					.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async").WithTriviaFrom(nameNode.Identifier)));
 			}
 
 			foreach (var transformFunction in result.TransformedFunctions)

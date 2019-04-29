@@ -29,7 +29,6 @@ namespace AsyncGenerator.Configuration.Internal
 			ParseConfiguration = new ProjectParseConfiguration();
 			AnalyzeConfiguration = new ProjectAnalyzeConfiguration(this);
 			TransformConfiguration = new ProjectTransformConfiguration(this);
-			RegisteredPlugins = new List<IPlugin>();
 		}
 
 		public bool ApplyChanges => _applyChanges ?? (_solutionConfiguration?.ApplyChanges ?? false);
@@ -50,7 +49,9 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ProjectCompileConfiguration CompileConfiguration { get; private set; }
 
-		public List<IPlugin> RegisteredPlugins { get; }
+		public List<IPlugin> RegisteredPlugins { get; } = new List<IPlugin>();
+
+		public List<IProjectConfigurator> RegisteredConfigurators { get; } = new List<IProjectConfigurator>();
 
 		public ImmutableArray<Predicate<string>> SuppressDiagnosticFailuresPrediactes { get; private set; } = ImmutableArray<Predicate<string>>.Empty;
 
@@ -200,6 +201,7 @@ namespace AsyncGenerator.Configuration.Internal
 
 		private void RegisterPlugin(IPlugin plugin)
 		{
+			TryAdd(plugin, RegisteredConfigurators);
 			TryAdd(plugin, AnalyzeConfiguration.AsyncCounterpartsFinders);
 			TryAdd(plugin, AnalyzeConfiguration.InvocationExpressionAnalyzers);
 			TryAdd(plugin, AnalyzeConfiguration.BodyFunctionReferencePostAnalyzers);
@@ -208,6 +210,7 @@ namespace AsyncGenerator.Configuration.Internal
 			TryAdd(plugin, AnalyzeConfiguration.PreserveMethodReturnTypeProviders);
 			TryAdd(plugin, AnalyzeConfiguration.MethodConversionProviders);
 			TryAdd(plugin, AnalyzeConfiguration.TypeConversionProviders);
+			TryAdd(plugin, AnalyzeConfiguration.FieldConversionProviders);
 			TryAdd(plugin, AnalyzeConfiguration.AlwaysAwaitMethodProviders);
 			TryAdd(plugin, AnalyzeConfiguration.SearchForMethodReferencesProviders);
 			TryAdd(plugin, AnalyzeConfiguration.CancellationTokens.MethodRequiresCancellationTokenProviders);

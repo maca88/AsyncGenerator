@@ -19,6 +19,7 @@ namespace AsyncGenerator.Configuration.Internal
 			_projectConfiguration = projectConfiguration;
 			GetMethodConversion = CreateMethodConversionFunction(m => MethodConversion.Unknown);
 			GetTypeConversion = CreateTypeConversionFunction(m => TypeConversion.Unknown);
+			GetFieldConversion = CreateFieldConversionFunction(m => FieldVariableConversion.Unknown);
 			CanPreserveReturnType = CreatePreserveReturnTypeFunction(m => false);
 			CanAlwaysAwait = CreateAlwaysAwaitFunction(symbol => false);
 			CanSearchForMethodReferences = CreateSearchForMethodReferencesFunction(m => true);
@@ -27,6 +28,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public Func<IMethodSymbol, MethodConversion> GetMethodConversion { get; private set; }
 
 		public Func<INamedTypeSymbol, TypeConversion> GetTypeConversion { get; private set; }
+
+		public Func<ISymbol, FieldVariableConversion> GetFieldConversion { get; private set; }
 
 		public Predicate<Document> CanSelectDocument { get; private set; } = m => true;
 
@@ -61,6 +64,8 @@ namespace AsyncGenerator.Configuration.Internal
 		public List<IMethodConversionProvider> MethodConversionProviders { get; } = new List<IMethodConversionProvider>();
 
 		public List<ITypeConversionProvider> TypeConversionProviders { get; } = new List<ITypeConversionProvider>();
+
+		public List<IFieldConversionProvider> FieldConversionProviders { get; } = new List<IFieldConversionProvider>();
 
 		public List<IAlwaysAwaitMethodProvider> AlwaysAwaitMethodProviders { get; } = new List<IAlwaysAwaitMethodProvider>();
 
@@ -135,6 +140,25 @@ namespace AsyncGenerator.Configuration.Internal
 				foreach (var provider in TypeConversionProviders)
 				{
 					var value = provider.GetConversion(typeSymbol);
+					if (value.HasValue)
+					{
+						return value.Value;
+					}
+				}
+
+				return defaultFunc(typeSymbol);
+			}
+		}
+
+		private Func<ISymbol, FieldVariableConversion> CreateFieldConversionFunction(Func<ISymbol, FieldVariableConversion> defaultFunc)
+		{
+			return Function;
+
+			FieldVariableConversion Function(ISymbol typeSymbol)
+			{
+				foreach (var provider in FieldConversionProviders)
+				{
+					var value = provider.GetFieldConversion(typeSymbol);
 					if (value.HasValue)
 					{
 						return value.Value;

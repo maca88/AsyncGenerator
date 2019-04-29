@@ -89,7 +89,7 @@ namespace AsyncGenerator.Transformation.Internal
 				{
 					var nameNode = copiedMethod.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
 					copiedMethod = copiedMethod
-						.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
+						.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async").WithTriviaFrom(nameNode.Identifier)));
 				}
 				if (!methodConversion.HasFlag(MethodConversion.ToAsync))
 				{
@@ -145,7 +145,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var nameNode = methodNode.GetAnnotatedNodes(refAnnotation).OfType<SimpleNameSyntax>().First();
 				methodNode = methodNode
-							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async")));
+							.ReplaceNode(nameNode, nameNode.WithIdentifier(Identifier(nameNode.Identifier.Value + "Async").WithTriviaFrom(nameNode.Identifier)));
 			}
 
 			foreach (var transformFunction in result.TransformedFunctions)

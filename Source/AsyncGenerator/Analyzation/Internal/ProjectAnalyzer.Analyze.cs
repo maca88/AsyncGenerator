@@ -699,15 +699,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					return false;
 				}
-				if (functionReferenceData.AsyncCounterpartSymbol != null)
+
+				if (functionReferenceData.AsyncCounterpartSymbol != null &&
+				    functionReferenceData.ArgumentOfFunctionInvocation == null &&
+				    analyzationResult.CanBeAsync)
 				{
-					if (functionReferenceData.ArgumentOfFunctionInvocation == null)
-					{
-						functionReferenceData.Conversion = analyzationResult.CanBeAsync
-							? ReferenceConversion.ToAsync
-							: ReferenceConversion.Unknown;
-					}
+					functionReferenceData.ToAsync();
 				}
+
 				// Ignore the method if we found its async counterpart
 				if (functionReferenceData.ReferenceFunctionData is MethodOrAccessorData methodOrAccessorData)
 				{

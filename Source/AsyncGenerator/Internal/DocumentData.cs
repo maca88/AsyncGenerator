@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core.Analyzation;
-using AsyncGenerator.Extensions;
-using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -108,7 +102,7 @@ namespace AsyncGenerator.Internal
 			
 			while (currentNode != null)
 			{
-				if (_validDataKinds.Contains(currentNode.Kind()))
+				if (IsValid(currentNode))
 				{
 					return GetNodeData(currentNode);
 				}
@@ -126,6 +120,7 @@ namespace AsyncGenerator.Internal
 			FunctionData functionData = null;
 			PropertyData propertyData = null;
 			BaseFieldData fieldData = null;
+			FieldVariableDeclaratorData fieldVariableData = null;
 			SyntaxNode endNode;
 			if (baseMethodData != null)
 			{
@@ -146,8 +141,7 @@ namespace AsyncGenerator.Internal
 
 			foreach (var n in node.AncestorsAndSelf()
 				.TakeWhile(o => !ReferenceEquals(o, endNode))
-				.Where(
-					o => _validDataKinds.Contains(o.Kind()))
+				.Where(IsValid)
 				.Reverse())
 			{
 				switch (n.Kind())
@@ -257,6 +251,18 @@ namespace AsyncGenerator.Internal
 							return null;
 						}
 						break;
+					case SyntaxKind.VariableDeclarator:
+						if (fieldData == null)
+						{
+							throw new InvalidOperationException($"Field {n} is declared outside a {nameof(BaseFieldDeclarationSyntax)}");
+						}
+						var variableNode = (VariableDeclaratorSyntax)n;
+						fieldVariableData = fieldData.GetVariableDeclaratorData(variableNode, SemanticModel);
+						if (fieldVariableData == null)
+						{
+							return null;
+						}
+						break;
 					case SyntaxKind.ClassDeclaration:
 					case SyntaxKind.InterfaceDeclaration:
 					case SyntaxKind.StructDeclaration:
@@ -312,6 +318,8 @@ namespace AsyncGenerator.Internal
 				case SyntaxKind.FieldDeclaration:
 				case SyntaxKind.EventFieldDeclaration:
 					return fieldData;
+				case SyntaxKind.VariableDeclarator:
+					return fieldVariableData;
 				case SyntaxKind.ArrowExpressionClause: // Arrow expression of a property getter or method
 					return functionData ?? baseMethodData;
 				default:
@@ -570,5 +578,15 @@ namespace AsyncGenerator.Internal
 		IEnumerable<INamespaceAnalyzationResult> IDocumentAnalyzationResult.AllNamespaces => GetAllNamespaceDatas();
 
 		#endregion
+
+		private bool IsValid(SyntaxNode node)
+		{
+			if (node.IsKind(SyntaxKind.VariableDeclarator))
+			{
+				node = node.Parent.Parent; // Only vaild if it belongs to a field
+			}
+
+			return _validDataKinds.Contains(node.Kind());
+		}
 	}
 }

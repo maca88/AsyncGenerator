@@ -537,7 +537,7 @@ namespace AsyncGenerator.Extensions.Internal
 
 		internal static TypeDeclarationSyntax ReplaceWithMembers(this TypeDeclarationSyntax node,
 			MemberDeclarationSyntax member, MemberDeclarationSyntax newMember,
-			IEnumerable<FieldDeclarationSyntax> extraFields, IEnumerable<MethodDeclarationSyntax> extraMethods)
+			IEnumerable<BaseFieldDeclarationSyntax> extraFields, IEnumerable<MethodDeclarationSyntax> extraMethods)
 		{
 			if (newMember == null)
 			{

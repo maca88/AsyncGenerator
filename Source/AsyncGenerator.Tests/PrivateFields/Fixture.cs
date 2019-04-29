@@ -8,7 +8,7 @@ namespace AsyncGenerator.Tests.PrivateFields
 	[TestFixture]
 	public class Fixture : BaseFixture
 	{
-		[Test]
+		[Test, Repeat(5)]
 		public Task TestUnusedFieldAfterTransformation()
 		{
 			return ReadonlyTest(nameof(UnusedField), p => p

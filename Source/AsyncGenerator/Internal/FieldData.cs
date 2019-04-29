@@ -18,13 +18,14 @@ namespace AsyncGenerator.Internal
 			TypeData = typeData;
 			Node = node;
 			Symbol = semanticModel.GetSymbolInfo(node.Declaration.Type).Symbol ?? throw new InvalidOperationException($"symbol for field type {node.Declaration.Type} was not found");
-			var list = new List<FieldVariableDeclaratorData>();
+			var variables = new List<FieldVariableDeclaratorData>();
 			foreach (var variable in node.Declaration.Variables)
 			{
 				var symbol = semanticModel.GetDeclaredSymbol(variable);
-				list.Add(new FieldVariableDeclaratorData(this, symbol, variable));
+				variables.Add(new FieldVariableDeclaratorData(this, symbol, variable));
 			}
-			Variables = list.AsReadOnly();
+
+			Variables = variables.AsReadOnly();
 		}
 
 		public IReadOnlyList<FieldVariableDeclaratorData> Variables { get; }
@@ -51,6 +52,11 @@ namespace AsyncGenerator.Internal
 		public override SyntaxNode GetNode() => Node;
 
 		public override ISymbol GetSymbol() => Symbol;
+
+		public FieldVariableDeclaratorData GetVariableDeclaratorData(VariableDeclaratorSyntax node, SemanticModel semanticModel)
+		{
+			return Variables.FirstOrDefault(o => o.Node == node);
+		}
 
 		protected override void Ignore()
 		{

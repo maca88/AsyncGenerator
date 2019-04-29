@@ -764,14 +764,14 @@ namespace AsyncGenerator.Analyzation.Internal
 					variable.Conversion = variable.HasAnyActiveReference()
 						? FieldVariableConversion.Copy
 						: FieldVariableConversion.Ignore;
-					if (variable.Conversion == FieldVariableConversion.Ignore && variable.ReferencedBy.OfType<BaseFieldData>().Any())
+					if (variable.Conversion == FieldVariableConversion.Ignore && variable.ReferencedBy.OfType<FieldVariableDeclaratorData>().Any())
 					{
 						postopnedVariables.Add(variable);
 					}
 				}
 				foreach (var variable in postopnedVariables)
 				{
-					variable.Conversion = variable.ReferencedBy.OfType<BaseFieldData>().Any(o => o.Variables.All(v => v.Conversion == FieldVariableConversion.Copy))
+					variable.Conversion = variable.ReferencedBy.OfType<FieldVariableDeclaratorData>().Any(o => o.Conversion == FieldVariableConversion.Copy)
 						? FieldVariableConversion.Copy
 						: FieldVariableConversion.Ignore;
 				}

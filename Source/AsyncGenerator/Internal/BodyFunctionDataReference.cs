@@ -33,7 +33,7 @@ namespace AsyncGenerator.Internal
 			set => _referenceAsyncSymbols = value;
 		}
 
-		public override ReferenceConversion Conversion { get; set; }
+		public override ReferenceConversion Conversion { get; protected set; }
 
 		public IgnoreReason IgnoredReason { get; private set; }
 
@@ -93,6 +93,11 @@ namespace AsyncGenerator.Internal
 		public void Ignore(string reason)
 		{
 			Ignore(IgnoreReason.Custom(reason, DiagnosticSeverity.Hidden));
+		}
+
+		public void ToAsync()
+		{
+			Conversion = ReferenceConversion.ToAsync;
 		}
 
 		public void Ignore(IgnoreReason reason)
@@ -333,6 +338,8 @@ namespace AsyncGenerator.Internal
 		#region IBodyFunctionReferenceAnalyzationResult
 
 		IEnumerable<IDelegateArgumentAnalyzationResult> IBodyFunctionReferenceAnalyzationResult.DelegateArguments => DelegateArguments ?? Enumerable.Empty<IDelegateArgumentAnalyzationResult>();
+
+		IFunctionAnalyzationResult IBodyFunctionReferenceAnalyzation.FunctionData => Data;
 
 		#endregion
 	}

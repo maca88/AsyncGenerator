@@ -198,7 +198,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		public IMethodAnalyzationResult AnalyzationResult { get; }
 
-		public List<FieldDeclarationSyntax> Fields { get; set; }
+		public List<BaseFieldDeclarationSyntax> Fields { get; set; }
 
 		public List<MethodDeclarationSyntax> Methods { get; private set; }
 
@@ -237,6 +237,16 @@ namespace AsyncGenerator.Transformation.Internal
 		IFunctionAnalyzationResult IFunctionTransformationResult.AnalyzationResult => AnalyzationResult;
 
 		#endregion
+
+		public void AddFields(IEnumerable<BaseFieldDeclarationSyntax> fields)
+		{
+			if (Fields == null)
+			{
+				Fields = new List<BaseFieldDeclarationSyntax>();
+			}
+
+			Fields.AddRange(fields);
+		}
 
 		public void AddMethod(MethodDeclarationSyntax node)
 		{

@@ -10,10 +10,13 @@ namespace AsyncGenerator.Core.Analyzation
 {
 	public interface IFieldVariableDeclaratorResult
 	{
-		ISymbol Symbol { get; }
-
 		VariableDeclaratorSyntax Node { get; }
 
 		FieldVariableConversion Conversion { get; }
+
+		/// <summary>
+		/// References of types that are used inside this type
+		/// </summary>
+		IReadOnlyList<ITypeReferenceAnalyzationResult> TypeReferences { get; }
 	}
 }

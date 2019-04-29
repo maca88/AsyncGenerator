@@ -30,7 +30,7 @@ namespace AsyncGenerator.Internal
 
 		public abstract ReferenceConversion GetConversion();
 
-		public abstract ReferenceConversion Conversion { get; set; }
+		public abstract ReferenceConversion Conversion { get; protected set; }
 
 		#region IReferenceAnalyzationResult
 
