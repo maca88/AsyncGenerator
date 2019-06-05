@@ -38,7 +38,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Permit the consumer to decide require the cancellation parameter
 					currentMethodData.CancellationTokenRequired =
 						_configuration.CancellationTokens.RequiresCancellationToken(currentMethodData.Symbol) ??
-						currentMethodData.CancellationTokenRequired;
+						currentMethodData.CancellationTokenRequired || currentMethodData.RelatedMethods.Any(r => r.CancellationTokenRequired);
 				}
 				// TODO: support params
 				if (currentMethodData.Symbol.Parameters.LastOrDefault()?.IsParams == true)
@@ -67,6 +67,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 						if (!toProcessMethodData.Contains(depMethodData))
 						{
+							currentMethodData.CancellationTokenRequired |= depMethodData.CancellationTokenRequired;
 							continue;
 						}
 						processingMetodData.Enqueue(depMethodData);
@@ -113,7 +114,12 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						currentMethodData.MethodCancellationToken = _configuration.CancellationTokens.MethodGeneration(currentMethodData);
 					}
+
 					currentMethodData.AddCancellationTokenGuards = _configuration.CancellationTokens.Guards;
+					foreach (var relatedMethod in currentMethodData.RelatedMethods)
+					{
+						relatedMethod.CancellationTokenRequired = true;
+					}
 				}
 			}
 		}

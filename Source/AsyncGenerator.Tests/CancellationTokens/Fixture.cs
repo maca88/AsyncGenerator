@@ -244,5 +244,32 @@ namespace AsyncGenerator.Tests.CancellationTokens
 				)
 			);
 		}
+
+		[Test, Repeat(5)]
+		public Task TestOverrideAfterTransformation()
+		{
+			return ReadonlyTest(nameof(Override), o => o
+				.ConfigureAnalyzation(a => a
+					.ScanMethodBody(true)
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.CancellationTokens(c => c
+						.Guards(true)
+						.ParameterGeneration(info => MethodCancellationToken.Required)
+						.RequiresCancellationToken(symbol => symbol.Name == "WriteMany" || symbol.Name == "Write"))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(Override)), document.Transformed.ToFullString());
+					})
+				)
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				));
+		}
 	}
 }
