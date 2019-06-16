@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <Import Project="..\..\Common.props" />
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>$(TestTargetFramework)</TargetFramework>
     <IsPackable>false</IsPackable>
     <LangVersion>7.2</LangVersion>
   </PropertyGroup>
@@ -23,13 +23,26 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Transactions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
-    <PackageReference Include="NUnit" Version="3.10.1" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
-    <PackageReference Include="SQLitePCLRaw.core" Version="1.0.0" /> <!--Needed for MONO 5.16-->
+    <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />
     <PackageReference Include="System.Interactive.Async" Version="3.1.1" />
-    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.6.0" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
     <PackageReference Include="log4net" Version="2.0.8" />
+
+    <!-- FIX FOR NRE https://github.com/dotnet/roslyn-analyzers/issues/1888 -->
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="2.9.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1'">
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.6.0" />
+    <PackageReference Include="SQLitePCLRaw.core" Version="1.1.2" /> <!-- Needed for MONO 5.16+ -->
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+    <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>

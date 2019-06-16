@@ -1,5 +1,19 @@
 version: 1.0.{build}
-image: Visual Studio 2017
+image:
+- Visual Studio 2017
+- Ubuntu
+environment:
+  matrix:
+  - Framework: .NET Core
+    Target: TestCore
+    ScriptArgs: ''
+  - Framework: .NET 4.7.2
+    Target: Test
+    ScriptArgs: ''
+  - Framework: .NET 4.6.1
+    Target: Test
+    ScriptArgs: netfx="net461"
 build_script:
-- cmd: PowerShell -Version 2.0 .\build.ps1
+- cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '-%ScriptArgs%'
+- sh: ./build.sh -t $Target --$ScriptArgs
 test: off

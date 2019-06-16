@@ -1,13 +1,13 @@
 ﻿#if ENV
 using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-#if NET461
 using Microsoft.Build.Locator;
-#endif
+using Microsoft.CodeAnalysis.MSBuild;
 
-#if NETCOREAPP2_0 || NET461
+#if NETCOREAPP2_1 || NET472 || NET461
 
 namespace AsyncGenerator.Internal
 {
@@ -40,11 +40,7 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public static void Setup()
 		{
-#if NETCOREAPP2_0
-			SetupMsBuildPath(GetNetCoreMsBuildPath);
-#endif
-
-#if NET461
+#if NET472 || NET461
 			if (IsMono)
 			{
 				SetupMsBuildPath(() =>
@@ -75,23 +71,39 @@ namespace AsyncGenerator.Internal
 				};
 				return;
 			}
+
 			var vsInstallDir = Environment.GetEnvironmentVariable("VSINSTALLDIR");
-			if (string.IsNullOrEmpty(vsInstallDir) || !Directory.Exists(vsInstallDir))
+			if (!string.IsNullOrEmpty(vsInstallDir) && Directory.Exists(vsInstallDir))
 			{
-				var instance = MSBuildLocator.QueryVisualStudioInstances()
-					.OrderByDescending(o => o.Version)
-					.FirstOrDefault();
-				if (instance != null)
-				{
-					MSBuildLocator.RegisterInstance(instance);
-				}
-				else
-				{
-					throw new InvalidOperationException(
-						"Visual Studio installation directory was not found. "+
-						"Install Visual Studio or set the environment variable VSINSTALLDIR");
-				}
-				Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.VisualStudioRootPath);
+				return;
+			}
+#endif
+			var instance = MSBuildLocator.QueryVisualStudioInstances()
+				.OrderByDescending(o => o.Version)
+				.FirstOrDefault();
+			if (instance != null)
+			{
+				MSBuildLocator.RegisterInstance(instance);
+			}
+			else
+			{
+				throw new InvalidOperationException(
+					"Visual Studio installation directory was not found. " +
+					"Install Visual Studio or set the environment variable VSINSTALLDIR");
+			}
+
+#if NET472 || NET461
+			Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.VisualStudioRootPath);
+#endif
+#if NETCOREAPP2_1
+			// Hack to be able to open an project that have one or more project references
+			var projectBuildManagerType = typeof(MSBuildProjectLoader).Assembly.GetType("Microsoft.CodeAnalysis.MSBuild.Build.ProjectBuildManager");
+			var field = projectBuildManagerType.GetFields(BindingFlags.NonPublic | BindingFlags.Static)
+				.FirstOrDefault(o => o.Name == "s_defaultGlobalProperties");
+			if (field != null)
+			{
+				var globalProperties = (ImmutableDictionary<string, string>)field.GetValue(null);
+				field.SetValue(null, globalProperties.SetItem("BuildingInsideVisualStudio", "false"));
 			}
 #endif
 		}
@@ -104,43 +116,16 @@ namespace AsyncGenerator.Internal
 
 		// On Mono RuntimeInformation.IsOSPlatform will always retrun true for Windows
 		public static bool IsWindows => Path.DirectorySeparatorChar == '\\';
-
+#if NETCOREAPP2_1
 		public static string GetConfigurationFilePath()
 		{
 			var name = AppDomain.CurrentDomain.FriendlyName;
 			// On .NET Core FriendlyName as only the assembly name without the extension
-			/*if (IsNetCore)
-			{
-				name += ".dll";
-			}*/
-			name += ".config";
+			name += ".dll.config";
 			var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
 			return File.Exists(path) ? path : null;
 		}
-
-		public static string GetNetCoreMsBuildPath()
-		{
-			// Get the sdk path by using the .NET Core runtime assembly location
-			// Default locations:
-			// Windows -> C:\Program Files\dotnet\shared\Microsoft.NETCore.App\2.0.0\System.Private.CoreLib.dllz
-			// Linux -> /usr/share/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dll
-			// OSX -> /usr/local/share/dotnet/shared/Microsoft.NETCore.App/2.0.0/System.Private.CoreLib.dll
-			// MSBuild.dll is then located:
-			// Windows -> C:\Program Files\dotnet\sdk\2.0.0\MSBuild.dll
-			// Linux -> /usr/share/dotnet/sdk/2.0.0/MSBuild.dll
-			// OSX -> /usr/local/share/dotnet/sdk/2.0.0/MSBuild.dll
-
-			var assembly = typeof(System.Runtime.GCSettings).Assembly;
-			var assemblyDirectory = Path.GetDirectoryName(assembly.Location);
-			var directoryInfo = new DirectoryInfo(assemblyDirectory);
-			var netCoreVersion = directoryInfo.Name; // e.g. 2.0.0
-			// Get the dotnet folder
-			var dotnetFolder = directoryInfo.Parent.Parent.Parent.FullName;
-			// MSBuild should be located at dotnet/sdk/{version}/MSBuild.dll
-			var msBuildPath = Path.Combine(dotnetFolder, "sdk", netCoreVersion, "MSBuild.dll");
-			return File.Exists(msBuildPath) ? msBuildPath : null;
-		}
-
+#endif
 		public static string GetMonoMsBuildPath(Action<string> monoDirectoryAction = null)
 		{
 			// Get the sdk path by using the Mono runtime assembly location

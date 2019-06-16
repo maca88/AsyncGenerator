@@ -1,10 +1,11 @@
-#tool nuget:?package=NUnit.ConsoleRunner&version=3.6.0
+#tool nuget:?package=NUnit.ConsoleRunner&version=3.10.0
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
+var netfx = Argument("netfx", "net472");
 
 //////////////////////////////////////////////////////////////////////
 // CONSTANTS
@@ -26,6 +27,31 @@ var buildDirs = new List<string>()
     Directory("./Source/AsyncGenerator.Core/bin") + Directory(configuration)
 };
 
+void SetupTestFramework(string framework)
+{
+    string content;
+    if (FileExists("Common.dev.props"))
+    {
+        content = System.IO.File.ReadAllText("Common.dev.props");
+        content = System.Text.RegularExpressions.Regex.Replace(content, @"(<TestTargetFramework>)([\w\.;]+)(</TestTargetFramework>)", $"$1{framework}$3");
+        content = System.Text.RegularExpressions.Regex.Replace(content, @"(<AppTargetFrameworks>)([\w\.;]+)(</AppTargetFrameworks>)", $"$1{framework}$3");
+        content = System.Text.RegularExpressions.Regex.Replace(content, @"(<LibTargetFrameworks>)([\w\.;]+)(</LibTargetFrameworks>)", $"$1{framework}$3");
+    }
+    else
+    {
+        content =
+$@"<Project>
+  <PropertyGroup>
+    <TestTargetFramework>{framework}</TestTargetFramework>
+    <AppTargetFrameworks>{framework}</AppTargetFrameworks>
+    <LibTargetFrameworks>{framework}</LibTargetFrameworks>
+  </PropertyGroup>
+</Project>";
+    }
+    
+    System.IO.File.WriteAllText("Common.dev.props", content);
+}
+
 //////////////////////////////////////////////////////////////////////
 // TASKS
 //////////////////////////////////////////////////////////////////////
@@ -39,11 +65,32 @@ Task("Clean")
     }
 });
 
-Task("Restore-NuGet-Packages")
+Task("SetupTestFramework")
+    .Does(() =>
+{
+    SetupTestFramework(netfx);
+});
+
+Task("SetupTestFrameworkCore")
+    .Does(() =>
+{
+    SetupTestFramework("netcoreapp2.1");
+});
+
+Task("ClearTestFramework")
+    .Does(() =>
+{
+    if (FileExists("Common.dev.props"))
+    {
+        System.IO.File.Delete("Common.dev.props");
+    }
+});
+
+Task("Restore")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    NuGetRestore("./Source/AsyncGenerator.sln", new NuGetRestoreSettings()
+    NuGetRestore("./Source/AsyncGenerator.sln", new NuGetRestoreSettings
     {
         ConfigFile = "./Nuget.config"
     });
@@ -58,36 +105,81 @@ Task("Restore-NuGet-Packages")
     }
 });
 
+Task("RestoreCore")
+    .IsDependentOn("Clean")
+    .Does(() =>
+{
+    DotNetCoreRestore("./Source/AsyncGenerator.sln", new DotNetCoreRestoreSettings
+    {
+        ConfigFile = "./Nuget.config"
+    });
+    var testSolutions = GetFiles("./Source/AsyncGenerator.TestProjects/*.sln");
+    foreach(var testSolution in testSolutions)
+    {
+        Information("Restoring {0}", testSolution);
+        DotNetCoreRestore(testSolution.FullPath, new DotNetCoreRestoreSettings
+        {
+            ConfigFile = "./Nuget.config"
+        });
+    }
+});
+
 Task("Build")
-    .IsDependentOn("Restore-NuGet-Packages")
+    .IsDependentOn("Restore")
     .Does(() =>
 {
     MSBuild("./Source/AsyncGenerator.sln", settings =>
         settings.SetConfiguration(configuration));
 });
 
-Task("Run-Unit-Tests")
+Task("BuildCore")
+    .IsDependentOn("RestoreCore")
+    .Does(() =>
+{
+    DotNetCoreBuild("./Source/AsyncGenerator.sln", new DotNetCoreBuildSettings
+    {
+        Configuration = configuration,
+        ArgumentCustomization = args => args.Append("--no-restore"),
+    });
+});
+
+Task("Test")
+    .IsDependentOn("SetupTestFramework")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    NUnit3("./Source/**/bin/" + configuration + "/net461/*.Tests.dll", new NUnit3Settings {
+    NUnit3("./Source/AsyncGenerator.Tests/bin/" + configuration + $"/{netfx}/*.Tests.dll", new NUnit3Settings
+    {
         NoResults = true
-        });
+    });
+});
+
+Task("TestCore")
+    .IsDependentOn("SetupTestFrameworkCore")
+    .IsDependentOn("BuildCore")
+    .Does(() =>
+{
+    DotNetCoreTest("./Source/AsyncGenerator.Tests/AsyncGenerator.Tests.csproj", new DotNetCoreTestSettings
+    {
+        Configuration = configuration,
+        NoBuild = true
+    });
 });
 
 //////////////////////////////////////////////////////////////////////
 // PACKAGE
 //////////////////////////////////////////////////////////////////////
 
-Task("Clean-Packages")
+Task("CleanPackages")
     .Does(() =>
 {
     CleanDirectory(PACKAGE_DIR);
 });
 
-Task("Pack-NuGet-Packages")
+Task("Pack")
+    .IsDependentOn("ClearTestFramework")
     .IsDependentOn("Build") // We have to build in order to include dlls for the AsyncGenerator.CommandLine project
-    .IsDependentOn("Clean-Packages")
+    .IsDependentOn("CleanPackages")
     .Description("Creates NuGet packages")
     .Does(() =>
 {
@@ -112,9 +204,8 @@ Task("Pack-NuGet-Packages")
     }
 });
     
-Task("Publish-NuGet-Packages")
-    //.IsDependentOn("Run-Unit-Tests")
-    .IsDependentOn("Pack-NuGet-Packages")
+Task("Publish")
+    .IsDependentOn("Pack")
     .Does(() =>
 {
     foreach(var package in System.IO.Directory.GetFiles(PACKAGE_DIR, "*.nupkg").Where(o => !o.Contains("symbols")))
@@ -133,10 +224,7 @@ Task("Publish-NuGet-Packages")
 //////////////////////////////////////////////////////////////////////
 
 Task("Default")
-    .IsDependentOn("Run-Unit-Tests");
-    
-Task("Publish")
-    .IsDependentOn("Publish-NuGet-Packages");
+    .IsDependentOn("Test");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION

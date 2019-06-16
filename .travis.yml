@@ -1,16 +1,17 @@
 language: csharp
-mono:
-  - 5.10.0
-  - 5.16.0
-os:
-  - osx
-  - linux
 script:
-  - sudo ./build.sh
+  - sudo ./build.sh -t $TARGET --$SCRIPTARGS
+os: osx
+matrix:
+  include:
+    - dotnet: 2.1.502
+      env: TARGET=TestCore SCRIPTARGS=
+    - mono: 5.18.1
+      env: TARGET=Test SCRIPTARGS=
+    - mono: 5.18.1
+      env: TARGET=Test SCRIPTARGS="netfx=\"net461\""
 git:
   submodules: false
-install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo nuget update -self; fi
 cache:
   directories:
     - Source/packages

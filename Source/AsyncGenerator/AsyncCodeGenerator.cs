@@ -352,7 +352,7 @@ namespace AsyncGenerator
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 			}
-			var project = await workspace.OpenProjectAsync(filePath, cancellationToken).ConfigureAwait(false);
+			var project = await workspace.OpenProjectAsync(filePath, null, cancellationToken).ConfigureAwait(false);
 			CheckForErrors(workspace, "project", supressFailuresPredicates, logger);
 			return project;
 		}
@@ -366,7 +366,7 @@ namespace AsyncGenerator
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 			}
-			var solution = await workspace.OpenSolutionAsync(filePath, cancellationToken).ConfigureAwait(false);
+			var solution = await workspace.OpenSolutionAsync(filePath, null, cancellationToken).ConfigureAwait(false);
 			CheckForErrors(workspace, "solution", supressFailuresPredicates, logger);
 			return solution;
 		}
