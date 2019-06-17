@@ -955,6 +955,13 @@ namespace AsyncGenerator.Extensions.Internal
 			int index;
 			if (lastParam != null)
 			{
+				var nameAttribute = lastParam.DescendantNodes().OfType<XmlNameAttributeSyntax>().FirstOrDefault();
+				if (nameAttribute?.Identifier.ToString() == parameterName)
+				{
+					// A parameter with the same name already exists, do not add it. (e.g ObsoleteMissingMethodTransformer can add it prior)
+					return node;
+				}
+
 				index = commentNode.Content.IndexOf(lastParam);
 			}
 			else

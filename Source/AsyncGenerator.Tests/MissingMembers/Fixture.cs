@@ -293,5 +293,30 @@ namespace AsyncGenerator.Tests.MissingMembers
 				)
 			);
 		}
+
+		[Test]
+		public Task TestObsoleteInterfaceAbstractTokenAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ObsoleteInterfaceAbstractToken), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Unknown)
+					.CancellationTokens(true)
+					.ScanForMissingAsyncMembers(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ObsoleteInterfaceAbstractToken)), document.Transformed.ToFullString());
+					})
+				)
+				.ConfigureParsing(pr => pr
+					.AddPreprocessorSymbolName("OBSOLETE")
+				)
+			);
+		}
 	}
 }

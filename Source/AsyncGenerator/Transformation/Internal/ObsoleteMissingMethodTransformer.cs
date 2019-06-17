@@ -34,15 +34,18 @@ namespace AsyncGenerator.Transformation.Internal
 				return MethodTransformerResult.Skip;
 			}
 			var methodNode = transformResult.Transformed;
-			var baseMethod = methodResult.BaseOverriddenMethod != null 
-				? methodResult.RelatedMethods.FirstOrDefault(o => o.Symbol.Equals(methodResult.BaseOverriddenMethod)) 
-				: methodResult.RelatedMethods.FirstOrDefault(o => methodResult.ImplementedInterfaces.Any(i => o.Symbol.Equals(i)));
-			if (baseMethod?.AsyncCounterpartSymbol == null || !baseMethod.AsyncCounterpartSymbol.GetAttributes().Any(o => o.AttributeClass.Name == nameof(ObsoleteAttribute)))
+
+			var baseMethod = methodResult.RelatedMethods
+				.Where(o =>
+					(methodResult.BaseOverriddenMethod != null && o.Symbol.Equals(methodResult.BaseOverriddenMethod)) ||
+					methodResult.ImplementedInterfaces.Any(i => o.Symbol.Equals(i)))
+				.FirstOrDefault(o => o.AsyncCounterpartSymbol?.GetAttributes().Any(a => a.AttributeClass.Name == nameof(ObsoleteAttribute)) == true);
+			if (baseMethod == null)
 			{
 				return MethodTransformerResult.Skip;
 			}
-			namespaceMetadata.AddUsing("System");
 
+			namespaceMetadata.AddUsing("System");
 			AttributeListSyntax obsoleteAttribute = null;
 			var syntaxReference = baseMethod.AsyncCounterpartSymbol.DeclaringSyntaxReferences.SingleOrDefault();
 			if (syntaxReference != null)
