@@ -445,6 +445,7 @@ namespace AsyncGenerator
 
 			// Type transformers
 			configuration.RegisterPlugin(new DocumentCommentTypeTransformer());
+			configuration.RegisterPlugin(new DisabledTextTypeTransformer());
 
 			// Method transformers
 			configuration.RegisterPlugin(new YieldMethodTransformer());

@@ -223,7 +223,11 @@ namespace AsyncGenerator.Transformation.Internal
 			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia) && RewritingSyntaxKind.HasValue)
 			{
 				var node = trivia.Token.Parent;
-				var method = node.Ancestors().First(o => o.IsKind(RewritingSyntaxKind.Value));
+				var method = node.Ancestors().FirstOrDefault(o => o.IsKind(RewritingSyntaxKind.Value));
+				if (method == null) // The directive is outside a method body
+				{
+					return trivia;
+				}
 				var startDirective = trivia.Token.Parent.GetLastDirective();
 				var endDirective = startDirective.GetNextDirective();
 				if (endDirective == null)

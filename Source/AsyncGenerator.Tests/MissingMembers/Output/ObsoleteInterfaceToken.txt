@@ -26,11 +26,6 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 			return Task.FromResult<IEnumerable<int>>(yields);
 		}
 #if OBSOLETE && OVERRIDE
-		[Obsolete]
-		public Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
-		{
-			return Task.FromResult(Test());
-		}
 #endif
 	}
 
@@ -44,11 +39,6 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 			return Task.FromResult<IEnumerable<int>>(yields);
 		}
 #if OBSOLETE && OVERRIDE
-		[Obsolete]
-		public Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
-		{
-			return Task.FromResult(Test());
-		}
 #endif
 	}
 }

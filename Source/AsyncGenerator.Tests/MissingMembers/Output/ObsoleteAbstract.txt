@@ -30,11 +30,6 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 			return Task.FromResult<IEnumerable<int>>(yields);
 		}
 #if OBSOLETE && OVERRIDE
-		[Obsolete]
-		protected internal override Task<IEnumerable<int>> TestAsync()
-		{
-			return Task.FromResult(Test());
-		}
 #endif
 	}
 
@@ -48,11 +43,6 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 			return Task.FromResult<IEnumerable<int>>(yields);
 		}
 #if OBSOLETE && OVERRIDE
-		[Obsolete]
-		protected internal override Task<IEnumerable<int>> TestAsync()
-		{
-			return Task.FromResult(Test());
-		}
 #endif
 	}
 }

@@ -20,6 +20,13 @@ namespace AsyncGenerator.Transformation.Internal
 	/// </summary>
 	internal class ObsoleteMissingMethodTransformer : IMethodOrAccessorTransformer
 	{
+		private readonly TriviaRemover _directiveRemover;
+
+		public ObsoleteMissingMethodTransformer()
+		{
+			_directiveRemover = new TriviaRemover(trivia => trivia.IsDirective);
+		}
+
 		public Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
 			return Task.CompletedTask;
@@ -52,7 +59,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				var baseMethodNode = syntaxReference.GetSyntax() as MethodDeclarationSyntax;
 				obsoleteAttribute = baseMethodNode?.AttributeLists.FirstOrDefault(o => o.Attributes.Count == 1 && o.Attributes.First().Name.ToString() == "Obsolete");
-				obsoleteAttribute = (AttributeListSyntax)new DirectiveRemover().VisitAttributeList(obsoleteAttribute);
+				obsoleteAttribute = (AttributeListSyntax)_directiveRemover.VisitAttributeList(obsoleteAttribute);
 			}
 
 			if (obsoleteAttribute == null)
