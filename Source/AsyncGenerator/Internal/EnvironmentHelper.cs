@@ -81,6 +81,23 @@ namespace AsyncGenerator.Internal
 			var instance = MSBuildLocator.QueryVisualStudioInstances()
 				.OrderByDescending(o => o.Version)
 				.FirstOrDefault();
+
+#if NETCOREAPP2_1
+			// Workaround for .NET Core 2.2 - Redirect Newtonsoft.Json version 9.0.0 requested from Microsoft.Build.NuGetSdkResolver
+			// to 10.0.3 which is provided with the framework
+			AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
+			{
+				var assemblyName = new AssemblyName(eventArgs.Name);
+				if ("Newtonsoft.Json" == assemblyName.Name)
+				{
+					var path = Path.Combine(instance.MSBuildPath, $"{assemblyName.Name}.dll");
+					return File.Exists(path) ? Assembly.LoadFile(Path.Combine(instance.MSBuildPath, $"{assemblyName.Name}.dll")) : null;
+				}
+
+				return null;
+			};
+#endif
+
 			if (instance != null)
 			{
 				MSBuildLocator.RegisterInstance(instance);
