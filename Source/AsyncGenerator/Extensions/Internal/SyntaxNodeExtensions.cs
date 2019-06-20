@@ -336,6 +336,14 @@ namespace AsyncGenerator.Extensions.Internal
 					return ((LocalFunctionStatementSyntax) node).Body ?? (SyntaxNode) ((LocalFunctionStatementSyntax) node).ExpressionBody;
 				case SyntaxKind.MethodDeclaration:
 					return ((MethodDeclarationSyntax) node).Body ?? (SyntaxNode) ((MethodDeclarationSyntax) node).ExpressionBody;
+				case SyntaxKind.GetAccessorDeclaration:
+				case SyntaxKind.SetAccessorDeclaration:
+					if (node is AccessorDeclarationSyntax accessorDeclaration)
+					{
+						return accessorDeclaration.Body ?? (SyntaxNode) accessorDeclaration.ExpressionBody;
+					}
+
+					return ((ArrowExpressionClauseSyntax) node).Expression;
 				default:
 					throw new InvalidOperationException($"Node {node} is not a function");
 			}

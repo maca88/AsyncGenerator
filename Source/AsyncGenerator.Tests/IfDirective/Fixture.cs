@@ -111,5 +111,46 @@ namespace AsyncGenerator.Tests.IfDirective
 				)
 			);
 		}
+
+		[Test]
+		public Task TestDisabledDirectiveTransformation()
+		{
+			return ReadonlyTest(nameof(DisabledDirective), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(DisabledDirective)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
+		public Task TestDisabledDirectiveNewTypeTransformation()
+		{
+			return ReadonlyTest(nameof(DisabledDirective), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.TypeConversion(symbol => TypeConversion.NewType)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(DisabledDirective) + "NewType"), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

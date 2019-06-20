@@ -33,19 +33,12 @@ namespace AsyncGenerator.Tests.IfDirective
 				}
 				#elif TRACE
 				#else
-
-				public void Sync2Method()
-				{
-
-				}
-
 				#endif
 
 			}
 
 			#if TRACE
 			#else
-
 			#endif
 		}
 	}
