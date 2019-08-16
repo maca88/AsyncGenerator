@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
+using System.Text;
 using System.Threading;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
@@ -60,6 +62,20 @@ namespace AsyncGenerator.CommandLine
 
 				return 0;
 			}
+#if !NETCOREAPP2_1
+			// Print inner exceptions for .NET as they are printed in NETCore 2.1: https://github.com/dotnet/coreclr/pull/15688
+			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions?.Length > 0)
+			{
+				var builder = new StringBuilder();
+				foreach (var loaderException in e.LoaderExceptions)
+				{
+					builder.AppendLine(loaderException.Message);
+				}
+
+				Logger.Fatal(builder.ToString(), e);
+				return -1;
+			}
+#endif
 			catch (Exception e)
 			{
 				Logger.Fatal(e);
