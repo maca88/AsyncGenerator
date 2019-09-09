@@ -240,6 +240,9 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlIgnore]
 		public bool? ReturnsVoid { get; private set; }
 		#endregion
+
+		[XmlAttribute(AttributeName = "executionPhase")]
+		public ExecutionPhase ExecutionPhase { get; set; }
 	}
 
 	[XmlInclude(typeof(TypeFilter))]
@@ -377,6 +380,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public string AnyInterfaceRule { get; set; }
 		[XmlAttribute(AttributeName = "anyBaseTypeRule")]
 		public string AnyBaseTypeRule { get; set; }
+		[XmlAttribute(AttributeName = "executionPhase")]
+		public ExecutionPhase ExecutionPhase { get; set; }
 	}
 
 	[Serializable]

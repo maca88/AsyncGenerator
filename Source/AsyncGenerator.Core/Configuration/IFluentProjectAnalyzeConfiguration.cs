@@ -16,6 +16,12 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration MethodConversion(Func<IMethodSymbol, MethodConversion> func);
 
 		/// <summary>
+		/// Set a function for an execution phase that will decide what type of conversion to apply for a given method.
+		/// <para>Default <see cref="F:AsyncGenerator.Core.MethodConversion.Unknown"/> is chosen for all methods.</para> 
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration MethodConversion(Func<IMethodSymbol, MethodConversion> func, ExecutionPhase executionPhase);
+
+		/// <summary>
 		/// Enable or disable generating async counterparts for property accessors (getter and setters).
 		/// <para>Default is set to false.</para>
 		/// </summary>
@@ -26,6 +32,12 @@ namespace AsyncGenerator.Core.Configuration
 		/// <para>Default <see cref="F:AsyncGenerator.Core.TypeConversion.Unknown"/> is chosen for all types.</para> 
 		/// </summary>
 		IFluentProjectAnalyzeConfiguration TypeConversion(Func<INamedTypeSymbol, TypeConversion> func);
+
+		/// <summary>
+		/// Set a function for an execution phase that will decide what type of conversion to apply for a given type.
+		/// <para>Default <see cref="F:AsyncGenerator.Core.TypeConversion.Unknown"/> is chosen for all types.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration TypeConversion(Func<INamedTypeSymbol, TypeConversion> func, ExecutionPhase executionPhase);
 
 		/// <summary>
 		/// Set a predicate that will decide if the document will be analyzed.
@@ -84,7 +96,13 @@ namespace AsyncGenerator.Core.Configuration
 		/// Set a predicate that will decide whether to await async calls that can be returned as a task.
 		/// <para>Default is set to false for all methods.</para>
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration AlwaysAwait(Predicate<IMethodSymbol> predicate);
+		IFluentProjectAnalyzeConfiguration AlwaysAwait(Func<IMethodSymbol, bool?> predicate);
+
+		/// <summary>
+		/// Set a predicate for an execution phase that will decide whether to await async calls that can be returned as a task.
+		/// <para>Default is set to false for all methods.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration AlwaysAwait(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase);
 
 		/// <summary>
 		/// Enable or disable scanning and generating async counterparts with an additional parameter of type <see cref="System.Threading.CancellationToken"/>.
@@ -121,7 +139,14 @@ namespace AsyncGenerator.Core.Configuration
 		/// The predicate will be called only for methods that do not have any async invocation that returns a <see cref="Task"/>
 		/// <para>Default false is choosen for all methods.</para>
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration PreserveReturnType(Predicate<IMethodSymbol> predicate);
+		IFluentProjectAnalyzeConfiguration PreserveReturnType(Func<IMethodSymbol, bool?> predicate);
+
+		/// <summary>
+		/// Set the predicate for an execution phase that will decide whether the return type of an async method should be preserved or not.
+		/// The predicate will be called only for methods that do not have any async invocation that returns a <see cref="Task"/>
+		/// <para>Default false is choosen for all methods.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration PreserveReturnType(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase);
 
 		/// <summary>
 		/// Set the predicate that will decide whether to search async counterparts for the given method. 
@@ -136,7 +161,15 @@ namespace AsyncGenerator.Core.Configuration
 		/// The predicate result will be ignored for an internal method when a reference to it is found.
 		/// <para>Default true is choosen for all methods.</para>
 		/// </summary>
-		IFluentProjectAnalyzeConfiguration SearchForMethodReferences(Predicate<IMethodSymbol> predicate);
+		IFluentProjectAnalyzeConfiguration SearchForMethodReferences(Func<IMethodSymbol, bool?> predicate);
+
+		/// <summary>
+		/// Set the predicate for an execution phase that will decide whether to search references for the given method.
+		/// This option can be useful for unit test methods.
+		/// The predicate result will be ignored for an internal method when a reference to it is found.
+		/// <para>Default true is choosen for all methods.</para>
+		/// </summary>
+		IFluentProjectAnalyzeConfiguration SearchForMethodReferences(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase);
 
 
 		/// <summary>

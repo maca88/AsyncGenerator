@@ -9,7 +9,5 @@ namespace AsyncGenerator.Core.Configuration
 		bool Guards { get; }
 
 		Func<IMethodSymbolInfo, MethodCancellationToken> MethodGeneration { get; }
-
-		Func<IMethodSymbol, bool?> RequiresCancellationToken { get; }
 	}
 }

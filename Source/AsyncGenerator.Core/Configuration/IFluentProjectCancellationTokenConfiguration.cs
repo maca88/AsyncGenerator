@@ -22,5 +22,10 @@ namespace AsyncGenerator.Core.Configuration
 		/// Override the default behavior for calculating the requirement of the cancellation token for the given method.
 		/// </summary>
 		IFluentProjectCancellationTokenConfiguration RequiresCancellationToken(Func<IMethodSymbol, bool?> func);
+
+		/// <summary>
+		/// Override the default behavior for calculating the requirement of the cancellation token for the given method and execution phase.
+		/// </summary>
+		IFluentProjectCancellationTokenConfiguration RequiresCancellationToken(Func<IMethodSymbol, bool?> func, ExecutionPhase executionPhase);
 	}
 }

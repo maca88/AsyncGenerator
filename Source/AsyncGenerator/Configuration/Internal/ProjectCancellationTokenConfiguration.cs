@@ -11,9 +11,11 @@ namespace AsyncGenerator.Configuration.Internal
 {
 	internal class ProjectCancellationTokenConfiguration : IFluentProjectCancellationTokenConfiguration, IProjectCancellationTokenConfiguration
 	{
+		private Func<IMethodSymbol, bool?> _requiresCancellationTokenFunction;
+		private Func<IMethodSymbol, bool?> _lastRequiresCancellationTokenFunction;
+
 		public ProjectCancellationTokenConfiguration()
 		{
-			RequiresCancellationToken = CreateRequiresCancellationTokenFunction(symbol => null);
 		}
 
 		public bool Enabled { get; internal set; }
@@ -25,27 +27,26 @@ namespace AsyncGenerator.Configuration.Internal
 				? MethodCancellationToken.Required
 				: MethodCancellationToken.Optional;
 
-		public Func<IMethodSymbol, bool?> RequiresCancellationToken { get; private set; }
-
 		public List<IMethodRequiresCancellationTokenProvider> MethodRequiresCancellationTokenProviders { get; } = new List<IMethodRequiresCancellationTokenProvider>();
 
-		private Func<IMethodSymbol, bool?> CreateRequiresCancellationTokenFunction(Func<IMethodSymbol, bool?> defaultFunc)
+		public bool? RequiresCancellationToken(IMethodSymbol methodSymbol)
 		{
-			return Function;
-
-			bool? Function(IMethodSymbol methodSymbol)
+			var result = _requiresCancellationTokenFunction?.Invoke(methodSymbol);
+			if (result.HasValue)
 			{
-				foreach (var provider in MethodRequiresCancellationTokenProviders)
-				{
-					var value = provider.RequiresCancellationToken(methodSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
-				}
-
-				return defaultFunc(methodSymbol);
+				return result.Value;
 			}
+
+			foreach (var provider in MethodRequiresCancellationTokenProviders)
+			{
+				result = provider.RequiresCancellationToken(methodSymbol);
+				if (result.HasValue)
+				{
+					return result.Value;
+				}
+			}
+
+			return _lastRequiresCancellationTokenFunction?.Invoke(methodSymbol) ?? null;
 		}
 
 		#region IProjectCancellationTokenConfiguration
@@ -68,12 +69,26 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.RequiresCancellationToken(Func<IMethodSymbol, bool?> func)
 		{
+			return ((IFluentProjectCancellationTokenConfiguration)this).RequiresCancellationToken(func, ExecutionPhase.Default);
+		}
+
+		IFluentProjectCancellationTokenConfiguration IFluentProjectCancellationTokenConfiguration.RequiresCancellationToken(Func<IMethodSymbol, bool?> func, ExecutionPhase executionPhase)
+		{
 			if (func == null)
 			{
 				throw new ArgumentNullException(nameof(func));
 			}
 
-			RequiresCancellationToken = CreateRequiresCancellationTokenFunction(func);
+			switch (executionPhase)
+			{
+				case ExecutionPhase.Default:
+					_requiresCancellationTokenFunction = func;
+					break;
+				case ExecutionPhase.PostProviders:
+					_lastRequiresCancellationTokenFunction = func;
+					break;
+			}
+
 			return this;
 		}
 
