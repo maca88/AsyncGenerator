@@ -139,5 +139,158 @@ namespace AsyncGenerator.Tests.NUnit
 				.RegisterPlugin(new NUnitPlugin(createNewTypes))
 			);
 		}
+
+		[Test]
+		public Task TestSimpleFixtureAfterTransformationYaml()
+		{
+			return YamlReadonlyTest("SimpleFixture",
+				@"projects:
+- filePath: AsyncGenerator.Tests.csproj
+  analyzation:
+    methodConversion:
+    - conversion: Smart
+      all: true
+  registerPlugin:
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: false
+    assemblyName: AsyncGenerator.Core
+",
+				o => o
+					.ConfigureParsing(p => p
+						.AddPreprocessorSymbolName("TEST")
+					)
+					.ConfigureTransformation(t => t.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.AreEqual(GetOutputFile("SimpleFixturePartial"), document.Transformed.ToFullString());
+					}))
+			);
+		}
+
+		[Test]
+		public Task TestIgnoreMethodsSimpleFixtureAfterTransformationYaml()
+		{
+			return YamlReadonlyTest("SimpleFixture",
+				@"projects:
+- filePath: AsyncGenerator.Tests.csproj
+  analyzation:
+    methodConversion:
+    - conversion: Ignore
+      all: true
+  registerPlugin:
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: false
+    assemblyName: AsyncGenerator.Core
+",
+				o => o
+					.ConfigureParsing(p => p
+						.AddPreprocessorSymbolName("TEST")
+					)
+					.ConfigureTransformation(t => t.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(0, result.Documents.Count);
+					}))
+			);
+		}
+
+		[Test]
+		public Task TestIgnoreMethodsPostProvidersSimpleFixtureAfterTransformationYaml()
+		{
+			return YamlReadonlyTest("SimpleFixture",
+				@"projects:
+- filePath: AsyncGenerator.Tests.csproj
+  analyzation:
+    methodConversion:
+    - conversion: Ignore
+      all: true
+      executionPhase: PostProviders
+  registerPlugin:
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: false
+    assemblyName: AsyncGenerator.Core
+",
+				o => o
+					.ConfigureParsing(p => p
+						.AddPreprocessorSymbolName("TEST")
+					)
+					.ConfigureTransformation(t => t.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.AreEqual(GetOutputFile("SimpleFixturePartial"), document.Transformed.ToFullString());
+					}))
+			);
+		}
+
+		[Test]
+		public Task TestIgnoreTypeSimpleFixtureAfterTransformationYaml()
+		{
+			return YamlReadonlyTest("SimpleFixture",
+				@"projects:
+- filePath: AsyncGenerator.Tests.csproj
+  analyzation:
+    typeConversion:
+    - conversion: Ignore
+      all: true
+  registerPlugin:
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: false
+    assemblyName: AsyncGenerator.Core
+",
+				o => o
+					.ConfigureParsing(p => p
+						.AddPreprocessorSymbolName("TEST")
+					)
+					.ConfigureTransformation(t => t.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(0, result.Documents.Count);
+					}))
+			);
+		}
+
+		[Test]
+		public Task TestIgnoreTypePostProvidersSimpleFixtureAfterTransformationYaml()
+		{
+			return YamlReadonlyTest("SimpleFixture",
+				@"projects:
+- filePath: AsyncGenerator.Tests.csproj
+  analyzation:
+    typeConversion:
+    - conversion: Ignore
+      all: true
+      executionPhase: PostProviders
+  registerPlugin:
+  - type: AsyncGenerator.Core.Plugins.NUnitPlugin
+    parameters:
+    - name: createNewTypes
+      value: true
+    assemblyName: AsyncGenerator.Core
+",
+				o => o
+					.ConfigureParsing(p => p
+						.AddPreprocessorSymbolName("TEST")
+					)
+					.ConfigureTransformation(t => t.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.AreEqual(GetOutputFile("SimpleFixtureNewType"), document.Transformed.ToFullString());
+					}))
+			);
+		}
 	}
 }

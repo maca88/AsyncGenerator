@@ -13,38 +13,29 @@ namespace AsyncGenerator.Configuration.Internal
 	internal class ProjectAnalyzeConfiguration : IFluentProjectAnalyzeConfiguration, IProjectAnalyzeConfiguration
 	{
 		private readonly IProjectConfiguration _projectConfiguration;
+		private Func<INamedTypeSymbol, TypeConversion> _typeConversionFunction; 
+		private Func<INamedTypeSymbol, TypeConversion> _lastTypeConversionFunction;
+		private Func<IMethodSymbol, MethodConversion> _methodConversionFunction;
+		private Func<IMethodSymbol, MethodConversion> _lastMethodConversionFunction;
+		private Func<IMethodSymbol, bool?> _preserveReturnTypeFunction;
+		private Func<IMethodSymbol, bool?> _lastPreserveReturnTypeFunction;
+		private Func<IMethodSymbol, bool?> _alwaysAwaitFunction;
+		private Func<IMethodSymbol, bool?> _lastAlwaysAwaitFunction;
+		private Func<IMethodSymbol, bool?> _searchForMethodReferencesFunction;
+		private Func<IMethodSymbol, bool?> _lastSearchForMethodReferencesFunction;
 
 		public ProjectAnalyzeConfiguration(IProjectConfiguration projectConfiguration)
 		{
 			_projectConfiguration = projectConfiguration;
-			GetMethodConversion = CreateMethodConversionFunction(m => MethodConversion.Unknown);
-			GetTypeConversion = CreateTypeConversionFunction(m => TypeConversion.Unknown);
-			GetFieldConversion = CreateFieldConversionFunction(m => FieldVariableConversion.Unknown);
-			CanPreserveReturnType = CreatePreserveReturnTypeFunction(m => false);
-			CanAlwaysAwait = CreateAlwaysAwaitFunction(symbol => false);
-			CanSearchForMethodReferences = CreateSearchForMethodReferencesFunction(m => true);
 		}
-
-		public Func<IMethodSymbol, MethodConversion> GetMethodConversion { get; private set; }
-
-		public Func<INamedTypeSymbol, TypeConversion> GetTypeConversion { get; private set; }
-
-		public Func<ISymbol, FieldVariableConversion> GetFieldConversion { get; private set; }
 
 		public Predicate<Document> CanSelectDocument { get; private set; } = m => true;
 
-		public Predicate<IMethodSymbol> CanPreserveReturnType { get; private set; }
-
 		public Predicate<IMethodSymbol> CanSearchForAsyncCounterparts { get; private set; } = m => true;
-
-		public Predicate<IMethodSymbol> CanSearchForMethodReferences { get; private set; }
-
-		public Predicate<IMethodSymbol> CanAlwaysAwait { get; private set; }
 
 		public Predicate<INamedTypeSymbol> CanScanForMissingAsyncMembers { get; private set; }
 
 		public Predicate<IMethodSymbol> CanForwardCall { get; set; } = symbol => false;
-
 
 		public bool PropertyConversion { get; private set; }
 
@@ -93,130 +84,144 @@ namespace AsyncGenerator.Configuration.Internal
 		public ProjectExceptionHandlingConfiguration ExceptionHandling { get; } = new ProjectExceptionHandlingConfiguration();
 
 
-		private Predicate<IMethodSymbol> CreatePreserveReturnTypeFunction(Predicate<IMethodSymbol> defaultFunc)
+		public TypeConversion GetTypeConversion(INamedTypeSymbol typeSymbol)
 		{
-			return Function;
-
-			bool Function(IMethodSymbol methodSymbol)
+			var result = _typeConversionFunction?.Invoke(typeSymbol);
+			if (result.HasValue && result != TypeConversion.Unknown)
 			{
-				foreach (var provider in PreserveMethodReturnTypeProviders)
-				{
-					var value = provider.PreserveReturnType(methodSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
-				}
-
-				return defaultFunc(methodSymbol);
+				return result.Value;
 			}
+
+			foreach (var provider in TypeConversionProviders)
+			{
+				result = provider.GetConversion(typeSymbol);
+				if (result.HasValue)
+				{
+					return result.Value;
+				}
+			}
+
+			return _lastTypeConversionFunction?.Invoke(typeSymbol) ?? TypeConversion.Unknown;
 		}
 
-		private Func<IMethodSymbol, MethodConversion> CreateMethodConversionFunction(Func<IMethodSymbol, MethodConversion> defaultFunc)
+		public MethodConversion GetMethodConversion(IMethodSymbol methodSymbol)
 		{
-			return Function;
-
-			MethodConversion Function(IMethodSymbol methodSymbol)
+			var result = _methodConversionFunction?.Invoke(methodSymbol);
+			if (result.HasValue && result != MethodConversion.Unknown)
 			{
-				foreach (var provider in MethodConversionProviders)
-				{
-					var value = provider.GetConversion(methodSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
-				}
-
-				return defaultFunc(methodSymbol);
+				return result.Value;
 			}
+
+			foreach (var provider in MethodConversionProviders)
+			{
+				result = provider.GetConversion(methodSymbol);
+				if (result.HasValue)
+				{
+					return result.Value;
+				}
+			}
+
+			return _lastMethodConversionFunction?.Invoke(methodSymbol) ?? MethodConversion.Unknown;
 		}
 
-		private Func<INamedTypeSymbol, TypeConversion> CreateTypeConversionFunction(Func<INamedTypeSymbol, TypeConversion> defaultFunc)
+		public FieldVariableConversion GetFieldConversion(ISymbol typeSymbol)
 		{
-			return Function;
-
-			TypeConversion Function(INamedTypeSymbol typeSymbol)
+			foreach (var provider in FieldConversionProviders)
 			{
-				foreach (var provider in TypeConversionProviders)
+				var value = provider.GetFieldConversion(typeSymbol);
+				if (value.HasValue)
 				{
-					var value = provider.GetConversion(typeSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
+					return value.Value;
 				}
-
-				return defaultFunc(typeSymbol);
 			}
+
+			return FieldVariableConversion.Unknown;
 		}
 
-		private Func<ISymbol, FieldVariableConversion> CreateFieldConversionFunction(Func<ISymbol, FieldVariableConversion> defaultFunc)
+		public bool CanPreserveReturnType(IMethodSymbol methodSymbol)
 		{
-			return Function;
-
-			FieldVariableConversion Function(ISymbol typeSymbol)
+			var result = _preserveReturnTypeFunction?.Invoke(methodSymbol);
+			if (result.HasValue)
 			{
-				foreach (var provider in FieldConversionProviders)
-				{
-					var value = provider.GetFieldConversion(typeSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
-				}
-
-				return defaultFunc(typeSymbol);
+				return result.Value;
 			}
+
+			foreach (var provider in PreserveMethodReturnTypeProviders)
+			{
+				var value = provider.PreserveReturnType(methodSymbol);
+				if (value.HasValue)
+				{
+					return value.Value;
+				}
+			}
+
+			return _lastPreserveReturnTypeFunction?.Invoke(methodSymbol) ?? false;
 		}
 
-		private Predicate<IMethodSymbol> CreateAlwaysAwaitFunction(Predicate<IMethodSymbol> defaultFunc)
+		public bool CanAlwaysAwait(IMethodSymbol methodSymbol)
 		{
-			return Function;
-
-			bool Function(IMethodSymbol methodSymbol)
+			var result = _alwaysAwaitFunction?.Invoke(methodSymbol);
+			if (result.HasValue)
 			{
-				foreach (var provider in AlwaysAwaitMethodProviders)
-				{
-					var value = provider.AlwaysAwait(methodSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
-				}
-
-				return defaultFunc(methodSymbol);
+				return result.Value;
 			}
+
+			foreach (var provider in AlwaysAwaitMethodProviders)
+			{
+				var value = provider.AlwaysAwait(methodSymbol);
+				if (value.HasValue)
+				{
+					return value.Value;
+				}
+			}
+
+			return _lastAlwaysAwaitFunction?.Invoke(methodSymbol) ?? false;
 		}
 
-		private Predicate<IMethodSymbol> CreateSearchForMethodReferencesFunction(Predicate<IMethodSymbol> defaultFunc)
+		public bool CanSearchForMethodReferences(IMethodSymbol methodSymbol)
 		{
-			return Function;
-
-			bool Function(IMethodSymbol methodSymbol)
+			var result = _searchForMethodReferencesFunction?.Invoke(methodSymbol);
+			if (result.HasValue)
 			{
-				foreach (var provider in SearchForMethodReferencesProviders)
-				{
-					var value = provider.SearchForMethodReferences(methodSymbol);
-					if (value.HasValue)
-					{
-						return value.Value;
-					}
-				}
-
-				return defaultFunc(methodSymbol);
+				return result.Value;
 			}
+
+			foreach (var provider in SearchForMethodReferencesProviders)
+			{
+				var value = provider.SearchForMethodReferences(methodSymbol);
+				if (value.HasValue)
+				{
+					return value.Value;
+				}
+			}
+
+			return _lastSearchForMethodReferencesFunction?.Invoke(methodSymbol) ?? true;
 		}
 
 		#region IFluentProjectAnalyzeConfiguration
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func)
 		{
+			return ((IFluentProjectAnalyzeConfiguration)this).MethodConversion(func, ExecutionPhase.Default);
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.MethodConversion(Func<IMethodSymbol, MethodConversion> func, ExecutionPhase executionPhase)
+		{
 			if (func == null)
 			{
 				throw new ArgumentNullException(nameof(func));
 			}
 
-			GetMethodConversion = CreateMethodConversionFunction(func);
+			switch (executionPhase)
+			{
+				case ExecutionPhase.Default:
+					_methodConversionFunction = func;
+					break;
+				case ExecutionPhase.PostProviders:
+					_lastMethodConversionFunction = func;
+					break;
+			}
+
 			return this;
 		}
 
@@ -228,12 +233,26 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.TypeConversion(Func<INamedTypeSymbol, TypeConversion> func)
 		{
+			return ((IFluentProjectAnalyzeConfiguration)this).TypeConversion(func, ExecutionPhase.Default);
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.TypeConversion(Func<INamedTypeSymbol, TypeConversion> func, ExecutionPhase executionPhase)
+		{
 			if (func == null)
 			{
 				throw new ArgumentNullException(nameof(func));
 			}
 
-			GetTypeConversion = CreateTypeConversionFunction(func);
+			switch (executionPhase)
+			{
+				case ExecutionPhase.Default:
+					_typeConversionFunction = func;
+					break;
+				case ExecutionPhase.PostProviders:
+					_lastTypeConversionFunction = func;
+					break;
+			}
+
 			return this;
 		}
 
@@ -299,18 +318,31 @@ namespace AsyncGenerator.Configuration.Internal
 
 		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AlwaysAwait(bool value)
 		{
-			CanAlwaysAwait = CreateAlwaysAwaitFunction(symbol => value);
-			return this; 
+			return ((IFluentProjectAnalyzeConfiguration)this).AlwaysAwait(symbol => value);
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AlwaysAwait(Predicate<IMethodSymbol> predicate)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AlwaysAwait(Func<IMethodSymbol, bool?> predicate)
+		{
+			return ((IFluentProjectAnalyzeConfiguration)this).AlwaysAwait(predicate, ExecutionPhase.Default);
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AlwaysAwait(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase)
 		{
 			if (predicate == null)
 			{
 				throw new ArgumentNullException(nameof(predicate));
 			}
 
-			CanAlwaysAwait = CreateAlwaysAwaitFunction(predicate);
+			switch (executionPhase)
+			{
+				case ExecutionPhase.Default:
+					_alwaysAwaitFunction = predicate;
+					break;
+				case ExecutionPhase.PostProviders:
+					_lastAlwaysAwaitFunction = predicate;
+					break;
+			}
+
 			return this;
 		}
 
@@ -361,14 +393,28 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PreserveReturnType(Predicate<IMethodSymbol> predicate)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PreserveReturnType(Func<IMethodSymbol, bool?> predicate)
+		{
+			return ((IFluentProjectAnalyzeConfiguration)this).PreserveReturnType(predicate, ExecutionPhase.Default);
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.PreserveReturnType(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase)
 		{
 			if (predicate == null)
 			{
 				throw new ArgumentNullException(nameof(predicate));
 			}
 
-			CanPreserveReturnType = CreatePreserveReturnTypeFunction(predicate);
+			switch (executionPhase)
+			{
+				case ExecutionPhase.Default:
+					_preserveReturnTypeFunction = predicate;
+					break;
+				case ExecutionPhase.PostProviders:
+					_lastPreserveReturnTypeFunction = predicate;
+					break;
+			}
+
 			return this;
 		}
 
@@ -378,14 +424,28 @@ namespace AsyncGenerator.Configuration.Internal
 			return this;
 		}
 
-		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.SearchForMethodReferences(Predicate<IMethodSymbol> predicate)
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.SearchForMethodReferences(Func<IMethodSymbol, bool?> predicate)
+		{
+			return ((IFluentProjectAnalyzeConfiguration)this).SearchForMethodReferences(predicate, ExecutionPhase.Default);
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.SearchForMethodReferences(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase)
 		{
 			if (predicate == null)
 			{
 				throw new ArgumentNullException(nameof(predicate));
 			}
 
-			CanSearchForMethodReferences = CreateSearchForMethodReferencesFunction(predicate);
+			switch (executionPhase)
+			{
+				case ExecutionPhase.Default:
+					_searchForMethodReferencesFunction = predicate;
+					break;
+				case ExecutionPhase.PostProviders:
+					_lastSearchForMethodReferencesFunction = predicate;
+					break;
+			}
+
 			return this;
 		}
 

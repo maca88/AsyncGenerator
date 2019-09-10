@@ -29,7 +29,14 @@
       <xs:enumeration value="SealedForwardNone"/>
     </xs:restriction>
   </xs:simpleType>
-  
+
+  <xs:simpleType name="ExecutionPhase">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Default"/>
+      <xs:enumeration value="PostProviders"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:complexType name="MemberFilter">
     <xs:attribute name="all" type="xs:boolean" />
     <xs:attribute name="name" type="xs:string" />
@@ -56,6 +63,7 @@
     <xs:complexContent>
       <xs:extension base="MemberFilter">
         <xs:attribute name="returnsVoid" type="xs:boolean" />
+        <xs:attribute name="executionPhase" type="ExecutionPhase" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -65,6 +73,7 @@
       <xs:extension base="MemberFilter">
         <xs:attribute name="anyInterfaceRule" type="xs:string" />
         <xs:attribute name="anyBaseTypeRule" type="xs:string" />
+        <xs:attribute name="executionPhase" type="ExecutionPhase" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

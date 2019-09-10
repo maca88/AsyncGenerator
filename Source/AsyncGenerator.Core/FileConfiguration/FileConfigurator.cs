@@ -168,15 +168,24 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.MethodConversion.Any())
 			{
-				fluentConfig.MethodConversion(CreateMethodConversionFunction(configuration, config.MethodConversion));
+				foreach (var group in config.MethodConversion.GroupBy(o => o.ExecutionPhase))
+				{
+					fluentConfig.MethodConversion(CreateMethodConversionFunction(configuration, group.ToList()), group.Key);
+				}
 			}
 			if (config.PreserveReturnType.Any())
 			{
-				fluentConfig.PreserveReturnType(CreateMethodPredicate(configuration, config.PreserveReturnType, true));
+				foreach (var group in config.PreserveReturnType.GroupBy(o => o.ExecutionPhase))
+				{
+					fluentConfig.PreserveReturnType(CreateMethodNullablePredicate(configuration, group.ToList(), true), group.Key);
+				}
 			}
 			if (config.AlwaysAwait.Any())
 			{
-				fluentConfig.AlwaysAwait(CreateMethodPredicate(configuration, config.AlwaysAwait, true));
+				foreach (var group in config.AlwaysAwait.GroupBy(o => o.ExecutionPhase))
+				{
+					fluentConfig.AlwaysAwait(CreateMethodNullablePredicate(configuration, group.ToList(), true), group.Key);
+				}
 			}
 			if (config.IgnoreSearchForAsyncCounterparts.Any())
 			{
@@ -188,11 +197,17 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.IgnoreSearchForMethodReferences.Any())
 			{
-				fluentConfig.SearchForMethodReferences(CreateMethodPredicate(configuration, config.IgnoreSearchForMethodReferences, false));
+				foreach (var group in config.IgnoreSearchForMethodReferences.GroupBy(o => o.ExecutionPhase))
+				{
+					fluentConfig.SearchForMethodReferences(CreateMethodNullablePredicate(configuration, group.ToList(), false), group.Key);
+				}
 			}
 			if (config.TypeConversion.Any())
 			{
-				fluentConfig.TypeConversion(CreateTypeConversionFunction(configuration, config.TypeConversion));
+				foreach (var group in config.TypeConversion.GroupBy(o => o.ExecutionPhase))
+				{
+					fluentConfig.TypeConversion(CreateTypeConversionFunction(configuration, group.ToList()), group.Key);
+				}
 			}
 		}
 
@@ -248,6 +263,20 @@ namespace AsyncGenerator.Core.FileConfiguration
 			}
 			if (config.WithoutCancellationToken.Any() || config.RequiresCancellationToken.Any())
 			{
+				foreach (ExecutionPhase value in Enum.GetValues(typeof(ExecutionPhase)))
+				{
+					var withoutTokenGroup = config.WithoutCancellationToken.GroupBy(o => o.ExecutionPhase).FirstOrDefault(o => o.Key == value);
+					var requiresTokenGroup = config.RequiresCancellationToken.GroupBy(o => o.ExecutionPhase).FirstOrDefault(o => o.Key == value);
+					if (withoutTokenGroup != null || requiresTokenGroup != null)
+					{
+						fluentConfig.RequiresCancellationToken(
+							CreateMethodNullablePredicate(configuration,
+								withoutTokenGroup?.ToList() ?? new List<MethodFilter>(),
+								requiresTokenGroup?.ToList() ?? new List<MethodFilter>()
+							), value);
+					}
+				}
+
 				fluentConfig.RequiresCancellationToken(CreateMethodNullablePredicate(configuration, 
 					config.WithoutCancellationToken, config.RequiresCancellationToken));
 			}
@@ -435,6 +464,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 					if (CanApply(symbol, filter, rules))
 					{
 						return filter.Result;
+					}
+				}
+				return null;
+			};
+		}
+
+		private static Func<IMethodSymbol, bool?> CreateMethodNullablePredicate(AsyncGenerator globalConfig, IList<MethodFilter> filters, bool validValue)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return validValue;
 					}
 				}
 				return null;
