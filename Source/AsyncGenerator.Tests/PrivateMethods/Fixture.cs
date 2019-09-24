@@ -165,5 +165,29 @@ namespace AsyncGenerator.Tests.PrivateMethods
 				)
 			);
 		}
+
+		[Test]
+		public Task TestPartialCompilationAfterTransformation()
+		{
+			return ReadonlyTest(nameof(PartialCompilation), o => o
+				.ConfigureAnalyzation(a => a
+					.CancellationTokens(true)
+					.MethodConversion(symbol => symbol.Name == "List" ? MethodConversion.Smart : MethodConversion.Unknown)
+				)
+				.ConfigureParsing(p => p
+					.AddPreprocessorSymbolName("TEST")
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(PartialCompilation)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }
