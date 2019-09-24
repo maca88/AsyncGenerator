@@ -13,16 +13,18 @@ namespace AsyncGenerator.Analyzation.Internal
 		public void Diagnose(IEnumerable<DocumentData> documents)
 		{
 			var config = _configuration.Diagnostics;
-			foreach (var document in documents.Where(o => config.CanDiagnoseDocument(o.Document)))
+			foreach (var document in documents.Where(o => config.CanDiagnoseDocument(o.Document)).OrderBy(o => o.FilePath))
 			{
 				var logs = new List<KeyValuePair<DiagnosticSeverity, string>>();
 				
-				foreach (var diagnostic in document.GetDiagnostics())
+				foreach (var diagnostic in document.GetDiagnostics()
+					.OrderByDescending(o => o.DiagnosticSeverity)
+					.ThenBy(o => o.Description))
 				{
 					logs.Add(new KeyValuePair<DiagnosticSeverity, string>(diagnostic.DiagnosticSeverity, diagnostic.Description));
 				}
 
-				foreach (var namespaceData in document.GetAllNamespaceDatas())
+				foreach (var namespaceData in document.GetAllNamespaceDatas().OrderBy(o => o.Node?.SpanStart))
 				{
 					if (namespaceData.IsGlobal)
 					{
@@ -34,7 +36,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 
 					foreach (var typeData in namespaceData.Types.Values.SelectMany(o => o.GetSelfAndDescendantsTypeData())
-						.Where(o => config.CanDiagnoseType(o.Symbol)))
+						.Where(o => config.CanDiagnoseType(o.Symbol))
+						.OrderBy(o => o.Node.SpanStart))
 					{
 						var diagnosedFunctions = new List<FunctionData>(typeData.Methods.Count);
 						foreach (var functionData in typeData.Methods.Values.Where(o => config.CanDiagnoseMethod(o.Symbol))
@@ -44,7 +47,7 @@ namespace AsyncGenerator.Analyzation.Internal
 							DiagnoseFunction(functionData);
 							diagnosedFunctions.Add(functionData);
 						}
-						foreach (var functionData in diagnosedFunctions)
+						foreach (var functionData in diagnosedFunctions.OrderBy(o => o.GetNode().SpanStart))
 						{
 							if (functionData is MethodData methodData)
 							{
@@ -55,29 +58,34 @@ namespace AsyncGenerator.Analyzation.Internal
 								LogDiagnostics("Function", functionData, logs);
 							}
 
-							foreach (var bodyReference in functionData.BodyFunctionReferences)
+							foreach (var bodyReference in functionData.BodyFunctionReferences
+								.OrderBy(o => o.ReferenceNameNode.SpanStart))
 							{
 								LogReferenceDiagnostics(bodyReference, logs);
 							}
 						}
 
-						foreach (var methodData in typeData.SpecialMethods.Values.Where(o => config.CanDiagnoseMethod(o.Symbol)))
+						foreach (var methodData in typeData.SpecialMethods.Values
+							.Where(o => config.CanDiagnoseMethod(o.Symbol))
+							.OrderBy(o => o.GetNode().SpanStart))
 						{
 							LogDiagnostics("Method", methodData, logs);
 						}
 
-						foreach (var propertyData in typeData.Properties.Values)
+						foreach (var propertyData in typeData.Properties.Values.OrderBy(o => o.Node.SpanStart))
 						{
 							LogDiagnostics("Property", propertyData, logs);
 
-							foreach (var accessorData in propertyData.GetAccessors().Where(o => config.CanDiagnoseMethod(o.Symbol)))
+							foreach (var accessorData in propertyData.GetAccessors()
+								.Where(o => config.CanDiagnoseMethod(o.Symbol))
+								.OrderBy(o => o.Node.SpanStart))
 							{
 								DiagnoseFunction(accessorData);
 								LogDiagnostics("Property accessor", accessorData, logs);
 							}
 						}
 
-						foreach (var fieldData in typeData.Fields.Values)
+						foreach (var fieldData in typeData.Fields.Values.OrderBy(o => o.Node.SpanStart))
 						{
 							LogDiagnostics("Field", fieldData, logs);
 						}
