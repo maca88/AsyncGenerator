@@ -29,6 +29,7 @@ namespace AsyncGenerator
 #if !NETCOREAPP2_1
 		// In .NET only one project or solution can be opened simultaneously
 		private static SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+		private const int LockTimeout = 30 * 1000;
 #endif
 
 		static AsyncCodeGenerator() { }
@@ -361,7 +362,7 @@ namespace AsyncGenerator
 			}
 
 #if !NETCOREAPP2_1
-			if (!await _lock.WaitAsync(5000, cancellationToken).ConfigureAwait(false))
+			if (!await _lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
 			{
 				throw new InvalidOperationException($"Project {filePath} cannot be opened beacause a build is already in progress.");
 			}
@@ -385,7 +386,7 @@ namespace AsyncGenerator
 			}
 
 #if !NETCOREAPP2_1
-			if (!await _lock.WaitAsync(5000, cancellationToken).ConfigureAwait(false))
+			if (!await _lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
 			{
 				throw new InvalidOperationException($"Solution {filePath} cannot be opened beacause a build is already in progress.");
 			}
