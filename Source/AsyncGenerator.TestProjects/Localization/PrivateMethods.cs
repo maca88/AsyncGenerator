@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,9 +48,7 @@ namespace Localization
 
 		protected virtual IList List()
 		{
-			var stream = File.OpenRead("");
-			stream.Read(new byte[] { }, 0, 100);
-			stream.Dispose();
+			Thread.Sleep(1);
 			return null;
 		}
 	}

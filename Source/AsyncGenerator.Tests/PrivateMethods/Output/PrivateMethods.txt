@@ -10,7 +10,6 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,9 +34,7 @@ namespace Localization
 
 		protected virtual async Task<IList> ListAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			var stream = File.OpenRead("");
-			await (stream.ReadAsync(new byte[] { }, 0, 100, cancellationToken));
-			stream.Dispose();
+			await (Task.Delay(1, cancellationToken));
 			return null;
 		}
 	}

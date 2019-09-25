@@ -191,7 +191,7 @@ namespace AsyncGenerator.Tests.PrivateMethods
 							.CancellationTokens(true)
 							.DocumentSelection(d => d.Name == "PrivateMethods.cs")
 							.MethodConversion(symbol => symbol.Name == "List" ? MethodConversion.Smart : MethodConversion.Unknown)
-							.CancellationTokens(true))
+						)
 						.ConfigureParsing(p => p
 							.AddPreprocessorSymbolName("TEST")
 						)
