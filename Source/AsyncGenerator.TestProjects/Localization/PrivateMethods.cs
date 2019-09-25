@@ -1,24 +1,13 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.PrivateMethods.Input
+namespace Localization
 {
-	public class PartialCompilationDerived : PartialCompilation
-	{
-		protected override IList List()
-		{
-			SimpleFile.Read();
-			return null;
-		}
-	}
-
-	public class PartialCompilation
+	public class PrivateMethods
 	{
 		public class FutureValue<T>
 		{
@@ -37,7 +26,7 @@ namespace AsyncGenerator.Tests.PrivateMethods.Input
 			}
 		}
 
-#if TEST
+		#if TEST
 
 		public FutureValue<TResult> GetFutureValue<TResult>()
 		{
@@ -46,7 +35,7 @@ namespace AsyncGenerator.Tests.PrivateMethods.Input
 				cancellationToken => GetCurrentResultAsync<TResult>(0, cancellationToken));
 			return future;
 		}
-#endif
+		#endif
 
 		private IList GetResults()
 		{
@@ -60,7 +49,10 @@ namespace AsyncGenerator.Tests.PrivateMethods.Input
 
 		protected virtual IList List()
 		{
-			throw new NotSupportedException();
+			var stream = File.OpenRead("");
+			stream.Read(new byte[] { }, 0, 100);
+			stream.Dispose();
+			return null;
 		}
 	}
 }

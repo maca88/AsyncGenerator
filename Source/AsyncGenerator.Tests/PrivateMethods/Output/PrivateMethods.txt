@@ -8,31 +8,20 @@
 //------------------------------------------------------------------------------
 
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncGenerator.TestCases;
 
-namespace AsyncGenerator.Tests.PrivateMethods.Input
+namespace Localization
 {
-	public partial class PartialCompilationDerived : PartialCompilation
-	{
-		protected override async Task<IList> ListAsync(CancellationToken cancellationToken = default(CancellationToken))
-		{
-			await (SimpleFile.ReadAsync(cancellationToken));
-			return null;
-		}
-	}
-
-	public partial class PartialCompilation
+	public partial class PrivateMethods
 	{
 
 		#if TEST
-#endif
+		#endif
 
 		private Task<IList> GetResultsAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
@@ -44,9 +33,12 @@ namespace AsyncGenerator.Tests.PrivateMethods.Input
 			return ((IList)(await (GetResultsAsync(cancellationToken)))[currentIndex]).Cast<TResult>();
 		}
 
-		protected virtual Task<IList> ListAsync(CancellationToken cancellationToken = default(CancellationToken))
+		protected virtual async Task<IList> ListAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			throw new NotSupportedException();
+			var stream = File.OpenRead("");
+			await (stream.ReadAsync(new byte[] { }, 0, 100, cancellationToken));
+			stream.Dispose();
+			return null;
 		}
 	}
 }

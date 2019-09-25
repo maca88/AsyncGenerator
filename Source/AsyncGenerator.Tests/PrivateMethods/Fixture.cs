@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Globalization;
 using System.Threading.Tasks;
+using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
 using AsyncGenerator.Tests.PrivateMethods.Input;
 using NUnit.Framework;
@@ -166,28 +164,54 @@ namespace AsyncGenerator.Tests.PrivateMethods
 			);
 		}
 
-		[Test]
-		public Task TestPartialCompilationAfterTransformation()
+		[TestCase("cs")]
+		[TestCase("de")]
+		[TestCase("es")]
+		[TestCase("fr")]
+		[TestCase("it")]
+		[TestCase("ja")]
+		[TestCase("ko")]
+		[TestCase("pl")]
+		[TestCase("pt-BR")]
+		[TestCase("tr")]
+		[TestCase("zh-Hans")]
+		[TestCase("zh-Hant")]
+		public async Task TestCS0103LocalizationAfterTransformation(string culture)
 		{
-			return ReadonlyTest(nameof(PartialCompilation), o => o
-				.ConfigureAnalyzation(a => a
-					.CancellationTokens(true)
-					.MethodConversion(symbol => symbol.Name == "List" ? MethodConversion.Smart : MethodConversion.Unknown)
-				)
-				.ConfigureParsing(p => p
-					.AddPreprocessorSymbolName("TEST")
-				)
-				.ConfigureTransformation(t => t
-					.AfterTransformation(result =>
-					{
-						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
-						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(PartialCompilation)), document.Transformed.ToFullString());
-					})
-				)
-			);
+			var origUiCluture = CultureInfo.CurrentUICulture;
+			try
+			{
+				var cultureInfo = CultureInfo.GetCultureInfo(culture);
+				CultureInfo.CurrentUICulture = cultureInfo;
+				CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+				await AsyncCodeGenerator.GenerateAsync(AsyncCodeConfiguration.Create()
+					.ConfigureProject(GetTestProjectPath("Localization"), o => o
+						.ConfigureAnalyzation(a => a
+							.CancellationTokens(true)
+							.DocumentSelection(d => d.Name == "PrivateMethods.cs")
+							.MethodConversion(symbol => symbol.Name == "List" ? MethodConversion.Smart : MethodConversion.Unknown)
+							.CancellationTokens(true))
+						.ConfigureParsing(p => p
+							.AddPreprocessorSymbolName("TEST")
+						)
+						.ConfigureTransformation(t => t
+							.AfterTransformation(result =>
+							{
+								AssertValidAnnotations(result);
+								Assert.AreEqual(1, result.Documents.Count);
+								var document = result.Documents[0];
+								Assert.NotNull(document.OriginalModified);
+								Assert.AreEqual(GetOutputFile("PrivateMethods"), document.Transformed.ToFullString());
+							})
+						)
+						.ApplyChanges(false)));
+			}
+			finally
+			{
+				CultureInfo.CurrentUICulture = origUiCluture;
+				CultureInfo.DefaultThreadCurrentUICulture = origUiCluture;
+			}
 		}
 	}
 }
