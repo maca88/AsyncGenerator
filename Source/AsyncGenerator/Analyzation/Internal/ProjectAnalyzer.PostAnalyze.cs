@@ -678,9 +678,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						// Ignore only if there is no CS0103 error related to the current function.
 						// e.g. The name 'identifier' does not exist in the current context
 						if (!methodOrAccessor.TypeData.NamespaceData.DocumentData.SemanticModel.GetDiagnostics()
-							.Where(o => o.Id == "CS0103")
-							.Select(o => Regex.Match(o.GetMessage(), "'(.+)'").Groups[1].Value)
-							.Any(o => o.Equals(methodOrAccessor.AsyncCounterpartName)))
+							.Any(o => o.Id == "CS0103" && o.GetMessage().Contains(methodOrAccessor.AsyncCounterpartName)))
 						{
 							methodOrAccessor.Ignore(IgnoreReason.NeverUsed);
 						}
