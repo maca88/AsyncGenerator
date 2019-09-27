@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AsyncGenerator.Core;
@@ -677,8 +678,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					case MethodUsage.None:
 						// Ignore only if there is no CS0103 error related to the current function.
 						// e.g. The name 'identifier' does not exist in the current context
-						if (!methodOrAccessor.TypeData.NamespaceData.DocumentData.SemanticModel.GetDiagnostics()
-							.Any(o => o.Id == "CS0103" && o.GetMessage().Contains(methodOrAccessor.AsyncCounterpartName)))
+						if (!methodOrAccessor.TypeData.NamespaceData.DocumentData.SemanticModel.GetDiagnostics(methodOrAccessor.TypeData.Node.Span)
+							.Any(o => o.Id == "CS0103" && o.GetMessage(CultureInfo.InvariantCulture).Contains($"'{methodOrAccessor.AsyncCounterpartName}'")))
 						{
 							methodOrAccessor.Ignore(IgnoreReason.NeverUsed);
 						}
