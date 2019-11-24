@@ -22,6 +22,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteAbstractDerived : ObsoleteAbstract
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public override Task<IEnumerable<int>> TestAsync()
 		{
@@ -35,6 +36,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteAbstractDerived2 : ObsoleteAbstract
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public override Task<IEnumerable<int>> TestAsync()
 		{

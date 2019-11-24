@@ -18,6 +18,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteInterfaceTokenDerived : ObsoleteInterfaceToken
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
 		{
@@ -31,6 +32,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteInterfaceTokenDerived2 : ObsoleteInterfaceToken
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
 		{

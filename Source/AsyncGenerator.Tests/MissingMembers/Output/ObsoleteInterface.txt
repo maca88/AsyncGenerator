@@ -17,6 +17,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteInterfaceDerived : ObsoleteInterface
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public Task<IEnumerable<int>> TestAsync()
 		{
@@ -30,6 +31,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteInterfaceDerived2 : ObsoleteInterface
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public Task<IEnumerable<int>> TestAsync()
 		{

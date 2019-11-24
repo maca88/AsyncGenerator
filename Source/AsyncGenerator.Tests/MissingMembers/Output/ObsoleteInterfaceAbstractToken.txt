@@ -18,22 +18,20 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public abstract partial class ObsoleteInterfaceAbstractTokenDerived : ObsoleteInterfaceAbstractToken
 	{
-		/// <summary>
-		/// Test
-		/// </summary>
-		/// <param name="cancellationToken">Token</param>
-		/// <returns></returns>
+		// Test2
+		/// <inheritdoc />
+		// Test1
+		// ttttt
 		[Obsolete]
 		public abstract Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken);
 	}
 
 	public partial class ObsoleteInterfaceAbstractTokenDerived2 : ObsoleteInterfaceAbstractTokenDerived
 	{
-		/// <summary>
-		/// Test
-		/// </summary>
-		/// <param name="cancellationToken">Token</param>
-		/// <returns></returns>
+		// Test2
+		/// <inheritdoc />
+		// Test1
+		// ttttt
 		[Obsolete]
 		public override Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
 		{

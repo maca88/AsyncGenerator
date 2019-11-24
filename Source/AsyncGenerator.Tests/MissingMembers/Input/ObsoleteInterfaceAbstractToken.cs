@@ -13,11 +13,14 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		/// <returns></returns>
 		IEnumerable<int> Test();
 #if OBSOLETE
+		// Test2
 		/// <summary>
 		/// Test
 		/// </summary>
 		/// <param name="cancellationToken">Token</param>
 		/// <returns></returns>
+		// Test1
+		// ttttt
 		[Obsolete]
 		Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken);
 #endif

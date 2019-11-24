@@ -22,6 +22,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteAbstractTokenDerived : ObsoleteAbstractToken
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public override Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
 		{
@@ -35,6 +36,7 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 
 	public partial class ObsoleteAbstractTokenDerived2 : ObsoleteAbstractToken
 	{
+		/// <inheritdoc />
 		[Obsolete]
 		public override Task<IEnumerable<int>> TestAsync(CancellationToken cancellationToken)
 		{

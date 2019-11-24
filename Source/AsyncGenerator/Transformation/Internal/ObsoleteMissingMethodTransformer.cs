@@ -55,11 +55,15 @@ namespace AsyncGenerator.Transformation.Internal
 			namespaceMetadata.AddUsing("System");
 			AttributeListSyntax obsoleteAttribute = null;
 			var syntaxReference = baseMethod.AsyncCounterpartSymbol.DeclaringSyntaxReferences.SingleOrDefault();
+			SyntaxTrivia? documentationTrivia = null;
 			if (syntaxReference != null)
 			{
 				var baseMethodNode = syntaxReference.GetSyntax() as MethodDeclarationSyntax;
 				obsoleteAttribute = baseMethodNode?.AttributeLists.FirstOrDefault(o => o.Attributes.Count == 1 && o.Attributes.First().Name.ToString() == "Obsolete");
 				obsoleteAttribute = (AttributeListSyntax)_directiveRemover.VisitAttributeList(obsoleteAttribute);
+				documentationTrivia = obsoleteAttribute.GetLeadingTrivia()
+					.Select(o => o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia) ? o : (SyntaxTrivia?) null)
+					.FirstOrDefault(o => o.HasValue);
 			}
 
 			if (obsoleteAttribute == null)
@@ -69,11 +73,49 @@ namespace AsyncGenerator.Transformation.Internal
 					.WithCloseBracketToken(Token(TriviaList(), SyntaxKind.CloseBracketToken, TriviaList(transformResult.EndOfLineTrivia)));
 			}
 
+			var inheritDocTrivia = Trivia(GetInheritdoc(transformResult.EndOfLineTrivia.ToFullString()));
+			if (documentationTrivia.HasValue)
+			{
+				obsoleteAttribute = obsoleteAttribute.WithLeadingTrivia(obsoleteAttribute.GetLeadingTrivia()
+					.Replace(documentationTrivia.Value, inheritDocTrivia));
+			}
+			else
+			{
+				// Append <inheritdoc />
+				var leadingTrivia = obsoleteAttribute.GetLeadingTrivia();
+				var trivias = new List<SyntaxTrivia>();
+				if (leadingTrivia.Count == 0 || !leadingTrivia.Last().IsKind(SyntaxKind.WhitespaceTrivia))
+				{
+					trivias.Add(transformResult.LeadingWhitespaceTrivia);
+				}
+
+				trivias.Add(inheritDocTrivia);
+				trivias.Add(transformResult.LeadingWhitespaceTrivia);
+				obsoleteAttribute = obsoleteAttribute.WithLeadingTrivia(leadingTrivia.AddRange(trivias));
+			}
+
 			methodNode = methodNode
 				.WithLeadingTrivia(TriviaList(transformResult.LeadingWhitespaceTrivia))
 				.WithAttributeLists(methodNode.AttributeLists.Add(obsoleteAttribute));
 				
 			return MethodTransformerResult.Update(methodNode);
+		}
+
+		private DocumentationCommentTriviaSyntax GetInheritdoc(string eol)
+		{
+			return DocumentationCommentTrivia(
+				SyntaxKind.SingleLineDocumentationCommentTrivia,
+				List(new XmlNodeSyntax[]
+					{
+						XmlText()
+							.WithTextTokens(TokenList(XmlTextLiteral(TriviaList(DocumentationCommentExterior("///")), " ", " ", TriviaList()))),
+						XmlEmptyElement(XmlName(Identifier("inheritdoc")))
+							.WithSlashGreaterThanToken(Token(TriviaList(Space), SyntaxKind.SlashGreaterThanToken, TriviaList())),
+						XmlText()
+							.WithTextTokens(TokenList(XmlTextNewLine(TriviaList(), eol, eol, TriviaList())))
+					}
+				)
+			);
 		}
 	}
 }
