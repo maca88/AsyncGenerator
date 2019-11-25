@@ -397,6 +397,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						methodData.AsyncCounterpartSymbol = asyncCounterpart;
 					}
+
+					methodData.IgnoreAsyncCounterpart = _configuration.IgnoreAsyncCounterpartsPredicates.Any(p => p(asyncCounterpart));
 				}
 				// TODO: define a better logic
 				// We should not ignore if none of the async counterparts is in the sync method type.

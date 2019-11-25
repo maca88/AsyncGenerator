@@ -704,7 +704,14 @@ namespace AsyncGenerator.Analyzation.Internal
 				    functionReferenceData.ArgumentOfFunctionInvocation == null &&
 				    analyzationResult.CanBeAsync)
 				{
-					functionReferenceData.ToAsync();
+					if (functionReferenceData.AsyncCounterpartSymbol.IsObsolete())
+					{
+						functionReferenceData.Ignore(IgnoreReason.CallObsoleteMethod);
+					}
+					else
+					{
+						functionReferenceData.ToAsync();
+					}
 				}
 
 				// Ignore the method if we found its async counterpart

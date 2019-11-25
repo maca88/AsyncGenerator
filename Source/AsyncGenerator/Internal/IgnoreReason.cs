@@ -19,6 +19,7 @@ namespace AsyncGenerator.Internal
 		public static IgnoreReason NeverUsedAsAsync = new IgnoreReason("Never used as async", DiagnosticSeverity.Hidden);
 		public static IgnoreReason NoAsyncMembers = new IgnoreReason("No async members", DiagnosticSeverity.Hidden);
 		public static IgnoreReason AsyncCounterpartExists = new IgnoreReason("An async counterpart already exists", DiagnosticSeverity.Hidden);
+		public static IgnoreReason CallObsoleteMethod = new IgnoreReason("Calling an obsolete method", DiagnosticSeverity.Hidden);
 
 		public static IgnoreReason InvokedMethodNoAsyncCounterpart = new IgnoreReason("The invoked method does not have an async counterpart", DiagnosticSeverity.Hidden);
 		public static IgnoreReason NoAsyncCounterparts = new IgnoreReason("No async counterparts", DiagnosticSeverity.Hidden);

@@ -8,6 +8,7 @@ using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -36,7 +37,7 @@ namespace AsyncGenerator.Transformation.Internal
 			ITypeTransformationMetadata typeMetadata, INamespaceTransformationMetadata namespaceMetadata)
 		{
 			var methodResult = transformResult.AnalyzationResult;
-			if (!methodResult.Missing || !methodResult.Conversion.HasFlag(MethodConversion.ToAsync) || methodResult.Symbol.GetAttributes().Any(o => o.AttributeClass.Name == nameof(ObsoleteAttribute)))
+			if (!methodResult.Missing || !methodResult.Conversion.HasFlag(MethodConversion.ToAsync) || methodResult.Symbol.IsObsolete())
 			{
 				return MethodTransformerResult.Skip;
 			}
@@ -46,7 +47,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.Where(o =>
 					(methodResult.BaseOverriddenMethod != null && o.Symbol.Equals(methodResult.BaseOverriddenMethod)) ||
 					methodResult.ImplementedInterfaces.Any(i => o.Symbol.Equals(i)))
-				.FirstOrDefault(o => o.AsyncCounterpartSymbol?.GetAttributes().Any(a => a.AttributeClass.Name == nameof(ObsoleteAttribute)) == true);
+				.FirstOrDefault(o => o.AsyncCounterpartSymbol?.IsObsolete() == true);
 			if (baseMethod == null)
 			{
 				return MethodTransformerResult.Skip;

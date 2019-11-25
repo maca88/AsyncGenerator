@@ -101,6 +101,11 @@ namespace AsyncGenerator.Extensions.Internal
 			return syntax.Span.Length == 4; // get; or set;
 		}
 
+		internal static bool IsObsolete(this IMethodSymbol symbol)
+		{
+			return symbol.GetAttributes().Any(o => o.AttributeClass.Name == nameof(ObsoleteAttribute));
+		}
+
 		internal static bool? IsVirtualAbstractOrInterface(this IMethodSymbol symbol)
 		{
 			return symbol.IsVirtual || symbol.IsAbstract || symbol.ContainingType.IsAbstract;

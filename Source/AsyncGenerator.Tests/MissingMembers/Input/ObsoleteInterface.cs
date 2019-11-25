@@ -42,4 +42,17 @@ namespace AsyncGenerator.Tests.MissingMembers.Input
 		}
 #endif
 	}
+
+	public class CallObsoleteInterface
+	{
+		public IEnumerable<int> Call(ObsoleteInterface obsolete)
+		{
+			if (obsolete != null)
+			{
+				return obsolete.Test();
+			}
+
+			return obsolete.Test();
+		}
+	}
 }

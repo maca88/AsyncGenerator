@@ -119,22 +119,28 @@ namespace AsyncGenerator.Transformation.Internal
 			return node;
 		}
 
-		//public override SyntaxNode VisitCatchClause(CatchClauseSyntax node)
-		//{
-		//	// TODO: add a declaration only if there is a throws statement
-		//	if (node.Declaration == null)
-		//	{
-		//		node = node.WithDeclaration(
-		//			CatchDeclaration(IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space))))
-		//				.WithIdentifier(Identifier("x"))
-		//				.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_eolTrivia))));
-		//	}
-		//	else if (node.Declaration.Identifier.ValueText == null)
-		//	{
-		//		node = node.ReplaceNode(node.Declaration, node.Declaration.WithIdentifier(Identifier("x")));
-		//	}
-		//	return base.VisitCatchClause(node);
-		//}
+		public override SyntaxNode VisitCatchClause(CatchClauseSyntax node)
+		{
+			//// TODO: add a declaration only if there is a throws statement
+			//if (node.Declaration == null)
+			//{
+			//	node = node.WithDeclaration(
+			//		CatchDeclaration(IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space))))
+			//			.WithIdentifier(Identifier("x"))
+			//			.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(_eolTrivia))));
+			//}
+
+			// We have to add an identifier when only throw is used (e.g. { throw; })
+			if (node.Declaration != null && node.Declaration.Identifier.ValueText == null && 
+				node.Block?.DescendantNodes().Any(o => o is ThrowStatementSyntax throwStatement && throwStatement.Expression == null) == true)
+			{
+				node = node.ReplaceNode(node.Declaration, node.Declaration
+					.WithType(node.Declaration.Type.WithTrailingTrivia(Space))
+					.WithIdentifier(Identifier("x")));
+			}
+
+			return base.VisitCatchClause(node);
+		}
 
 		public override SyntaxNode Visit(SyntaxNode node)
 		{

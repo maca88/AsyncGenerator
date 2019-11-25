@@ -129,11 +129,16 @@ namespace AsyncGenerator.Internal
 			var methodConversion = MethodConversion.Unknown;
 			if (ReferenceFunctionData != null)
 			{
-				methodConversion =
-					ReferenceFunctionData.Conversion == MethodConversion.Ignore &&
-					ReferenceFunctionData.IgnoredReason == IgnoreReason.AsyncCounterpartExists
-						? MethodConversion.Unknown
-						: ReferenceFunctionData.Conversion;
+				if (ReferenceFunctionData.IgnoredReason == IgnoreReason.AsyncCounterpartExists)
+				{
+					methodConversion = ((MethodOrAccessorData) ReferenceFunctionData).GetValidAsyncCounterpartSymbol()?.IsObsolete() != false
+						? MethodConversion.Ignore
+						: MethodConversion.ToAsync;
+				}
+				else
+				{
+					methodConversion = ReferenceFunctionData.Conversion;
+				}
 			}
 			
 			var conversion = Conversion;

@@ -63,6 +63,11 @@ namespace AsyncGenerator.Internal
 		public IMethodSymbol AsyncCounterpartSymbol { get; set; }
 
 		/// <summary>
+		/// Whether to ignore the async counterpart when calculating the final conversion.
+		/// </summary>
+		public bool IgnoreAsyncCounterpart { get; set; }
+
+		/// <summary>
 		/// Reference to the async counterpart that has a <see cref="System.Threading.CancellationToken"/>
 		/// </summary>
 		public IMethodSymbol AsyncCounterpartWithTokenSymbol { get; set; }
@@ -70,6 +75,16 @@ namespace AsyncGenerator.Internal
 		public bool CancellationTokenRequired { get; set; }
 
 		public bool HasAsyncCounterpart => AsyncCounterpartWithTokenSymbol != null || AsyncCounterpartSymbol != null;
+
+		public IMethodSymbol GetValidAsyncCounterpartSymbol()
+		{
+			if (IgnoreAsyncCounterpart)
+			{
+				return null;
+			}
+
+			return AsyncCounterpartWithTokenSymbol ?? AsyncCounterpartSymbol;
+		}
 
 		public abstract bool IsPrivate { get; }
 
