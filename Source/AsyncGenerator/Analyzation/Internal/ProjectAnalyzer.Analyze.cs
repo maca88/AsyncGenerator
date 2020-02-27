@@ -738,7 +738,6 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				functionReferenceData.AsyncCounterpartName = functionReferenceData.ReferenceFunctionData.AsyncCounterpartName;
 				functionReferenceData.AsyncCounterpartSymbol = methodSymbol;
-				
 			}
 			return true;
 		}

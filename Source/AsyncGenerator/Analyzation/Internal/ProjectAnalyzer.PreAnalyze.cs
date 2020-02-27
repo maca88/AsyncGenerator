@@ -215,6 +215,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				if (newType)
 				{
+					// TODO: We should copy only when the method will be used by the generated methods or is implementing/overriding an interface/base type
 					functionData.Copy();
 				}
 				else
