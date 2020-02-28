@@ -211,11 +211,22 @@ namespace AsyncGenerator.Analyzation.Internal
 			functionData.ForceAsync = functionData.Conversion.HasFlag(MethodConversion.ToAsync);
 			var newType = functionData.TypeData.IsNewType;
 			// Here we want to log only ignored methods that were explicitly set to async
-			void IgnoreOrCopy(IgnoreReason reason)
+			void IgnoreOrCopy(IgnoreReason reason, bool forceCopy = false)
 			{
 				if (newType)
 				{
-					functionData.Copy();
+					// The method should be copied only when it is referenced by a method that will be generated, is implementing/overriding an
+					// interface/base type or it is explicitly flagged by the user to bo copied
+					functionData.CanBeAsync = false;
+					if (forceCopy || functionData.Conversion.HasFlag(MethodConversion.Copy))
+					{
+						functionData.Copy();
+					}
+					else
+					{
+						// Scan references in order to later decide whether the method will be copied or ignored.
+						functionData.Smart();
+					}
 				}
 				else
 				{
@@ -223,8 +234,8 @@ namespace AsyncGenerator.Analyzation.Internal
 					{
 						reason = reason.WithSeverity(DiagnosticSeverity.Warning);
 					}
+
 					functionData.Ignore(reason);
-					
 				}
 			}
 
@@ -233,6 +244,19 @@ namespace AsyncGenerator.Analyzation.Internal
 				IgnoreOrCopy(IgnoreReason.AlreadyAsync);
 				return;
 			}
+
+			// Constructors should always be copied for new types
+			if (newType && 
+			    (
+				    methodSymbol.MethodKind == MethodKind.Constructor ||
+					methodSymbol.MethodKind == MethodKind.Destructor ||
+					methodSymbol.MethodKind == MethodKind.StaticConstructor
+				))
+			{
+				IgnoreOrCopy(IgnoreReason.NotSupported($"Unsupported method kind {methodSymbol.MethodKind}"), true);
+				return;
+			}
+
 			if (
 				methodSymbol.MethodKind != MethodKind.Ordinary && 
 				methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation &&
@@ -277,7 +301,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
 						if (!asyncConterparts.Any())
 						{
-							IgnoreOrCopy(IgnoreReason.ExplicitImplementsExternalMethodWithoutAsync(interfaceMember));
+							IgnoreOrCopy(IgnoreReason.ExplicitImplementsExternalMethodWithoutAsync(interfaceMember), true);
 							return;
 						}
 					}
@@ -304,7 +328,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.ExternalRelatedMethods.TryAdd(overridenMethod);
 					if (!asyncConterparts.Any())
 					{
-						IgnoreOrCopy(IgnoreReason.OverridesExternalMethodWithoutAsync(overridenMethod));
+						IgnoreOrCopy(IgnoreReason.OverridesExternalMethodWithoutAsync(overridenMethod), true);
 						return;
 					}
 				}
@@ -355,7 +379,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					methodData.ExternalRelatedMethods.TryAdd(interfaceMember);
 					if (!asyncConterparts.Any())
 					{
-						IgnoreOrCopy(IgnoreReason.ImplementsExternalMethodWithoutAsync(interfaceMember));
+						IgnoreOrCopy(IgnoreReason.ImplementsExternalMethodWithoutAsync(interfaceMember), true);
 						return;
 					}
 				}

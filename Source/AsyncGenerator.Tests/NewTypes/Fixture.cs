@@ -458,5 +458,27 @@ namespace AsyncGenerator.Tests.NewTypes
 				)
 			);
 		}
+
+		[Test]
+		public Task TestAlreadyAsyncAfterTransformation()
+		{
+			return ReadonlyTest(nameof(AlreadyAsync), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.TypeConversion(symbol => TypeConversion.NewType)
+					.ScanMethodBody(true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(AlreadyAsync)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

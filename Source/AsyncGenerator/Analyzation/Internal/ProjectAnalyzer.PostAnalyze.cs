@@ -52,7 +52,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 				CalculatePreserveReturnType(currentMethodData);
 
-				foreach (var depFunctionData in currentMethodData.Dependencies)
+				foreach (var depFunctionData in currentMethodData.Dependencies.Where(o => o.CanBeAsync))
 				{
 					var depMethodData = depFunctionData as MethodOrAccessorData;
 					var bodyReferences = depFunctionData.BodyFunctionReferences.Where(o => o.ReferenceFunctionData == currentMethodData).ToList();
@@ -415,7 +415,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
-			if (functionData.BodyFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
+			if (functionData.CanBeAsync && functionData.BodyFunctionReferences.Any(o => o.GetConversion() == ReferenceConversion.ToAsync))
 			{
 				functionData.ToAsync();
 			}
@@ -502,7 +502,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// to dependency methods
 			if (_configuration.UseCancellationTokens || _configuration.CanScanForMissingAsyncMembers != null)
 			{
-				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired).ToList();
+				var tokenMethodDatas = toProcessMethodData.Where(o => o.CancellationTokenRequired && o.CanBeAsync).ToList();
 				foreach (var tokenMethodData in tokenMethodDatas)
 				{
 					if (toProcessMethodData.Count == 0)
@@ -530,7 +530,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			// TODO: should we start from the bottom/leaf method that is async? how do we know if the method is a leaf (consider circular calls)?
 			var remainingMethodData = toProcessMethodData.ToList();
 			var postponedMethodData = new List<MethodOrAccessorData>();
-			foreach (var methodData in remainingMethodData)
+			foreach (var methodData in remainingMethodData.Where(o => o.CanBeAsync))
 			{
 				// Start from the bottom child function in case the root function calls them
 				foreach (var childFunction in methodData.GetDescendantsChildFunctions()

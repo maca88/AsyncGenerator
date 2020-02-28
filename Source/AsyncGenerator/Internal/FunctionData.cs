@@ -29,6 +29,11 @@ namespace AsyncGenerator.Internal
 
 		public bool ForceAsync { get; set; }
 
+		/// <summary>
+		/// Whether the function can be converted to an async method. Default: true
+		/// </summary>
+		public bool CanBeAsync { get; set; } = true;
+
 		public abstract FunctionData ParentFunction { get; }
 
 		public override ISymbol GetSymbol()
