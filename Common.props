@@ -14,5 +14,6 @@
     <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0</LibTargetFrameworks>
     <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp2.1</AppTargetFrameworks>
     <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net472</TestTargetFramework>
+    <ToolTargetFramework Condition ="$(ToolTargetFramework) == ''">netcoreapp2.1</ToolTargetFramework>
   </PropertyGroup>
 </Project>

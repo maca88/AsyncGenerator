@@ -1,19 +1,21 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.13
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator", "AsyncGenerator/AsyncGenerator.csproj", "{9D321EA8-54AE-4741-86A8-12198551AD67}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator", "AsyncGenerator\AsyncGenerator.csproj", "{9D321EA8-54AE-4741-86A8-12198551AD67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Tests", "AsyncGenerator.Tests/AsyncGenerator.Tests.csproj", "{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator.Tests", "AsyncGenerator.Tests\AsyncGenerator.Tests.csproj", "{0A3D852A-5C81-4E74-AC16-85BA2EBF3581}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.TestCases", "AsyncGenerator.TestCases/AsyncGenerator.TestCases.csproj", "{A183D706-0DBB-4F6B-92A5-6359660255D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator.TestCases", "AsyncGenerator.TestCases\AsyncGenerator.TestCases.csproj", "{A183D706-0DBB-4F6B-92A5-6359660255D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Core", "AsyncGenerator.Core/AsyncGenerator.Core.csproj", "{7F45BDB9-6B8D-421F-9F91-D92AAB8F0F24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator.Core", "AsyncGenerator.Core\AsyncGenerator.Core.csproj", "{7F45BDB9-6B8D-421F-9F91-D92AAB8F0F24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.Configuration.Yaml", "AsyncGenerator.Configuration.Yaml/AsyncGenerator.Configuration.Yaml.csproj", "{C130CF5A-6543-4396-99C3-E223FF3C5EEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator.Configuration.Yaml", "AsyncGenerator.Configuration.Yaml\AsyncGenerator.Configuration.Yaml.csproj", "{C130CF5A-6543-4396-99C3-E223FF3C5EEE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncGenerator.CommandLine", "AsyncGenerator.CommandLine/AsyncGenerator.CommandLine.csproj", "{BF73EAAC-697E-456C-A323-3DF13A00EC64}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator.CommandLine", "AsyncGenerator.CommandLine\AsyncGenerator.CommandLine.csproj", "{BF73EAAC-697E-456C-A323-3DF13A00EC64}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsyncGenerator.Tool", "AsyncGenerator.Tool\AsyncGenerator.Tool.csproj", "{DB1892E6-5980-4005-9CEB-B4B0E46FAA97}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,8 +47,15 @@ Global
 		{BF73EAAC-697E-456C-A323-3DF13A00EC64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF73EAAC-697E-456C-A323-3DF13A00EC64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF73EAAC-697E-456C-A323-3DF13A00EC64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB1892E6-5980-4005-9CEB-B4B0E46FAA97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB1892E6-5980-4005-9CEB-B4B0E46FAA97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB1892E6-5980-4005-9CEB-B4B0E46FAA97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB1892E6-5980-4005-9CEB-B4B0E46FAA97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {03161291-4CAD-4F5B-B2C6-081AB05963F0}
 	EndGlobalSection
 EndGlobal

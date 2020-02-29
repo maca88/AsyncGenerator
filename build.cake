@@ -23,6 +23,7 @@ var buildDirs = new List<string>()
 {
     Directory("./Source/AsyncGenerator/bin") + Directory(configuration),
     Directory("./Source/AsyncGenerator.CommandLine/bin") + Directory(configuration),
+    Directory("./Source/AsyncGenerator.Tool/bin") + Directory(configuration),
     Directory("./Source/AsyncGenerator.Configuration.Yaml/bin") + Directory(configuration),
     Directory("./Source/AsyncGenerator.Core/bin") + Directory(configuration)
 };
@@ -202,6 +203,13 @@ Task("Pack")
                 .Append("/p:PackageOutputPath=\"" + PACKAGE_DIR + "\"")
         });
     }
+
+    DotNetCorePack("Source/AsyncGenerator.Tool/AsyncGenerator.Tool.csproj", new DotNetCorePackSettings {
+        Configuration = configuration,
+        OutputDirectory = PACKAGE_DIR,
+        IncludeSymbols = false,
+        ArgumentCustomization = arg => arg.Append("/p:PackAsTool=true")
+    });
 });
     
 Task("Publish")

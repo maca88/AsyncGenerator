@@ -4,7 +4,6 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(AppTargetFrameworks)</TargetFrameworks>
     <ServerGarbageCollection>true</ServerGarbageCollection>
-    <PackageType>DotnetTool</PackageType>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -13,21 +12,13 @@
     <PackageId>CSharpAsyncGenerator.CommandLine</PackageId>
     <Product>AsyncGenerator.CommandLine</Product>
     <Description>Tool for generating async C# code</Description>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>async-generator</ToolCommandName>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1'">
     <IsTool>true</IsTool>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1'">
+  <ItemGroup>
     <Content Include="$(OutputPath)\**\*.dll;$(OutputPath)\**\*.exe;$(OutputPath)\**\*runtimeconfig.json;$(OutputPath)\**\AsyncGenerator.CommandLine*.config;">
       <Pack>true</Pack>
       <PackagePath>tools</PackagePath>
