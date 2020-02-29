@@ -46,6 +46,7 @@ $@"<Project>
     <TestTargetFramework>{framework}</TestTargetFramework>
     <AppTargetFrameworks>{framework}</AppTargetFrameworks>
     <LibTargetFrameworks>{framework}</LibTargetFrameworks>
+    <ToolTargetFramework>{framework}</ToolTargetFramework>
   </PropertyGroup>
 </Project>";
     }

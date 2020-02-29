@@ -4,17 +4,17 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>$(ToolTargetFramework)</TargetFramework>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <Product>AsyncGenerator.Tool</Product>
+    <Description>dotnet tool for generating async C# code</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+    <PackageId>CSharpAsyncGenerator.Tool</PackageId>
     <PackageType>DotnetTool</PackageType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>async-generator</ToolCommandName>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <PackageId>CSharpAsyncGenerator.Tool</PackageId>
-    <Product>AsyncGenerator.Tool</Product>
-    <Description>dotnet tool for generating async C# code</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
