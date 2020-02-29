@@ -30,12 +30,21 @@ namespace AsyncGenerator.Tests
 {
 	public abstract class BaseFixture
 	{
-		private static readonly Lazy<Microsoft.CodeAnalysis.Project> ReadOnlyProject =
-			new Lazy<Microsoft.CodeAnalysis.Project>(SetupAndGetReadOnlyProject, LazyThreadSafetyMode.ExecutionAndPublication);
-		private static readonly Lazy<Microsoft.CodeAnalysis.Solution> ReadOnlySolution =
-			new Lazy<Microsoft.CodeAnalysis.Solution>(SetupAndGetReadOnlySolution, LazyThreadSafetyMode.ExecutionAndPublication);
-		private static Microsoft.CodeAnalysis.Project _readOnlyProject;
-		private static Microsoft.CodeAnalysis.Solution _readOnlySolution;
+		private class ReadOnlyProjectAndSolution
+		{
+			public ReadOnlyProjectAndSolution(Microsoft.CodeAnalysis.Project project, Microsoft.CodeAnalysis.Solution solution)
+			{
+				Project = project;
+				Solution = solution;
+			}
+
+			public Microsoft.CodeAnalysis.Project Project { get; }
+
+			public Microsoft.CodeAnalysis.Solution Solution { get; }
+		}
+
+		private static readonly Lazy<ReadOnlyProjectAndSolution> ReadOnlyProjectAndSolutionLazy =
+			new Lazy<ReadOnlyProjectAndSolution>(SetupAndGetReadOnlyProjectAndSolution, LazyThreadSafetyMode.ExecutionAndPublication);
 		private static readonly ILoggerFactory LoggerFactory;
 		private static readonly ILogger Logger;
 
@@ -49,7 +58,7 @@ namespace AsyncGenerator.Tests
 				XmlConfigurator.Configure(logRepository, File.OpenRead(configPath));
 			}
 #endif
-#if NET472 || NET461
+#if NET472
 			XmlConfigurator.Configure();
 #endif
 			EnvironmentHelper.Setup();
@@ -88,14 +97,14 @@ namespace AsyncGenerator.Tests
 		public async Task ReadonlyTest(Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = Configure(action).ProjectConfigurations.Single();
-			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProject.Value, configuration);
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProjectAndSolutionLazy.Value.Project, configuration);
 			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task ReadonlyTest(string fileName, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = Configure(fileName, action).SolutionConfigurations.First();
-			var solutionData = AsyncCodeGenerator.CreateSolutionData(ReadOnlySolution.Value, configuration);
+			var solutionData = AsyncCodeGenerator.CreateSolutionData(ReadOnlyProjectAndSolutionLazy.Value.Solution, configuration);
 			var project = solutionData.GetProjects().Single();
 			await AsyncCodeGenerator.GenerateProject(project, LoggerFactory, Logger).ConfigureAwait(false);
 		}
@@ -103,28 +112,28 @@ namespace AsyncGenerator.Tests
 		public async Task YamlReadonlyTest(string yamlConfig, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = ConfigureByYaml(yamlConfig, null, action).ProjectConfigurations.Single();
-			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProject.Value, configuration);
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProjectAndSolutionLazy.Value.Project, configuration);
 			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task YamlReadonlyTest(string fileName, string yamlConfig, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = ConfigureByYaml(yamlConfig, fileName, action).ProjectConfigurations.Single();
-			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProject.Value, configuration);
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProjectAndSolutionLazy.Value.Project, configuration);
 			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task XmlReadonlyTest(string xmlConfig, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = ConfigureByXml(xmlConfig, null, action).ProjectConfigurations.Single();
-			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProject.Value, configuration);
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProjectAndSolutionLazy.Value.Project, configuration);
 			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
 		public async Task XmlReadonlyTest(string fileName, string xmlConfig, Action<IFluentProjectConfiguration> action = null)
 		{
 			var configuration = ConfigureByXml(xmlConfig, fileName, action).ProjectConfigurations.Single();
-			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProject.Value, configuration);
+			var projectData = AsyncCodeGenerator.CreateProjectData(ReadOnlyProjectAndSolutionLazy.Value.Project, configuration);
 			await AsyncCodeGenerator.GenerateProject(projectData, LoggerFactory, Logger).ConfigureAwait(false);
 		}
 
@@ -278,28 +287,11 @@ namespace AsyncGenerator.Tests
 			return AsyncCodeGenerator.OpenSolution(workspace, filePath, ImmutableArray<Predicate<string>>.Empty, Logger).GetAwaiter().GetResult();
 		}
 
-		private static Microsoft.CodeAnalysis.Project SetupAndGetReadOnlyProject()
+		private static ReadOnlyProjectAndSolution SetupAndGetReadOnlyProjectAndSolution()
 		{
-			SetupReadonlyProjectAndSolution();
-			return _readOnlyProject;
-		}
-
-		private static Microsoft.CodeAnalysis.Solution SetupAndGetReadOnlySolution()
-		{
-			SetupReadonlyProjectAndSolution();
-			return _readOnlySolution;
-		}
-
-		[MethodImpl(MethodImplOptions.Synchronized)]
-		private static void SetupReadonlyProjectAndSolution()
-		{
-			if (_readOnlyProject != null)
-			{
-				return;
-			}
-
-			_readOnlyProject = OpenProject();
-			_readOnlySolution = OpenSolution();
+			var project = OpenProject();
+			var solution = OpenSolution();
+			return new ReadOnlyProjectAndSolution(project, solution);
 		}
 
 		private static Stream GenerateStreamFromString(string value)

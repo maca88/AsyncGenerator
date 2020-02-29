@@ -470,9 +470,7 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new DefaultPreconditionChecker());
 
 			// Document transformers
-#if !NET461
 			configuration.RegisterPlugin(new RestoreNullableTransformer());
-#endif
 
 			// Type transformers
 			configuration.RegisterPlugin(new DocumentCommentTypeTransformer());
