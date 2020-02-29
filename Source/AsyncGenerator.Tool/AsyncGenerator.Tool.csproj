@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\Common.props" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(ToolTargetFramework)</TargetFramework>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <Product>AsyncGenerator.Tool</Product>
+    <Description>dotnet tool for generating async C# code</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+    <PackageId>CSharpAsyncGenerator.Tool</PackageId>
+    <PackageType>DotnetTool</PackageType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>async-generator</ToolCommandName>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;ENV</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;ENV</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="2.0.8" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.6" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.0.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\AsyncGenerator.Configuration.Yaml\AsyncGenerator.Configuration.Yaml.csproj" />
+    <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj" />
+    <ProjectReference Include="..\AsyncGenerator\AsyncGenerator.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
+      <Link>EnvironmentHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\AsyncGenerator.CommandLine\Log4NetLogger.cs">
+      <Link>Log4NetLogger.cs</Link>
+    </Compile>
+    <Compile Include="..\AsyncGenerator.CommandLine\Log4NetLoggerFactory.cs">
+      <Link>Log4NetLoggerFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\AsyncGenerator.CommandLine\Program.cs">
+      <Link>Program.cs</Link>
+    </Compile>
+    <None Include="..\AsyncGenerator.CommandLine\App.config">
+      <Link>App.config</Link>
+    </None>
+  </ItemGroup>
+
+</Project>
