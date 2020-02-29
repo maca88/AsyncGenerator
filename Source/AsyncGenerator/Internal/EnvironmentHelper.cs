@@ -7,7 +7,7 @@ using System.Reflection;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 
-#if NETCOREAPP2_1 || NET472 || NET461
+#if NETCOREAPP2_1 || NET472
 
 namespace AsyncGenerator.Internal
 {
@@ -40,7 +40,7 @@ namespace AsyncGenerator.Internal
 		/// </summary>
 		public static void Setup()
 		{
-#if NET472 || NET461
+#if NET472
 			if (IsMono)
 			{
 				SetupMsBuildPath(() =>
@@ -109,7 +109,7 @@ namespace AsyncGenerator.Internal
 					"Install Visual Studio or set the environment variable VSINSTALLDIR");
 			}
 
-#if NET472 || NET461
+#if NET472
 			Environment.SetEnvironmentVariable("VSINSTALLDIR", instance.VisualStudioRootPath);
 #endif
 #if NETCOREAPP2_1

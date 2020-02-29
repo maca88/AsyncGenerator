@@ -26,7 +26,7 @@
     <PackageReference Include="NUnit" Version="3.11.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />
     <PackageReference Include="System.Interactive.Async" Version="3.1.1" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.2" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.6" />
     <PackageReference Include="log4net" Version="2.0.8" />
 
     <!-- FIX FOR NRE https://github.com/dotnet/roslyn-analyzers/issues/1888 -->

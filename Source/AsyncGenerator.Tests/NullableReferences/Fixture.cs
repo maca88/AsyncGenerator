@@ -1,5 +1,4 @@
-﻿#if !NET461
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
 using Microsoft.CodeAnalysis.CSharp;
@@ -44,4 +43,3 @@ namespace AsyncGenerator.Tests.NullableReferences
 		}
 	}
 }
-#endif

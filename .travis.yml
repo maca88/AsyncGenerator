@@ -1,6 +1,6 @@
 language: csharp
 script:
-  - sudo ./build.sh -t $TARGET --$SCRIPTARGS
+  - sudo ./build.sh --target=$TARGET --$SCRIPTARGS
 os: osx
 matrix:
   include:
@@ -8,8 +8,6 @@ matrix:
       env: TARGET=TestCore SCRIPTARGS=
     - mono: 5.18.1
       env: TARGET=Test SCRIPTARGS=
-    - mono: 5.18.1
-      env: TARGET=Test SCRIPTARGS="netfx=\"net461\""
 git:
   submodules: false
 cache:

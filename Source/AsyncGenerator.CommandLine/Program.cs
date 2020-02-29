@@ -28,7 +28,7 @@ namespace AsyncGenerator.CommandLine
 				XmlConfigurator.Configure(logRepository, File.OpenRead(configPath));
 			}
 #endif
-#if NET472 || NET461
+#if NET472
 			Logger = LogManager.GetLogger($"{nameof(AsyncGenerator)}.{nameof(CommandLine)}");
 			XmlConfigurator.Configure();
 #endif

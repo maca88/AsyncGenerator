@@ -10,10 +10,7 @@ environment:
   - Framework: .NET 4.7.2
     Target: Test
     ScriptArgs: ''
-  - Framework: .NET 4.6.1
-    Target: Test
-    ScriptArgs: netfx="net461"
 build_script:
 - cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '-%ScriptArgs%'
-- sh: ./build.sh -t $Target --$ScriptArgs
+- sh: ./build.sh -t --target=$Target --$ScriptArgs
 test: off

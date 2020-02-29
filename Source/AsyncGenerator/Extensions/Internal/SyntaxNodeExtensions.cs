@@ -658,13 +658,6 @@ namespace AsyncGenerator.Extensions.Internal
 				return null; // TODO: we need to preserve or remove directives!
 			}
 			node = node.RemoveNode(toRemoveNode, SyntaxRemoveOptions.KeepUnbalancedDirectives);
-#if NET461
-			// Workaround: When EOL is not CRLF we need to replace all CRLF that may be added by RemoveNode with LF
-			if (eol.ToFullString() != CarriageReturnLineFeed.ToFullString())
-			{
-				node = (T)new UnixEndOfLineTriviaRewriter().Visit(node);
-			}
-#endif
 			foreach (var directiveAnnotation in directiveAnnotations)
 			{
 				var directiveNode = node.GetAnnotatedNodes(directiveAnnotation).FirstOrDefault();

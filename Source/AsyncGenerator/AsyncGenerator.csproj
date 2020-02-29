@@ -16,15 +16,10 @@
   <ItemGroup>
     <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SymbolExtensions.cs" Link="Extensions\SymbolExtensions.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net461'">
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="3.0.0" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461'">
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.10.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.10.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="2.10.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj" />

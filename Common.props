@@ -11,8 +11,8 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <TreatSpecificWarningsAsErrors />
-    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">net461;netstandard2.0</LibTargetFrameworks>
-    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;net461;netcoreapp2.1</AppTargetFrameworks>
+    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0</LibTargetFrameworks>
+    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp2.1</AppTargetFrameworks>
     <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net472</TestTargetFramework>
   </PropertyGroup>
 </Project>

@@ -1,5 +1,4 @@
-﻿#if !NET461
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
@@ -46,4 +45,3 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 	}
 }
-#endif
