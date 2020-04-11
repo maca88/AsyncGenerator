@@ -1,16 +1,30 @@
 version: 1.0.{build}
 image:
 - Visual Studio 2017
+- Visual Studio 2019
 - Ubuntu
 environment:
   matrix:
-  - Framework: .NET Core
+  - Target: TestCore
+    ScriptArgs: ''
+  - Target: TestCore
+    ScriptArgs: netcore="netcoreapp2.1"
+  - Target: Test
+    ScriptArgs: ''
+matrix:
+  exclude:
+  - image: Visual Studio 2017
     Target: TestCore
     ScriptArgs: ''
-  - Framework: .NET 4.7.2
+  - image: Visual Studio 2017
     Target: Test
-    ScriptArgs: ''
+  - image: Visual Studio 2019
+    Target: TestCore
+    ScriptArgs: netcore="netcoreapp2.1"
+  - image: Ubuntu
+    Target: TestCore
+    ScriptArgs: netcore="netcoreapp2.1"
 build_script:
-- cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '-%ScriptArgs%'
+- cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '--%ScriptArgs%'
 - sh: ./build.sh -t --target=$Target --$ScriptArgs
 test: off

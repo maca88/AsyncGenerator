@@ -6,6 +6,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
+var netcore = Argument("netcore", "netcoreapp3.1");
 
 //////////////////////////////////////////////////////////////////////
 // CONSTANTS
@@ -37,6 +38,7 @@ void SetupTestFramework(string framework)
         content = System.Text.RegularExpressions.Regex.Replace(content, @"(<TestTargetFramework>)([\w\.;]+)(</TestTargetFramework>)", $"$1{framework}$3");
         content = System.Text.RegularExpressions.Regex.Replace(content, @"(<AppTargetFrameworks>)([\w\.;]+)(</AppTargetFrameworks>)", $"$1{framework}$3");
         content = System.Text.RegularExpressions.Regex.Replace(content, @"(<LibTargetFrameworks>)([\w\.;]+)(</LibTargetFrameworks>)", $"$1{framework}$3");
+        content = System.Text.RegularExpressions.Regex.Replace(content, @"(<ToolTargetFrameworks>)([\w\.;]+)(</ToolTargetFrameworks>)", $"$1{framework}$3");
     }
     else
     {
@@ -46,7 +48,7 @@ $@"<Project>
     <TestTargetFramework>{framework}</TestTargetFramework>
     <AppTargetFrameworks>{framework}</AppTargetFrameworks>
     <LibTargetFrameworks>{framework}</LibTargetFrameworks>
-    <ToolTargetFramework>{framework}</ToolTargetFramework>
+    <ToolTargetFrameworks>{framework}</ToolTargetFrameworks>
   </PropertyGroup>
 </Project>";
     }
@@ -76,7 +78,7 @@ Task("SetupTestFramework")
 Task("SetupTestFrameworkCore")
     .Does(() =>
 {
-    SetupTestFramework("netcoreapp2.1");
+    SetupTestFramework(netcore);
 });
 
 Task("ClearTestFramework")

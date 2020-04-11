@@ -7,7 +7,7 @@ using System.Reflection;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 
-#if NETCOREAPP2_1 || NET472
+#if NETCOREAPP || NET472
 
 namespace AsyncGenerator.Internal
 {
@@ -82,16 +82,20 @@ namespace AsyncGenerator.Internal
 				.OrderByDescending(o => o.Version)
 				.FirstOrDefault();
 
-#if NETCOREAPP2_1
-			// Workaround for .NET Core 2.2 - Redirect Newtonsoft.Json version 9.0.0 requested from Microsoft.Build.NuGetSdkResolver
-			// to 10.0.3 which is provided with the framework
+#if NETCOREAPP
 			AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
 			{
 				var assemblyName = new AssemblyName(eventArgs.Name);
+#if NETCOREAPP2_1
+				// Workaround for .NET Core 2.2 - Redirect Newtonsoft.Json version 9.0.0 requested from Microsoft.Build.NuGetSdkResolver
+				// to 10.0.3 which is provided with the framework
 				if ("Newtonsoft.Json" == assemblyName.Name)
+#else
+				if (NuGetAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
+#endif
 				{
 					var path = Path.Combine(instance.MSBuildPath, $"{assemblyName.Name}.dll");
-					return File.Exists(path) ? Assembly.LoadFile(Path.Combine(instance.MSBuildPath, $"{assemblyName.Name}.dll")) : null;
+					return File.Exists(path) ? Assembly.LoadFrom(path) : null;
 				}
 
 				return null;
@@ -127,13 +131,9 @@ namespace AsyncGenerator.Internal
 
 		public static  bool IsMono => Type.GetType("Mono.Runtime") != null;
 
-		//public static  bool IsNetCore => RuntimeInformation.FrameworkDescription.StartsWith(".NET Core"); // .NET Core 4.6.00001.0
-
-		//public static  bool IsNetFramework => RuntimeInformation.FrameworkDescription.StartsWith(".NET Framework"); // .NET Framework 4.7.2115.0
-
 		// On Mono RuntimeInformation.IsOSPlatform will always retrun true for Windows
 		public static bool IsWindows => Path.DirectorySeparatorChar == '\\';
-#if NETCOREAPP2_1
+#if NETCOREAPP
 		public static string GetConfigurationFilePath()
 		{
 			var name = AppDomain.CurrentDomain.FriendlyName;

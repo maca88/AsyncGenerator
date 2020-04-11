@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions.Internal;
@@ -82,7 +83,7 @@ namespace AsyncGenerator.Plugins.Internal
 
 		public void PostAnalyzeBodyFunctionReference(IBodyFunctionReferenceAnalyzation functionReferenceAnalyzation)
 		{
-			if (functionReferenceAnalyzation.AsyncCounterpartSymbol?.Equals(_whenAllMethod) != true)
+			if (functionReferenceAnalyzation.AsyncCounterpartSymbol?.EqualTo(_whenAllMethod) != true)
 			{
 				return;
 			}
@@ -96,7 +97,7 @@ namespace AsyncGenerator.Plugins.Internal
 		public void AnalyzeInvocationExpression(InvocationExpressionSyntax invocation, IBodyFunctionReferenceAnalyzation funcReferenceResult,
 			SemanticModel semanticModel)
 		{
-			if (funcReferenceResult.AsyncCounterpartSymbol?.Equals(_whenAllMethod) != true)
+			if (funcReferenceResult.AsyncCounterpartSymbol?.EqualTo(_whenAllMethod) != true)
 			{
 				return;
 			}
@@ -111,7 +112,7 @@ namespace AsyncGenerator.Plugins.Internal
 			IFunctionReferenceAnalyzationResult funcReferenceResult,
 			INamespaceTransformationMetadata namespaceMetadata)
 		{
-			if (!funcReferenceResult.AsyncCounterpartSymbol.Equals(_whenAllMethod))
+			if (!funcReferenceResult.AsyncCounterpartSymbol.EqualTo(_whenAllMethod))
 			{
 				return node;
 			}
@@ -157,7 +158,7 @@ namespace AsyncGenerator.Plugins.Internal
 					invoke => invoke.AddCancellationTokenArgumentIf(cancellationTokenParamName, delArgument.BodyFunctionReference));
 			}
 			ExpressionSyntax enumerableExpression;
-			if (bodyReference.ReferenceSymbol.Equals(_forMethod))
+			if (bodyReference.ReferenceSymbol.EqualTo(_forMethod))
 			{
 				// Construct an Enumerable.Range(1, 10 - 1), where 1 and 10 are the first two arguments of Parallel.For method
 				var startArg = invokeNode.ArgumentList.Arguments.First();
@@ -204,10 +205,10 @@ namespace AsyncGenerator.Plugins.Internal
 		{
 			switch (syncMethodSymbol.Name)
 			{
-				case "ForEach" when syncMethodSymbol.Equals(_forEachMethod):
+				case "ForEach" when syncMethodSymbol.EqualTo(_forEachMethod):
 					yield return _whenAllMethod;
 					break;
-				case "For" when _forMethod.Equals(syncMethodSymbol):
+				case "For" when _forMethod.EqualTo(syncMethodSymbol):
 					yield return _whenAllMethod;
 					break;
 			}

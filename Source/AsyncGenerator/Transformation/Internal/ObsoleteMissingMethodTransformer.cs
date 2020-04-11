@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions.Internal;
@@ -45,8 +46,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 			var baseMethod = methodResult.RelatedMethods
 				.Where(o =>
-					(methodResult.BaseOverriddenMethod != null && o.Symbol.Equals(methodResult.BaseOverriddenMethod)) ||
-					methodResult.ImplementedInterfaces.Any(i => o.Symbol.Equals(i)))
+					(methodResult.BaseOverriddenMethod != null && o.Symbol.EqualTo(methodResult.BaseOverriddenMethod)) ||
+					methodResult.ImplementedInterfaces.Any(i => o.Symbol.EqualTo(i)))
 				.FirstOrDefault(o => o.AsyncCounterpartSymbol?.IsObsolete() == true);
 			if (baseMethod == null)
 			{

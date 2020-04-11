@@ -19,7 +19,7 @@ namespace AsyncGenerator.CommandLine
 
 		static Program()
 		{
-#if NETCOREAPP2_1
+#if NETCOREAPP
 			var configPath = EnvironmentHelper.GetConfigurationFilePath();
 			if (!string.IsNullOrEmpty(configPath))
 			{
@@ -62,7 +62,7 @@ namespace AsyncGenerator.CommandLine
 
 				return 0;
 			}
-#if !NETCOREAPP2_1
+#if !NETCOREAPP
 			// Print inner exceptions for .NET as they are printed in NETCore 2.1: https://github.com/dotnet/coreclr/pull/15688
 			catch (ReflectionTypeLoadException e) when (e.LoaderExceptions?.Length > 0)
 			{

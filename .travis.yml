@@ -5,8 +5,10 @@ os: osx
 matrix:
   include:
     - dotnet: 2.1.502
+      env: TARGET=TestCore SCRIPTARGS="netcore=\"netcoreapp2.1\""
+    - dotnet: 3.1.201
       env: TARGET=TestCore SCRIPTARGS=
-    - mono: 5.18.1
+    - mono: latest
       env: TARGET=Test SCRIPTARGS=
 git:
   submodules: false

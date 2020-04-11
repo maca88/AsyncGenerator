@@ -501,7 +501,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						// Find out if the method implements the interface member or an override 
 						// method that implements it
 						var impl = type.FindImplementationForInterfaceMember(m);
-						return methodSymbol.Equals(impl) || relatedSymbols.Any(ov => ov.Equals(impl));
+						return methodSymbol.EqualTo(impl) || relatedSymbols.Any(ov => ov.EqualTo(impl));
 					}))
 				.OfType<IMethodSymbol>())
 			{
@@ -697,7 +697,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 			// A cref/nameof can be on a method or type trivia but we get always the type symbol
-			var typeData = documentData.GetAllTypeDatas(o => o.Symbol.Equals(typeSymbol)).FirstOrDefault();
+			var typeData = documentData.GetAllTypeDatas(o => o.Symbol.EqualTo(typeSymbol)).FirstOrDefault();
 			if (typeData == null)
 			{
 				return;
@@ -830,7 +830,7 @@ namespace AsyncGenerator.Analyzation.Internal
 								areEqual = typeParameter.CanApply(type);
 								break;
 							default:
-								areEqual = candidateType.Equals(type);
+								areEqual = candidateType.EqualTo(type);
 								break;
 						}
 						if (!areEqual)

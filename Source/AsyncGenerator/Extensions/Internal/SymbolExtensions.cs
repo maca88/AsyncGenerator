@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Extensions;
+using AsyncGenerator.Core.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -38,7 +39,7 @@ namespace AsyncGenerator.Extensions.Internal
 		/// <returns></returns>
 		internal static bool IsAwaitRequired(this ITypeSymbol retrivedType, ITypeSymbol toReturnType)
 		{
-			if (retrivedType.Equals(toReturnType))
+			if (retrivedType.EqualTo(toReturnType))
 			{
 				return true;
 			}
@@ -61,7 +62,7 @@ namespace AsyncGenerator.Extensions.Internal
 				return false;
 			}
 
-			if (!retrivedType.OriginalDefinition.Equals(toReturnType.OriginalDefinition))
+			if (!retrivedType.OriginalDefinition.EqualTo(toReturnType.OriginalDefinition))
 			{
 				return false;
 			}

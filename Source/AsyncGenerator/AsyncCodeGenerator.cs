@@ -26,7 +26,7 @@ namespace AsyncGenerator
 {
 	public static class AsyncCodeGenerator
 	{
-#if !NETCOREAPP2_1
+#if !NETCOREAPP
 		// In .NET only one project or solution can be opened simultaneously
 		private static SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 		private const int LockTimeout = 30 * 1000;
@@ -361,14 +361,14 @@ namespace AsyncGenerator
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-#if !NETCOREAPP2_1
+#if !NETCOREAPP
 			if (!await _lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
 			{
 				throw new InvalidOperationException($"Project {filePath} cannot be opened beacause a build is already in progress.");
 			}
 #endif
 			var project = await workspace.OpenProjectAsync(filePath, null, cancellationToken).ConfigureAwait(false);
-#if !NETCOREAPP2_1
+#if !NETCOREAPP
 			_lock.Release();
 #endif
 			CheckForErrors(workspace, "project", supressFailuresPredicates, logger);
@@ -385,14 +385,14 @@ namespace AsyncGenerator
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-#if !NETCOREAPP2_1
+#if !NETCOREAPP
 			if (!await _lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
 			{
 				throw new InvalidOperationException($"Solution {filePath} cannot be opened beacause a build is already in progress.");
 			}
 #endif
 			var solution = await workspace.OpenSolutionAsync(filePath, null, cancellationToken).ConfigureAwait(false);
-#if !NETCOREAPP2_1
+#if !NETCOREAPP
 			_lock.Release();
 #endif
 			CheckForErrors(workspace, "solution", supressFailuresPredicates, logger);

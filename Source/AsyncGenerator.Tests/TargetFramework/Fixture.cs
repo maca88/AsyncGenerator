@@ -1,4 +1,4 @@
-﻿#if !NETCOREAPP2_1
+﻿#if !NETCOREAPP
 using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core.Plugins;

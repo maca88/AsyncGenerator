@@ -204,7 +204,7 @@ namespace AsyncGenerator.Internal
 				}
 
 				// If the reference is an internal method we need to ignore the argument, as currently we do not support async parameter conversion
-				if (Data.Symbol.ContainingAssembly.Equals(ReferenceSymbol.ContainingAssembly) && ReferenceAsyncSymbols.Count == 0)
+				if (Data.Symbol.ContainingAssembly.EqualTo(ReferenceSymbol.ContainingAssembly) && ReferenceAsyncSymbols.Count == 0)
 				{
 					// TODO: support for parameter conversion e.g. Action -> Func<Task>
 					if (functionArgument.FunctionData != null && functionArgument.FunctionData.Conversion != MethodConversion.Ignore)
@@ -267,7 +267,7 @@ namespace AsyncGenerator.Internal
 			}
 			// Ignore if the return types does not match
 			// e.g. Assert.DoesNotThrow(SimpleFile.Read)
-			if (ReferenceFunctionData == null && !AsyncCounterpartSymbol.ReturnType.Equals(asyncDelegateArgument.ReturnType))
+			if (ReferenceFunctionData == null && !AsyncCounterpartSymbol.ReturnType.EqualTo(asyncDelegateArgument.ReturnType))
 			{
 				Ignore(IgnoreReason.Custom("One of the arguments does not match the with the async delegate parameter", DiagnosticSeverity.Hidden));
 				return;

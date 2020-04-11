@@ -359,7 +359,7 @@ namespace AsyncGenerator.Analyzation.Internal
 								// Find out if the method implements the interface member or an override 
 								// method that implements it
 								var impl = type.FindImplementationForInterfaceMember(m);
-								return methodSymbol.Equals(impl) || methodData.OverridenMethods.Any(ov => ov.Equals(impl));
+								return methodSymbol.EqualTo(impl) || methodData.OverridenMethods.Any(ov => ov.EqualTo(impl));
 							}
 						))
 				.OfType<IMethodSymbol>()
@@ -372,7 +372,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					// Check if there is an internal interface member that hides this method
 					if (interfaceMembers.Where(o => o.ContainingAssembly.Name == methodSymbol.ContainingAssembly.Name)
-						.Any(o => o.GetHiddenMethods().Any(hm => hm.Equals(interfaceMember))))
+						.Any(o => o.GetHiddenMethods().Any(hm => hm.EqualTo(interfaceMember))))
 					{
 						continue;
 					}
@@ -426,7 +426,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 				// TODO: define a better logic
 				// We should not ignore if none of the async counterparts is in the sync method type.
-				if (asyncCounterparts.Any(o => o.ContainingType.Equals(methodSymbol.ContainingType))
+				if (asyncCounterparts.Any(o => o.ContainingType.EqualTo(methodSymbol.ContainingType))
 				/*(_configuration.UseCancellationTokens && asyncCounterparts.Count == 2) ||
 			(!_configuration.UseCancellationTokens && asyncCounterparts.Count == 1)*/
 				)

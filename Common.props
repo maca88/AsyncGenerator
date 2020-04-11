@@ -11,9 +11,12 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <TreatSpecificWarningsAsErrors />
-    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0</LibTargetFrameworks>
-    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp2.1</AppTargetFrameworks>
-    <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net472</TestTargetFramework>
-    <ToolTargetFramework Condition ="$(ToolTargetFramework) == ''">netcoreapp2.1</ToolTargetFramework>
+    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0;netcoreapp2.1</LibTargetFrameworks>
+    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp2.1;netcoreapp3.1</AppTargetFrameworks>
+    <TestTargetFramework Condition ="$(TestTargetFramework) == ''">netcoreapp3.1</TestTargetFramework>
+    <ToolTargetFrameworks Condition ="$(ToolTargetFrameworks) == ''">netcoreapp2.1;netcoreapp3.1</ToolTargetFrameworks>
+    <MicrosoftCodeAnalysisVersion Condition ="$(TargetFramework) == 'netcoreapp2.1'">3.0.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion Condition ="$(TargetFramework) != 'netcoreapp2.1'">3.6.0-3.20210.9</MicrosoftCodeAnalysisVersion>
+    <DefineConstants Condition ="$(MicrosoftCodeAnalysisVersion) == '3.0.0'">LEGACY</DefineConstants>
   </PropertyGroup>
 </Project>
