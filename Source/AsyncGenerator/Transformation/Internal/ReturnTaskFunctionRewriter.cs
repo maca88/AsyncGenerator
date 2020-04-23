@@ -325,13 +325,17 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax AddReturnStatement(BlockSyntax node)
 		{
-			return node.AddStatements(GetReturnTaskCompleted());
+			var leadingTrivia = node.Statements.Count > 0 
+				? node.Statements[0].GetLeadingWhitespace()
+				: Whitespace(node.GetLeadingWhitespace().ToFullString() + _transformResult.IndentTrivia.ToFullString());
+
+			return node.AddStatements(GetReturnTaskCompleted().WithLeadingTrivia(TriviaList(leadingTrivia)));
 		}
 
 		private ReturnStatementSyntax GetReturnTaskCompleted()
 		{
 			return ReturnStatement(
-				Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				Token(default(SyntaxTriviaList), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 				MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
 					_namespaceMetadata.TaskConflict
