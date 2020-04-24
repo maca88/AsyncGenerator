@@ -1,7 +1,7 @@
 ﻿<Project>
   <Import Condition="Exists('Common.dev.props')" Project="Common.dev.props"/>
   <PropertyGroup>
-    <Version>0.18.1</Version>
+    <Version>0.18.2</Version>
     <Authors>maca88</Authors>
     <Company />
     <Copyright>Copyright © 2017</Copyright>
