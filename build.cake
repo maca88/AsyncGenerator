@@ -6,6 +6,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
+var netcoreVersion = Argument("netcoreVersion", "");
 
 //////////////////////////////////////////////////////////////////////
 // CONSTANTS
@@ -76,6 +77,15 @@ Task("SetupTestFramework")
 Task("SetupTestFrameworkCore")
     .Does(() =>
 {
+    if (!string.IsNullOrEmpty(netcoreVersion))
+    {
+        StartProcess("dotnet", new ProcessSettings {
+            Arguments = new ProcessArgumentBuilder()
+                .Append( string.Format("new globaljson --sdk-version {0} --force", netcoreVersion))
+            }
+        );
+    }
+
     SetupTestFramework("netcoreapp2.1");
 });
 

@@ -6,11 +6,11 @@ environment:
   matrix:
   - Framework: .NET Core
     Target: TestCore
-    ScriptArgs: ''
+    ScriptArgs: '--netcoreVersion="2.2.402"'
   - Framework: .NET 4.7.2
     Target: Test
     ScriptArgs: ''
 build_script:
-- cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '-%ScriptArgs%'
-- sh: ./build.sh -t --target=$Target --$ScriptArgs
+- cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '%ScriptArgs%'
+- sh: ./build.sh -t --target=$Target $ScriptArgs
 test: off
