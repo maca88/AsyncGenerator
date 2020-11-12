@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Core;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 

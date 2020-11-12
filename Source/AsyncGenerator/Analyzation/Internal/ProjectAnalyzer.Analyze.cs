@@ -220,13 +220,13 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void AnalyzeCrefMethodReference(DocumentData documentData, MethodOrAccessorData methoData, CrefFunctionDataReference crefData)
 		{
 			crefData.RelatedBodyFunctionReferences.AddRange(
-				methoData.BodyFunctionReferences.Where(o => o.ReferenceSymbol.Equals(crefData.ReferenceSymbol)));
+				methoData.BodyFunctionReferences.Where(o => o.ReferenceSymbol.EqualTo(crefData.ReferenceSymbol)));
 		}
 
 		private void AnalyzeNameofMethodReference(DocumentData documentData, MethodOrAccessorData methoData, NameofFunctionDataReference nameofData)
 		{
 			nameofData.RelatedBodyFunctionReferences.AddRange(
-				methoData.BodyFunctionReferences.Where(o => o.ReferenceSymbol.Equals(nameofData.ReferenceSymbol)));
+				methoData.BodyFunctionReferences.Where(o => o.ReferenceSymbol.EqualTo(nameofData.ReferenceSymbol)));
 		}
 
 		private void AnalyzeMethodReference(DocumentData documentData, BodyFunctionDataReference refData)
@@ -456,7 +456,7 @@ namespace AsyncGenerator.Analyzation.Internal
 								// If the invocation has at least one argument that does not fit into any async counterparts we have to ignore it
 								if (functionReferenceData.ReferenceAsyncSymbols
 									.Where(o => o.Parameters.Length >= methodSymbol.Parameters.Length) // The async counterpart may have less parameters. e.g. Parallel.For -> Task.WhenAll
-									.All(o => !((IMethodSymbol) o.Parameters[i].Type.GetMembers("Invoke").First()).ReturnType.Equals(argMethodSymbol.ReturnType)))
+									.All(o => !((IMethodSymbol) o.Parameters[i].Type.GetMembers("Invoke").First()).ReturnType.EqualTo(argMethodSymbol.ReturnType)))
 								{
 									functionReferenceData.Ignore(IgnoreReason.Custom("The delegate argument does not fit to any async counterparts", DiagnosticSeverity.Hidden));
 									return;

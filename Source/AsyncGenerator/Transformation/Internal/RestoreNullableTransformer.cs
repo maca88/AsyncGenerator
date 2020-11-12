@@ -38,6 +38,9 @@ namespace AsyncGenerator.Transformation.Internal
 				Token(SyntaxKind.HashToken),
 				Token(TriviaList(), SyntaxKind.NullableKeyword, TriviaList(Space)),
 				Token(SyntaxKind.RestoreKeyword),
+#if !LEGACY
+				default,
+#endif
 				Token(TriviaList(), SyntaxKind.EndOfDirectiveToken, TriviaList(transformationResult.EndOfLineTrivia)), true);
 
 			return transformed.ReplaceNode(firstNode,

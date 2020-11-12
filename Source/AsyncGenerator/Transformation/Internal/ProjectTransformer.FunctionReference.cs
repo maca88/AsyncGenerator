@@ -110,7 +110,7 @@ namespace AsyncGenerator.Transformation.Internal
 						var refMethod = bodyFuncReferenceResult.ReferenceFunction as IMethodAnalyzationResult;
 						if (refMethod != null && refMethod.PreserveReturnType)
 						{
-							returnTypeMismatch = !delReturnType.Equals(returnType); // TODO Generics
+							returnTypeMismatch = !delReturnType.EqualTo(returnType); // TODO Generics
 						}
 						else if (delReturnType.IsGenericType) // Generic Task
 						{
@@ -123,7 +123,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					else
 					{
-						returnTypeMismatch = !delReturnType.Equals(returnType); // TODO Generics
+						returnTypeMismatch = !delReturnType.EqualTo(returnType); // TODO Generics
 					}
 
 					var newArgumentExpression = argumentNode.Expression
@@ -482,7 +482,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var syncContainingType = funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType;
 			// If the async counterpart is from another type that is static e.g. Thread.Sleep -> Task.Delay, we need to change also the type
 			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
-			    !asyncContainingType.Equals(syncContainingType) &&
+			    !asyncContainingType.EqualTo(syncContainingType) &&
 			    funcReferenceResult.ReferenceSymbol.IsStatic &&
 				node.Expression is MemberAccessExpressionSyntax memberAccess)
 			{
@@ -501,7 +501,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var syncContainingType = funcReferenceResult.ReferenceSymbol.OriginalDefinition.ContainingType;
 			// If the async counterpart is from another type that is static e.g. Thread.Sleep -> Task.Delay, we need to change also the type
 			if (!funcReferenceResult.AsyncCounterpartSymbol.IsExtensionMethod &&
-			    !asyncContainingType.Equals(syncContainingType) &&
+			    !asyncContainingType.EqualTo(syncContainingType) &&
 			    funcReferenceResult.ReferenceSymbol.IsStatic)
 			{
 				var type = funcReferenceResult.AsyncCounterpartSymbol.ContainingType;

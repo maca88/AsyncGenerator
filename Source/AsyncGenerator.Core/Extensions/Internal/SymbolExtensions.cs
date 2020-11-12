@@ -12,7 +12,11 @@ namespace AsyncGenerator.Core.Extensions.Internal
 {
 	internal static class SymbolExtensions
 	{
-		private static readonly Func<IMethodSymbol, IEnumerable> GetHiddenMembersFunc;
+		private static readonly Func<object, IEnumerable> GetHiddenMembersFunc;
+#if !LEGACY
+		private static readonly Func<object, ISymbol> GetPublicSymbolFunc;
+		private static readonly Func<ISymbol, object> GetInternalSymbolFunc;
+#endif
 
 		static SymbolExtensions()
 		{
@@ -22,6 +26,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			{
 				throw new InvalidOperationException($"Type {methodSymbolFullName} does not exist");
 			}
+
 			var overriddenOrHiddenMembersGetter = type.GetProperty("OverriddenOrHiddenMembers", BindingFlags.NonPublic | BindingFlags.Instance)?.GetMethod;
 			if (overriddenOrHiddenMembersGetter == null)
 			{
@@ -34,22 +39,92 @@ namespace AsyncGenerator.Core.Extensions.Internal
 				throw new InvalidOperationException($"Property HiddenMembers of type {overriddenOrHiddenMembersGetter.ReturnType} does not exist.");
 			}
 
-			var param1 = Expression.Parameter(typeof(IMethodSymbol), "methodSymbol");
-			var convertToMethodSymbol = Expression.Convert(param1, type);
-			var callOverriddenOrHiddenMembersGetter = Expression.Call(convertToMethodSymbol, overriddenOrHiddenMembersGetter);
+			var symbolParameter = Expression.Parameter(typeof(object));
+			var callOverriddenOrHiddenMembersGetter = Expression.Call(
+				Expression.Convert(symbolParameter, type),
+				overriddenOrHiddenMembersGetter);
 			var callHiddenMembersGetter = Expression.Call(callOverriddenOrHiddenMembersGetter, hiddenMembersGetter);
 			var lambdaParams = new List<ParameterExpression>
 			{
-				param1
+				symbolParameter
 			};
-			GetHiddenMembersFunc = Expression.Lambda<Func<IMethodSymbol, IEnumerable>>(
+			GetHiddenMembersFunc = Expression.Lambda<Func<object, IEnumerable>>(
 					Expression.Convert(callHiddenMembersGetter, typeof(IEnumerable)), lambdaParams)
 				.Compile();
+#if !LEGACY
+			GetPublicSymbolFunc = CreateGetPublicSymbolFunction();
+			GetInternalSymbolFunc = CreateGetInternalSymbolFunction();
+#endif
 		}
+
+#if !LEGACY
+		private static Func<object, ISymbol> CreateGetPublicSymbolFunction()
+		{
+			const string symbolInternalFullName = "Microsoft.CodeAnalysis.Symbols.ISymbolInternal, Microsoft.CodeAnalysis";
+			var symbolInternalType = Type.GetType(symbolInternalFullName);
+			if (symbolInternalType == null)
+			{
+				throw new InvalidOperationException($"Type {symbolInternalFullName} does not exist");
+			}
+
+			var getISymbolMethod = symbolInternalType.GetMethod("GetISymbol");
+			if (getISymbolMethod == null)
+			{
+				throw new InvalidOperationException($"Method GetISymbol of type {symbolInternalFullName} does not exist.");
+			}
+
+			var wrapperParameter = Expression.Parameter(typeof(object));
+			return Expression.Lambda<Func<object, ISymbol>>(
+				Expression.Call(
+					Expression.Convert(wrapperParameter, symbolInternalType),
+					getISymbolMethod
+				),
+				wrapperParameter
+			).Compile();
+		}
+
+		private static Func<ISymbol, object> CreateGetInternalSymbolFunction()
+		{
+			const string publicSymbolFullName = "Microsoft.CodeAnalysis.CSharp.Symbols.PublicModel.Symbol, Microsoft.CodeAnalysis.CSharp";
+			var publicSymbolType = Type.GetType(publicSymbolFullName);
+			if (publicSymbolType == null)
+			{
+				throw new InvalidOperationException($"Type {publicSymbolFullName} does not exist");
+			}
+
+			var underlyingSymbolProperty = publicSymbolType.GetProperty("UnderlyingSymbol", BindingFlags.NonPublic | BindingFlags.Instance);
+			if (underlyingSymbolProperty == null)
+			{
+				throw new InvalidOperationException($"Property UnderlyingSymbol of type {publicSymbolFullName} does not exist.");
+			}
+
+			var symbolParameter = Expression.Parameter(typeof(ISymbol));
+			return Expression.Lambda<Func<ISymbol, object>>(
+				Expression.Property(
+					Expression.Convert(symbolParameter, publicSymbolType),
+					underlyingSymbolProperty
+				),
+				symbolParameter
+			).Compile();
+		}
+#endif
 
 		internal static IEnumerable<IMethodSymbol> GetHiddenMethods(this IMethodSymbol methodSymbol)
 		{
+#if LEGACY
 			return GetHiddenMembersFunc(methodSymbol).OfType<IMethodSymbol>();
+#else
+			foreach (var item in GetHiddenMembersFunc(GetInternalSymbolFunc(methodSymbol)))
+			{
+				var hiddenMethod = GetPublicSymbolFunc(item) as IMethodSymbol;
+				if (hiddenMethod == null)
+				{
+					continue;
+				}
+
+				yield return hiddenMethod;
+			}
+#endif
 		}
 
 		/// <summary>
@@ -146,6 +221,15 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			return true;
 		}
 
+		internal static bool EqualTo(this ISymbol symbol, ISymbol symbolToCompare)
+		{
+#if LEGACY
+			return symbol.Equals(symbolToCompare);
+#else
+			return symbol.Equals(symbolToCompare, SymbolEqualityComparer.Default);
+#endif
+		}
+
 		/// <summary>
 		/// Check if the return type matches, valid cases: <see cref="Void"/> to <see cref="System.Threading.Tasks.Task"/> Task, TResult to <see cref="System.Threading.Tasks.Task{TResult}"/> and
 		/// also equals return types are ok when there is at least one delegate that can be converted to async (eg. Task.Run(<see cref="Action"/>) and Task.Run(<see cref="Func{Task}"/>))
@@ -156,7 +240,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 		internal static bool IsAsyncCandidateForReturnType(this IMethodSymbol syncMethod, IMethodSymbol candidateAsyncMethod)
 		{
 			// Original definition is used for matching generic types
-			if (syncMethod.ReturnType.OriginalDefinition.Equals(candidateAsyncMethod.ReturnType.OriginalDefinition))
+			if (syncMethod.ReturnType.OriginalDefinition.EqualTo(candidateAsyncMethod.ReturnType.OriginalDefinition))
 			{
 				return true;
 			}
@@ -220,7 +304,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 					continue;
 				}
 				var candidateDelegate = candidateTypeSymbol.DelegateInvokeMethod;
-				if (origDelegate.Equals(candidateDelegate))
+				if (origDelegate.EqualTo(candidateDelegate))
 				{
 					continue;
 				}
@@ -239,7 +323,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 		/// <returns></returns>
 		internal static bool AreEqual(this ITypeSymbol type, ITypeSymbol toCompare, ITypeSymbol canBeDerivedFromType = null)
 		{
-			if (type.Equals(toCompare))
+			if (type.EqualTo(toCompare))
 			{
 				return true;
 			}
@@ -267,10 +351,10 @@ namespace AsyncGenerator.Core.Extensions.Internal
 					return false;
 				}
 			}
-			var equals = typeNamedType.OriginalDefinition.Equals(toCompareNamedType.OriginalDefinition);
+			var equals = typeNamedType.OriginalDefinition.EqualTo(toCompareNamedType.OriginalDefinition);
 			if (!equals && canBeDerivedFromType != null)
 			{
-				equals = new []{ canBeDerivedFromType }.Concat(canBeDerivedFromType.AllInterfaces).Any(o => toCompareNamedType.OriginalDefinition.Equals(o.OriginalDefinition));
+				equals = new []{ canBeDerivedFromType }.Concat(canBeDerivedFromType.AllInterfaces).Any(o => toCompareNamedType.OriginalDefinition.EqualTo(o.OriginalDefinition));
 			}
 			return equals;
 		}
@@ -286,14 +370,14 @@ namespace AsyncGenerator.Core.Extensions.Internal
 				return InheritsFromOrEquals(type, baseType);
 			}
 
-			return type.GetBaseTypesAndThis().Concat(type.AllInterfaces).Any(t => t.Equals(baseType));
+			return type.GetBaseTypesAndThis().Concat(type.AllInterfaces).Any(t => t.EqualTo(baseType));
 		}
 
 		// Determine if "type" inherits from "baseType", ignoring constructed types and interfaces, dealing
 		// only with original types.
 		internal static bool InheritsFromOrEquals(this ITypeSymbol type, ITypeSymbol baseType)
 		{
-			return type.GetBaseTypesAndThis().Any(t => t.Equals(baseType));
+			return type.GetBaseTypesAndThis().Any(t => t.EqualTo(baseType));
 		}
 
 		// Determine if "type" inherits from "baseType", ignoring constructed types, and dealing
@@ -301,7 +385,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 		internal static bool InheritsFromOrEqualsIgnoringConstruction(this ITypeSymbol type, ITypeSymbol baseType)
 		{
 			var originalBaseType = baseType.OriginalDefinition;
-			return type.GetBaseTypesAndThis().Any(t => t.OriginalDefinition.Equals(originalBaseType));
+			return type.GetBaseTypesAndThis().Any(t => t.OriginalDefinition.EqualTo(originalBaseType));
 		}
 
 		internal static IEnumerable<ITypeSymbol> GetBaseTypesAndThis(this ITypeSymbol type)

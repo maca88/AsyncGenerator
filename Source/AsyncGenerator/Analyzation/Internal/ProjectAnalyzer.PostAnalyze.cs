@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AsyncGenerator.Core;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Extensions;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
@@ -633,7 +634,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						{
 							// Only update if AsyncCounterpartSymbol is the sync version of method.
 							if (functionRefData.AsyncCounterpartSymbol.OriginalDefinition
-								.Equals(functionRefData.ReferenceFunctionData.Symbol.OriginalDefinition))
+								.EqualTo(functionRefData.ReferenceFunctionData.Symbol.OriginalDefinition))
 							{
 								var refMethodData = functionRefData.ReferenceFunctionData.GetMethodOrAccessorData();
 								functionRefData.PassCancellationToken = refMethodData.CancellationTokenRequired;

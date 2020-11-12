@@ -43,7 +43,7 @@ namespace AsyncGenerator.Core.Extensions
 				syncMethod = syncMethod.ReducedFrom ?? syncMethod;
 			}
 
-			if (syncMethod.OverriddenMethod != null && candidateAsyncMethod.Equals(syncMethod.OverriddenMethod))
+			if (syncMethod.OverriddenMethod != null && candidateAsyncMethod.EqualTo(syncMethod.OverriddenMethod))
 			{
 				return false;
 			}
@@ -74,7 +74,7 @@ namespace AsyncGenerator.Core.Extensions
 					{
 						return false;
 					}
-					if (param.ConstraintTypes.Where((t, j) => !t.Equals(candidateParam.ConstraintTypes[j])).Any())
+					if (param.ConstraintTypes.Where((t, j) => !t.EqualTo(candidateParam.ConstraintTypes[j])).Any())
 					{
 						return false;
 					}
@@ -88,7 +88,7 @@ namespace AsyncGenerator.Core.Extensions
 			}
 			// Both methods can have the same return type only if we have at least one delegate argument that can be async or the ignoreReturnType
 			// is set to true
-			var result = ignoreReturnType || !syncMethod.ReturnType.OriginalDefinition.Equals(candidateAsyncMethod.ReturnType.OriginalDefinition);
+			var result = ignoreReturnType || !syncMethod.ReturnType.OriginalDefinition.EqualTo(candidateAsyncMethod.ReturnType.OriginalDefinition);
 
 			for (var i = 0; i < syncMethod.Parameters.Length; i++)
 			{
@@ -142,7 +142,7 @@ namespace AsyncGenerator.Core.Extensions
 				{
 					return false;
 				}
-				if (origDelegate.Equals(candidateDelegate))
+				if (origDelegate.EqualTo(candidateDelegate))
 				{
 					continue;
 				}
@@ -192,14 +192,14 @@ namespace AsyncGenerator.Core.Extensions
 					? new[] {rootType}.Concat(rootType.AllInterfaces)
 					: rootType.GetBaseTypesAndThis();
 				var asyncCounterparts = types
-					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m)))
+					.SelectMany(o => o.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.EqualTo(m)))
 					.OfType<IMethodSymbol>()
 					.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
 				// We have to return only unique async counterparts, skip overriden and hidden methods
 				return FilterOutHiddenAndOverridenMethods(asyncCounterparts);
 			}
 
-			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.Equals(m))
+			return methodSymbol.ContainingType.GetMembers().Where(m => asyncName == m.Name || !equalParameters && m.Name == methodSymbol.Name && !methodSymbol.EqualTo(m))
 				.OfType<IMethodSymbol>()
 				.Where(o => methodSymbol.IsAsyncCounterpart(invokedFromType, o, equalParameters, hasCancellationToken, ignoreReturnType));
 		}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -35,8 +36,7 @@ namespace AsyncGenerator.Transformation.Internal
 		{
 			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
 			{
-				var root = (CompilationUnitSyntax)ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
-				var body = (BlockSyntax)Visit(root.Members.OfType<MethodDeclarationSyntax>().First().Body);
+				var body = (BlockSyntax) Visit(trivia.ConvertToBlock());
 				return DisabledText(string.Join("", body.Statements.Select(o => o.ToFullString())));
 			}
 

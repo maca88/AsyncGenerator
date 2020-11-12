@@ -50,7 +50,7 @@ namespace AsyncGenerator.Tests
 
 		static BaseFixture()
 		{
-#if NETCOREAPP2_1
+#if NETCOREAPP
 			var configPath = EnvironmentHelper.GetConfigurationFilePath();
 			if (!string.IsNullOrEmpty(configPath))
 			{

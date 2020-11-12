@@ -247,8 +247,7 @@ namespace AsyncGenerator.Transformation.Internal
 					o.SpanStart > startDirective.SpanStart &&
 					o.Span.End < endDirective.SpanStart))
 				{
-					var root = (CompilationUnitSyntax)ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
-					var body = (BlockSyntax)Visit(root.Members.OfType<MethodDeclarationSyntax>().First().Body);
+					var body = (BlockSyntax) Visit(trivia.ConvertToBlock());
 					if (!body.DescendantNodes().Any(o => o.IsKind(SyntaxKind.ReturnStatement)))
 					{
 						body = AddReturnStatement(body);

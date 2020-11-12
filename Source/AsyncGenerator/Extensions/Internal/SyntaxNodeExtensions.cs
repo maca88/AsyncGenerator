@@ -1304,5 +1304,16 @@ namespace AsyncGenerator.Extensions.Internal
 			return $"({fileSpan.Start.Line + 1},{fileSpan.Start.Character + 1})-" +
 			       $"({fileSpan.End.Line + 1},{fileSpan.End.Character + 1})";
 		}
+
+		internal static BlockSyntax ConvertToBlock(this SyntaxTrivia trivia)
+		{
+			var root = (CompilationUnitSyntax) ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
+#if LEGACY
+			return root.Members.OfType<MethodDeclarationSyntax>().First().Body;
+#else
+			var globalStatement = root.Members.OfType<GlobalStatementSyntax>().First();
+			return ((LocalFunctionStatementSyntax) globalStatement.Statement).Body;
+#endif
+		}
 	}
 }

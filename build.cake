@@ -6,6 +6,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
+var netcore = Argument("netcore", "netcoreapp3.1");
 var netcoreVersion = Argument("netcoreVersion", "");
 
 //////////////////////////////////////////////////////////////////////
@@ -38,6 +39,7 @@ void SetupTestFramework(string framework)
         content = System.Text.RegularExpressions.Regex.Replace(content, @"(<TestTargetFramework>)([\w\.;]+)(</TestTargetFramework>)", $"$1{framework}$3");
         content = System.Text.RegularExpressions.Regex.Replace(content, @"(<AppTargetFrameworks>)([\w\.;]+)(</AppTargetFrameworks>)", $"$1{framework}$3");
         content = System.Text.RegularExpressions.Regex.Replace(content, @"(<LibTargetFrameworks>)([\w\.;]+)(</LibTargetFrameworks>)", $"$1{framework}$3");
+        content = System.Text.RegularExpressions.Regex.Replace(content, @"(<ToolTargetFrameworks>)([\w\.;]+)(</ToolTargetFrameworks>)", $"$1{framework}$3");
     }
     else
     {
@@ -47,7 +49,7 @@ $@"<Project>
     <TestTargetFramework>{framework}</TestTargetFramework>
     <AppTargetFrameworks>{framework}</AppTargetFrameworks>
     <LibTargetFrameworks>{framework}</LibTargetFrameworks>
-    <ToolTargetFramework>{framework}</ToolTargetFramework>
+    <ToolTargetFrameworks>{framework}</ToolTargetFrameworks>
   </PropertyGroup>
 </Project>";
     }
@@ -75,18 +77,22 @@ Task("SetupTestFramework")
 });
 
 Task("SetupTestFrameworkCore")
+    .IsDependentOn("ClearGlobalJs")
     .Does(() =>
 {
     if (!string.IsNullOrEmpty(netcoreVersion))
     {
-        StartProcess("dotnet", new ProcessSettings {
-            Arguments = new ProcessArgumentBuilder()
-                .Append( string.Format("new globaljson --sdk-version {0} --force", netcoreVersion))
-            }
-        );
+        var content = string.Format(
+@"{{
+  ""sdk"": {{
+    ""version"": ""{0}"",
+    ""rollForward"": ""latestFeature""
+  }}
+}}", netcoreVersion);
+        System.IO.File.WriteAllText("global.json", content);
     }
 
-    SetupTestFramework("netcoreapp2.1");
+    SetupTestFramework(netcore);
 });
 
 Task("ClearTestFramework")
@@ -95,6 +101,15 @@ Task("ClearTestFramework")
     if (FileExists("Common.dev.props"))
     {
         System.IO.File.Delete("Common.dev.props");
+    }
+});
+
+Task("ClearGlobalJs")
+    .Does(() =>
+{
+    if (FileExists("global.json"))
+    {
+        System.IO.File.Delete("global.json");
     }
 });
 

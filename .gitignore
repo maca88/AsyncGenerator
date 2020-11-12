@@ -243,6 +243,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-tools/**
+[Tt]ools/
 .idea/
 *.dev.props

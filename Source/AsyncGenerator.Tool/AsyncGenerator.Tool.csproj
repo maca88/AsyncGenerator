@@ -2,13 +2,13 @@
   <Import Project="..\..\Common.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>$(ToolTargetFramework)</TargetFramework>
+    <TargetFrameworks>$(ToolTargetFrameworks)</TargetFrameworks>
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <Product>AsyncGenerator.Tool</Product>
     <Description>dotnet tool for generating async C# code</Description>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net472'">
     <PackageId>CSharpAsyncGenerator.Tool</PackageId>
     <PackageType>DotnetTool</PackageType>
     <PackAsTool>true</PackAsTool>
@@ -18,20 +18,20 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE;ENV</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRACE;ENV</DefineConstants>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;ENV</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRACE;DEBUG;ENV</DefineConstants>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
     <PackageReference Include="Microsoft.Build.Locator" Version="1.2.6" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.0.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisVersion)" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(MicrosoftCodeAnalysisVersion)" />
   </ItemGroup>
   
   <ItemGroup>
