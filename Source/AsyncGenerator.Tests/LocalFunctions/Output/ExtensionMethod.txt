@@ -24,9 +24,9 @@ namespace AsyncGenerator.Tests.LocalFunctions.Input
 				try
 				{
 					return (from e in new EnumerableQuery<TType>(new List<TType>())
-						where e.Equals(item)
-						select e
-					).FirstOrDefaultAsync();
+							where e.Equals(item)
+							select e
+						).FirstOrDefaultAsync();
 
 				}
 				catch (System.Exception ex)

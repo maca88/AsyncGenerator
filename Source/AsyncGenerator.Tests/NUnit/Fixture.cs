@@ -119,6 +119,28 @@ namespace AsyncGenerator.Tests.NUnit
 			);
 		}
 
+		[Test]
+		public Task TestAssertMultipleAfterTransformation()
+		{
+			return ReadonlyTest(nameof(AssertMultiple), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PreserveReturnType(o => true)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(AssertMultiple)), document.Transformed.ToFullString());
+					})
+				)
+				.RegisterPlugin(new NUnitPlugin(false))
+			);
+		}
+
 		[TestCase(false)]
 		[TestCase(true)]
 		public Task TestSimpleFixtureAfterTransformation(bool createNewTypes)

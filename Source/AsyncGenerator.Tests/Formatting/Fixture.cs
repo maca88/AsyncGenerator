@@ -169,5 +169,68 @@ namespace AsyncGenerator.Tests.Formatting
 				)
 			);
 		}
+
+		[Test]
+		public Task TestIndentSwitchAfterTransformation()
+		{
+			return ReadonlyTest(nameof(IndentSwitch), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(IndentSwitch)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
+		public Task TestIndentConditionAfterTransformation()
+		{
+			return ReadonlyTest(nameof(IndentCondition), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(IndentCondition)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+
+		[Test]
+		public Task TestMixingIndentAfterTransformation()
+		{
+			return ReadonlyTest(nameof(MixingIndent), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+				)
+				.ConfigureTransformation(t => t
+					.LocalFunctions(true)
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(MixingIndent)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

@@ -185,21 +185,14 @@ namespace AsyncGenerator.Transformation.Internal
 				return methodNode;
 			}
 			// Make a diff by using only the whitespaces
-			var triviaLengthDiff = string.Join("", methodBody.GetLeadingTrivia()
-					                       .Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
-					                       .Select(o => o.ToFullString()))
-				                       .Length -
-			                       string.Join("", methodNode.GetLeadingTrivia()
-					                       .Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
-					                       .Select(o => o.ToFullString()))
-				                       .Length;
+			var triviaLengthDiff = GetLeadingWhitespaceDifference(methodBody, methodNode);
 			if (triviaLengthDiff > 0)
 			{
 				// Normalize leading trivia
 				methodNode = methodNode.WithBody(methodBody
 					.SubtractIndent(string.Join("", methodBody.GetLeadingTrivia()
 						.Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
-						.Select(o => o.ToFullString())).Substring(0, triviaLengthDiff)));
+						.Select(o => o.ToFullString())).Substring(0, triviaLengthDiff.Value)));
 			}
 
 			var eol = result.EndOfLineTrivia.ToFullString();
@@ -238,6 +231,29 @@ namespace AsyncGenerator.Transformation.Internal
 				methodNode = methodNode.WithBody(methodBody);
 			}
 			return methodNode;
+		}
+
+		private static int? GetLeadingWhitespaceDifference(SyntaxNode node, SyntaxNode node2)
+		{
+			var nodeLeadingWhitespace = GetLeadingWhitespace(node);
+			var node2LeadingWhitespace = GetLeadingWhitespace(node2);
+			// Compare only when both nodes are using the same whitespace character
+			return HaveSameWhitespaceCharacter(nodeLeadingWhitespace, node2LeadingWhitespace, '\t') ||
+			       HaveSameWhitespaceCharacter(nodeLeadingWhitespace, node2LeadingWhitespace, ' ')
+				? nodeLeadingWhitespace.Length - node2LeadingWhitespace.Length
+				: (int?) null;
+		}
+
+		private static bool HaveSameWhitespaceCharacter(string whitespace, string whitespace2, char indentCharacter)
+		{
+			return whitespace.All(c => c == indentCharacter) && whitespace2.All(c => c == indentCharacter);
+		}
+
+		private static string GetLeadingWhitespace(SyntaxNode node)
+		{
+			return string.Join("", node.GetLeadingTrivia()
+				.Where(o => o.IsKind(SyntaxKind.WhitespaceTrivia))
+				.Select(o => o.ToFullString()));
 		}
 	}
 }

@@ -166,6 +166,7 @@ namespace AsyncGenerator.Transformation.Internal
 			{
 				// An arrow method does not have a statement
 				var statement = nameNode.Ancestors().OfType<StatementSyntax>().FirstOrDefault();
+				var statementInParentFunction = nameNode.Ancestors().TakeWhile(o => !o.Equals(statement)).Any(o => o.IsFunction());
 				var newNode = (SyntaxNode)statement ?? node;
 
 				if (invokeNode != null)
@@ -200,7 +201,8 @@ namespace AsyncGenerator.Transformation.Internal
 
 				if (statement != null && !statement.IsKind(SyntaxKind.LocalFunctionStatement))
 				{
-					if (bodyFuncReferenceResult.UseAsReturnValue)
+					// Skip adding return statement for arrow functions
+					if (bodyFuncReferenceResult.UseAsReturnValue && !statementInParentFunction)
 					{
 						newNode = ((StatementSyntax) newNode).ToReturnStatement();
 					}

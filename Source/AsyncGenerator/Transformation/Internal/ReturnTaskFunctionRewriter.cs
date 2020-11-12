@@ -247,8 +247,7 @@ namespace AsyncGenerator.Transformation.Internal
 					o.SpanStart > startDirective.SpanStart &&
 					o.Span.End < endDirective.SpanStart))
 				{
-					var root = (CompilationUnitSyntax)ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
-					var body = (BlockSyntax)Visit(root.Members.OfType<MethodDeclarationSyntax>().First().Body);
+					var body = (BlockSyntax) Visit(trivia.ConvertToBlock());
 					if (!body.DescendantNodes().Any(o => o.IsKind(SyntaxKind.ReturnStatement)))
 					{
 						body = AddReturnStatement(body);
@@ -325,13 +324,17 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax AddReturnStatement(BlockSyntax node)
 		{
-			return node.AddStatements(GetReturnTaskCompleted());
+			var leadingTrivia = node.Statements.Count > 0 
+				? node.Statements[0].GetLeadingWhitespace()
+				: Whitespace(node.GetLeadingWhitespace().ToFullString() + _transformResult.IndentTrivia.ToFullString());
+
+			return node.AddStatements(GetReturnTaskCompleted().WithLeadingTrivia(TriviaList(leadingTrivia)));
 		}
 
 		private ReturnStatementSyntax GetReturnTaskCompleted()
 		{
 			return ReturnStatement(
-				Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				Token(default(SyntaxTriviaList), SyntaxKind.ReturnKeyword, TriviaList(Space)),
 				MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
 					_namespaceMetadata.TaskConflict

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -14,15 +12,7 @@ namespace AsyncGenerator.Transformation.Internal
 	{
 		private readonly string _indent;
 		private readonly bool _subtract;
-
-		// TODO: unit test and add missing ones
-		private readonly HashSet<SyntaxKind> _validSyntaxes = new HashSet<SyntaxKind>
-		{
-			SyntaxKind.CatchClause,
-			SyntaxKind.FinallyClause,
-			SyntaxKind.ElseClause,
-			SyntaxKind.CaseSwitchLabel
-		};
+		private SyntaxToken? _currentToken;
 
 		public IndentRewriter(string indent, bool subtract = false)
 		{
@@ -30,34 +20,33 @@ namespace AsyncGenerator.Transformation.Internal
 			_subtract = subtract;
 		}
 
+		public override SyntaxToken VisitToken(SyntaxToken token)
+		{
+			if (token.IsKind(SyntaxKind.None))
+			{
+				return token;
+			}
+
+			token = NeedsIndent() ? token.WithLeadingTrivia(AlterIndent(token.LeadingTrivia)) : token;
+			_currentToken = base.VisitToken(token);
+			return _currentToken.Value;
+		}
+
 		public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
 		{
 			if (trivia.IsKind(SyntaxKind.DisabledTextTrivia))
 			{
-				var root = (CompilationUnitSyntax) ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
-				var body = (BlockSyntax)Visit(root.Members.OfType<MethodDeclarationSyntax>().First().Body);
+				var body = (BlockSyntax) Visit(trivia.ConvertToBlock());
 				return DisabledText(string.Join("", body.Statements.Select(o => o.ToFullString())));
 			}
+
 			return base.VisitTrivia(trivia);
 		}
 
-		public override SyntaxNode Visit(SyntaxNode node)
+		private bool NeedsIndent()
 		{
-			if (node == null || (!(node is StatementSyntax) && !_validSyntaxes.Contains(node.Kind())))
-			{
-				return base.Visit(node);
-			}
-			node = node.WithLeadingTrivia(AlterIndent(node.GetLeadingTrivia()));
-			return base.Visit(node);
-		}
-
-		public override SyntaxNode VisitBlock(BlockSyntax node)
-		{
-			node = node
-				.WithCloseBraceToken(
-					node.CloseBraceToken.WithLeadingTrivia(AlterIndent(node.CloseBraceToken.LeadingTrivia))
-				);
-			return base.VisitBlock(node);
+			return !_currentToken.HasValue ||
+			       _currentToken.Value.TrailingTrivia.Any(o => o.IsKind(SyntaxKind.EndOfLineTrivia));
 		}
 
 		private SyntaxTriviaList AlterIndent(SyntaxTriviaList leadTrivia)
@@ -77,10 +66,9 @@ namespace AsyncGenerator.Transformation.Internal
 					.RemoveAt(whitespace.Index)
 					.Insert(whitespace.Index, _subtract
 						? Whitespace(trivia.Substring(0, Math.Max(trivia.Length - _indent.Length, 0)))
-						: Whitespace(trivia + _indent));
+						: Whitespace(_indent + trivia));
 			}
 			return leadTrivia;
 		}
-
 	}
 }
