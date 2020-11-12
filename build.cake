@@ -82,11 +82,14 @@ Task("SetupTestFrameworkCore")
 {
     if (!string.IsNullOrEmpty(netcoreVersion))
     {
-        StartProcess("dotnet", new ProcessSettings {
-            Arguments = new ProcessArgumentBuilder()
-                .Append( string.Format("new globaljson --sdk-version {0} --force", netcoreVersion))
-            }
-        );
+        var content = string.Format(
+@"{{
+  ""sdk"": {{
+    ""version"": ""{0}"",
+    ""rollForward"": ""latestFeature""
+  }}
+}}", netcoreVersion);
+        System.IO.File.WriteAllText("global.json", content);
     }
 
     SetupTestFramework(netcore);
