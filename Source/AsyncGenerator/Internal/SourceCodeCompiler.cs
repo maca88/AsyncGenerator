@@ -15,7 +15,7 @@ namespace AsyncGenerator.Internal
 	{
 		public static Assembly Compile(string sourceCode)
 		{
-			var codeBase = Assembly.GetExecutingAssembly().CodeBase;
+			var codeBase = Assembly.GetExecutingAssembly().Location;
 			var uri = new UriBuilder(codeBase);
 			var assemblyPath = Uri.UnescapeDataString(uri.Path);
 			var assemblyDir = Path.GetDirectoryName(assemblyPath);

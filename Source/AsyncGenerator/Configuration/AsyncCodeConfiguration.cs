@@ -144,7 +144,7 @@ namespace AsyncGenerator.Configuration
 
 		private static string GetExecutingDirectory()
 		{
-			var codeBase = Assembly.GetExecutingAssembly().CodeBase;
+			var codeBase = Assembly.GetExecutingAssembly().Location;
 			var uri = new UriBuilder(codeBase);
 			var assemblyPath = Uri.UnescapeDataString(uri.Path);
 			var dir = Path.GetDirectoryName(assemblyPath);

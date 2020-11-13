@@ -1,4 +1,4 @@
-#tool nuget:?package=NUnit.ConsoleRunner&version=3.10.0
+#tool nuget:?package=NUnit.ConsoleRunner&version=3.11.1
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -205,7 +205,7 @@ Task("CleanPackages")
 
 Task("Pack")
     .IsDependentOn("ClearTestFramework")
-    .IsDependentOn("Build") // We have to build in order to include dlls for the AsyncGenerator.CommandLine project
+    .IsDependentOn("BuildCore") // We have to build in order to include dlls for the AsyncGenerator.CommandLine project
     .IsDependentOn("CleanPackages")
     .Description("Creates NuGet packages")
     .Does(() =>
