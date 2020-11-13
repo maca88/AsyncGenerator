@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
@@ -15,12 +16,10 @@ namespace AsyncGenerator.Internal
 	{
 		public static Assembly Compile(string sourceCode)
 		{
-			var codeBase = Assembly.GetExecutingAssembly().CodeBase;
-			var uri = new UriBuilder(codeBase);
-			var assemblyPath = Uri.UnescapeDataString(uri.Path);
+			var assembly = Assembly.GetExecutingAssembly();
+			var assemblyPath = assembly.GetPath();
 			var assemblyDir = Path.GetDirectoryName(assemblyPath);
-
-			var assemRefs = Assembly.GetExecutingAssembly().GetReferencedAssemblies();
+			var assemRefs = assembly.GetReferencedAssemblies();
 			var references = assemRefs.Select(assemblyName => assemblyName.Name + ".dll").ToList();
 			for (var i = 0; i < references.Count; i++)
 			{

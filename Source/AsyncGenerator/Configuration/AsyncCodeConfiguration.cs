@@ -6,6 +6,7 @@ using System.Reflection;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Logging;
+using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 
 namespace AsyncGenerator.Configuration
@@ -144,11 +145,7 @@ namespace AsyncGenerator.Configuration
 
 		private static string GetExecutingDirectory()
 		{
-			var codeBase = Assembly.GetExecutingAssembly().CodeBase;
-			var uri = new UriBuilder(codeBase);
-			var assemblyPath = Uri.UnescapeDataString(uri.Path);
-			var dir = Path.GetDirectoryName(assemblyPath);
-			return dir;
+			return Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetPath());
 		}
 	}
 }
