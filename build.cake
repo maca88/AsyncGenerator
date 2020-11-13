@@ -86,7 +86,8 @@ Task("SetupTestFrameworkCore")
 @"{{
   ""sdk"": {{
     ""version"": ""{0}"",
-    ""rollForward"": ""latestFeature""
+    ""rollForward"": ""latestFeature"",
+    ""allowPrerelease"": ""true""
   }}
 }}", netcoreVersion);
         System.IO.File.WriteAllText("global.json", content);
