@@ -86,13 +86,10 @@ namespace AsyncGenerator.Internal
 			AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
 			{
 				var assemblyName = new AssemblyName(eventArgs.Name);
-#if NETCOREAPP2_1
-				// Workaround for .NET Core 2.2 - Redirect Newtonsoft.Json version 9.0.0 requested from Microsoft.Build.NuGetSdkResolver
+
+				// Workaround for .NET Core from 2.2 and up to 3.1.200 - Redirect Newtonsoft.Json version 9.0.0 requested from Microsoft.Build.NuGetSdkResolver
 				// to 10.0.3 which is provided with the framework
-				if ("Newtonsoft.Json" == assemblyName.Name)
-#else
-				if (NuGetAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
-#endif
+				if ("Newtonsoft.Json" == assemblyName.Name || NuGetAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
 				{
 					var path = Path.Combine(instance.MSBuildPath, $"{assemblyName.Name}.dll");
 					return File.Exists(path) ? Assembly.LoadFrom(path) : null;
