@@ -8,6 +8,8 @@ environment:
   - Target: TestCore
     ScriptArgs: '--netcoreVersion="3.1.200"'
   - Target: TestCore
+    ScriptArgs: '--netcore="net5.0"'
+  - Target: TestCore
     ScriptArgs: '--netcore="netcoreapp2.1" --netcoreVersion="2.2.100"'
   - Target: Test
     ScriptArgs: ''
@@ -16,6 +18,9 @@ matrix:
   - image: Visual Studio 2017
     Target: TestCore
     ScriptArgs: '--netcoreVersion="3.1.200"'
+  - image: Visual Studio 2017
+    Target: TestCore
+    ScriptArgs: '--netcore="net5.0"'
   - image: Visual Studio 2017
     Target: Test
   - image: Visual Studio 2019
