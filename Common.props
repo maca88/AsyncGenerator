@@ -11,12 +11,11 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <TreatSpecificWarningsAsErrors />
-    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0;netcoreapp2.1;net5.0</LibTargetFrameworks>
-    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp2.1;netcoreapp3.1;net5.0</AppTargetFrameworks>
-    <TestTargetFramework Condition ="$(TestTargetFramework) == ''">netcoreapp3.1</TestTargetFramework>
-    <ToolTargetFrameworks Condition ="$(ToolTargetFrameworks) == ''">netcoreapp2.1;netcoreapp3.1;net5.0</ToolTargetFrameworks>
-    <MicrosoftCodeAnalysisVersion Condition ="$(TargetFramework) == 'netcoreapp2.1'">3.0.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftCodeAnalysisVersion Condition ="$(TargetFramework) != 'netcoreapp2.1'">3.7.0</MicrosoftCodeAnalysisVersion>
-    <DefineConstants Condition ="$(MicrosoftCodeAnalysisVersion) == '3.0.0'">LEGACY</DefineConstants>
+    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0;net5.0;net6.0</LibTargetFrameworks>
+    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp3.1;net5.0;net6.0</AppTargetFrameworks>
+    <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net6.0</TestTargetFramework>
+    <ToolTargetFrameworks Condition ="$(ToolTargetFrameworks) == ''">netcoreapp3.1;net5.0;net6.0</ToolTargetFrameworks>
+    <MicrosoftCodeAnalysisVersion>3.7.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftBuildLocatorVersion>1.4.1</MicrosoftBuildLocatorVersion>
   </PropertyGroup>
 </Project>
