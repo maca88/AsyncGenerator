@@ -2,17 +2,29 @@ version: 1.0.{build}
 image:
 - Visual Studio 2022
 - Ubuntu
+- macos
 environment:
   matrix:
   - Target: TestCore
-    ScriptArgs: '--netcoreVersion="3.1.200"'
+    ScriptArgs: '--netcoreVersion="3.1.200" --netcore="netcoreapp3.1"'
   - Target: TestCore
     ScriptArgs: '--netcoreVersion="5.0.400" --netcore="net5.0"'
   - Target: TestCore
     ScriptArgs: '--netcore="net6.0"'
   - Target: Test
     ScriptArgs: ''
+matrix:
+  exclude:
+  - image: macos
+    Target: TestCore
+    ScriptArgs: '--netcore="net6.0"'
+  - image: macos
+    Target: Test
+  - image: Ubuntu
+    Target: Test
+install:
+  - dotnet tool restore
 build_script:
-- cmd: PowerShell -Version 2.0 .\build.ps1 -Target %Target% -ScriptArgs '%ScriptArgs%'
-- sh: ./build.sh -t --target=$Target $ScriptArgs
+- cmd: dotnet cake --target=%Target% %ScriptArgs%
+- sh: dotnet cake --target=$Target $ScriptArgs
 test: off

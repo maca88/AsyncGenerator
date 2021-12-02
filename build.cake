@@ -1,4 +1,5 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.13.0
+#tool nuget:?package=NuGet.CommandLine&version=5.9.1
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -6,7 +7,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
-var netcore = Argument("netcore", "netcoreapp3.1");
+var netcore = Argument("netcore", "net6.0");
 var netcoreVersion = Argument("netcoreVersion", "");
 
 //////////////////////////////////////////////////////////////////////
@@ -136,7 +137,7 @@ Task("RestoreCore")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    DotNetCoreRestore("./Source/AsyncGenerator.sln", new DotNetCoreRestoreSettings
+    DotNetRestore("./Source/AsyncGenerator.sln", new DotNetRestoreSettings
     {
         ConfigFile = "./Nuget.config"
     });
@@ -144,7 +145,7 @@ Task("RestoreCore")
     foreach(var testSolution in testSolutions)
     {
         Information("Restoring {0}", testSolution);
-        DotNetCoreRestore(testSolution.FullPath, new DotNetCoreRestoreSettings
+        DotNetRestore(testSolution.FullPath, new DotNetRestoreSettings
         {
             ConfigFile = "./Nuget.config"
         });
@@ -163,7 +164,7 @@ Task("BuildCore")
     .IsDependentOn("RestoreCore")
     .Does(() =>
 {
-    DotNetCoreBuild("./Source/AsyncGenerator.sln", new DotNetCoreBuildSettings
+    DotNetBuild("./Source/AsyncGenerator.sln", new DotNetBuildSettings
     {
         Configuration = configuration,
         ArgumentCustomization = args => args.Append("--no-restore"),
@@ -186,7 +187,7 @@ Task("TestCore")
     .IsDependentOn("BuildCore")
     .Does(() =>
 {
-    DotNetCoreTest("./Source/AsyncGenerator.Tests/AsyncGenerator.Tests.csproj", new DotNetCoreTestSettings
+    DotNetTest("./Source/AsyncGenerator.Tests/AsyncGenerator.Tests.csproj", new DotNetTestSettings
     {
         Configuration = configuration,
         NoBuild = true
@@ -230,7 +231,7 @@ Task("Pack")
         });
     }
 
-    DotNetCorePack("Source/AsyncGenerator.Tool/AsyncGenerator.Tool.csproj", new DotNetCorePackSettings {
+    DotNetPack("Source/AsyncGenerator.Tool/AsyncGenerator.Tool.csproj", new DotNetPackSettings {
         Configuration = configuration,
         OutputDirectory = PACKAGE_DIR,
         IncludeSymbols = false,
@@ -258,7 +259,7 @@ Task("Publish")
 //////////////////////////////////////////////////////////////////////
 
 Task("Default")
-    .IsDependentOn("Test");
+    .IsDependentOn("TestCore");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
