@@ -4,26 +4,20 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Yaml;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.FileConfiguration;
-using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
-using AsyncGenerator.Logging;
-using log4net;
-using log4net.Config;
-using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
 namespace AsyncGenerator.Tests
@@ -50,20 +44,17 @@ namespace AsyncGenerator.Tests
 
 		static BaseFixture()
 		{
-#if NETCOREAPP
-			var configPath = EnvironmentHelper.GetConfigurationFilePath();
-			if (!string.IsNullOrEmpty(configPath))
+			var config = new ConfigurationBuilder()
+				.AddJsonFile("logging.settings.json")
+				.Build();
+			var loggingFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
 			{
-				var logRepository = LogManager.GetRepository(typeof(BaseFixture).Assembly);
-				XmlConfigurator.Configure(logRepository, File.OpenRead(configPath));
-			}
-#endif
-#if NET472
-			XmlConfigurator.Configure();
-#endif
+				builder.AddConfiguration(config).AddConsole();
+			});
+
 			EnvironmentHelper.Setup();
-			LoggerFactory = new Log4NetLoggerFactory();
-			Logger = LoggerFactory.GetLogger(nameof(AsyncGenerator));
+			LoggerFactory = loggingFactory;
+			Logger = loggingFactory.CreateLogger(nameof(AsyncGenerator));
 		}
 
 		protected BaseFixture(string folderPath = null)
@@ -140,7 +131,7 @@ namespace AsyncGenerator.Tests
 		public virtual AsyncCodeConfiguration Configure(Action<IFluentProjectConfiguration> action = null)
 		{
 			var filePath = Path.GetFullPath(Path.Combine(GetBaseDirectory(), "..", "..", "..", "AsyncGenerator.Tests.csproj"));
-			
+
 			return AsyncCodeConfiguration.Create()
 				.ConfigureProject(filePath, p =>
 				{
@@ -301,7 +292,7 @@ namespace AsyncGenerator.Tests
 
 		private class TestProjectYamlFileConfigurator : TestProjectFileConfigurator
 		{
-			public TestProjectYamlFileConfigurator(string inputFolderPath, string fileName, Action<IFluentProjectConfiguration> configureProjectAction) 
+			public TestProjectYamlFileConfigurator(string inputFolderPath, string fileName, Action<IFluentProjectConfiguration> configureProjectAction)
 				: base(new YamlFileConfigurator(), inputFolderPath, fileName, configureProjectAction)
 			{
 			}

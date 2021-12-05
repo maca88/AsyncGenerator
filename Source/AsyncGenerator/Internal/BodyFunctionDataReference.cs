@@ -29,7 +29,7 @@ namespace AsyncGenerator.Internal
 
 		public HashSet<IMethodSymbol> ReferenceAsyncSymbols
 		{
-			get => _referenceAsyncSymbols ?? (_referenceAsyncSymbols = new HashSet<IMethodSymbol>());
+			get => _referenceAsyncSymbols ?? (_referenceAsyncSymbols = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default));
 			set => _referenceAsyncSymbols = value;
 		}
 
@@ -140,9 +140,9 @@ namespace AsyncGenerator.Internal
 					methodConversion = ReferenceFunctionData.Conversion;
 				}
 			}
-			
+
 			var conversion = Conversion;
-			
+
 			if (methodConversion.HasFlag(MethodConversion.ToAsync))
 			{
 				return ReferenceConversion.ToAsync;
@@ -317,7 +317,7 @@ namespace AsyncGenerator.Internal
 		#region IFunctionReferenceAnalyzationResult
 
 		private IReadOnlyList<IMethodSymbol> _cachedReferenceAsyncSymbols;
-		IReadOnlyList<IMethodSymbol> IBodyFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols => 
+		IReadOnlyList<IMethodSymbol> IBodyFunctionReferenceAnalyzationResult.ReferenceAsyncSymbols =>
 			_cachedReferenceAsyncSymbols ?? (_cachedReferenceAsyncSymbols = ReferenceAsyncSymbols.ToImmutableArray());
 
 		bool IBodyFunctionReferenceAnalyzationResult.AwaitInvocation => AwaitInvocation.GetValueOrDefault();

@@ -5,9 +5,10 @@ using System.Linq;
 using System.Reflection;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Configuration;
-using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AsyncGenerator.Configuration
 {
@@ -24,7 +25,7 @@ namespace AsyncGenerator.Configuration
 
 		internal List<ProjectConfiguration> ProjectConfigurations { get; } = new List<ProjectConfiguration>();
 
-		internal ILoggerFactory LoggerFactoryInstance { get; private set; } = new VoidLoggerFactory();
+		internal ILoggerFactory LoggerFactoryInstance { get; private set; } = new NullLoggerFactory();
 
 		public AsyncCodeConfiguration ConfigureSolution(string solutionFilePath, Action<IFluentSolutionConfiguration> action)
 		{

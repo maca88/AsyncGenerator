@@ -1308,12 +1308,8 @@ namespace AsyncGenerator.Extensions.Internal
 		internal static BlockSyntax ConvertToBlock(this SyntaxTrivia trivia)
 		{
 			var root = (CompilationUnitSyntax) ParseSyntaxTree($"void Method() {{\n{trivia.ToFullString()}\n}}").GetRoot();
-#if LEGACY
-			return root.Members.OfType<MethodDeclarationSyntax>().First().Body;
-#else
 			var globalStatement = root.Members.OfType<GlobalStatementSyntax>().First();
 			return ((LocalFunctionStatementSyntax) globalStatement.Statement).Body;
-#endif
 		}
 	}
 }

@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(AppTargetFrameworks)</TargetFrameworks>
     <ServerGarbageCollection>true</ServerGarbageCollection>
+    <LangVersion>7.3</LangVersion>
+    <NoWarn Condition="'$(TargetFramework)' == 'netcoreapp3.1'">CS8032</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -35,18 +37,20 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
-    <PackageReference Include="log4net" Version="2.0.12" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.6" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="$(MicrosoftBuildLocatorVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(MicrosoftCodeAnalysisVersion)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <PackageReference Include="log4net" Version="2.0.12">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.6">
+    <PackageReference Include="Microsoft.Build.Locator" Version="$(MicrosoftBuildLocatorVersion)">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisVersion)">
@@ -58,11 +62,11 @@
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.6.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="SQLitePCLRaw.core" Version="1.1.2"> <!-- Needed for mono 5.16+ -->
+    <PackageReference Include="SQLitePCLRaw.core" Version="2.0.7"> <!-- Needed for mono 5.16+ -->
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.Configuration.Yaml\AsyncGenerator.Configuration.Yaml.csproj" />
     <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj" />
@@ -73,6 +77,12 @@
     <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
       <Link>EnvironmentHelper.cs</Link>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logging.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

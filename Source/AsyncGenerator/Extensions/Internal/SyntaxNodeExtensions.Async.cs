@@ -45,7 +45,7 @@ namespace AsyncGenerator.Extensions.Internal
 					case SyntaxKind.ParenthesizedLambdaExpression:
 					case SyntaxKind.SimpleLambdaExpression:
 					case SyntaxKind.AnonymousMethodExpression:
-						if ((node as AnonymousFunctionExpressionSyntax)?.AsyncKeyword.Kind() != SyntaxKind.AsyncKeyword)
+						if ((node as AnonymousFunctionExpressionSyntax)?.AsyncKeyword.IsKind(SyntaxKind.AsyncKeyword) != true)
 						{
 							return node;
 						}

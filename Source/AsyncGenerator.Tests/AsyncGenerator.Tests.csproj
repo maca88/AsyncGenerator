@@ -3,7 +3,8 @@
   <PropertyGroup>
     <TargetFramework>$(TestTargetFramework)</TargetFramework>
     <IsPackable>false</IsPackable>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>7.3</LangVersion>
+    <NoWarn Condition="'$(TargetFramework)' == 'netcoreapp3.1'">CS8032</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -21,26 +22,21 @@
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.0" />
-    <PackageReference Include="NUnit" Version="3.11.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />
-    <PackageReference Include="Microsoft.Build.Locator" Version="1.2.6" />
-    <PackageReference Include="log4net" Version="2.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="NUnit" Version="3.13.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="$(MicrosoftBuildLocatorVersion)" />
     <PackageReference Include="System.Interactive.Async" Version="4.1.1" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-    <!-- FIX FOR NRE https://github.com/dotnet/roslyn-analyzers/issues/1888 -->
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="2.9.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <Reference Include="System.Transactions" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.6.0" />
-    <PackageReference Include="SQLitePCLRaw.core" Version="1.1.2" /> <!-- Needed for MONO 5.16+ -->
+    <PackageReference Include="SQLitePCLRaw.core" Version="2.0.7" /> <!-- Needed for MONO 5.16+ -->
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
@@ -59,11 +55,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\AsyncGenerator.CommandLine\Log4NetLogger.cs" Link="Log4NetLogger.cs" />
-    <Compile Include="..\AsyncGenerator.CommandLine\Log4NetLoggerFactory.cs" Link="Log4NetLoggerFactory.cs" />
     <Compile Include="..\AsyncGenerator\Internal\EnvironmentHelper.cs">
       <Link>EnvironmentHelper.cs</Link>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="logging.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

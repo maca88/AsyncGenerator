@@ -13,10 +13,8 @@ namespace AsyncGenerator.Core.Extensions.Internal
 	internal static class SymbolExtensions
 	{
 		private static readonly Func<object, IEnumerable> GetHiddenMembersFunc;
-#if !LEGACY
 		private static readonly Func<object, ISymbol> GetPublicSymbolFunc;
 		private static readonly Func<ISymbol, object> GetInternalSymbolFunc;
-#endif
 
 		static SymbolExtensions()
 		{
@@ -51,13 +49,10 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			GetHiddenMembersFunc = Expression.Lambda<Func<object, IEnumerable>>(
 					Expression.Convert(callHiddenMembersGetter, typeof(IEnumerable)), lambdaParams)
 				.Compile();
-#if !LEGACY
 			GetPublicSymbolFunc = CreateGetPublicSymbolFunction();
 			GetInternalSymbolFunc = CreateGetInternalSymbolFunction();
-#endif
 		}
 
-#if !LEGACY
 		private static Func<object, ISymbol> CreateGetPublicSymbolFunction()
 		{
 			const string symbolInternalFullName = "Microsoft.CodeAnalysis.Symbols.ISymbolInternal, Microsoft.CodeAnalysis";
@@ -107,13 +102,9 @@ namespace AsyncGenerator.Core.Extensions.Internal
 				symbolParameter
 			).Compile();
 		}
-#endif
 
 		internal static IEnumerable<IMethodSymbol> GetHiddenMethods(this IMethodSymbol methodSymbol)
 		{
-#if LEGACY
-			return GetHiddenMembersFunc(methodSymbol).OfType<IMethodSymbol>();
-#else
 			foreach (var item in GetHiddenMembersFunc(GetInternalSymbolFunc(methodSymbol)))
 			{
 				var hiddenMethod = GetPublicSymbolFunc(item) as IMethodSymbol;
@@ -124,7 +115,6 @@ namespace AsyncGenerator.Core.Extensions.Internal
 
 				yield return hiddenMethod;
 			}
-#endif
 		}
 
 		/// <summary>
@@ -223,11 +213,7 @@ namespace AsyncGenerator.Core.Extensions.Internal
 
 		internal static bool EqualTo(this ISymbol symbol, ISymbol symbolToCompare)
 		{
-#if LEGACY
-			return symbol.Equals(symbolToCompare);
-#else
 			return symbol.Equals(symbolToCompare, SymbolEqualityComparer.Default);
-#endif
 		}
 
 		/// <summary>
