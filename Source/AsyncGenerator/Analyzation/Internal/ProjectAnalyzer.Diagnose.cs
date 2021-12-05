@@ -5,6 +5,7 @@ using System.Linq;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 
 namespace AsyncGenerator.Analyzation.Internal
 {
@@ -105,16 +106,16 @@ namespace AsyncGenerator.Analyzation.Internal
 					switch (log.Key)
 					{
 						case DiagnosticSeverity.Hidden:
-							_diagnosticsLogger.Debug(log.Value);
+							_diagnosticsLogger.LogDebug(log.Value);
 							break;
 						case DiagnosticSeverity.Info:
-							_diagnosticsLogger.Info(log.Value);
+							_diagnosticsLogger.LogInformation(log.Value);
 							break;
 						case DiagnosticSeverity.Warning:
-							_diagnosticsLogger.Warn(log.Value);
+							_diagnosticsLogger.LogWarning(log.Value);
 							break;
 						case DiagnosticSeverity.Error:
-							_diagnosticsLogger.Error(log.Value);
+							_diagnosticsLogger.LogError(log.Value);
 							break;
 					}
 				}

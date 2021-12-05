@@ -74,8 +74,11 @@ namespace AsyncGenerator.Core.Plugins
 
 			// With NUnit version 3.8, each sync method has its own async counterpart, but we are using
 			// FirstOrDefault just in case if there will be a new sync overload without an async counterpart in the future
-			_thatAsyncCounterparts = thatMethods.Where(o => !o.IsGenericMethod)
-				.ToDictionary(o => o, o => asyncThatMethods.FirstOrDefault(a => MatchParameters(o, a)));
+			_thatAsyncCounterparts = new Dictionary<IMethodSymbol, IMethodSymbol>(SymbolEqualityComparer.Default);
+			foreach (var symbol in thatMethods.Where(o => !o.IsGenericMethod))
+			{
+				_thatAsyncCounterparts.Add(symbol, asyncThatMethods.FirstOrDefault(a => MatchParameters(symbol, a)));
+			}
 
 			return Task.CompletedTask;
 		}

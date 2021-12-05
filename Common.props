@@ -15,7 +15,7 @@
     <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;netcoreapp3.1;net5.0;net6.0</AppTargetFrameworks>
     <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net6.0</TestTargetFramework>
     <ToolTargetFrameworks Condition ="$(ToolTargetFrameworks) == ''">netcoreapp3.1;net5.0;net6.0</ToolTargetFrameworks>
-    <MicrosoftCodeAnalysisVersion>3.7.0</MicrosoftCodeAnalysisVersion>
+    <MicrosoftCodeAnalysisVersion>3.11.0</MicrosoftCodeAnalysisVersion>
     <MicrosoftBuildLocatorVersion>1.4.1</MicrosoftBuildLocatorVersion>
   </PropertyGroup>
 </Project>

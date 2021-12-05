@@ -35,7 +35,7 @@ namespace AsyncGenerator.Core.Plugins
 			_extensionMethods = new HashSet<IMethodSymbol>(rootNode.DescendantNodes()
 				.OfType<MethodDeclarationSyntax>()
 				.Where(o => o.Identifier.ValueText.EndsWith("Async"))
-				.Select(o => semanticModel.GetDeclaredSymbol(o)));
+				.Select(o => semanticModel.GetDeclaredSymbol(o)), SymbolEqualityComparer.Default);
 			_extensionMethodsLookup = _extensionMethods.ToLookup(o => o.Name);
 		}
 
@@ -50,8 +50,8 @@ namespace AsyncGenerator.Core.Plugins
 				.Distinct()
 				.ToList();
 
-			if (!requiredNamespaces.Any() || requiredNamespaces.All(o => 
-				transformationResult.AnalyzationResult.GlobalNamespace.NestedNamespaces.Any(n => n.Symbol.ToString().StartsWith(o)) || 
+			if (!requiredNamespaces.Any() || requiredNamespaces.All(o =>
+				transformationResult.AnalyzationResult.GlobalNamespace.NestedNamespaces.Any(n => n.Symbol.ToString().StartsWith(o)) ||
 				transformationResult.Transformed.Usings.Any(u => u.Name.ToString() == o)))
 			{
 				return null;

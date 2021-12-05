@@ -206,7 +206,7 @@ namespace AsyncGenerator.Core.Extensions
 
 		private static IEnumerable<IMethodSymbol> FilterOutHiddenAndOverridenMethods(IEnumerable<IMethodSymbol> methodSymbols)
 		{
-			var overridenOrHiddenMethods = new HashSet<IMethodSymbol>();
+			var overridenOrHiddenMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
 			foreach (var methodSymbol in methodSymbols)
 			{
 				if (overridenOrHiddenMethods.Contains(methodSymbol))

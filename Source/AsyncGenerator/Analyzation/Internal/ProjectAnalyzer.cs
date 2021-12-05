@@ -10,12 +10,12 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
-using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Extensions.Internal;
 using AsyncGenerator.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Logging;
 using Document = Microsoft.CodeAnalysis.Document;
 using IMethodSymbol = Microsoft.CodeAnalysis.IMethodSymbol;
 using Project = Microsoft.CodeAnalysis.Project;
@@ -32,16 +32,16 @@ namespace AsyncGenerator.Analyzation.Internal
 		private IImmutableSet<Project> _analyzeProjects;
 		private ProjectAnalyzeConfiguration _configuration;
 		private Solution _solution;
-		private readonly ConcurrentDictionary<ITypeSymbol, ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>> _methodByTypeAsyncConterparts = 
-			new ConcurrentDictionary<ITypeSymbol, ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>>();
+		private readonly ConcurrentDictionary<ITypeSymbol, ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>> _methodByTypeAsyncConterparts =
+			new ConcurrentDictionary<ITypeSymbol, ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>>(SymbolEqualityComparer.Default);
 		private readonly ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> _methodAsyncConterparts =
-			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>();
+			new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>(SymbolEqualityComparer.Default);
 
 		public ProjectAnalyzer(ProjectData projectData, ILoggerFactory loggerFactory)
 		{
 			ProjectData = projectData;
-			_logger = loggerFactory.GetLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectAnalyzer)}");
-			_diagnosticsLogger = loggerFactory.GetLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectAnalyzer)}.Diagnostics");
+			_logger = loggerFactory.CreateLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectAnalyzer)}");
+			_diagnosticsLogger = loggerFactory.CreateLogger($"{nameof(AsyncGenerator)}.{nameof(ProjectAnalyzer)}.Diagnostics");
 		}
 
 		public ProjectData ProjectData { get; }
@@ -55,7 +55,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			Setup();
 
 			// 1. Step - Parse all documents inside the project and create a DocumentData for each
-			_logger.Info("Parsing documents started");
+			_logger.LogInformation("Parsing documents started");
 			DocumentData[] documentData;
 			if (_configuration.ConcurrentRun)
 			{
@@ -72,10 +72,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					i++;
 				}
 			}
-			_logger.Info("Parsing documents completed");
+			_logger.LogInformation("Parsing documents completed");
 
 			// 2. Step - Each method in a document will be pre-analyzed and saved in a structural tree
-			_logger.Info("Pre-analyzing documents started");
+			_logger.LogInformation("Pre-analyzing documents started");
 			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(documentData, PreAnalyzeDocumentData);
@@ -87,10 +87,10 @@ namespace AsyncGenerator.Analyzation.Internal
 					PreAnalyzeDocumentData(item);
 				}
 			}
-			_logger.Info("Pre-analyzing documents completed");
+			_logger.LogInformation("Pre-analyzing documents completed");
 
 			// 3. Step - Find all references for each method and optionally scan its body for async counterparts
-			_logger.Info("Scanning references started");
+			_logger.LogInformation("Scanning references started");
 			if (_configuration.ConcurrentRun)
 			{
 				await Task.WhenAll(documentData.Select(o => ScanDocumentData(o, cancellationToken))).ConfigureAwait(false);
@@ -102,9 +102,9 @@ namespace AsyncGenerator.Analyzation.Internal
 					await ScanDocumentData(item, cancellationToken).ConfigureAwait(false);
 				}
 			}
-			_logger.Info("Scanning references completed");
+			_logger.LogInformation("Scanning references completed");
 
-			_logger.Debug(
+			_logger.LogDebug(
 				$"Scanning statistics:{Environment.NewLine}" +
 				$"Total scanned documents: {documentData.Length}{Environment.NewLine}" +
 				$"Total scanned methods: {_scannedMethodOrAccessors.Count}{Environment.NewLine}" +
@@ -117,7 +117,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			);
 
 			// 4. Step - Analyze all references found in the previous step
-			_logger.Info("Analyzing documents started");
+			_logger.LogInformation("Analyzing documents started");
 			if (_configuration.ConcurrentRun)
 			{
 				Parallel.ForEach(documentData, AnalyzeDocumentData);
@@ -129,19 +129,19 @@ namespace AsyncGenerator.Analyzation.Internal
 					AnalyzeDocumentData(item);
 				}
 			}
-			_logger.Info("Analyzing documents completed");
+			_logger.LogInformation("Analyzing documents completed");
 
 			// 5. Step - Calculate the final conversion for all method data
-			_logger.Info("Post-analyzing documents started");
+			_logger.LogInformation("Post-analyzing documents started");
 			PostAnalyze(documentData);
-			_logger.Info("Post-analyzing documents completed");
+			_logger.LogInformation("Post-analyzing documents completed");
 
 			// 6. Step - Log the diagnoses of documents
 			if (_configuration.Diagnostics.Enabled)
 			{
-				_logger.Info("Diagnose of documents started");
+				_logger.LogInformation("Diagnose of documents started");
 				Diagnose(documentData);
-				_logger.Info("Diagnose of documents completed");
+				_logger.LogInformation("Diagnose of documents completed");
 			}
 			return ProjectData;
 		}
@@ -161,7 +161,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return GetAsyncCounterparts(methodSymbol, options, onlyNew);
 			}
-			var typeDict = _methodByTypeAsyncConterparts.GetOrAdd(invokedFromType.OriginalDefinition, new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>());
+			var typeDict = _methodByTypeAsyncConterparts.GetOrAdd(invokedFromType.OriginalDefinition, new ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>>(SymbolEqualityComparer.Default));
 			return GetAsyncCounterparts(typeDict, methodSymbol, invokedFromType.OriginalDefinition, options, onlyNew);
 		}
 
@@ -170,7 +170,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			return GetAsyncCounterparts(_methodAsyncConterparts, methodSymbol, null, options, onlyNew);
 		}
 
-		private IEnumerable<IMethodSymbol> GetAsyncCounterparts(ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> asyncCounterparts, 
+		private IEnumerable<IMethodSymbol> GetAsyncCounterparts(ConcurrentDictionary<IMethodSymbol, ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>> asyncCounterparts,
 			IMethodSymbol methodSymbol, ITypeSymbol invokedFromType, AsyncCounterpartsSearchOptions options, bool onlyNew = false)
 		{
 			var dict = asyncCounterparts.GetOrAdd(methodSymbol, new ConcurrentDictionary<AsyncCounterpartsSearchOptions, HashSet<IMethodSymbol>>());
@@ -180,14 +180,14 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			asyncMethodSymbols = _configuration.CanSearchForAsyncCounterparts(methodSymbol)
 				? new HashSet<IMethodSymbol>(_configuration.AsyncCounterpartsFinders
-					.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, invokedFromType, options)))
-				: new HashSet<IMethodSymbol>();
+					.SelectMany(o => o.FindAsyncCounterparts(methodSymbol, invokedFromType, options)), SymbolEqualityComparer.Default)
+				: new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
 			return dict.AddOrUpdate(
 				options,
 				asyncMethodSymbols,
 				(k, v) =>
 				{
-					_logger.Debug($"Performance hit: Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
+					_logger.LogDebug($"Performance hit: Multiple GetAsyncCounterparts method calls for method symbol {methodSymbol}");
 					return asyncMethodSymbols;
 				});
 		}
@@ -210,7 +210,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				return Enumerable.Empty<IMethodSymbol>();
 			}
 
-			var result = new HashSet<IMethodSymbol>();
+			var result = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
 			var methodDataBody = methodData.GetBodyNode();
 			if (methodDataBody == null)
 			{

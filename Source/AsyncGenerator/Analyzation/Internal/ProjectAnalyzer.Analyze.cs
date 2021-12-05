@@ -86,7 +86,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				SoftCopyAllDependencies(methodAccessorData);
 				return; // We do not want to analyze method that will be only copied
 			}
-			
+
 			// If all abstract/virtual related methods are ignored then ignore also this one (IsAbstract includes also interface members)
 			// Skip methods that were ignored because having an async counterpart in order to have overrides generated
 			var baseMethods = methodAccessorData.RelatedMethods
@@ -156,7 +156,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (
 				methodAccessorData.Dependencies.All(o => o.Conversion.HasFlag(MethodConversion.Ignore)) &&
 				methodAccessorData.RelatedMethods.All(o => !o.HasAsyncCounterpart || o.ExplicitlyIgnored) &&
-				methodAccessorData.BodyFunctionReferences.All(o => o.Conversion == ReferenceConversion.Ignore) && 
+				methodAccessorData.BodyFunctionReferences.All(o => o.Conversion == ReferenceConversion.Ignore) &&
 				methodAccessorData.Conversion.HasFlag(MethodConversion.Smart) &&
 			    methodAccessorData.TypeData.GetSelfAndAncestorsTypeData().All(o => o.Conversion != TypeConversion.NewType) &&
 				!methodAccessorData.ExternalRelatedMethods.Any()
@@ -348,7 +348,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			{
 				return;
 			}
-			
+
 			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
 			if (methodSymbol.ReturnType.IsTaskType())
 			{
@@ -518,7 +518,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			if (node.Parent.Equals(functionBodyNode) || //eg. bool ExpressionReturn() => SimpleFile.Write();
 			    node.Equals(functionBodyNode) || // eg. Func<bool> fn = () => SimpleFile.Write();
 				(
-					node.IsKind(SyntaxKind.IdentifierName) && 
+					node.IsKind(SyntaxKind.IdentifierName) &&
 					node.Parent.Parent.IsKind(SyntaxKind.ArrowExpressionClause) &&
 					node.Parent.Parent.Equals(functionBodyNode)
 				) // eg. bool Prop => StaticClass.Property;
@@ -544,7 +544,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						functionReferenceData.LastInvocation = true;
 						functionReferenceData.UseAsReturnValue = true;
 						return;
-					case SyntaxKind.ConditionalExpression: // return num > 5 ? SimpleFile.Write() : false 
+					case SyntaxKind.ConditionalExpression: // return num > 5 ? SimpleFile.Write() : false
 						var conditionExpression = (ConditionalExpressionSyntax)currNode;
 						if (conditionExpression.Condition.Contains(node))
 						{
@@ -651,7 +651,7 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			functionReferenceData.ReferenceAsyncSymbols = new HashSet<IMethodSymbol>(GetAsyncCounterparts(methodSymbol.OriginalDefinition,
 				functionReferenceData.InvokedFromType, _searchOptions)
-				.Where(o => _configuration.IgnoreAsyncCounterpartsPredicates.All(p => !p(o))));
+				.Where(o => _configuration.IgnoreAsyncCounterpartsPredicates.All(p => !p(o))), SymbolEqualityComparer.Default);
 		}
 
 		private bool SetAsyncCounterpart(BodyFunctionDataReference functionReferenceData)
@@ -741,7 +741,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			return true;
 		}
-		
+
 		internal class AnalyzationCandidateResult
 		{
 			public IMethodSymbol AsyncCandidate { get; set; }
@@ -814,12 +814,12 @@ namespace AsyncGenerator.Analyzation.Internal
 			foreach (var functionArgument in functionReferenceData.DelegateArguments)
 			{
 				var funcData = functionArgument.FunctionData;
-				
+
 				if (funcData == null)
 				{
 					var bodyRef = functionArgument.FunctionReference;
 					funcData = bodyRef.ReferenceFunctionData;
-					
+
 					//if (!result.CanBeAsync)
 					//{
 					//	return new AnalyzationCandidateResult

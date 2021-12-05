@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.Extensions.Logging;
 
 namespace AsyncGenerator.Analyzation.Internal
 {
@@ -26,7 +27,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			foreach (var typeData in documentData.GetAllTypeDatas(o => o.Conversion != TypeConversion.Ignore))
 			{
-				// If the type have to be defined as a new type then we need to find all references to that type. 
+				// If the type have to be defined as a new type then we need to find all references to that type.
 				// We must not scan for nested types as they will not be renamed
 				if (typeData.Conversion == TypeConversion.NewType)
 				{
@@ -169,20 +170,20 @@ namespace AsyncGenerator.Analyzation.Internal
 
 			SyntaxReference syntax;
 			var bodyScanMethodDatas = new HashSet<MethodOrAccessorData>();
-			var referenceScanMethods = new HashSet<IMethodSymbol>();
+			var referenceScanMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
 
 			if (_configuration.ScanMethodBody || methodOrAccessorData.Conversion.HasAnyFlag(MethodConversion.Smart, MethodConversion.ToAsync))
 			{
 				bodyScanMethodDatas.Add(methodOrAccessorData);
 			}
 
-			var interfaceMethods = methodOrAccessorData.ImplementedInterfaces.ToImmutableHashSet();
+			var interfaceMethods = methodOrAccessorData.ImplementedInterfaces.ToImmutableHashSet(SymbolEqualityComparer.Default);
 			if (methodOrAccessorData.InterfaceMethod)
 			{
 				interfaceMethods = interfaceMethods.Add(methodOrAccessorData.Symbol);
 			}
 			// Get and save all interface implementations
-			foreach (var interfaceMethod in interfaceMethods)
+			foreach (var interfaceMethod in interfaceMethods.OfType<IMethodSymbol>())
 			{
 				referenceScanMethods.Add(interfaceMethod);
 
@@ -306,7 +307,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 		}
 
-		private async Task ScanForReferences<TReferenceSymbol, TReferenceData>(TReferenceData data, TReferenceSymbol symbol, 
+		private async Task ScanForReferences<TReferenceSymbol, TReferenceData>(TReferenceData data, TReferenceSymbol symbol,
 			Func<AbstractData, ReferenceLocation, SimpleNameSyntax, IDataReference> createRefFunc, CancellationToken cancellationToken = default(CancellationToken))
 			where TReferenceData : AbstractData
 			where TReferenceSymbol : ISymbol
@@ -332,7 +333,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				referenceData.References.TryAdd(reference);
 				if (!data.SelfReferences.TryAdd(reference))
 				{
-					_logger.Debug($"Performance hit: Self reference for type {symbol} already exists");
+					_logger.LogDebug($"Performance hit: Self reference for type {symbol} already exists");
 				}
 			}
 		}
@@ -498,7 +499,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				.SelectMany(o => o.GetMembers(methodSymbol.Name)
 					.Where(m =>
 					{
-						// Find out if the method implements the interface member or an override 
+						// Find out if the method implements the interface member or an override
 						// method that implements it
 						var impl = type.FindImplementationForInterfaceMember(m);
 						return methodSymbol.EqualTo(impl) || relatedSymbols.Any(ov => ov.EqualTo(impl));
@@ -517,7 +518,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 			methodSymbol = methodSymbol.OriginalDefinition;
-			if ((!_configuration.CanSearchForMethodReferences(methodSymbol) && !_mustScanForMethodReferences.Contains(methodSymbol)) || 
+			if ((!_configuration.CanSearchForMethodReferences(methodSymbol) && !_mustScanForMethodReferences.Contains(methodSymbol)) ||
 				!_searchedMethodReferences.TryAdd(methodSymbol))
 			{
 				return;
@@ -609,7 +610,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					// We need to find the usage of the property, if getter or setter is used
 					methodReferenceSymbol = nameNode.IsAssigned()
-						? propertyReferenceSymbol.SetMethod 
+						? propertyReferenceSymbol.SetMethod
 						: propertyReferenceSymbol.GetMethod;
 				}
 				if (methodReferenceSymbol == null)
@@ -617,7 +618,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					// Check if the node is inside a nameof keyword as GetSymbolInfo will never return a symbol for it only candidates
 					if (nameNode.IsInsideNameOf())
 					{
-						var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>();
+						var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>(SymbolEqualityComparer.Default);
 						foreach (var candidateSymbol in referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
 						{
 							var nameofReferenceData = ProjectData.GetFunctionData(candidateSymbol);
@@ -626,7 +627,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						var nameofReference = new NameofFunctionDataReference(baseMethodData, refLocation, nameNode, referencedFuncs, true);
 						if (!baseMethodData.References.TryAdd(nameofReference))
 						{
-							_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
+							_logger.LogDebug($"Performance hit: MembersReferences {nameNode} already added");
 						}
 						foreach (var referencedFun in referencedFuncs.Values.Where(o => o != null))
 						{
@@ -654,7 +655,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					var crefReference = new CrefFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceFunctionData, true);
 					if (!baseMethodData.References.TryAdd(crefReference))
 					{
-						_logger.Debug($"Performance hit: MembersReferences {nameNode} already added");
+						_logger.LogDebug($"Performance hit: MembersReferences {nameNode} already added");
 					}
 					referenceFunctionData?.SelfReferences.TryAdd(crefReference);
 					continue; // No need to further scan a cref reference
@@ -662,7 +663,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				var methodReferenceData = new BodyFunctionDataReference(baseMethodData, refLocation, nameNode, methodReferenceSymbol, referenceFunctionData);
 				if (!baseMethodData.References.TryAdd(methodReferenceData))
 				{
-					_logger.Debug($"Performance hit: method reference {methodReferenceSymbol} already processed");
+					_logger.LogDebug($"Performance hit: method reference {methodReferenceSymbol} already processed");
 					continue; // Reference already processed
 				}
 				referenceFunctionData?.SelfReferences.TryAdd(methodReferenceData);
@@ -671,7 +672,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					continue;
 				}
-				// Do not scan for method that will be only copied (e.g. the containing type is a new type). 
+				// Do not scan for method that will be only copied (e.g. the containing type is a new type).
 				if (baseMethodData.Conversion == MethodConversion.Copy)
 				{
 					continue;
@@ -720,7 +721,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 			else if(referenceNameNode.IsInsideNameOf()) // GetSymbolInfo will never return a concrete symbol for nameof only candidates
 			{
-				var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>();
+				var referencedFuncs = new Dictionary<IMethodSymbol, FunctionData>(SymbolEqualityComparer.Default);
 				foreach (var candidateSymbol in referenceSymbolInfo.CandidateSymbols.OfType<IMethodSymbol>())
 				{
 					var nameofReferenceData = ProjectData.GetFunctionData(candidateSymbol);
@@ -889,7 +890,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				? symbolInfo.CandidateSymbols.OfType<IMethodSymbol>()
 					.FirstOrDefault(o => o.MatchesDefinition(parameterDelegate))
 				: null;
-			
+
 
 			// TODO: analyze if we need an option for the consumer to select the correct candidate
 		}

@@ -4,6 +4,9 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NETCOREAPP
+using System.Runtime.Loader;
+#endif
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 
@@ -83,16 +86,14 @@ namespace AsyncGenerator.Internal
 				.FirstOrDefault();
 
 #if NETCOREAPP
-			AppDomain.CurrentDomain.AssemblyResolve += (_, eventArgs) =>
+			AssemblyLoadContext.Default.Resolving += (assemblyLoadContext, assemblyName) =>
 			{
-				var assemblyName = new AssemblyName(eventArgs.Name);
-
 				// Workaround for .NET Core from 2.2 and up to 3.1.200 - Redirect Newtonsoft.Json version 9.0.0 requested from Microsoft.Build.NuGetSdkResolver
 				// to 10.0.3 which is provided with the framework
 				if ("Newtonsoft.Json" == assemblyName.Name || NuGetAssemblies.Contains(assemblyName.Name, StringComparer.OrdinalIgnoreCase))
 				{
 					var path = Path.Combine(instance.MSBuildPath, $"{assemblyName.Name}.dll");
-					return File.Exists(path) ? Assembly.LoadFrom(path) : null;
+					return File.Exists(path) ? assemblyLoadContext.LoadFromAssemblyPath(path) : null;
 				}
 
 				return null;
@@ -130,16 +131,7 @@ namespace AsyncGenerator.Internal
 
 		// On Mono RuntimeInformation.IsOSPlatform will always retrun true for Windows
 		public static bool IsWindows => Path.DirectorySeparatorChar == '\\';
-#if NETCOREAPP
-		public static string GetConfigurationFilePath()
-		{
-			var name = AppDomain.CurrentDomain.FriendlyName;
-			// On .NET Core FriendlyName as only the assembly name without the extension
-			name += ".dll.config";
-			var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
-			return File.Exists(path) ? path : null;
-		}
-#endif
+
 		public static string GetMonoMsBuildPath(Action<string> monoDirectoryAction = null)
 		{
 			// Get the sdk path by using the Mono runtime assembly location

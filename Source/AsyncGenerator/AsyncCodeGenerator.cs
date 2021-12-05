@@ -12,7 +12,6 @@ using AsyncGenerator.Configuration;
 using AsyncGenerator.Configuration.Internal;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
-using AsyncGenerator.Core.Logging;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
@@ -21,16 +20,15 @@ using AsyncGenerator.Transformation.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.Extensions.Logging;
 
 namespace AsyncGenerator
 {
 	public static class AsyncCodeGenerator
 	{
-#if !NETCOREAPP
-		// In .NET only one project or solution can be opened simultaneously
-		private static SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+		// Only one project or solution can be opened simultaneously
+		private static readonly SemaphoreSlim Lock = new SemaphoreSlim(1, 1);
 		private const int LockTimeout = 30 * 1000;
-#endif
 
 		static AsyncCodeGenerator() { }
 
@@ -44,21 +42,21 @@ namespace AsyncGenerator
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 			}
-			var logger = configuration.LoggerFactoryInstance.GetLogger(nameof(AsyncCodeGenerator));
+			var logger = configuration.LoggerFactoryInstance.CreateLogger(nameof(AsyncCodeGenerator));
 
-			logger.Info("Generating async code started");
+			logger.LogInformation("Generating async code started");
 
 			foreach (var config in configuration.SolutionConfigurations)
 			{
 				var workspace = CreateWorkspace(config.TargetFramework);
-				logger.Info($"Opening solution '{config.Path}' started");
+				logger.LogInformation($"Opening solution '{config.Path}' started");
 				var solution = await OpenSolution(workspace, config.Path,
 					config.SuppressDiagnosticFailuresPrediactes, logger, cancellationToken).ConfigureAwait(false);
-				logger.Info($"Opening solution '{config.Path}' completed");
+				logger.LogInformation($"Opening solution '{config.Path}' completed");
 
-				logger.Info("Configuring solution prior analyzation started");
+				logger.LogInformation("Configuring solution prior analyzation started");
 				var solutionData = CreateSolutionData(solution, config);
-				logger.Info("Configuring solution prior analyzation completed");
+				logger.LogInformation("Configuring solution prior analyzation completed");
 
 				foreach (var projectData in solutionData.GetProjects())
 				{
@@ -74,14 +72,14 @@ namespace AsyncGenerator
 			foreach (var config in configuration.ProjectConfigurations)
 			{
 				var workspace = CreateWorkspace(config.TargetFramework);
-				logger.Info($"Opening project '{config.Path}' started");
-				var project = await OpenProject(workspace, config.Path, 
+				logger.LogInformation($"Opening project '{config.Path}' started");
+				var project = await OpenProject(workspace, config.Path,
 					config.SuppressDiagnosticFailuresPrediactes, logger, cancellationToken).ConfigureAwait(false);
-				logger.Info($"Opening project '{config.Path}' completed");
+				logger.LogInformation($"Opening project '{config.Path}' completed");
 
-				logger.Info("Configuring project prior analyzation started");
+				logger.LogInformation("Configuring project prior analyzation started");
 				var projectData = CreateProjectData(project, config);
-				logger.Info("Configuring project prior analyzation completed");
+				logger.LogInformation("Configuring project prior analyzation completed");
 
 				await GenerateProject(projectData, configuration.LoggerFactoryInstance, logger, cancellationToken).ConfigureAwait(false);
 
@@ -92,7 +90,7 @@ namespace AsyncGenerator
 				workspace.Dispose();
 			}
 
-			logger.Info("Generating async code completed");
+			logger.LogInformation("Generating async code completed");
 		}
 
 		internal static MSBuildWorkspace CreateWorkspace(string targetFramework)
@@ -133,12 +131,12 @@ namespace AsyncGenerator
 			SetupParsing(projectData);
 
 			// Compile project for the first time
-			logger.Info($"Compiling project '{projectData.Project.Name}' started");
+			logger.LogInformation($"Compiling project '{projectData.Project.Name}' started");
 			projectData.Compilation = await projectData.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
-			logger.Info($"Compiling project '{projectData.Project.Name}' completed");
+			logger.LogInformation($"Compiling project '{projectData.Project.Name}' completed");
 
 			// Initialize plugins
-			logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' started");
+			logger.LogInformation($"Initializing registered plugins for project '{projectData.Project.Name}' started");
 			foreach (var registeredPlugin in projectData.Configuration.RegisteredPlugins)
 			{
 				if (cancellationToken.IsCancellationRequested)
@@ -147,36 +145,36 @@ namespace AsyncGenerator
 				}
 				await registeredPlugin.Initialize(projectData.Project, projectData.Configuration, projectData.Compilation).ConfigureAwait(false);
 			}
-			logger.Info($"Initializing registered plugins for project '{projectData.Project.Name}' completed");
+			logger.LogInformation($"Initializing registered plugins for project '{projectData.Project.Name}' completed");
 
 			// Analyze project
-			logger.Info($"Analyzing project '{projectData.Project.Name}' started");
+			logger.LogInformation($"Analyzing project '{projectData.Project.Name}' started");
 			var analyzationResult = await AnalyzeProject(projectData, loggerFactory, cancellationToken).ConfigureAwait(false);
 			foreach (var action in analyzeConfig.AfterAnalyzation)
 			{
 				action(analyzationResult);
 			}
-			logger.Info($"Analyzing project '{projectData.Project.Name}' completed");
+			logger.LogInformation($"Analyzing project '{projectData.Project.Name}' completed");
 
 			// Transform documents
 			var transformConfig = projectData.Configuration.TransformConfiguration;
 			if (transformConfig.Enabled)
 			{
-				logger.Info($"Transforming project '{projectData.Project.Name}' started");
+				logger.LogInformation($"Transforming project '{projectData.Project.Name}' started");
 				var transformResult = TransformProject(analyzationResult, transformConfig, loggerFactory);
 				foreach (var action in transformConfig.AfterTransformation)
 				{
 					action(transformResult);
 				}
 				projectData.Project = transformResult.Project; // updates also the solution
-				logger.Info($"Transforming project '{projectData.Project.Name}' completed");
+				logger.LogInformation($"Transforming project '{projectData.Project.Name}' completed");
 			}
 
 			// Compile transformed project
 			var compileConfig = projectData.Configuration.CompileConfiguration;
 			if (compileConfig != null)
 			{
-				logger.Info($"Compiling project '{projectData.Project.Name}' started");
+				logger.LogInformation($"Compiling project '{projectData.Project.Name}' started");
 				var compilation = await projectData.Project.GetCompilationAsync(cancellationToken).ConfigureAwait(false);
 				var emit = compilation.Emit(compileConfig.OutputPath, compileConfig.SymbolsPath, compileConfig.XmlDocumentationPath);
 				if (!emit.Success)
@@ -187,7 +185,7 @@ namespace AsyncGenerator
 					throw new InvalidOperationException(
 						$"Generation for Project {projectData.Project.Name} failed to generate a valid code. Errors:{Environment.NewLine}{messages}");
 				}
-				logger.Info($"Compiling project '{projectData.Project.Name}' completed");
+				logger.LogInformation($"Compiling project '{projectData.Project.Name}' completed");
 			}
 		}
 
@@ -202,7 +200,7 @@ namespace AsyncGenerator
 
 			if (solution.FilePath != null)
 			{
-				logger.Info($"Applying solution '{solution.FilePath}' changes started");
+				logger.LogInformation($"Applying solution '{solution.FilePath}' changes started");
 			}
 
 			// Apply changes manually as the AddDocument and RemoveDocument methods do not play well with the new csproj format
@@ -211,7 +209,7 @@ namespace AsyncGenerator
 			// - When a document is added in a new csproj, the file will be explicitly added in the csproj even if there is a glob that could import it
 			foreach (var projectChanges in changes.GetProjectChanges())
 			{
-				logger.Info($"Applying project '{projectChanges.NewProject.FilePath}' changes started");
+				logger.LogInformation($"Applying project '{projectChanges.NewProject.FilePath}' changes started");
 
 				var xml = new XmlDocument();
 				xml.Load(projectChanges.NewProject.FilePath);
@@ -283,14 +281,14 @@ namespace AsyncGenerator
 						.Project.Solution;
 				}
 
-				logger.Info($"Applying project '{projectChanges.NewProject.FilePath}' changes completed");
+				logger.LogInformation($"Applying project '{projectChanges.NewProject.FilePath}' changes completed");
 			}
 
 			workspace.TryApplyChanges(newSolution);
 
 			if (solution.FilePath != null)
 			{
-				logger.Info($"Applying solution '{solution.FilePath}' changes completed");
+				logger.LogInformation($"Applying solution '{solution.FilePath}' changes completed");
 			}
 		}
 
@@ -361,16 +359,13 @@ namespace AsyncGenerator
 				cancellationToken.ThrowIfCancellationRequested();
 			}
 
-#if !NETCOREAPP
-			if (!await _lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
+			if (!await Lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
 			{
-				throw new InvalidOperationException($"Project {filePath} cannot be opened beacause a build is already in progress.");
+				throw new InvalidOperationException($"Project {filePath} cannot be opened because a build is already in progress.");
 			}
-#endif
+
 			var project = await workspace.OpenProjectAsync(filePath, null, cancellationToken).ConfigureAwait(false);
-#if !NETCOREAPP
-			_lock.Release();
-#endif
+			Lock.Release();
 			CheckForErrors(workspace, "project", supressFailuresPredicates, logger);
 			return project;
 		}
@@ -386,14 +381,14 @@ namespace AsyncGenerator
 			}
 
 #if !NETCOREAPP
-			if (!await _lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
+			if (!await Lock.WaitAsync(LockTimeout, cancellationToken).ConfigureAwait(false))
 			{
 				throw new InvalidOperationException($"Solution {filePath} cannot be opened beacause a build is already in progress.");
 			}
 #endif
 			var solution = await workspace.OpenSolutionAsync(filePath, null, cancellationToken).ConfigureAwait(false);
 #if !NETCOREAPP
-			_lock.Release();
+			Lock.Release();
 #endif
 			CheckForErrors(workspace, "solution", supressFailuresPredicates, logger);
 			return solution;
@@ -439,7 +434,7 @@ namespace AsyncGenerator
 				.ToList();
 			if (warnings.Any())
 			{
-				logger.Warn(
+				logger.LogWarning(
 					$"One or more warnings occurred while opening the {itemType}:{Environment.NewLine}{string.Join(Environment.NewLine, warnings)}{Environment.NewLine}");
 			}
 		}
