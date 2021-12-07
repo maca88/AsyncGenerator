@@ -48,6 +48,7 @@ namespace AsyncGenerator.Tests.NUnit.Input
 
 			var result = false;
 			Assert.That(async () => result = await (SimpleFile.WriteAsync("")), Throws.Nothing);
+			Assert.That<Task<bool>>(async () => result = await (SimpleFile.WriteAsync("")), Throws.Nothing);
 			Assert.IsTrue(result);
 
 		}

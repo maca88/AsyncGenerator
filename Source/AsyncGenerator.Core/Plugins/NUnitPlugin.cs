@@ -2,9 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Extensions.Internal;
+using AsyncGenerator.Core.Transformation;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace AsyncGenerator.Core.Plugins
 {
@@ -16,7 +20,8 @@ namespace AsyncGenerator.Core.Plugins
 		IPreserveMethodReturnTypeProvider,
 		IMethodRequiresCancellationTokenProvider,
 		IMethodExceptionHandler,
-		ISearchForMethodReferencesProvider
+		ISearchForMethodReferencesProvider,
+		IFunctionReferenceTransformer
 	{
 		private const string IgnoreAttribute = "NUnit.Framework.IgnoreAttribute";
 		private static readonly HashSet<string> TypeTestAttributes = new HashSet<string>
@@ -212,6 +217,34 @@ namespace AsyncGenerator.Core.Plugins
 				}
 			}
 			return true;
+		}
+
+		public SyntaxNode TransformFunctionReference(SyntaxNode node, IFunctionAnalyzationResult funcResult, IFunctionReferenceAnalyzationResult funcReferenceResult, INamespaceTransformationMetadata namespaceMetadata)
+		{
+			var symbol = funcReferenceResult.ReferenceSymbol;
+			if (symbol.Name != "That" ||
+				symbol.ContainingType.Name != "Assert" ||
+				symbol.ContainingType.ContainingNamespace.ToString() != "NUnit.Framework" ||
+				!(node is InvocationExpressionSyntax invokeNode) ||
+				!(funcReferenceResult is IBodyFunctionReferenceAnalyzationResult bodyReference))
+			{
+				return node;
+			}
+
+			var nameSyntax = (SimpleNameSyntax)invokeNode.Expression.DescendantNodes()
+				.FirstOrDefault(o => o is SimpleNameSyntax name && name.Identifier.ValueText == "That");
+			if (!(nameSyntax is GenericNameSyntax genericNameSyntax))
+			{
+				return node;
+			}
+
+			return node.ReplaceNode(
+				genericNameSyntax,
+				genericNameSyntax
+					.WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(
+						genericNameSyntax.TypeArgumentList.Arguments[0]
+						.WrapIntoTask(!namespaceMetadata.AnalyzationResult.IsIncluded("System.Threading.Tasks")))))
+			);
 		}
 	}
 }

@@ -38,6 +38,7 @@ namespace AsyncGenerator.Tests.NUnit.Input
 
 			var result = false;
 			Assert.That(() => result = SimpleFile.Write(""), Throws.Nothing);
+			Assert.That<bool>(() => result = SimpleFile.Write(""), Throws.Nothing);
 			Assert.IsTrue(result);
 
 		}
