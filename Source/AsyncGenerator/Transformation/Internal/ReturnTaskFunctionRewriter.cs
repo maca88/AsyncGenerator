@@ -17,6 +17,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtensions;
+using static AsyncGenerator.Core.Extensions.Internal.SyntaxNodeHelper;
 
 namespace AsyncGenerator.Transformation.Internal
 {
@@ -284,7 +285,7 @@ namespace AsyncGenerator.Transformation.Internal
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
 						_namespaceMetadata.TaskConflict
-							? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
+							? ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
 							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
 						GenericName(
 								Identifier("FromException"))
@@ -338,7 +339,7 @@ namespace AsyncGenerator.Transformation.Internal
 				MemberAccessExpression(
 					SyntaxKind.SimpleMemberAccessExpression,
 					_namespaceMetadata.TaskConflict
-						? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
+						? ConstructNameSyntax("System.Threading.Tasks.Task")
 						: IdentifierName(nameof(Task)),
 					IdentifierName("CompletedTask")),
 				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
@@ -387,7 +388,7 @@ namespace AsyncGenerator.Transformation.Internal
 							CatchDeclaration(
 								_namespaceMetadata.UsingSystem
 									? IdentifierName(Identifier(TriviaList(), "Exception", TriviaList(Space)))
-									: SyntaxNodeExtensions.ConstructNameSyntax("System.Exception", Space)
+									: ConstructNameSyntax("System.Exception", Space)
 								)
 								.WithIdentifier(Identifier("ex"))
 								.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, eolTrivia))
@@ -414,7 +415,7 @@ namespace AsyncGenerator.Transformation.Internal
 										MemberAccessExpression(
 											SyntaxKind.SimpleMemberAccessExpression,
 											_namespaceMetadata.TaskConflict
-												? SyntaxNodeExtensions.ConstructNameSyntax("System.Threading.Tasks.Task")
+												? ConstructNameSyntax("System.Threading.Tasks.Task")
 												: IdentifierName(nameof(Task)),
 											GenericName(
 													Identifier("FromException"))

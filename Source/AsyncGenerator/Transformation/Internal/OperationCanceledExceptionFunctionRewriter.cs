@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtensions;
+using static AsyncGenerator.Core.Extensions.Internal.SyntaxNodeHelper;
 
 namespace AsyncGenerator.Transformation.Internal
 {
@@ -65,7 +65,7 @@ namespace AsyncGenerator.Transformation.Internal
 				.WithDeclaration(
 					CatchDeclaration(_namespaceMetadata.UsingSystem
 							? IdentifierName(nameof(OperationCanceledException))
-							: SyntaxNodeExtensions.ConstructNameSyntax($"System.{nameof(OperationCanceledException)}"))
+							: ConstructNameSyntax($"System.{nameof(OperationCanceledException)}"))
 						.WithCloseParenToken(Token(TriviaList(), SyntaxKind.CloseParenToken, TriviaList(Space))))
 				.WithBlock(
 					Block(SingletonList<StatementSyntax>(

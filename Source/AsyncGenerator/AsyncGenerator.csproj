@@ -19,6 +19,12 @@
     <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SymbolExtensions.cs" Link="Extensions\SymbolExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SyntaxNodeExtensions.cs" Link="Extensions\SyntaxNodeExtensions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\AsyncGenerator.Core\Extensions\Internal\SyntaxNodeHelper.cs" Link="Extensions\SyntaxNodeHelper.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(MicrosoftCodeAnalysisVersion)" />

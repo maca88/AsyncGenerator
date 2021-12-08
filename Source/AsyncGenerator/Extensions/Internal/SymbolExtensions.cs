@@ -8,6 +8,7 @@ using AsyncGenerator.Core.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static AsyncGenerator.Core.Extensions.Internal.SyntaxNodeHelper;
 
 namespace AsyncGenerator.Extensions.Internal
 {
@@ -121,7 +122,7 @@ namespace AsyncGenerator.Extensions.Internal
 					? (TypeSyntax)SyntaxFactory.NullableType(predefinedType)
 					: predefinedType;
 			}
-			return SyntaxNodeExtensions.ConstructNameSyntax(symbol.ToString(), insideCref: insideCref, onlyName: onlyName);
+			return ConstructNameSyntax(symbol.ToString(), insideCref: insideCref, onlyName: onlyName);
 		}
 
 		internal static bool IsEventAccessor(this ISymbol symbol)

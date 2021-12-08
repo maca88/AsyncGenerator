@@ -16,7 +16,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using SyntaxNodeExtensions = AsyncGenerator.Extensions.Internal.SyntaxNodeExtensions;
+using static AsyncGenerator.Core.Extensions.Internal.SyntaxNodeHelper;
 
 
 namespace AsyncGenerator.Transformation.Internal
@@ -141,7 +141,7 @@ namespace AsyncGenerator.Transformation.Internal
 				list = list.Add(Token(TriviaList(), SyntaxKind.StaticKeyword, TriviaList(Space)));
 			}
 			list = list.Add(Token(TriviaList(), SyntaxKind.ReadOnlyKeyword, TriviaList(Space)));
-			var lockType = SyntaxNodeExtensions.ConstructNameSyntax(_configuration.AsyncLockFullTypeName, Space);
+			var lockType = ConstructNameSyntax(_configuration.AsyncLockFullTypeName, Space);
 			return FieldDeclaration(
 					VariableDeclaration(lockType)
 						.WithVariables(
@@ -151,7 +151,7 @@ namespace AsyncGenerator.Transformation.Internal
 									)
 									.WithInitializer(
 										EqualsValueClause(
-											ObjectCreationExpression(SyntaxNodeExtensions.ConstructNameSyntax(_configuration.AsyncLockFullTypeName))
+											ObjectCreationExpression(ConstructNameSyntax(_configuration.AsyncLockFullTypeName))
 												.WithArgumentList(ArgumentList())
 												.WithNewKeyword(Token(TriviaList(), SyntaxKind.NewKeyword, TriviaList(Space)))
 										)
