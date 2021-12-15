@@ -80,6 +80,12 @@ namespace AsyncGenerator.Internal
 #endif
 			var instance = MSBuildLocator.QueryVisualStudioInstances()
 				.OrderByDescending(o => o.Version)
+#if NET472
+				.Where(o => o.Version.Major < 17 /* VS2022 */)
+#endif
+#if NETCOREAPP2_1
+				.Where(o => o.Version.Major == 2 || (o.Version.Major == 3 && o.Version.Minor == 1 && o.Version.Build < 200))
+#endif
 				.FirstOrDefault();
 
 #if NETCOREAPP2_1
