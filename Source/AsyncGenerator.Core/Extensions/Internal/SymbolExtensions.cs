@@ -243,6 +243,16 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			{
 				return true;
 			}
+
+			if (type.TypeKind == TypeKind.Array && toCompare.TypeKind == TypeKind.Array)
+			{
+				var arrayType = (IArrayTypeSymbol)type;
+				var toCompareArrayType = (IArrayTypeSymbol)toCompare;
+				return arrayType.Rank == toCompareArrayType.Rank &&
+				       arrayType.IsSZArray == toCompareArrayType.IsSZArray &&
+				       AreEqual(arrayType.ElementType, toCompareArrayType.ElementType);
+			}
+
 			var typeNamedType = type as INamedTypeSymbol;
 			var toCompareNamedType = toCompare as INamedTypeSymbol;
 			if (typeNamedType == null)

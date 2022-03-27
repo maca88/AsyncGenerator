@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 
 namespace AsyncGenerator.Core.Plugins
@@ -202,7 +203,7 @@ namespace AsyncGenerator.Core.Plugins
 			}
 			for (var i = 1; i < thatMethod.Parameters.Length; i++)
 			{
-				if (!thatMethod.Parameters[i].Type.Equals(asyncThatMethod.Parameters[i].Type))
+				if (!thatMethod.Parameters[i].Type.AreEqual(asyncThatMethod.Parameters[i].Type))
 				{
 					return false;
 				}
