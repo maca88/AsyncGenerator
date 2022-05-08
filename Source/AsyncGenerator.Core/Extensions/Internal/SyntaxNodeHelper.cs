@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -34,6 +35,25 @@ namespace AsyncGenerator.Core.Extensions.Internal
 				result = QualifiedName(result, GetSimpleName(names[i], TriviaList(), trailingTriviaList, insideCref));
 			}
 			return result;
+		}
+
+		internal static ReturnStatementSyntax GetReturnTaskCompleted(AsyncReturnType asyncReturnType, bool useQualifiedName, SyntaxTriviaList semicolonTrivia = default)
+		{
+			var name = useQualifiedName
+				? ConstructNameSyntax($"System.Threading.Tasks.{asyncReturnType.ToString()}")
+				: IdentifierName(asyncReturnType.ToString());
+			var expression = asyncReturnType == AsyncReturnType.Task
+				? MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					name,
+					IdentifierName("CompletedTask"))
+				: (ExpressionSyntax)DefaultExpression(name);
+
+			return ReturnStatement(
+				Token(TriviaList(), SyntaxKind.ReturnKeyword, TriviaList(Space)),
+				expression,
+				Token(TriviaList(), SyntaxKind.SemicolonToken, semicolonTrivia)
+			);
 		}
 
 		// TODO: Use symbol for type arguments

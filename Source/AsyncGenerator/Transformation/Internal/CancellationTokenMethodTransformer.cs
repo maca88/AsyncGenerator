@@ -70,7 +70,7 @@ namespace AsyncGenerator.Transformation.Internal
 					transformResult.EndOfLineTrivia);
 
 			var methodBody = methodNode.Body;
-			methodNode = methodNode.WithBody(AddGuards(transformResult, methodBody, methodResult, CancellationTokenParamName));
+			methodNode = methodNode.WithBody(AddGuards(transformResult, methodBody, methodResult, namespaceMetadata, CancellationTokenParamName));
 
 			var originalMethodNode = originalNode as MethodDeclarationSyntax;
 
@@ -84,7 +84,7 @@ namespace AsyncGenerator.Transformation.Internal
 				return MethodTransformerResult.Update(methodNode);
 			}
 			var overloadNode = originalMethodNode
-				.ReturnAsTask(namespaceMetadata.TaskConflict)
+				.ReturnAsTaskOrValueTask(methodResult.AsyncReturnType, namespaceMetadata.TaskConflict)
 				.WithTriviaFrom(transformResult.Transformed) // We want to have the sumamry of the transformed node but not the parameter list
 				.WithoutAnnotations(transformResult.Annotation)
 				.WithIdentifier(Identifier(methodNode.Identifier.ValueText));
@@ -156,8 +156,12 @@ namespace AsyncGenerator.Transformation.Internal
 				.AddMethod(overloadNode);
 		}
 
-		private BlockSyntax AddGuards(IFunctionTransformationResult transformResult, BlockSyntax methodBody,
-			IFunctionAnalyzationResult methodResult, string cancellationTokenParamName)
+		private BlockSyntax AddGuards(
+			IFunctionTransformationResult transformResult,
+			BlockSyntax methodBody,
+			IFunctionAnalyzationResult methodResult,
+			INamespaceTransformationMetadata namespaceMetadata,
+			string cancellationTokenParamName)
 		{
 			if (!_configuration.Guards || methodBody == null || methodResult.Faulted)
 			{
@@ -209,7 +213,7 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 
 			var startGuard = methodResult.OmitAsync
-				? GetSyncGuard(methodResult, cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
+				? GetSyncGuard(methodResult, namespaceMetadata, cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia, transformResult.IndentTrivia)
 				: GetAsyncGuard(cancellationTokenParamName, transformResult.BodyLeadingWhitespaceTrivia,
 					transformResult.EndOfLineTrivia);
@@ -260,9 +264,19 @@ namespace AsyncGenerator.Transformation.Internal
 		}
 
 
-		private StatementSyntax GetSyncGuard(IFunctionAnalyzationResult methodResult, string parameterName, SyntaxTrivia leadingWhitespace, 
-			SyntaxTrivia endOfLine, SyntaxTrivia indent)
+		private StatementSyntax GetSyncGuard(
+			IFunctionAnalyzationResult methodResult,
+			INamespaceTransformationMetadata namespaceMetadata,
+			string parameterName,
+			SyntaxTrivia leadingWhitespace,
+			SyntaxTrivia endOfLine,
+			SyntaxTrivia indent)
 		{
+			var fromCanceledNode = IdentifierName(parameterName).WrapInTaskFromCanceled(
+				methodResult.AsyncReturnType,
+				namespaceMetadata.TaskConflict,
+				methodResult.Symbol.ReturnsVoid ? null : methodResult.GetNode().GetReturnType());
+
 			return IfStatement(
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
@@ -270,23 +284,7 @@ namespace AsyncGenerator.Transformation.Internal
 						IdentifierName("IsCancellationRequested")),
 					Block(
 						SingletonList<StatementSyntax>(
-							ReturnStatement(
-								InvocationExpression(
-									MemberAccessExpression(
-										SyntaxKind.SimpleMemberAccessExpression,
-										IdentifierName("Task"),
-										GenericName(Identifier("FromCanceled"))
-											.WithTypeArgumentList(
-												TypeArgumentList(
-													SingletonSeparatedList(
-														methodResult.Symbol.ReturnsVoid
-															? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-															: methodResult.GetNode().GetReturnType().WithoutTrivia())
-														))))
-									.WithArgumentList(
-										ArgumentList(
-											SingletonSeparatedList(
-												Argument(IdentifierName(parameterName))))))
+							ReturnStatement(fromCanceledNode)
 								.WithReturnKeyword(
 									Token(TriviaList(Whitespace(leadingWhitespace.ToFullString() + indent.ToFullString())), SyntaxKind.ReturnKeyword, TriviaList(Space)))
 								.WithSemicolonToken(

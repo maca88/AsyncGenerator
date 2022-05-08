@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Internal;
@@ -214,17 +215,21 @@ namespace AsyncGenerator.Extensions.Internal
 			return elseIsReturnRequired;
 		}
 
-		internal static MethodDeclarationSyntax ReturnAsTask(this MethodDeclarationSyntax methodNode, bool withFullName = false)
+		internal static MethodDeclarationSyntax ReturnAsTaskOrValueTask(this MethodDeclarationSyntax methodNode, AsyncReturnType returnType, bool withFullName = false)
 		{
 			return methodNode.WithReturnType(
-				methodNode.ReturnType.WrapIntoTask(withFullName)
+				returnType == AsyncReturnType.Task
+					? methodNode.ReturnType.WrapIntoTask(withFullName)
+					: methodNode.ReturnType.WrapIntoValueTask(withFullName)
 			);
 		}
 
-		internal static LocalFunctionStatementSyntax ReturnAsTask(this LocalFunctionStatementSyntax methodNode, bool withFullName = false)
+		internal static LocalFunctionStatementSyntax ReturnAsTaskOrValueTask(this LocalFunctionStatementSyntax methodNode, AsyncReturnType returnType, bool withFullName = false)
 		{
 			return methodNode.WithReturnType(
-				methodNode.ReturnType.WrapIntoTask(withFullName)
+				returnType == AsyncReturnType.Task
+					? methodNode.ReturnType.WrapIntoTask(withFullName)
+					: methodNode.ReturnType.WrapIntoValueTask(withFullName)
 			);
 		}
 
@@ -833,21 +838,10 @@ namespace AsyncGenerator.Extensions.Internal
 			);
 		}
 
-		private static ReturnStatementSyntax GetReturnTaskCompleted(bool useQualifiedName)
-		{
-			return ReturnStatement(
-				Token(TriviaList(), SyntaxKind.ReturnKeyword, TriviaList(Space)),
-				MemberAccessExpression(
-					SyntaxKind.SimpleMemberAccessExpression,
-					useQualifiedName
-						? ConstructNameSyntax("System.Threading.Tasks.Task")
-						: IdentifierName(nameof(Task)),
-					IdentifierName("CompletedTask")),
-				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList())
-			);
-		}
-
-		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(this ExpressionSyntax expression, IMethodSymbol delegateSymbol,
+		internal static ParenthesizedLambdaExpressionSyntax WrapInsideFunction(
+			this ExpressionSyntax expression,
+			IMethodSymbol delegateSymbol,
+			AsyncReturnType asyncReturnType,
 			bool returnTypeMismatch, bool taskConflict, Func<InvocationExpressionSyntax, InvocationExpressionSyntax> invocationModifierFunc = null)
 		{
 			var comma = Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space));
@@ -872,7 +866,7 @@ namespace AsyncGenerator.Extensions.Internal
 					.WithStatements(new SyntaxList<StatementSyntax>().AddRange(new StatementSyntax[]
 					{
 						ExpressionStatement(invocation),
-						GetReturnTaskCompleted(taskConflict)
+						GetReturnTaskCompleted(asyncReturnType, taskConflict)
 					}));
 			}
 
@@ -1054,8 +1048,95 @@ namespace AsyncGenerator.Extensions.Internal
 			return TriviaList(triviaList);
 		}
 
-		internal static InvocationExpressionSyntax WrapInTaskFromResult(this ExpressionSyntax node, TypeSyntax retunTypeSyntax, bool useFullName, bool useTypeArgument = true)
+		internal static ExpressionSyntax WrapInTaskFromCanceled(this ExpressionSyntax node, AsyncReturnType asyncReturnType, bool useQualifiedName, TypeSyntax returnTypeNode)
 		{
+			return WrapInTaskFrom("FromCanceled", node, asyncReturnType, useQualifiedName, returnTypeNode);
+		}
+
+		internal static ExpressionSyntax WrapInTaskFromException(this ExpressionSyntax node, AsyncReturnType asyncReturnType, bool useQualifiedName, TypeSyntax returnTypeNode)
+		{
+			return WrapInTaskFrom("FromException", node, asyncReturnType, useQualifiedName, returnTypeNode);
+		}
+
+		private static ExpressionSyntax WrapInTaskFrom(string functionName, ExpressionSyntax node, AsyncReturnType asyncReturnType, bool useQualifiedName, TypeSyntax returnTypeNode)
+		{
+			var taskTrivia = asyncReturnType == AsyncReturnType.Task
+				? node.GetLeadingTrivia()
+				: TriviaList();
+			var taskFromFunction = InvocationExpression(
+					MemberAccessExpression(
+						SyntaxKind.SimpleMemberAccessExpression,
+						useQualifiedName
+							? ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(taskTrivia)
+							: IdentifierName(Identifier(taskTrivia, nameof(Task), TriviaList())),
+						GenericName(Identifier(functionName))
+							.WithTypeArgumentList(
+								TypeArgumentList(
+									SingletonSeparatedList(
+										returnTypeNode == null
+											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
+											: returnTypeNode.WithoutTrivia())))))
+				.WithArgumentList(
+					ArgumentList(
+						SingletonSeparatedList(
+							Argument(node.WithoutLeadingTrivia()))));
+			if (asyncReturnType == AsyncReturnType.Task)
+			{
+				return taskFromFunction;
+			}
+
+			var typeName = returnTypeNode == null
+				? (SimpleNameSyntax) IdentifierName(nameof(ValueTask))
+				: GenericName(Identifier(nameof(ValueTask)))
+					.WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(returnTypeNode.WithoutTrivia())));
+
+			return ObjectCreationExpression(
+						useQualifiedName
+							? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), typeName)
+							: (TypeSyntax)typeName)
+					.WithLeadingTrivia(node.GetLeadingTrivia())
+					.WithNewKeyword(
+						Token(
+							TriviaList(),
+							SyntaxKind.NewKeyword,
+							TriviaList(Space)))
+					.WithArgumentList(
+						ArgumentList(
+							SingletonSeparatedList(
+								Argument(taskFromFunction.WithoutLeadingTrivia()))));
+		}
+
+		internal static ExpressionSyntax WrapInTaskFromResult(
+			this ExpressionSyntax node,
+			AsyncReturnType asyncReturnType,
+			TypeSyntax returnTypeSyntax,
+			bool useFullName,
+			bool useTypeArgument = true)
+		{
+			if (asyncReturnType == AsyncReturnType.ValueTask)
+			{
+				var typeName = GenericName(Identifier(nameof(ValueTask)))
+					.WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(
+						returnTypeSyntax == null
+							? PredefinedType(Token(SyntaxKind.ObjectKeyword))
+							: returnTypeSyntax.WithoutTrivia())));
+
+				return ObjectCreationExpression(
+						useFullName
+							? QualifiedName(ConstructNameSyntax("System.Threading.Tasks"), typeName)
+							: (TypeSyntax)typeName)
+					.WithLeadingTrivia(node.GetLeadingTrivia())
+					.WithNewKeyword(
+						Token(
+							TriviaList(),
+							SyntaxKind.NewKeyword,
+							TriviaList(Space)))
+					.WithArgumentList(
+						ArgumentList(
+							SingletonSeparatedList(
+								Argument(node.WithoutLeadingTrivia()))));
+			}
+
 			return InvocationExpression(
 					MemberAccessExpression(
 						SyntaxKind.SimpleMemberAccessExpression,
@@ -1065,9 +1146,9 @@ namespace AsyncGenerator.Extensions.Internal
 						useTypeArgument
 							? GenericName(Identifier("FromResult"))
 								.WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(
-									retunTypeSyntax == null
+									returnTypeSyntax == null
 										? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-										: retunTypeSyntax.WithoutTrivia())))
+										: returnTypeSyntax.WithoutTrivia())))
 							: (SimpleNameSyntax) IdentifierName("FromResult")
 					))
 				.WithArgumentList(

@@ -180,6 +180,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 					fluentConfig.PreserveReturnType(CreateMethodNullablePredicate(configuration, group.ToList(), true), group.Key);
 				}
 			}
+			if (config.AsyncReturnType.Any())
+			{
+				foreach (var group in config.AsyncReturnType.GroupBy(o => o.ExecutionPhase))
+				{
+					fluentConfig.AsyncReturnType(CreateAsyncReturnTypeFunction(configuration, group.ToList()));
+				}
+			}
 			if (config.AlwaysAwait.Any())
 			{
 				foreach (var group in config.AlwaysAwait.GroupBy(o => o.ExecutionPhase))
@@ -531,6 +538,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 					}
 				}
 				return MethodConversion.Unknown; // Default value
+			};
+		}
+
+		private static Func<IMethodSymbol, AsyncReturnType?> CreateAsyncReturnTypeFunction(AsyncGenerator globalConfig, IList<AsyncReturnTypeFilter> filters)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.ReturnType;
+					}
+				}
+				return null; // Default value
 			};
 		}
 

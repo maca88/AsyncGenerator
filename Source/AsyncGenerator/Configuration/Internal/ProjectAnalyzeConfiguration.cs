@@ -74,6 +74,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public List<Action<IProjectAnalyzationResult>> AfterAnalyzation { get; } = new List<Action<IProjectAnalyzationResult>>();
 
+		public List<Func<IMethodSymbol, AsyncReturnType?>> AsyncMethodReturnTypeFunctions { get; } = new List<Func<IMethodSymbol, AsyncReturnType?>>();
+
 
 		public ProjectCancellationTokenConfiguration CancellationTokens { get; } = new ProjectCancellationTokenConfiguration();
 
@@ -122,6 +124,20 @@ namespace AsyncGenerator.Configuration.Internal
 			}
 
 			return _lastMethodConversionFunction?.Invoke(methodSymbol) ?? MethodConversion.Unknown;
+		}
+
+		public AsyncReturnType GetAsyncMethodReturnType(IMethodSymbol methodSymbol)
+		{
+			foreach (var func in AsyncMethodReturnTypeFunctions)
+			{
+				var value = func(methodSymbol);
+				if (value.HasValue)
+				{
+					return value.Value;
+				}
+			}
+
+			return AsyncReturnType.Task;
 		}
 
 		public FieldVariableConversion GetFieldConversion(ISymbol typeSymbol)
@@ -415,6 +431,17 @@ namespace AsyncGenerator.Configuration.Internal
 					break;
 			}
 
+			return this;
+		}
+
+		IFluentProjectAnalyzeConfiguration IFluentProjectAnalyzeConfiguration.AsyncReturnType(Func<IMethodSymbol, AsyncReturnType?> func)
+		{
+			if (func == null)
+			{
+				throw new ArgumentNullException(nameof(func));
+			}
+
+			AsyncMethodReturnTypeFunctions.Add(func);
 			return this;
 		}
 

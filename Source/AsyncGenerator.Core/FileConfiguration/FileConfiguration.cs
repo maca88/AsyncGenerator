@@ -150,6 +150,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> PreserveReturnType { get; set; }
 		[XmlArrayItem("Method", IsNullable = false)]
+		public List<AsyncReturnTypeFilter> AsyncReturnType { get; set; }
+		[XmlArrayItem("Method", IsNullable = false)]
 		public List<MethodFilter> AlwaysAwait { get; set; }
 		[XmlArrayItem("Type", IsNullable = false)]
 		public List<TypeConversionFilter> TypeConversion { get; set; }
@@ -189,6 +191,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 			AlwaysAwait = new List<MethodFilter>();
 			MethodConversion = new List<MethodConversionFilter>();
 			ScanForMissingAsyncMembers = new List<TypeFilter>();
+			AsyncReturnType = new List<AsyncReturnTypeFilter>();
 		}
 	}
 
@@ -208,6 +211,18 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("AsyncReturnTypeFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class AsyncReturnTypeFilter : MethodFilter
+	{
+		[XmlAttribute(AttributeName = "returnType")]
+		public AsyncReturnType ReturnType { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodPredicateFilter")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodPredicateFilter : MethodFilter
@@ -219,6 +234,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
 	[XmlInclude(typeof(MethodPredicateFilter))]
+	[XmlInclude(typeof(AsyncReturnTypeFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
@@ -253,6 +269,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
 	[XmlInclude(typeof(MethodPredicateFilter))]
+	[XmlInclude(typeof(AsyncReturnTypeFilter))]
 	[Serializable]
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]

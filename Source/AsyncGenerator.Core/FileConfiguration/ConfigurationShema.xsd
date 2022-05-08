@@ -37,6 +37,13 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="AsyncReturnType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Task"/>
+      <xs:enumeration value="ValueTask"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:complexType name="MemberFilter">
     <xs:attribute name="all" type="xs:boolean" />
     <xs:attribute name="name" type="xs:string" />
@@ -106,6 +113,14 @@
     <xs:complexContent>
       <xs:extension base="MethodFilter">
         <xs:attribute name="conversion" type="MethodConversion" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="AsyncReturnTypeFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="returnType" type="AsyncReturnType" use="required" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -296,6 +311,13 @@
         <xs:complexType>
           <xs:sequence>
             <xs:element name="Method" type="MethodFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="AsyncReturnType" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="AsyncReturnTypeFilter" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

@@ -149,6 +149,13 @@ namespace AsyncGenerator.Core.Configuration
 		IFluentProjectAnalyzeConfiguration PreserveReturnType(Func<IMethodSymbol, bool?> predicate, ExecutionPhase executionPhase);
 
 		/// <summary>
+		/// Set a function that will decide which return type to use for the generated async method.
+		/// <para>Default <see cref="Core.AsyncReturnType.Task"/> will be used as the return type.</para>
+		/// </summary>
+		/// <param name="func">The function that decides which return type to use for the generated async method.</param>
+		IFluentProjectAnalyzeConfiguration AsyncReturnType(Func<IMethodSymbol, AsyncReturnType?> func);
+
+		/// <summary>
 		/// Set the predicate that will decide whether to search async counterparts for the given method. 
 		/// Use this option when an external method is not wanted to be async.
 		/// <para>Default true is choosen for all methods.</para>

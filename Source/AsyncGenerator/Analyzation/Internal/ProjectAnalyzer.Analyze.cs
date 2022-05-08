@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Core.Extensions.Internal;
@@ -108,6 +109,16 @@ namespace AsyncGenerator.Analyzation.Internal
 				return;
 			}
 
+			// If any of the related method returns ValueTask, we need to update other related methods
+			if (methodAccessorData.AsyncReturnType == AsyncReturnType.ValueTask ||
+			    methodAccessorData.RelatedMethods.Any(o => o.AsyncReturnType == AsyncReturnType.ValueTask))
+			{
+				methodAccessorData.AsyncReturnType = AsyncReturnType.ValueTask;
+				foreach (var relatedMethod in methodAccessorData.RelatedMethods)
+				{
+					relatedMethod.AsyncReturnType = AsyncReturnType.ValueTask;
+				}
+			}
 
 			var methodBody = methodAccessorData.GetBodyNode();
 			methodAccessorData.HasYields = methodBody?.DescendantNodes().OfType<YieldStatementSyntax>().Any() == true;
@@ -350,7 +361,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// If the invocation returns a Task then we need to analyze it further to see how the Task is handled
-			if (methodSymbol.ReturnType.IsTaskType())
+			if (methodSymbol.ReturnType.IsTaskOrValueTaskType())
 			{
 				var retrunType = (INamedTypeSymbol) methodSymbol.ReturnType;
 				var canBeAwaited = false;
@@ -508,12 +519,12 @@ namespace AsyncGenerator.Analyzation.Internal
 		private void CalculateLastInvocation(SyntaxNode node, BodyFunctionDataReference functionReferenceData)
 		{
 			var functionData = functionReferenceData.Data;
-			var methodSymbol = functionReferenceData.ReferenceSymbol;
 			var functionBodyNode = functionData.GetBodyNode();
 			if (functionBodyNode == null)
 			{
 				return;
 			}
+
 			// Check if the invocation node is returned in an expression body
 			if (node.Parent.Equals(functionBodyNode) || //eg. bool ExpressionReturn() => SimpleFile.Write();
 			    node.Equals(functionBodyNode) || // eg. Func<bool> fn = () => SimpleFile.Write();
@@ -525,7 +536,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			)
 			{
 				functionReferenceData.LastInvocation = true;
-				functionReferenceData.UseAsReturnValue = !methodSymbol.ReturnsVoid;
+				CalculateUseAsReturnValue(functionReferenceData);
 				return;
 			}
 			if (!functionBodyNode.IsKind(SyntaxKind.Block))
@@ -542,7 +553,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				{
 					case SyntaxKind.ReturnStatement:
 						functionReferenceData.LastInvocation = true;
-						functionReferenceData.UseAsReturnValue = true;
+						CalculateUseAsReturnValue(functionReferenceData);
 						return;
 					case SyntaxKind.ConditionalExpression: // return num > 5 ? SimpleFile.Write() : false
 						var conditionExpression = (ConditionalExpressionSyntax)currNode;
@@ -582,13 +593,26 @@ namespace AsyncGenerator.Analyzation.Internal
 				}
 			}
 			functionReferenceData.LastInvocation = true;
+			CalculateUseAsReturnValue(functionReferenceData);
+		}
+
+		private void CalculateUseAsReturnValue(BodyFunctionDataReference functionReferenceData)
+		{
+			var functionData = functionReferenceData.Data;
+			var methodSymbol = functionReferenceData.ReferenceSymbol;
+			var asyncReturnTypeName = functionData.AsyncReturnType.ToString();
 			if (functionReferenceData.ReferenceFunctionData == null && functionReferenceData.AsyncCounterpartSymbol != null)
 			{
-				functionReferenceData.UseAsReturnValue = !_configuration.CanAlwaysAwait(methodSymbol) && functionReferenceData.AsyncCounterpartSymbol.ReturnType.IsTaskType();
+				var invokeReturnType = functionReferenceData.AsyncCounterpartSymbol.ReturnType;
+				functionReferenceData.UseAsReturnValue = !_configuration.CanAlwaysAwait(methodSymbol) &&
+				                                         invokeReturnType.IsTaskOrValueTaskType() &&
+				                                         asyncReturnTypeName == invokeReturnType.Name;
 			}
-			else if (!methodSymbol.ReturnsVoid)
+			else
 			{
-				functionReferenceData.UseAsReturnValue = !_configuration.CanAlwaysAwait(methodSymbol); // here we don't now if the method will be converted to async or not
+				// here we don't now if the method will be converted to async or not
+				functionReferenceData.UseAsReturnValue = !_configuration.CanAlwaysAwait(methodSymbol) &&
+				                                         asyncReturnTypeName == (functionReferenceData.ReferenceFunctionData?.AsyncReturnType.ToString());
 			}
 		}
 
@@ -661,7 +685,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			var useTokens = _configuration.UseCancellationTokens | _configuration.CanScanForMissingAsyncMembers != null;
 			if (functionReferenceData.ReferenceAsyncSymbols.Any())
 			{
-				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))
+				if (functionReferenceData.ReferenceAsyncSymbols.All(o => o.ReturnsVoid || !o.ReturnType.IsTaskOrValueTaskType()))
 				{
 					functionReferenceData.AwaitInvocation = false;
 					functionReferenceData.AddDiagnostic("Cannot await method that is either void or do not return a Task", DiagnosticSeverity.Hidden);
