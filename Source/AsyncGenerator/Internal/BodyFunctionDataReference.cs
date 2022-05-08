@@ -166,6 +166,23 @@ namespace AsyncGenerator.Internal
 			return conversion;
 		}
 
+		public override AsyncReturnType GetAsyncReturnType()
+		{
+			if (ReferenceFunctionData != null)
+			{
+				return ReferenceFunctionData.AsyncReturnType;
+			}
+
+			if (AsyncCounterpartSymbol != null)
+			{
+				return AsyncCounterpartSymbol.ReturnType.IsValueTaskType()
+					? AsyncReturnType.ValueTask
+					: AsyncReturnType.Task;
+			}
+
+			return AsyncReturnType.Task;
+		}
+
 		public void CalculateFunctionArguments()
 		{
 			foreach (var functionArgument in DelegateArguments)

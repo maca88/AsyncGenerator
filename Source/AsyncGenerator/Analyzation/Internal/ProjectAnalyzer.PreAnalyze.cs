@@ -201,6 +201,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			functionData.Conversion = _configuration.GetMethodConversion(methodSymbol);
+			functionData.AsyncReturnType = _configuration.GetAsyncMethodReturnType(methodSymbol);
 			// TODO: validate conversion
 			if (functionData.Conversion == MethodConversion.Ignore)
 			{

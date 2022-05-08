@@ -55,7 +55,7 @@ namespace AsyncGenerator.Transformation.Internal
 				}
 				transformResult.LeadingWhitespaceTrivia = leadingWhitespace;
 				transformResult.EndOfLineTrivia = node.GetEndOfLine();
-				transformResult.TaskConflict = rootResult.ContainsType(nameof(Task));
+				transformResult.TaskConflict = rootResult.ContainsType(nameof(Task)) || rootResult.ContainsType(nameof(ValueTask));
 				transformResult.UsingSystem = result.Node.HasUsing("System");
 
 				foreach (var typeResult in result.Types/*.Where(o => o.Conversion != TypeConversion.Ignore)*/)

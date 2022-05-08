@@ -90,5 +90,10 @@ namespace AsyncGenerator.Core.Analyzation
 		/// The name what will be used for the async counterpart
 		/// </summary>
 		string AsyncCounterpartName { get; }
+
+		/// <summary>
+		/// The return type that will be used by the async counterpart.
+		/// </summary>
+		AsyncReturnType AsyncReturnType { get; }
 	}
 }

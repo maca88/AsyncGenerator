@@ -216,6 +216,18 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			return symbol.Equals(symbolToCompare, SymbolEqualityComparer.Default);
 		}
 
+		internal static bool IsTaskOrValueTaskType(this ITypeSymbol typeSymbol)
+		{
+			return (typeSymbol.Name == nameof(Task) || typeSymbol.Name == nameof(ValueTask)) &&
+			       typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
+		}
+
+		internal static bool IsValueTaskType(this ITypeSymbol typeSymbol)
+		{
+			return typeSymbol.Name == nameof(ValueTask) &&
+			       typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
+		}
+
 		/// <summary>
 		/// Check if the return type matches, valid cases: <see cref="Void"/> to <see cref="System.Threading.Tasks.Task"/> Task, TResult to <see cref="System.Threading.Tasks.Task{TResult}"/> and
 		/// also equals return types are ok when there is at least one delegate that can be converted to async (eg. Task.Run(<see cref="Action"/>) and Task.Run(<see cref="Func{Task}"/>))
@@ -242,14 +254,14 @@ namespace AsyncGenerator.Core.Extensions.Internal
 			}
 			if (syncMethod.ReturnsVoid)
 			{
-				if (candidateReturnType.Name != nameof(Task) || candidateReturnType.TypeArguments.Any())
+				if (!candidateReturnType.IsTaskOrValueTaskType() || candidateReturnType.TypeArguments.Any())
 				{
 					return false;
 				}
 			}
 			else
 			{
-				if (candidateReturnType.Name != nameof(Task) || candidateReturnType.TypeArguments.Length != 1)
+				if (!candidateReturnType.IsTaskOrValueTaskType() || candidateReturnType.TypeArguments.Length != 1)
 				{
 					return false;
 				}

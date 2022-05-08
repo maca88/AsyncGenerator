@@ -227,7 +227,7 @@ namespace AsyncGenerator.Analyzation.Internal
 				functionData.WrapInTryCatch = true;
 				return;
 			}
-			if (refData.GetConversion() == ReferenceConversion.Ignore || refData.ReferenceAsyncSymbols.Any(o => o.ReturnsVoid || !o.ReturnType.IsTaskType()))
+			if (refData.GetConversion() == ReferenceConversion.Ignore || refData.ReferenceAsyncSymbols.Any(o => o.ReturnsVoid || !o.ReturnType.IsTaskOrValueTaskType()))
 			{
 				functionData.WrapInTryCatch = true;
 			}
@@ -258,7 +258,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					) ||
 					(
 						o.ReferenceFunctionData == null &&
-						!o.AsyncCounterpartSymbol.ReturnType.SupportsTaskType()
+						!o.AsyncCounterpartSymbol.ReturnType.SupportsTaskOrValueTaskType()
 					)
 					))
 			{
@@ -924,36 +924,19 @@ namespace AsyncGenerator.Analyzation.Internal
 					}
 
 					var referenceFunctionData = methodReference.Data;
-
-					if (methodReference.LastInvocation && referenceFunctionData.Symbol.ReturnsVoid && (
-						    (methodReference.ReferenceAsyncSymbols.Any() && methodReference.ReferenceAsyncSymbols.All(o => o.ReturnType.IsTaskType())) ||
-						    methodReference.ReferenceFunctionData?.Conversion.HasFlag(MethodConversion.ToAsync) == true
-					    ))
-					{
-						continue;
-					}
-
-					var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskType();
+					var isReturnTypeTask = methodReference.ReferenceSymbol.ReturnType.IsTaskOrValueTaskType();
 					// We need to check the return value of the async counterpart
 					// eg. Task<IList<string>> to Task<IEnumerable<string>>, Task<long> -> Task<int> are not valid
 					// eg. Task<int> to Task is valid
 					if (!isReturnTypeTask &&
 					    (
 						    (
-							    methodReference.ReferenceAsyncSymbols.Any() &&
-							    !methodReference.ReferenceAsyncSymbols.All(o =>
-							    {
-								    var returnType = o.ReturnType as INamedTypeSymbol;
-								    if (returnType == null || !returnType.IsGenericType)
-								    {
-									    return o.ReturnType.IsAwaitRequired(referenceFunctionData.Symbol.ReturnType);
-								    }
-								    return returnType.TypeArguments.First().IsAwaitRequired(referenceFunctionData.Symbol.ReturnType);
-							    })
+							    methodReference.ReferenceAsyncSymbols.Count > 0 &&
+							    methodReference.ReferenceAsyncSymbols.Any(o => referenceFunctionData.IsAwaitRequired(o))
 						    ) ||
 						    (
 							    methodReference.ReferenceFunctionData != null &&
-							    !methodReference.ReferenceFunctionData.Symbol.ReturnType.IsAwaitRequired(referenceFunctionData.Symbol.ReturnType)
+							    referenceFunctionData.IsAwaitRequired(methodReference.ReferenceFunctionData)
 						    )
 					    )
 					)

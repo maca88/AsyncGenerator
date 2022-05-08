@@ -65,6 +65,31 @@ namespace AsyncGenerator.TestCases
 			return Task.CompletedTask;
 		}
 
+#if NETCOREAPP2_1_OR_GREATER
+		public static void ReadValue()
+		{
+		}
+
+		public static ValueTask ReadValueAsync()
+		{
+			return default;
+		}
+
+		public static ValueTask ReadValueAsync(CancellationToken cancellationToken)
+		{
+			return default;
+		}
+
+		public static bool WriteValue(string content)
+		{
+			return true;
+		}
+
+		public static ValueTask<bool> WriteValueAsync(string content)
+		{
+			return default;
+		}
+#endif
 
 		public static bool FastWrite(string content = "")
 		{

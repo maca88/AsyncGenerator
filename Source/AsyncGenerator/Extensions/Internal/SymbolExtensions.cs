@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Extensions;
 using AsyncGenerator.Core.Extensions.Internal;
@@ -14,68 +12,88 @@ namespace AsyncGenerator.Extensions.Internal
 {
 	internal static class SymbolExtensions
 	{
-		internal static bool IsTaskType(this ITypeSymbol typeSymbol)
+		internal static ITypeSymbol UnwrapGenericTaskOrValueTask(this ITypeSymbol typeSymbol)
 		{
-			return typeSymbol.Name == nameof(Task) &&
-			       typeSymbol.ContainingNamespace.ToString() == "System.Threading.Tasks";
+			if (!typeSymbol.IsTaskOrValueTaskType() || !(typeSymbol is INamedTypeSymbol taskType))
+			{
+				return null;
+			}
+
+			if (!taskType.IsGenericType)
+			{
+				return taskType.ContainingAssembly.GetTypeByMetadataName("System.Void");
+			}
+
+			return taskType.TypeArguments.First();
 		}
 
-		internal static bool SupportsTaskType(this ITypeSymbol typeSymbol)
+		internal static bool IsVoid(this ITypeSymbol typeSymbol)
+		{
+			return typeSymbol.Name == typeof(void).Name && typeSymbol.ContainingNamespace.ToString() == "System";
+		}
+
+		internal static bool SupportsTaskOrValueTaskType(this ITypeSymbol typeSymbol)
 		{
 			if (typeSymbol is ITypeParameterSymbol typeParameterSymbol)
 			{
-				return typeParameterSymbol.ConstraintTypes.All(o => o.IsTaskType()) &&
+				return typeParameterSymbol.ConstraintTypes.All(o => o.IsTaskOrValueTaskType()) &&
 				       !typeParameterSymbol.HasValueTypeConstraint;
 			}
 
-			return IsTaskType(typeSymbol);
+			return typeSymbol.IsTaskOrValueTaskType();
 		}
 
 		/// <summary>
-		/// Check if the retrived type can be returned without having an await. We need to consider that the given types will be wrapped in a <see cref="Task{T}"/>.
+		/// Check if the retrieved type can be returned without having an await. We need to consider that the given types will be wrapped in a <see cref="Task{T}"/>.
 		/// Also when dealing with type parameters we need to check if the they can be applied to the given type
 		/// </summary>
-		/// <param name="retrivedType"></param>
+		/// <param name="retrievedType"></param>
 		/// <param name="toReturnType"></param>
 		/// <returns></returns>
-		internal static bool IsAwaitRequired(this ITypeSymbol retrivedType, ITypeSymbol toReturnType)
+		internal static bool IsAwaitRequired(this ITypeSymbol retrievedType, ITypeSymbol toReturnType)
 		{
-			if (retrivedType.EqualTo(toReturnType))
+			return IsAwaitRequired(retrievedType, toReturnType, 0);
+		}
+
+		private static bool IsAwaitRequired(this ITypeSymbol retrievedType, ITypeSymbol toReturnType, int level)
+		{
+			if (retrievedType.EqualTo(toReturnType) || (level == 0 && toReturnType.IsVoid()))
 			{
-				return true;
-			}
-			var retrivedNamedType = retrivedType as INamedTypeSymbol;
-			var toReturnNamedType = toReturnType as INamedTypeSymbol;
-			if (retrivedNamedType == null)
-			{
-				if (retrivedType is ITypeParameterSymbol retrivedParamType)
-				{
-					return retrivedParamType.CanApply(toReturnType);
-				}
 				return false;
+			}
+
+			var retrievedNamedType = retrievedType as INamedTypeSymbol;
+			var toReturnNamedType = toReturnType as INamedTypeSymbol;
+			if (retrievedNamedType == null)
+			{
+				if (retrievedType is ITypeParameterSymbol retrievedParamType)
+				{
+					return !retrievedParamType.CanApply(toReturnType);
+				}
+				return true;
 			}
 			if (toReturnNamedType == null)
 			{
 				if (toReturnType is ITypeParameterSymbol toReturnParamType)
 				{
-					return toReturnParamType.CanApply(retrivedType);
+					return !toReturnParamType.CanApply(retrievedType);
 				}
-				return false;
+				return true;
 			}
 
-			if (!retrivedType.OriginalDefinition.EqualTo(toReturnType.OriginalDefinition))
+			if (!retrievedType.OriginalDefinition.EqualTo(toReturnType.OriginalDefinition))
 			{
-				return false;
+				return true;
 			}
 			// If the original definitions are equal then we need to check the type arguments if they match
-			for (var i = 0; i < retrivedNamedType.TypeArguments.Length; i++)
+			for (var i = 0; i < retrievedNamedType.TypeArguments.Length; i++)
 			{
-				if (!retrivedNamedType.TypeArguments[i].IsAwaitRequired(toReturnNamedType.TypeArguments[i]))
+				if (retrievedNamedType.TypeArguments[i].IsAwaitRequired(toReturnNamedType.TypeArguments[i], level + 1))
 				{
-					return false;
+					return true;
 				}
 			}
-			return true;
+			return false;
 		}
 
 		internal static bool IsAccessor(this ISymbol symbol)

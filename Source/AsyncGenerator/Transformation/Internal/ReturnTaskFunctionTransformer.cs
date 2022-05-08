@@ -101,7 +101,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 			if (!methodResult.PreserveReturnType && methodResult.Symbol.MethodKind != MethodKind.PropertySet)
 			{
-				methodNode = methodNode.ReturnAsTask(namespaceMetadata.TaskConflict);
+				methodNode = methodNode.ReturnAsTaskOrValueTask(methodResult.AsyncReturnType, namespaceMetadata.TaskConflict);
 			}
 			return MethodTransformerResult.Update(methodNode);
 		}
@@ -112,7 +112,7 @@ namespace AsyncGenerator.Transformation.Internal
 			functionNode = functionNode.WithIdentifier(Identifier(analyzeResult.AsyncCounterpartName));
 			if (!analyzeResult.PreserveReturnType && analyzeResult.Symbol.MethodKind != MethodKind.PropertySet)
 			{
-				functionNode = functionNode.ReturnAsTask(namespaceMetadata.TaskConflict);
+				functionNode = functionNode.ReturnAsTaskOrValueTask(analyzeResult.AsyncReturnType, namespaceMetadata.TaskConflict);
 			}
 			return functionNode;
 		}

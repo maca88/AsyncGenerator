@@ -30,6 +30,8 @@ namespace AsyncGenerator.Internal
 
 		public abstract ReferenceConversion GetConversion();
 
+		public virtual AsyncReturnType GetAsyncReturnType() => AsyncReturnType.Task;
+
 		public abstract ReferenceConversion Conversion { get; protected set; }
 
 		#region IReferenceAnalyzationResult

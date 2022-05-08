@@ -7,6 +7,7 @@ using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Configuration;
+using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
 using AsyncGenerator.Extensions;
@@ -179,15 +180,15 @@ namespace AsyncGenerator.Transformation.Internal
 					var isWhenFalseTask = conditionalExpression.WhenFalse.GetAnnotations(Annotations.TaskReturned).Any();
 					var whenFalse = isWhenFalseTask
 						? conditionalExpression.WhenFalse
-						: conditionalExpression.WhenFalse.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict);
+						: conditionalExpression.WhenFalse.WrapInTaskFromResult(_methodResult.AsyncReturnType, _retunTypeSyntax, _namespaceMetadata.TaskConflict);
 					var whenTrue = isWhenTrueTask
 						? conditionalExpression.WhenTrue
-						: conditionalExpression.WhenTrue.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict);
+						: conditionalExpression.WhenTrue.WrapInTaskFromResult(_methodResult.AsyncReturnType,_retunTypeSyntax, _namespaceMetadata.TaskConflict);
 					return conditionalExpression
 						.WithWhenFalse(whenFalse)
 						.WithWhenTrue(whenTrue);
 				}
-				return expression.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict);
+				return expression.WrapInTaskFromResult(_methodResult.AsyncReturnType, _retunTypeSyntax, _namespaceMetadata.TaskConflict);
 			}
 			return base.Visit(node);
 		}
@@ -279,26 +280,12 @@ namespace AsyncGenerator.Transformation.Internal
 			}
 		}
 
-		private InvocationExpressionSyntax WrapInTaskFromException(ExpressionSyntax node)
+		private ExpressionSyntax WrapInTaskFromException(ExpressionSyntax node)
 		{
-			return InvocationExpression(
-					MemberAccessExpression(
-						SyntaxKind.SimpleMemberAccessExpression,
-						_namespaceMetadata.TaskConflict
-							? ConstructNameSyntax("System.Threading.Tasks.Task").WithLeadingTrivia(node.GetLeadingTrivia())
-							: IdentifierName(Identifier(TriviaList(node.GetLeadingTrivia()), nameof(Task), TriviaList())),
-						GenericName(
-								Identifier("FromException"))
-							.WithTypeArgumentList(
-								TypeArgumentList(
-									SingletonSeparatedList(
-										_retunTypeSyntax == null
-											? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-											: _retunTypeSyntax.WithoutTrivia())))))
-				.WithArgumentList(
-					ArgumentList(
-						SingletonSeparatedList(
-							Argument(node.WithoutLeadingTrivia()))));
+			return node.WrapInTaskFromException(
+				_methodResult.AsyncReturnType,
+				_namespaceMetadata.TaskConflict,
+				_retunTypeSyntax);
 		}
 
 		private BlockSyntax RewriteMethodBody(MethodDeclarationSyntax node, BlockSyntax body, IMethodOrAccessorAnalyzationResult methodResult)
@@ -334,16 +321,10 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private ReturnStatementSyntax GetReturnTaskCompleted()
 		{
-			return ReturnStatement(
-				Token(default(SyntaxTriviaList), SyntaxKind.ReturnKeyword, TriviaList(Space)),
-				MemberAccessExpression(
-					SyntaxKind.SimpleMemberAccessExpression,
-					_namespaceMetadata.TaskConflict
-						? ConstructNameSyntax("System.Threading.Tasks.Task")
-						: IdentifierName(nameof(Task)),
-					IdentifierName("CompletedTask")),
-				Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))
-			);
+			return SyntaxNodeHelper.GetReturnTaskCompleted(
+				_methodResult.AsyncReturnType,
+				_namespaceMetadata.TaskConflict,
+				TriviaList(_transformResult.EndOfLineTrivia));
 		}
 
 		private BlockSyntax ForwardCall(MethodDeclarationSyntax methodNode, BlockSyntax bodyBlock)
@@ -363,7 +344,7 @@ namespace AsyncGenerator.Transformation.Internal
 					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))))
 				: block.AddStatements(ReturnStatement(
 					Token(TriviaList(_transformResult.BodyLeadingWhitespaceTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)),
-					invocation.WrapInTaskFromResult(_retunTypeSyntax, _namespaceMetadata.TaskConflict),
+					invocation.WrapInTaskFromResult(_methodResult.AsyncReturnType, _retunTypeSyntax, _namespaceMetadata.TaskConflict),
 					Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia))));
 			return WrapInsideTryCatch(block, false);
 		}
@@ -407,29 +388,16 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private BlockSyntax GetCatchBlock(SyntaxTrivia innerBodyTrivia)
 		{
+			var fromExceptionNode = IdentifierName("ex")
+				.WrapInTaskFromException(
+					_methodResult.AsyncReturnType,
+					_namespaceMetadata.TaskConflict,
+					_retunTypeSyntax);
+
 			return Block(
 					SingletonList<StatementSyntax>(
 						ReturnStatement()
-							.WithExpression(
-								InvocationExpression(
-										MemberAccessExpression(
-											SyntaxKind.SimpleMemberAccessExpression,
-											_namespaceMetadata.TaskConflict
-												? ConstructNameSyntax("System.Threading.Tasks.Task")
-												: IdentifierName(nameof(Task)),
-											GenericName(
-													Identifier("FromException"))
-												.WithTypeArgumentList(
-													TypeArgumentList(
-														SingletonSeparatedList(
-															_retunTypeSyntax == null
-																? PredefinedType(Token(SyntaxKind.ObjectKeyword))
-																: _retunTypeSyntax.WithoutTrivia())))))
-									.WithArgumentList(
-										ArgumentList(
-											SingletonSeparatedList(
-												Argument(
-													IdentifierName("ex"))))))
+							.WithExpression(fromExceptionNode)
 							.WithReturnKeyword(Token(TriviaList(innerBodyTrivia), SyntaxKind.ReturnKeyword, TriviaList(Space)))
 							.WithSemicolonToken(Token(TriviaList(), SyntaxKind.SemicolonToken, TriviaList(_transformResult.EndOfLineTrivia)))
 					))

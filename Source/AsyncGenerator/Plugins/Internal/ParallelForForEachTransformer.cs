@@ -154,7 +154,7 @@ namespace AsyncGenerator.Plugins.Internal
 				var cancellationTokenParamName = funcResult.GetMethodOrAccessor().CancellationTokenRequired
 					? "cancellationToken"
 					: null; // TODO: find a way to not have this duplicated and fix naming colision
-				newExpression = newExpression.WrapInsideFunction(actionMethod, false, namespaceMetadata.TaskConflict,
+				newExpression = newExpression.WrapInsideFunction(actionMethod, funcResult.AsyncReturnType, false, namespaceMetadata.TaskConflict,
 					invoke => invoke.AddCancellationTokenArgumentIf(cancellationTokenParamName, delArgument.BodyFunctionReference));
 			}
 			ExpressionSyntax enumerableExpression;

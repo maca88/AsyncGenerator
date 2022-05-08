@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using AsyncGenerator.Analyzation;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Extensions.Internal;
 using AsyncGenerator.Core.Transformation;
@@ -135,7 +136,7 @@ namespace AsyncGenerator.Transformation.Internal
 								(type, fullName) => rootNode.WithExpression(type.CreateTypeSyntax(false, fullName))),
 							childNode => RunReferenceTransformers(childNode, funcResult, funReferenceResult, namespaceMetadata)
 						)
-						.WrapInsideFunction(bodyFuncReferenceResult.AsyncDelegateArgument, returnTypeMismatch,
+						.WrapInsideFunction(bodyFuncReferenceResult.AsyncDelegateArgument, funcResult.AsyncReturnType, returnTypeMismatch,
 							namespaceMetadata.TaskConflict,
 							invocation => invocation.AddCancellationTokenArgumentIf(cancellationTokenParamName, bodyFuncReferenceResult));
 					node = node
@@ -258,7 +259,7 @@ namespace AsyncGenerator.Transformation.Internal
 					}
 					else
 					{
-						node = TransformConditionalAccessToIfStatements(node, nameNode, typeMetadata, conditionalAccessNode, invokeNode);
+						node = TransformConditionalAccessToIfStatements(node, funReferenceResult.GetAsyncReturnType(), nameNode, typeMetadata, conditionalAccessNode, invokeNode);
 					}
 				}
 				else
@@ -395,6 +396,7 @@ namespace AsyncGenerator.Transformation.Internal
 
 		private T TransformConditionalAccessToIfStatements<T>(
 			T node,
+			AsyncReturnType asyncReturnType,
 			SimpleNameSyntax nameNode,
 			ITypeTransformationMetadata typeMetadata,
 			ConditionalAccessExpressionSyntax conditionalAccessNode,
@@ -440,9 +442,20 @@ namespace AsyncGenerator.Transformation.Internal
 						.WithTrailingTrivia(conditionalAccessNode.GetTrailingTrivia())
 				));
 
-			var variable = newBlock.GetAnnotatedNodes(variableAnnotation).OfType<IdentifierNameSyntax>().First();
-			newBlock = newBlock.ReplaceNode(variable, variable.AddAwait(_configuration.ConfigureAwaitArgument));
+			ExpressionSyntax variable = newBlock.GetAnnotatedNodes(variableAnnotation).OfType<IdentifierNameSyntax>().First();
+			if (asyncReturnType == AsyncReturnType.ValueTask)
+			{
+				newBlock = newBlock.ReplaceNode(
+					variable,
+					MemberAccessExpression(
+							SyntaxKind.SimpleMemberAccessExpression,
+							variable.WithoutAnnotations(variableAnnotation),
+							IdentifierName("Value"))
+						.WithAdditionalAnnotations(new SyntaxAnnotation(variableAnnotation)));
+				variable = newBlock.GetAnnotatedNodes(variableAnnotation).OfType<MemberAccessExpressionSyntax>().First();
+			}
 
+			newBlock = newBlock.ReplaceNode(variable, variable.AddAwait(_configuration.ConfigureAwaitArgument));
 			var ifBlock = Block()
 				.WithOpenBraceToken(
 					Token(TriviaList(leadingTrivia), SyntaxKind.OpenBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
@@ -450,15 +463,19 @@ namespace AsyncGenerator.Transformation.Internal
 					Token(TriviaList(leadingTrivia), SyntaxKind.CloseBraceToken, TriviaList(typeMetadata.EndOfLineTrivia)))
 				.WithStatements(SingletonList(newBlock.Statements[index].AppendIndent(typeMetadata.IndentTrivia.ToFullString())));
 
-			var ifStatement = IfStatement(
-					BinaryExpression(
-							SyntaxKind.NotEqualsExpression,
-							IdentifierName(Identifier(TriviaList(), variableName, TriviaList(Space))),
-							LiteralExpression(SyntaxKind.NullLiteralExpression))
-						.WithOperatorToken(
-							Token(TriviaList(), SyntaxKind.ExclamationEqualsToken, TriviaList(Space))),
-					ifBlock
-				)
+			var ifCondition = asyncReturnType == AsyncReturnType.Task
+				? (ExpressionSyntax) BinaryExpression(
+						SyntaxKind.NotEqualsExpression,
+						IdentifierName(Identifier(TriviaList(), variableName, TriviaList(Space))),
+						LiteralExpression(SyntaxKind.NullLiteralExpression))
+					.WithOperatorToken(
+						Token(TriviaList(), SyntaxKind.ExclamationEqualsToken, TriviaList(Space)))
+				: MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        IdentifierName(variableName),
+                        IdentifierName("HasValue"));
+
+			var ifStatement = IfStatement(ifCondition, ifBlock)
 				.WithIfKeyword(
 					Token(TriviaList(leadingTrivia), SyntaxKind.IfKeyword, TriviaList(Space)))
 				.WithCloseParenToken(

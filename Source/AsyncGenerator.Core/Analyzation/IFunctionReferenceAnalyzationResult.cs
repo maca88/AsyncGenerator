@@ -10,6 +10,8 @@ namespace AsyncGenerator.Core.Analyzation
 
 		ReferenceConversion GetConversion();
 
+		AsyncReturnType GetAsyncReturnType();
+
 		string AsyncCounterpartName { get; }
 
 		IMethodSymbol AsyncCounterpartSymbol { get; }

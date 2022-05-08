@@ -94,5 +94,26 @@ namespace AsyncGenerator.Tests.AbstractClass
 				)
 			);
 		}
+
+		[Test]
+		public Task TestValueTaskFromInterfaceAfterTransformation()
+		{
+			return ReadonlyTest(p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? MethodConversion.ToAsync : MethodConversion.Unknown)
+					.AsyncReturnType(symbol => symbol.ContainingType.Name == nameof(ITestInteraface) ? Core.AsyncReturnType.ValueTask : (Core.AsyncReturnType?)null)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile("ValueTaskFromInterface"), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }

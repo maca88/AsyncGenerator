@@ -3,9 +3,12 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using AsyncGenerator.Core;
 using AsyncGenerator.Core.Analyzation;
 using AsyncGenerator.Core.Extensions;
+using AsyncGenerator.Core.Extensions.Internal;
+using AsyncGenerator.Extensions.Internal;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -24,6 +27,8 @@ namespace AsyncGenerator.Internal
 		public abstract TypeData TypeData { get; }
 
 		public MethodConversion Conversion { get; set; }
+
+		public AsyncReturnType AsyncReturnType { get; set; }
 
 		public string AsyncCounterpartName { get; set; }
 
@@ -167,6 +172,22 @@ namespace AsyncGenerator.Internal
 			{
 				Conversion = MethodConversion.ToAsync;
 			}
+		}
+
+		internal bool IsAwaitRequired(FunctionData invokedFunctionData)
+		{
+			return IsAwaitRequired(invokedFunctionData.Symbol.ReturnType, invokedFunctionData.AsyncReturnType.ToString());
+		}
+
+		internal bool IsAwaitRequired(IMethodSymbol invokedMethod)
+		{
+			return invokedMethod.ReturnType.Name != (AsyncReturnType.ToString()) ||
+			       invokedMethod.ReturnType.UnwrapGenericTaskOrValueTask().IsAwaitRequired(Symbol.ReturnType);
+		}
+
+		private bool IsAwaitRequired(ITypeSymbol invokeResultType, string taskType = nameof(Task))
+		{
+			return taskType != (AsyncReturnType.ToString()) || invokeResultType.IsAwaitRequired(Symbol.ReturnType);
 		}
 
 		/// <summary>
