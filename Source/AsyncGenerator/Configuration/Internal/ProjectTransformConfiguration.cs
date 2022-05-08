@@ -1,14 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using AsyncGenerator.Analyzation;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
-using AsyncGenerator.Plugins;
-using AsyncGenerator.Transformation;
-using AsyncGenerator.Transformation.Internal;
-using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -22,6 +16,7 @@ namespace AsyncGenerator.Configuration.Internal
 		{
 			_projectConfiguration = projectConfiguration;
 			DocumentationComments = new ProjectDocumentationCommentConfiguration();
+			PreprocessorDirectives = new ProjectPreprocessorDirectivesConfiguration();
 		}
 
 		public bool Enabled { get; private set; } = true;
@@ -40,6 +35,8 @@ namespace AsyncGenerator.Configuration.Internal
 
 		public ProjectDocumentationCommentConfiguration DocumentationComments { get; }
 
+		public ProjectPreprocessorDirectivesConfiguration PreprocessorDirectives { get; }
+
 		public List<IMethodOrAccessorTransformer> MethodTransformers { get; } = new List<IMethodOrAccessorTransformer>();
 
 		public List<IFunctionTransformer> FunctionTransformers { get; } = new List<IFunctionTransformer>();
@@ -55,6 +52,8 @@ namespace AsyncGenerator.Configuration.Internal
 		#region IFluentProjectTransformConfiguration
 
 		IProjectDocumentationCommentConfiguration IProjectTransformConfiguration.DocumentationComments => DocumentationComments;
+
+		IProjectPreprocessorDirectivesConfiguration IProjectTransformConfiguration.PreprocessorDirectives => PreprocessorDirectives;
 
 		#endregion
 
@@ -111,6 +110,16 @@ namespace AsyncGenerator.Configuration.Internal
 				throw new ArgumentNullException(nameof(action));
 			}
 			action(DocumentationComments);
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.PreprocessorDirectives(Action<IFluentProjectPreprocessorDirectivesConfiguration> action)
+		{
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			action(PreprocessorDirectives);
 			return this;
 		}
 

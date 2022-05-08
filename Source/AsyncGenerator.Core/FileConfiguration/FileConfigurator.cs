@@ -311,7 +311,16 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.AsyncLock(config.AsyncLock.Type, config.AsyncLock.MethodName);
 			}
-			fluentConfig.DocumentationComments(o => Configure(configuration, config. DocumentationComments, o));
+			fluentConfig.DocumentationComments(o => Configure(configuration, config.DocumentationComments, o));
+			fluentConfig.PreprocessorDirectives(o => Configure(configuration, config.PreprocessorDirectives, o));
+		}
+
+		private static void Configure(AsyncGenerator configuration, PreprocessorDirectives config, IFluentProjectPreprocessorDirectivesConfiguration fluentConfig)
+		{
+			if (config.AddForMethod.Any())
+			{
+				fluentConfig.AddForMethod(CreateMethodPreprocessorDirectiveFunction(configuration, config.AddForMethod));
+			}
 		}
 
 		private static void Configure(AsyncGenerator configuration, DocumentationComments config, IFluentProjectDocumentationCommentConfiguration fluentConfig)
@@ -379,6 +388,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 					if (CanApply(symbol, filter, rules))
 					{
 						return filter.Content;
+					}
+				}
+				return null;
+			};
+		}
+
+		private static Func<IMethodSymbol, Core.PreprocessorDirectives> CreateMethodPreprocessorDirectiveFunction(AsyncGenerator globalConfig, List<MethodPreprocessorDirectiveFilter> filters)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return new Core.PreprocessorDirectives(filter.StartDirective, filter.EndDirective);
 					}
 				}
 				return null;

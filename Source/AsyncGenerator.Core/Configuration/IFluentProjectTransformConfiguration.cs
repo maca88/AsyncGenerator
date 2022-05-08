@@ -56,7 +56,9 @@ namespace AsyncGenerator.Core.Configuration
 		/// </summary>
 		IFluentProjectTransformConfiguration DocumentationComments(Action<IFluentProjectDocumentationCommentConfiguration> action);
 
-
-
+		/// <summary>
+		/// Add a callback to configure the preprocessor directives generation
+		/// </summary>
+		IFluentProjectTransformConfiguration PreprocessorDirectives(Action<IFluentProjectPreprocessorDirectivesConfiguration> action);
 	}
 }

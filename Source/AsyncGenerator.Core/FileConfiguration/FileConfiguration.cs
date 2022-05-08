@@ -474,11 +474,14 @@ namespace AsyncGenerator.Core.FileConfiguration
 		public TransformationAsyncLock AsyncLock { get; set; }
 		[XmlElement("DocumentationComments")]
 		public DocumentationComments DocumentationComments { get; set; }
+		[XmlElement("PreprocessorDirectives")]
+		public PreprocessorDirectives PreprocessorDirectives { get; set; }
 
 		public Transformation()
 		{
 			AsyncLock = new TransformationAsyncLock();
 			DocumentationComments = new DocumentationComments();
+			PreprocessorDirectives = new PreprocessorDirectives();
 		}
 	}
 
@@ -633,6 +636,23 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("PreprocessorDirectives")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class PreprocessorDirectives
+	{
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodPreprocessorDirectiveFilter> AddForMethod { get; set; }
+
+		public PreprocessorDirectives()
+		{
+			AddForMethod = new List<MethodPreprocessorDirectiveFilter>();
+		}
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("MethodCancellationTokenFilter")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class MethodCancellationTokenFilter : MethodFilter
@@ -653,6 +673,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 	{
 		[XmlElement("Content")]
 		public string Content { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("MethodPreprocessorDirectiveFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class MethodPreprocessorDirectiveFilter : MethodFilter
+	{
+		[XmlElement("StartDirective")]
+		public string StartDirective { get; set; }
+
+		[XmlElement("EndDirective")]
+		public string EndDirective { get; set; }
 	}
 
 	[Serializable]
