@@ -43,16 +43,23 @@ namespace AsyncGenerator.Core.Extensions
 				syncMethod = syncMethod.ReducedFrom ?? syncMethod;
 			}
 
+			var candidateIndexOffset = 0;
+			if (candidateAsyncMethod.IsExtensionMethod && !syncMethod.IsExtensionMethod)
+			{
+				candidateIndexOffset = 1;
+			}
+
 			if (syncMethod.OverriddenMethod != null && candidateAsyncMethod.EqualTo(syncMethod.OverriddenMethod))
 			{
 				return false;
 			}
 
+			var candidateParameterLength = candidateAsyncMethod.Parameters.Length - candidateIndexOffset;
 			// Check if the length of the parameters matches
-			if (syncMethod.Parameters.Length != candidateAsyncMethod.Parameters.Length)
+			if (syncMethod.Parameters.Length != candidateParameterLength)
 			{
 				// For symplicity, we suppose that the sync method does not have a cancellation token as a parameter
-				if (!hasCancellationToken || syncMethod.Parameters.Length + 1 != candidateAsyncMethod.Parameters.Length)
+				if (!hasCancellationToken || syncMethod.Parameters.Length + 1 != candidateParameterLength)
 				{
 					return false;
 				}
@@ -93,7 +100,7 @@ namespace AsyncGenerator.Core.Extensions
 			for (var i = 0; i < syncMethod.Parameters.Length; i++)
 			{
 				var param = syncMethod.Parameters[i];
-				var candidateParam = candidateAsyncMethod.Parameters[i];
+				var candidateParam = candidateAsyncMethod.Parameters[i + candidateIndexOffset];
 				if (param.IsOptional != candidateParam.IsOptional ||
 					param.IsParams != candidateParam.IsParams ||
 					param.RefKind != candidateParam.RefKind)
@@ -152,7 +159,7 @@ namespace AsyncGenerator.Core.Extensions
 				}
 				result = true;
 			}
-			if (syncMethod.Parameters.Length >= candidateAsyncMethod.Parameters.Length)
+			if (syncMethod.Parameters.Length >= candidateParameterLength)
 			{
 				return result;
 			}

@@ -125,9 +125,13 @@ namespace AsyncGenerator.Core.FileConfiguration
 		[XmlArrayItem("ProjectFile", IsNullable = false)]
 		public List<ProjectFile> ProjectFiles { get; set; }
 
+		[XmlArrayItem("AssemblyType", IsNullable = false)]
+		public List<AssemblyType> AssemblyTypes { get; set; }
+
 		public AsyncExtensionMethods()
 		{
 			ProjectFiles = new List<ProjectFile>();
+			AssemblyTypes = new List<AssemblyType>();
 		}
 	}
 
@@ -378,6 +382,21 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		[XmlAttribute(AttributeName = "projectName")]
 		public string ProjectName { get; set; }
+	}
+	
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("AssemblyType")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class AssemblyType
+	{
+		[XmlAttribute(AttributeName = "assemblyName")]
+		public string AssemblyName { get; set; }
+
+		[XmlAttribute(AttributeName = "fullTypeName")]
+		public string FullTypeName { get; set; }
 	}
 
 	[Serializable]

@@ -123,7 +123,15 @@ namespace AsyncGenerator
 			{
 				foreach (var fileName in pair.Value)
 				{
-					RegisterPlugin(projectData.Configuration, new AsyncExtensionMethodsFinder(pair.Key, fileName));
+					RegisterPlugin(projectData.Configuration, new AsyncExtensionMethodsFinder(pair.Key, fileName, false));
+				}
+			}
+
+			foreach (var pair in analyzeConfig.AsyncExtensionMethods.AssemblyTypes)
+			{
+				foreach (var fullTypeName in pair.Value)
+				{
+					RegisterPlugin(projectData.Configuration, new AsyncExtensionMethodsFinder(pair.Key, fullTypeName, true));
 				}
 			}
 

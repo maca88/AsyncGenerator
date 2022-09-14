@@ -224,6 +224,11 @@ namespace AsyncGenerator.Core.FileConfiguration
 			{
 				fluentConfig.ProjectFile(projectFile.ProjectName, projectFile.FileName);
 			}
+
+			foreach (var assemblyType in config.AssemblyTypes)
+			{
+				fluentConfig.ExternalType(assemblyType.AssemblyName, assemblyType.FullTypeName);
+			}
 		}
 
 		private static void Configure(AsyncGenerator configuration, Diagnostics config, IFluentProjectDiagnosticsConfiguration fluentConfig)

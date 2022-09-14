@@ -13,16 +13,13 @@ namespace AsyncGenerator.Core.Configuration
 		/// </summary>
 		/// <param name="projectName">Name of the project where async extension methods are located</param>
 		/// <param name="fileName">Name of the file which contains the async extension methods</param>
-		/// <returns></returns>
 		IFluentProjectAsyncExtensionMethodsConfiguration ProjectFile(string projectName, string fileName);
 
-		// TODO
-		///// <summary>
-		///// Add an external type that contains async extension methods
-		///// </summary>
-		///// <param name="assemblyName">Name of the assembly where async extension methods are located</param>
-		///// <param name="type">Full name of the type which contains the async extension methods</param>
-		///// <returns></returns>
-		//IFluentProjectExtensionMethodsConfiguration ExternalType(string assemblyName, string type);
+		/// <summary>
+		/// Add an external type that contains async extension methods
+		/// </summary>
+		/// <param name="assemblyName">Name of the assembly where async extension methods are located</param>
+		/// <param name="fullTypeName">Full name of the type which contains the async extension methods</param>
+		IFluentProjectAsyncExtensionMethodsConfiguration ExternalType(string assemblyName, string fullTypeName);
 	}
 }
