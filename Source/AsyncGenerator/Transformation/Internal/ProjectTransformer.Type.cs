@@ -329,7 +329,9 @@ namespace AsyncGenerator.Transformation.Internal
 		private TypeDeclarationSyntax TransformMethod(MethodTransformationResult methodTransform, TypeDeclarationSyntax newTypeNode, TypeTransformationResult transformResult,
 			INamespaceTransformationMetadata namespaceMetadata, SyntaxTrivia memberWhitespace, bool onlyMissingMembers)
 		{
-			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore || (onlyMissingMembers && !methodTransform.AnalyzationResult.Missing))
+			if (methodTransform.AnalyzationResult.Conversion == MethodConversion.Ignore ||
+			    (onlyMissingMembers && !methodTransform.AnalyzationResult.Missing) ||
+			    _configuration.GetMethodGeneration(methodTransform.AnalyzationResult.Symbol) == MethodGeneration.Ignore)
 			{
 				// We need to add a whitespace trivia to keep directives as they will not have any leading whitespace
 				newTypeNode = newTypeNode.RemoveNodeKeepDirectives(methodTransform.Annotation, memberWhitespace, transformResult.EndOfLineTrivia);

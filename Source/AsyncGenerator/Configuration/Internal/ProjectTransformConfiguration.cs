@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using AsyncGenerator.Core;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Plugins;
 using AsyncGenerator.Core.Transformation;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -11,6 +13,7 @@ namespace AsyncGenerator.Configuration.Internal
 	internal class ProjectTransformConfiguration : IFluentProjectTransformConfiguration, IProjectTransformConfiguration
 	{
 		private readonly IProjectConfiguration _projectConfiguration;
+		private Func<IMethodSymbol, MethodGeneration> _methodGenerationFunction;
 
 		public ProjectTransformConfiguration(IProjectConfiguration projectConfiguration)
 		{
@@ -48,6 +51,11 @@ namespace AsyncGenerator.Configuration.Internal
 		public List<IFunctionReferenceTransformer> FunctionReferenceTransformers { get; } = new List<IFunctionReferenceTransformer>();
 
 		public List<Action<IProjectTransformationResult>> AfterTransformation { get; } = new List<Action<IProjectTransformationResult>>();
+
+		public MethodGeneration GetMethodGeneration(IMethodSymbol methodSymbol)
+		{
+			return _methodGenerationFunction?.Invoke(methodSymbol) ?? MethodGeneration.Generate;
+		}
 
 		#region IFluentProjectTransformConfiguration
 
@@ -130,6 +138,12 @@ namespace AsyncGenerator.Configuration.Internal
 				throw new ArgumentNullException(nameof(action));
 			}
 			AfterTransformation.Add(action);
+			return this;
+		}
+
+		IFluentProjectTransformConfiguration IFluentProjectTransformConfiguration.MethodGeneration(Func<IMethodSymbol, MethodGeneration> func)
+		{
+			_methodGenerationFunction = func ?? throw new ArgumentNullException(nameof(func));
 			return this;
 		}
 

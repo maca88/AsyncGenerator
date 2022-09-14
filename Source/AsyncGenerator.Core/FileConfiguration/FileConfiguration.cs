@@ -211,6 +211,18 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[DebuggerStepThrough]
 	[DesignerCategory("code")]
 	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
+	[XmlRoot("MethodGenerationFilter")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public class MethodGenerationFilter : MethodFilter
+	{
+		[XmlAttribute(AttributeName = "generation")]
+		public MethodGeneration Generation { get; set; }
+	}
+
+	[Serializable]
+	[DebuggerStepThrough]
+	[DesignerCategory("code")]
+	[XmlType(Namespace = "https://github.com/maca88/AsyncGenerator")]
 	[XmlRoot("AsyncReturnTypeFilter")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class AsyncReturnTypeFilter : MethodFilter
@@ -233,6 +245,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
+	[XmlInclude(typeof(MethodGenerationFilter))]
 	[XmlInclude(typeof(MethodPredicateFilter))]
 	[XmlInclude(typeof(AsyncReturnTypeFilter))]
 	[Serializable]
@@ -268,6 +281,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[XmlInclude(typeof(MethodFilter))]
 	[XmlInclude(typeof(MethodCancellationTokenFilter))]
 	[XmlInclude(typeof(MethodConversionFilter))]
+	[XmlInclude(typeof(MethodGenerationFilter))]
 	[XmlInclude(typeof(MethodPredicateFilter))]
 	[XmlInclude(typeof(AsyncReturnTypeFilter))]
 	[Serializable]
@@ -462,6 +476,8 @@ namespace AsyncGenerator.Core.FileConfiguration
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public class Transformation
 	{
+		[XmlArrayItem("Method", IsNullable = false)]
+		public List<MethodGenerationFilter> MethodGeneration { get; set; }
 		[XmlElement(IsNullable = true)]
 		public bool? Disable { get; set; }
 		[XmlElement("AsyncFolder")]
@@ -479,6 +495,7 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		public Transformation()
 		{
+			MethodGeneration = new List<MethodGenerationFilter>();
 			AsyncLock = new TransformationAsyncLock();
 			DocumentationComments = new DocumentationComments();
 			PreprocessorDirectives = new PreprocessorDirectives();
