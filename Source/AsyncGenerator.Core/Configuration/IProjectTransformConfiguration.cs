@@ -13,5 +13,7 @@
 		bool ConcurrentRun { get; }
 
 		IProjectDocumentationCommentConfiguration DocumentationComments { get; }
+
+		IProjectPreprocessorDirectivesConfiguration PreprocessorDirectives { get; }
 	}
 }

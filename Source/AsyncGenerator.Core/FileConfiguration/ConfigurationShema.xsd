@@ -188,6 +188,17 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="MethodPreprocessorDirectiveFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:all>
+          <xs:element type="xs:string" name="StartDirective"/>
+          <xs:element type="xs:string" name="EndDirective"/>
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
   <xs:complexType name="TypeContentFilter">
     <xs:complexContent>
       <xs:extension base="TypeFilter">
@@ -441,6 +452,18 @@
     </xs:all>
   </xs:complexType>
 
+  <xs:complexType name="PreprocessorDirectives">
+    <xs:all>
+      <xs:element name="AddForMethod" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodPreprocessorDirectiveFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
 
   <xs:complexType name="Transformation">
     <xs:all>
@@ -449,6 +472,7 @@
       <xs:element name="ConfigureAwaitArgument" type="xs:boolean"  nillable="true" minOccurs="0" />
       <xs:element name="LocalFunctions" type="xs:boolean" nillable="true" minOccurs="0" />
       <xs:element name="DocumentationComments" type="DocumentationComments" minOccurs="0" />
+      <xs:element name="PreprocessorDirectives" type="PreprocessorDirectives" minOccurs="0" />
       <xs:element name="AsyncLock" minOccurs="0">
         <xs:complexType>
           <xs:attribute name="type" type="xs:string" use="required" />

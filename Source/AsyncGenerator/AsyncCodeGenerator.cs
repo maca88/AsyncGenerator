@@ -482,6 +482,7 @@ namespace AsyncGenerator
 			configuration.RegisterPlugin(new CancellationTokenMethodTransformer());
 			configuration.RegisterPlugin(new SplitTailMethodTransformer());
 			configuration.RegisterPlugin(new DocumentationCommentMethodTransformer());
+			configuration.RegisterPlugin(new PreprocessorDirectivesMethodTransformer());
 		}
 
 		private static void RegisterPlugin(IFluentProjectConfiguration configuration, IPlugin plugin)
