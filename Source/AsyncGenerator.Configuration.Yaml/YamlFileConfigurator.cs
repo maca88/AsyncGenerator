@@ -14,7 +14,7 @@ namespace AsyncGenerator.Configuration.Yaml
 		private static T Deserialize<T>(string content)
 		{
 			var deserializer = new DeserializerBuilder()
-				.WithNamingConvention(new CamelCaseNamingConvention())
+				.WithNamingConvention(CamelCaseNamingConvention.Instance)
 				.Build();
 			return deserializer.Deserialize<T>(content);
 		}
