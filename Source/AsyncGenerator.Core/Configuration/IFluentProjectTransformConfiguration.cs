@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Transformation;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AsyncGenerator.Core.Configuration
@@ -60,5 +61,11 @@ namespace AsyncGenerator.Core.Configuration
 		/// Add a callback to configure the preprocessor directives generation
 		/// </summary>
 		IFluentProjectTransformConfiguration PreprocessorDirectives(Action<IFluentProjectPreprocessorDirectivesConfiguration> action);
+
+		/// <summary>
+		/// Set a function that will decide what type of generation to apply for a given method.
+		/// <para>Default <see cref="F:AsyncGenerator.Core.MethodGeneration.Generate"/> is chosen for all methods.</para>
+		/// </summary>
+		IFluentProjectTransformConfiguration MethodGeneration(Func<IMethodSymbol, MethodGeneration> func);
 	}
 }

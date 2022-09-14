@@ -11,6 +11,13 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="MethodGeneration">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Ignore"/>
+      <xs:enumeration value="Generate"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:simpleType name="TypeConversion">
     <xs:restriction base="xs:string">
       <xs:enumeration value="Ignore"/>
@@ -117,6 +124,14 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="MethodGenerationFilter">
+    <xs:complexContent>
+      <xs:extension base="MethodFilter">
+        <xs:attribute name="generation" type="MethodGeneration" use="required" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
   <xs:complexType name="AsyncReturnTypeFilter">
     <xs:complexContent>
       <xs:extension base="MethodFilter">
@@ -219,8 +234,13 @@
     <xs:attribute name="fileName" type="xs:string" use="required"/>
   </xs:complexType>
 
+  <xs:complexType name="AssemblyType">
+    <xs:attribute name="assemblyName" type="xs:string" use="required"/>
+    <xs:attribute name="fullTypeName" type="xs:string" use="required"/>
+  </xs:complexType>
+
   <xs:complexType name="AsyncExtensionMethods">
-    <xs:sequence>
+    <xs:all>
       <xs:element name="ProjectFiles" minOccurs="0">
         <xs:complexType>
           <xs:sequence>
@@ -228,7 +248,14 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
-    </xs:sequence>
+      <xs:element name="AssemblyTypes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="AssemblyType" type="AssemblyType" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
   </xs:complexType>
 
   <xs:complexType name="CancellationTokens">
@@ -464,9 +491,15 @@
     </xs:all>
   </xs:complexType>
 
-
   <xs:complexType name="Transformation">
     <xs:all>
+      <xs:element name="MethodGeneration" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Method" type="MethodGenerationFilter" maxOccurs="unbounded" minOccurs="0"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="Disable" type="xs:boolean" nillable="true" minOccurs="0" />
       <xs:element name="AsyncFolder" type="xs:string" minOccurs="0" />
       <xs:element name="ConfigureAwaitArgument" type="xs:boolean"  nillable="true" minOccurs="0" />
@@ -481,7 +514,7 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
-  
+
   <xs:complexType name="Project">
       <xs:all>
         <xs:element name="ConcurrentRun" type="xs:boolean" nillable="true" minOccurs="0"/>

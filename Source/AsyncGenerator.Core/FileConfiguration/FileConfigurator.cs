@@ -291,6 +291,10 @@ namespace AsyncGenerator.Core.FileConfiguration
 
 		private static void Configure(AsyncGenerator configuration, Transformation config, IFluentProjectTransformConfiguration fluentConfig)
 		{
+			if (config.MethodGeneration.Any())
+			{
+				fluentConfig.MethodGeneration(CreateMethodGenerationFunction(configuration, config.MethodGeneration));
+			}
 			if (config.LocalFunctions.HasValue)
 			{
 				fluentConfig.LocalFunctions(config.LocalFunctions.Value);
@@ -563,6 +567,22 @@ namespace AsyncGenerator.Core.FileConfiguration
 					}
 				}
 				return MethodConversion.Unknown; // Default value
+			};
+		}
+
+		private static Func<IMethodSymbol, MethodGeneration> CreateMethodGenerationFunction(AsyncGenerator globalConfig, IList<MethodGenerationFilter> filters)
+		{
+			var rules = globalConfig.MethodRules.ToDictionary(o => o.Name, o => o.Filters);
+			return symbol =>
+			{
+				foreach (var filter in filters)
+				{
+					if (CanApply(symbol, filter, rules))
+					{
+						return filter.Generation;
+					}
+				}
+				return MethodGeneration.Generate; // Default value
 			};
 		}
 
