@@ -1,11 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using AsyncGenerator.Analyzation;
+﻿using System.Threading.Tasks;
 using AsyncGenerator.Core;
-using AsyncGenerator.Core.Plugins;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
 using AsyncGenerator.Tests.AsyncMethodFinder.Input;
 
@@ -157,6 +151,28 @@ namespace AsyncGenerator.Tests.AsyncMethodFinder
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
 						Assert.AreEqual(GetOutputFile(nameof(ExtensionMethods)), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
+		
+		[Test]
+		public Task TestExternalExtensionMethodsAfterTransformation()
+		{
+			return ReadonlyTest(nameof(ExternalExtensionMethods), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.AsyncExtensionMethods(o => o
+						.ExternalType("AsyncGenerator.TestCases", "AsyncGenerator.TestCases.FileReaderExtensions"))
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.NotNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile(nameof(ExternalExtensionMethods)), document.Transformed.ToFullString());
 					})
 				)
 			);

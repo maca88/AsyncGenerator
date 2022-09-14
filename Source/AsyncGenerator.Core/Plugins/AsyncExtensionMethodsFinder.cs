@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AsyncGenerator.Core.Configuration;
 using AsyncGenerator.Core.Extensions;
@@ -10,6 +9,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static AsyncGenerator.Core.AsyncCounterpartsSearchOptions;
 
 namespace AsyncGenerator.Core.Plugins
 {
@@ -19,23 +19,56 @@ namespace AsyncGenerator.Core.Plugins
 		private ILookup<string, IMethodSymbol> _extensionMethodsLookup;
 		private readonly string _fileName;
 		private readonly string _projectName;
+		private readonly bool _findByReference;
 
-		public AsyncExtensionMethodsFinder(string projectName, string fileName)
+		public AsyncExtensionMethodsFinder(string projectName, string fileName, bool findByReference)
 		{
 			_projectName = projectName;
 			_fileName = fileName;
+			_findByReference = findByReference;
 		}
 
 		public async Task Initialize(Project project, IProjectConfiguration configuration, Compilation compilation)
 		{
-			var extProject = project.Solution.Projects.First(o => o.Name == _projectName);
-			var doc = extProject.Documents.First(o => o.Name == _fileName);
-			var rootNode = await doc.GetSyntaxRootAsync().ConfigureAwait(false);
-			var semanticModel = await doc.GetSemanticModelAsync().ConfigureAwait(false);
-			_extensionMethods = new HashSet<IMethodSymbol>(rootNode.DescendantNodes()
-				.OfType<MethodDeclarationSyntax>()
-				.Where(o => o.Identifier.ValueText.EndsWith("Async"))
-				.Select(o => semanticModel.GetDeclaredSymbol(o)), SymbolEqualityComparer.Default);
+			_extensionMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+			if (_findByReference)
+			{
+				var test = compilation.References
+					.Select(compilation.GetAssemblyOrModuleSymbol)
+					.OfType<IAssemblySymbol>()
+					.FirstOrDefault(o => o.Name == _projectName);
+				var type = test?.GetTypeByMetadataName(_fileName);
+				if (type == null)
+				{
+					throw new InvalidOperationException($"Type {_fileName} was not found in assembly {_projectName}");
+				}
+
+				foreach (var asyncMethod in type.GetMembers().OfType<IMethodSymbol>()
+					         .Where(o => o.Name.EndsWith("Async") && o.IsExtensionMethod))
+				{
+					_extensionMethods.Add(asyncMethod);
+				}
+			}
+			else
+			{
+				var extProject = project.Solution.Projects.First(o => o.Name == _projectName);
+				var docs = extProject.Documents.Where(o => o.Name == _fileName);
+				foreach (var doc in docs)
+				{
+					var rootNode = await doc.GetSyntaxRootAsync().ConfigureAwait(false);
+					var semanticModel = await doc.GetSemanticModelAsync().ConfigureAwait(false);
+					var asyncMethods = rootNode.DescendantNodes()
+						.OfType<MethodDeclarationSyntax>()
+						.Where(o => o.Identifier.ValueText.EndsWith("Async"))
+						.Select(o => semanticModel.GetDeclaredSymbol(o))
+						.Where(o => o?.IsExtensionMethod == true);
+					foreach (var asyncMethod in asyncMethods)
+					{
+						_extensionMethods.Add(asyncMethod);
+					}
+				}
+			}
+
 			_extensionMethodsLookup = _extensionMethods.ToLookup(o => o.Name);
 		}
 
@@ -77,10 +110,16 @@ namespace AsyncGenerator.Core.Plugins
 			var asyncName = symbol.GetAsyncName();
 			foreach (var asyncCandidate in _extensionMethodsLookup[asyncName])
 			{
-				if (!symbol.IsAsyncCounterpart(invokedFromType, asyncCandidate, true, true, false))
+				if (!symbol.IsAsyncCounterpart(
+					    invokedFromType,
+					    asyncCandidate, 
+					    true,
+					    options.HasFlag(HasCancellationToken),
+					    options.HasFlag(IgnoreReturnType)))
 				{
 					continue;
 				}
+
 				yield return asyncCandidate;
 				yield break;
 			}
