@@ -10,6 +10,17 @@ using System.Runtime.Loader;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis.MSBuild;
 
+#if NET472 || (NETCOREAPP && !NET5_0_OR_GREATER)
+
+// To make init (C# 9.0) work with older .NET versions
+namespace System.Runtime.CompilerServices
+{
+	internal static class IsExternalInit
+	{
+	}
+}
+#endif
+
 #if NETCOREAPP || NET472
 
 namespace AsyncGenerator.Internal

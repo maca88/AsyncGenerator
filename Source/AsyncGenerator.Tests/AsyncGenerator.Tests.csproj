@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>$(TestTargetFramework)</TargetFramework>
     <IsPackable>false</IsPackable>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <NoWarn Condition="'$(TargetFramework)' == 'netcoreapp3.1'">CS8032</NoWarn>
   </PropertyGroup>
 
@@ -53,6 +53,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="**\*.txt;**\*.yml;**\*.xml" Exclude="bin\**\*.*;obj\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="AsyncProperites\Output\InitSetter.txt" />
   </ItemGroup>
 
   <ItemGroup>

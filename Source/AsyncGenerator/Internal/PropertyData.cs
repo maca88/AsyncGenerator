@@ -24,9 +24,10 @@ namespace AsyncGenerator.Internal
 					? (SyntaxNode)Node.AccessorList.Accessors.First(o => o.Keyword.IsKind(SyntaxKind.GetKeyword))
 					: Node.ExpressionBody);
 			}
-			if (Symbol.SetMethod != null)
+			//Ignore init setters
+			if (Symbol.SetMethod != null && Node.AccessorList.Accessors.FirstOrDefault(o => o.Keyword.IsKind(SyntaxKind.SetKeyword)) is AccessorDeclarationSyntax accessorDeclaration)
 			{
-				SetAccessorData = new AccessorData(this, Symbol.SetMethod, Node.AccessorList.Accessors.First(o => o.Keyword.IsKind(SyntaxKind.SetKeyword)));
+				SetAccessorData = new AccessorData(this, Symbol.SetMethod, accessorDeclaration);
 			}
 		}
 
