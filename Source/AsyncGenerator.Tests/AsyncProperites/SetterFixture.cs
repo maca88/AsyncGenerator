@@ -183,5 +183,27 @@ namespace AsyncGenerator.Tests.AsyncProperites
 				)
 			);
 		}
+
+		[Test]
+		public Task TestInitSetterNewTypeAfterTransformation()
+		{
+			return ReadonlyTest(nameof(InitSetter), p => p
+				.ConfigureAnalyzation(a => a
+					.MethodConversion(symbol => MethodConversion.Smart)
+					.PropertyConversion(true)
+					.TypeConversion(o => TypeConversion.NewType)
+				)
+				.ConfigureTransformation(t => t
+					.AfterTransformation(result =>
+					{
+						AssertValidAnnotations(result);
+						Assert.AreEqual(1, result.Documents.Count);
+						var document = result.Documents[0];
+						Assert.IsNull(document.OriginalModified);
+						Assert.AreEqual(GetOutputFile($"{nameof(InitSetter)}NewType"), document.Transformed.ToFullString());
+					})
+				)
+			);
+		}
 	}
 }
