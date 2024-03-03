@@ -4,7 +4,7 @@ skip_tags: true
 image:
 - Visual Studio 2022
 - Ubuntu
-- macos
+- macos-sonoma
 environment:
   matrix:
   - Target: TestCore
@@ -17,10 +17,10 @@ environment:
     ScriptArgs: ''
 matrix:
   exclude:
-  - image: macos
+  - image: Ubuntu
     Target: TestCore
     ScriptArgs: '--netcore="net8.0"'
-  - image: macos
+  - image: macos-sonoma
     Target: Test
   - image: Ubuntu
     Target: Test
