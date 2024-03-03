@@ -25,10 +25,10 @@ namespace AsyncGenerator.Tests.RegionDirective
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCase"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCase")));
 					})
 				)
 			);
@@ -45,10 +45,10 @@ namespace AsyncGenerator.Tests.RegionDirective
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("EmptyRegionRemover"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("EmptyRegionRemover")));
 					})
 				)
 				.RegisterPlugin<EmptyRegionRemover>()
@@ -68,10 +68,10 @@ namespace AsyncGenerator.Tests.RegionDirective
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseTokens")));
 					})
 				)
 			);

@@ -27,7 +27,7 @@ namespace AsyncGenerator.Tests.Github.Issue50
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(3, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(3));
 						var documents = result.Documents.ToDictionary(o => o.AnalyzationResult.Document.Name.Split('.')[0]);
 						var names = new []
 						{
@@ -41,10 +41,10 @@ namespace AsyncGenerator.Tests.Github.Issue50
 							var readMethod = document.AnalyzationResult.AllTypes
 								.SelectMany(o => o.Methods.Where(m => m.Symbol.Name == read))
 								.Single();
-							Assert.AreEqual(2, readMethod.RelatedMethods.Count);
+							Assert.That(readMethod.RelatedMethods.Count, Is.EqualTo(2));
 
-							Assert.IsNotNull(document.OriginalModified);
-							Assert.AreEqual(GetOutputFile(name), document.Transformed.ToFullString(), name);
+							Assert.That(document.OriginalModified, Is.Not.Null);
+							Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(name)), name);
 						}
 					})
 				)

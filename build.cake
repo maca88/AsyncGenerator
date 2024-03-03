@@ -1,4 +1,4 @@
-#tool nuget:?package=NUnit.ConsoleRunner&version=3.13.0
+#tool nuget:?package=NUnit.ConsoleRunner&version=3.17.0
 #tool nuget:?package=NuGet.CommandLine&version=5.9.1
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
@@ -7,7 +7,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
-var netcore = Argument("netcore", "net6.0");
+var netcore = Argument("netcore", "net8.0");
 var netcoreVersion = Argument("netcoreVersion", "");
 
 //////////////////////////////////////////////////////////////////////

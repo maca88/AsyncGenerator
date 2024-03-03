@@ -28,36 +28,36 @@ namespace AsyncGenerator.Tests.SimpleReference
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(3));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.IsTrue(methods[readFile].OmitAsync);
+				Assert.That(methods[readFile].OmitAsync, Is.True);
 
 				// Check InvokedBy
-				Assert.AreEqual(1, methods[readFile].ReferencedBy.Count());
-				Assert.AreEqual(methods[callReadFile], methods[readFile].ReferencedBy.First());
-				Assert.AreEqual(1, methods[callReadFile].ReferencedBy.Count());
-				Assert.AreEqual(0, methods[callCallReadFile].ReferencedBy.Count());
+				Assert.That(methods[readFile].ReferencedBy.Count(), Is.EqualTo(1));
+				Assert.That(methods[readFile].ReferencedBy.First(), Is.EqualTo(methods[callReadFile]));
+				Assert.That(methods[callReadFile].ReferencedBy.Count(), Is.EqualTo(1));
+				Assert.That(methods[callCallReadFile].ReferencedBy.Count(), Is.EqualTo(0));
 
 				// Check MethodReferences
-				Assert.AreEqual(1, methods[readFile].BodyFunctionReferences.Count());
+				Assert.That(methods[readFile].BodyFunctionReferences.Count(), Is.EqualTo(1));
 				var methodReference = methods[readFile].BodyFunctionReferences.First();
-				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsNull(methodReference.ReferenceFunction);
-				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
-				Assert.AreEqual(1, methodReference.ReferenceAsyncSymbols.Count);
-				Assert.AreEqual(readAsync, methodReference.ReferenceAsyncSymbols[0].Name);
+				Assert.That(methodReference.ReferenceNode.Kind(), Is.EqualTo(SyntaxKind.InvocationExpression));
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.ReferenceFunction, Is.Null);
+				Assert.That(methodReference.ReferenceSymbol.Name, Is.EqualTo(read));
+				Assert.That(methodReference.ReferenceAsyncSymbols.Count, Is.EqualTo(1));
+				Assert.That(methodReference.ReferenceAsyncSymbols[0].Name, Is.EqualTo(readAsync));
 
 				// Check Conversion
-				Assert.AreEqual(MethodConversion.ToAsync, methods[readFile].Conversion);
-				Assert.AreEqual(MethodConversion.ToAsync, methods[callReadFile].Conversion);
-				Assert.AreEqual(MethodConversion.ToAsync, methods[callCallReadFile].Conversion);
+				Assert.That(methods[readFile].Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(methods[callReadFile].Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(methods[callCallReadFile].Conversion, Is.EqualTo(MethodConversion.ToAsync));
 			}
 
 			var methodConversions = new[] {MethodConversion.ToAsync, MethodConversion.Smart};
@@ -85,10 +85,10 @@ namespace AsyncGenerator.Tests.SimpleReference
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -105,49 +105,49 @@ namespace AsyncGenerator.Tests.SimpleReference
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(3));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				// Check conversions
 				CheckMethodsConversion(methods.Values);
 
 				//Check token
-				Assert.IsTrue(methods[readFile].CancellationTokenRequired);
-				Assert.IsTrue(methods[callReadFile].CancellationTokenRequired);
-				Assert.IsTrue(methods[callCallReadFile].CancellationTokenRequired);
+				Assert.That(methods[readFile].CancellationTokenRequired, Is.True);
+				Assert.That(methods[callReadFile].CancellationTokenRequired, Is.True);
+				Assert.That(methods[callCallReadFile].CancellationTokenRequired, Is.True);
 
-				Assert.IsTrue(methods[readFile].OmitAsync);
+				Assert.That(methods[readFile].OmitAsync, Is.True);
 
 				// Check MethodReferences
-				Assert.AreEqual(1, methods[readFile].BodyFunctionReferences.Count());
+				Assert.That(methods[readFile].BodyFunctionReferences.Count(), Is.EqualTo(1));
 				var methodReference = methods[readFile].BodyFunctionReferences.First();
-				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.PassCancellationToken);
-				Assert.IsNull(methodReference.ReferenceFunction);
-				Assert.AreEqual(read, methodReference.ReferenceSymbol.Name);
-				Assert.AreEqual(2, methodReference.ReferenceAsyncSymbols.Count);
-				Assert.AreEqual(readAsync, methodReference.ReferenceAsyncSymbols[0].Name);
-				Assert.AreEqual(readAsync, methodReference.ReferenceAsyncSymbols[1].Name);
+				Assert.That(methodReference.ReferenceNode.Kind(), Is.EqualTo(SyntaxKind.InvocationExpression));
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.PassCancellationToken, Is.True);
+				Assert.That(methodReference.ReferenceFunction, Is.Null);
+				Assert.That(methodReference.ReferenceSymbol.Name, Is.EqualTo(read));
+				Assert.That(methodReference.ReferenceAsyncSymbols.Count, Is.EqualTo(2));
+				Assert.That(methodReference.ReferenceAsyncSymbols[0].Name, Is.EqualTo(readAsync));
+				Assert.That(methodReference.ReferenceAsyncSymbols[1].Name, Is.EqualTo(readAsync));
 
 				methodReference = methods[callReadFile].BodyFunctionReferences.First();
-				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.PassCancellationToken);
+				Assert.That(methodReference.ReferenceNode.Kind(), Is.EqualTo(SyntaxKind.InvocationExpression));
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.PassCancellationToken, Is.True);
 
 				methodReference = methods[callCallReadFile].BodyFunctionReferences.First();
-				Assert.AreEqual(SyntaxKind.InvocationExpression, methodReference.ReferenceNode.Kind());
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.PassCancellationToken);
+				Assert.That(methodReference.ReferenceNode.Kind(), Is.EqualTo(SyntaxKind.InvocationExpression));
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.PassCancellationToken, Is.True);
 			}
 
 			var methodConversions = new Func<IMethodSymbol, MethodConversion>[] {
@@ -181,10 +181,10 @@ namespace AsyncGenerator.Tests.SimpleReference
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseDefaultToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseDefaultToken")));
 					})
 				)
 			);
@@ -204,10 +204,10 @@ namespace AsyncGenerator.Tests.SimpleReference
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseParameterToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseParameterToken")));
 					})
 				)
 			);
@@ -227,10 +227,10 @@ namespace AsyncGenerator.Tests.SimpleReference
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseOverloadToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseOverloadToken")));
 					})
 				)
 			);

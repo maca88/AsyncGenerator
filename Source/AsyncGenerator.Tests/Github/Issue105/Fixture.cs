@@ -24,11 +24,11 @@ namespace AsyncGenerator.Tests.Github.Issue105
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -49,11 +49,11 @@ namespace AsyncGenerator.Tests.Github.Issue105
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase2)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase2))));
 					})
 				)
 			.ConfigureParsing(pp => pp
@@ -76,7 +76,7 @@ namespace AsyncGenerator.Tests.Github.Issue105
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 				.ConfigureParsing(pp => pp

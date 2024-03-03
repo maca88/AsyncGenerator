@@ -25,10 +25,10 @@ namespace AsyncGenerator.Tests.Github.Issue44
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);

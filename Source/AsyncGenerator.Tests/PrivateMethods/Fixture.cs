@@ -24,11 +24,11 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -45,11 +45,11 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -67,11 +67,11 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase) + "WithToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase) + "WithToken")));
 					})
 				)
 			);
@@ -89,11 +89,11 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase) + "NewType"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase) + "NewType")));
 					})
 				)
 			);
@@ -112,11 +112,11 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase) + "NewTypeWithToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase) + "NewTypeWithToken")));
 					})
 				)
 			);
@@ -133,11 +133,11 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(ExplicitInterface)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(ExplicitInterface))));
 					})
 				)
 			);
@@ -155,10 +155,10 @@ namespace AsyncGenerator.Tests.PrivateMethods
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(UsedByNestedFunction)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(UsedByNestedFunction))));
 					})
 				)
 			);
@@ -199,10 +199,10 @@ namespace AsyncGenerator.Tests.PrivateMethods
 							.AfterTransformation(result =>
 							{
 								AssertValidAnnotations(result);
-								Assert.AreEqual(1, result.Documents.Count);
+								Assert.That(result.Documents.Count, Is.EqualTo(1));
 								var document = result.Documents[0];
-								Assert.NotNull(document.OriginalModified);
-								Assert.AreEqual(GetOutputFile("PrivateMethods"), document.Transformed.ToFullString());
+								Assert.That(document.OriginalModified, Is.Not.Null);
+								Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("PrivateMethods")));
 							})
 						)
 						.ApplyChanges(false)));

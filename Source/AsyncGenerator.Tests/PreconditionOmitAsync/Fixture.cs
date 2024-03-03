@@ -24,58 +24,58 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(6, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(6));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				CheckMethodsConversion(methods.Values);
 
-				Assert.AreEqual(1, methods[readFile].ReferencedBy.Count());
+				Assert.That(methods[readFile].ReferencedBy.Count(), Is.EqualTo(1));
 
 				var method = methods[preconditionReturn];
-				Assert.AreEqual(1, method.Preconditions.Count);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
+				Assert.That(method.Preconditions.Count, Is.EqualTo(1));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
 				var methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
-				Assert.AreEqual(methods[readFile], methodReference.ReferenceFunction);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
+				Assert.That(methodReference.ReferenceFunction, Is.EqualTo(methods[readFile]));
 
 				method = methods[preconditionVoid];
-				Assert.AreEqual(1, method.Preconditions.Count);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
+				Assert.That(method.Preconditions.Count, Is.EqualTo(1));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
-				Assert.IsNull(methodReference.ReferenceFunction);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
+				Assert.That(methodReference.ReferenceFunction, Is.Null);
 
 				method = methods[preconditionToSplit];
-				Assert.AreEqual(1, method.Preconditions.Count);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsTrue(method.SplitTail);
+				Assert.That(method.Preconditions.Count, Is.EqualTo(1));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.True);
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsTrue(methodReference.AwaitInvocation);
-				Assert.IsFalse(methodReference.UseAsReturnValue);
-				Assert.IsFalse(methodReference.LastInvocation);
-				Assert.IsNull(methodReference.ReferenceFunction);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.True);
+				Assert.That(methodReference.UseAsReturnValue, Is.False);
+				Assert.That(methodReference.LastInvocation, Is.False);
+				Assert.That(methodReference.ReferenceFunction, Is.Null);
 
 				method = methods[syncPrecondition];
-				Assert.AreEqual(1, method.Preconditions.Count);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsTrue(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.FunctionReferences.Count);
+				Assert.That(method.Preconditions.Count, Is.EqualTo(1));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.True);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.FunctionReferences.Count, Is.EqualTo(0));
 			}
 
 			return ReadonlyTest(p => p
@@ -97,10 +97,10 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -118,10 +118,10 @@ namespace AsyncGenerator.Tests.PreconditionOmitAsync
 					.LocalFunctions(true)
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseLocalFunctions"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseLocalFunctions")));
 					})
 				)
 			);

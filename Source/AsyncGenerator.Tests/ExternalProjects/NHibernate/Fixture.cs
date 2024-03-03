@@ -20,8 +20,8 @@ namespace AsyncGenerator.Tests.ExternalProjects.NHibernate
 		[Test]
 		public Task Test()
 		{
-			//var configPath = Path.GetFullPath(Path.Combine(GetExternalProjectDirectory("NHibernate"), "src", "AsyncGenerator.yml"));
-			var configPath = Path.Combine(@"C:\Workspace\Git\nhibernate-core\src", "AsyncGenerator.yml");
+			var configPath = Path.GetFullPath(Path.Combine(GetExternalProjectDirectory("NHibernate"), "src", "AsyncGenerator.yml"));
+			//var configPath = Path.Combine(@"C:\Workspace\Git\nhibernate-core\src", "AsyncGenerator.yml");
 			var config = AsyncCodeConfiguration.Create()
 				.ConfigureFromFile<YamlFileConfigurator>(configPath);
 			return AsyncCodeGenerator.GenerateAsync(config);

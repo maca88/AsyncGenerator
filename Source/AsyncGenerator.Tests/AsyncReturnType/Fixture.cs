@@ -22,10 +22,10 @@ namespace AsyncGenerator.Tests.AsyncReturnType
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -43,10 +43,10 @@ namespace AsyncGenerator.Tests.AsyncReturnType
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
 						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(NullCoalescing)), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(NullCoalescing))));
 					})
 				)
 			);
@@ -115,10 +115,10 @@ namespace AsyncGenerator.Tests.AsyncReturnType
 		private void ValidateValueTask(IProjectTransformationResult result)
 		{
 			AssertValidAnnotations(result);
-			Assert.AreEqual(1, result.Documents.Count);
+			Assert.That(result.Documents.Count, Is.EqualTo(1));
 			var document = result.Documents[0];
 			Assert.NotNull(document.OriginalModified);
-			Assert.AreEqual(GetOutputFile(nameof(TestCase) + "ValueTask"), document.Transformed.ToFullString());
+			Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase) + "ValueTask")));
 		}
 	}
 }

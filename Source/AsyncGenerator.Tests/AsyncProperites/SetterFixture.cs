@@ -24,10 +24,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Setter)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Setter))));
 					})
 				)
 			);
@@ -45,10 +45,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(ArrowSetter)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(ArrowSetter))));
 					})
 				)
 			);
@@ -66,10 +66,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AbstractSetter)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AbstractSetter))));
 					})
 				)
 			);
@@ -88,10 +88,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("AbstractSetterNewType"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("AbstractSetterNewType")));
 					})
 				)
 			);
@@ -109,10 +109,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AbstractInterfaceSetter)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AbstractInterfaceSetter))));
 					})
 				)
 			);
@@ -131,10 +131,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("AbstractInterfaceSetterWithTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("AbstractInterfaceSetterWithTokens")));
 					})
 				)
 			);
@@ -154,10 +154,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(SetAccessor)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(SetAccessor))));
 					})
 				)
 			);
@@ -175,10 +175,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(InitSetter)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(InitSetter))));
 					})
 				)
 			);
@@ -197,10 +197,10 @@ namespace AsyncGenerator.Tests.AsyncProperites
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile($"{nameof(InitSetter)}NewType"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile($"{nameof(InitSetter)}NewType")));
 					})
 				)
 			);

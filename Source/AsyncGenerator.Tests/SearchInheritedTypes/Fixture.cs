@@ -72,10 +72,10 @@ namespace AsyncGenerator.Tests.SearchInheritedTypes
 		private void AfterInterafaceTransformantion(IProjectTransformationResult result)
 		{
 			AssertValidAnnotations(result);
-			Assert.AreEqual(1, result.Documents.Count);
+			Assert.That(result.Documents.Count, Is.EqualTo(1));
 			var document = result.Documents[0];
-			Assert.NotNull(document.OriginalModified);
-			Assert.AreEqual(GetOutputFile(nameof(Interface)), document.Transformed.ToFullString());
+			Assert.That(document.OriginalModified, Is.Not.Null);
+			Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Interface))));
 		}
 
 
@@ -112,10 +112,10 @@ namespace AsyncGenerator.Tests.SearchInheritedTypes
 		private void AfterAbstractClassTransformantion(IProjectTransformationResult result)
 		{
 			AssertValidAnnotations(result);
-			Assert.AreEqual(1, result.Documents.Count);
+			Assert.That(result.Documents.Count, Is.EqualTo(1));
 			var document = result.Documents[0];
-			Assert.NotNull(document.OriginalModified);
-			Assert.AreEqual(GetOutputFile(nameof(AbstractClass)), document.Transformed.ToFullString());
+			Assert.That(document.OriginalModified, Is.Not.Null);
+			Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AbstractClass))));
 		}
 
 
@@ -131,10 +131,10 @@ namespace AsyncGenerator.Tests.SearchInheritedTypes
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(MultipleAsyncCounterparts)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(MultipleAsyncCounterparts))));
 					})
 				)
 			);
@@ -154,10 +154,10 @@ namespace AsyncGenerator.Tests.SearchInheritedTypes
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(MultipleAsyncCounterparts) + "Token"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(MultipleAsyncCounterparts) + "Token")));
 					})
 				)
 			);
@@ -176,10 +176,10 @@ namespace AsyncGenerator.Tests.SearchInheritedTypes
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(MissingAsyncMembers)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(MissingAsyncMembers))));
 					})
 				)
 			);
@@ -198,7 +198,7 @@ namespace AsyncGenerator.Tests.SearchInheritedTypes
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 			);

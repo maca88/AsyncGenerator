@@ -35,134 +35,134 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(13, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(13));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				IBodyFunctionReferenceAnalyzationResult methodReference;
 				IMethodAnalyzationResult method;
 
 				method = methods[simpleReturn];
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 
 				method = methods[doubleCallReturn];
-				Assert.IsFalse(method.OmitAsync);
-				Assert.IsFalse(method.SplitTail);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.AreEqual(2, method.BodyFunctionReferences.Count());
+				Assert.That(method.OmitAsync, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(2));
 				var methodReferences = method.BodyFunctionReferences.ToLookup(o => o.ReferenceSymbol.Name);
 				methodReference = methodReferences[write].First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsTrue(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.True);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 				methodReference = methodReferences[readFile].First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsTrue(methodReference.AwaitInvocation);
-				Assert.IsFalse(methodReference.UseAsReturnValue);
-				Assert.IsFalse(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.True);
+				Assert.That(methodReference.UseAsReturnValue, Is.False);
+				Assert.That(methodReference.LastInvocation, Is.False);
 
 				method = methods[syncReturn];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsTrue(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.True);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.Ignore, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.Ignore));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 
 				method = methods[simpleVoid];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 
 				method = methods[doubleCallVoid];
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.SplitTail);
-				Assert.IsTrue(method.WrapInTryCatch);
-				Assert.AreEqual(2, method.BodyFunctionReferences.Count());
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.WrapInTryCatch, Is.True);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(2));
 				methodReferences = method.BodyFunctionReferences.ToLookup(o => o.ReferenceSymbol.Name);
 				methodReference = methodReferences[read].First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 				methodReference = methodReferences[syncReadFile].First();
-				Assert.AreEqual(ReferenceConversion.Ignore, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsFalse(methodReference.UseAsReturnValue);
-				Assert.IsFalse(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.Ignore));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.False);
+				Assert.That(methodReference.LastInvocation, Is.False);
 
 				method = methods[expressionVoid];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 
 				method = methods[expressionReturn];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 				methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsTrue(methodReference.LastInvocation);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.LastInvocation, Is.True);
 
 				method = methods[returnString];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(0));
 
 				method = methods[returnDefaultString];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(0));
 
 				method = methods[returnDecimal];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(0));
 
 				method = methods[returnDecimalConstructor];
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
-				Assert.IsFalse(method.SplitTail);
-				Assert.AreEqual(0, method.BodyFunctionReferences.Count());
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
+				Assert.That(method.SplitTail, Is.False);
+				Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(0));
 			}
 
 			return ReadonlyTest(p => p
@@ -195,10 +195,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -223,10 +223,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 					.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseConfigureAwait"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseConfigureAwait")));
 					})
 				)
 			);
@@ -251,10 +251,10 @@ namespace AsyncGenerator.Tests.SimpleOmitAsync
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseWithTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseWithTokens")));
 					})
 				)
 			);

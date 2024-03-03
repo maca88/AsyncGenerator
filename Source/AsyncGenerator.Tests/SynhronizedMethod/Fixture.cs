@@ -19,13 +19,13 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(4, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(4));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.IsTrue(methods[noOptimizationSynhronized].MustRunSynchronized);
-				Assert.IsTrue(methods[synhronized].MustRunSynchronized);
+				Assert.That(methods[noOptimizationSynhronized].MustRunSynchronized, Is.True);
+				Assert.That(methods[synhronized].MustRunSynchronized, Is.True);
 			}
 
 			return ReadonlyTest(p => p
@@ -51,10 +51,10 @@ namespace AsyncGenerator.Tests.SynhronizedMethod
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCase"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCase")));
 					})
 				)
 			);

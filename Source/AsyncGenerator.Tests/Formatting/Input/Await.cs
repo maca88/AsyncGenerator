@@ -29,9 +29,9 @@ namespace AsyncGenerator.Tests.Formatting.Input
 				.Write("")
 				.ToString();
 
-			Assert.IsTrue(
+			Assert.That(
 				SimpleFile
-					.Write("").Equals(true));
+					.Write("").Equals(true), Is.True);
 		}
 	}
 }

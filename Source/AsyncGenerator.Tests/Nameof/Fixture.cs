@@ -20,10 +20,10 @@ namespace AsyncGenerator.Tests.Nameof
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Method) + "NewType"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Method) + "NewType")));
 					})
 				)
 			);
@@ -40,10 +40,10 @@ namespace AsyncGenerator.Tests.Nameof
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Method) + "Partial"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Method) + "Partial")));
 					})
 				)
 			);
@@ -61,10 +61,10 @@ namespace AsyncGenerator.Tests.Nameof
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(SelfReference) + "NewType"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(SelfReference) + "NewType")));
 					})
 				)
 			);
@@ -82,10 +82,10 @@ namespace AsyncGenerator.Tests.Nameof
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(ArgumentFunction) + "NewType"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(ArgumentFunction) + "NewType")));
 					})
 				)
 			);
@@ -102,10 +102,10 @@ namespace AsyncGenerator.Tests.Nameof
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Variable)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Variable))));
 					})
 				)
 			);
@@ -123,10 +123,10 @@ namespace AsyncGenerator.Tests.Nameof
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Variable)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Variable))));
 					})
 				)
 			);

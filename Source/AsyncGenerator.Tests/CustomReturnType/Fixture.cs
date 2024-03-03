@@ -21,15 +21,15 @@ namespace AsyncGenerator.Tests.CustomReturnType
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(2));
 
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(MethodConversion.Ignore, methods[getData].Conversion);
-				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
+				Assert.That(methods[getData].Conversion, Is.EqualTo(MethodConversion.Ignore));
+				Assert.That(methods[getDataAsync].Conversion, Is.EqualTo(MethodConversion.Ignore));
 			}
 
 			return ReadonlyTest(nameof(TestCase), p => p
@@ -53,7 +53,7 @@ namespace AsyncGenerator.Tests.CustomReturnType
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 			);
@@ -67,15 +67,15 @@ namespace AsyncGenerator.Tests.CustomReturnType
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(2));
 
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(MethodConversion.Ignore, methods[getData].Conversion);
-				Assert.AreEqual(MethodConversion.Ignore, methods[getDataAsync].Conversion);
+				Assert.That(methods[getData].Conversion, Is.EqualTo(MethodConversion.Ignore));
+				Assert.That(methods[getDataAsync].Conversion, Is.EqualTo(MethodConversion.Ignore));
 			}
 
 			return ReadonlyTest(nameof(TestCase), p => p
@@ -101,7 +101,7 @@ namespace AsyncGenerator.Tests.CustomReturnType
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 			);

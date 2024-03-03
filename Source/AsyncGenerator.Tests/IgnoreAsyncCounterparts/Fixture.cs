@@ -24,7 +24,7 @@ namespace AsyncGenerator.Tests.IgnoreAsyncCounterparts
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 			);
@@ -47,7 +47,7 @@ namespace AsyncGenerator.Tests.IgnoreAsyncCounterparts
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 			);
@@ -77,7 +77,7 @@ namespace AsyncGenerator.Tests.IgnoreAsyncCounterparts
 					.ConfigureTransformation(t => t
 						.AfterTransformation(result =>
 						{
-							Assert.AreEqual(0, result.Documents.Count);
+							Assert.That(result.Documents.Count, Is.EqualTo(0));
 						})
 					)
 			);

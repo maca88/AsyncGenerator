@@ -12,18 +12,18 @@ namespace AsyncGenerator.Tests.Sleep.Input
 	{
 		/// <summary>
 		/// <see cref="Thread.Sleep(int)"/>
-		/// <see cref="System.Threading.Thread.Sleep(TimeSpan)"/>
+		/// <see cref="Thread.Sleep(TimeSpan)"/>
 		/// </summary>
 		public void Sleep()
 		{
 			Thread.Sleep(10);
-			System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(10));
+			Thread.Sleep(TimeSpan.FromMilliseconds(10));
 
 			var name = nameof(Thread.Sleep);
-			Assert.AreEqual(nameof(System.Threading.Thread.Sleep), name);
+			Assert.That(name, Is.EqualTo(nameof(Thread.Sleep)));
 
 			Runner.RunWithIntParameter(Thread.Sleep);
-			Runner.RunWithIntParameter(System.Threading.Thread.Sleep);
+			Runner.RunWithIntParameter(Thread.Sleep);
 		}
 
 		public void Sleep2()

@@ -31,7 +31,7 @@ namespace AsyncGenerator.Tests.Sleep.Input
 			await (Task.Delay(TimeSpan.FromMilliseconds(10)));
 
 			var name = nameof(Task.Delay);
-			Assert.AreEqual(nameof(Task.Delay), name);
+			Assert.That(name, Is.EqualTo(nameof(Task.Delay)));
 
 			Runner.RunWithIntParameterAsync(Task.Delay);
 			Runner.RunWithIntParameterAsync(Task.Delay);

@@ -22,7 +22,11 @@ namespace AsyncGenerator.Tests.NUnit.Input
 	{
 		public void TestAsync()
 		{
+#pragma warning disable NUnit2007
+#pragma warning disable NUnit2009
 			Assert.That(1, Is.EqualTo(1));
+#pragma warning restore NUnit2009
+#pragma warning restore NUnit2007
 
 			Assert.That(async () =>
 			{
@@ -49,7 +53,7 @@ namespace AsyncGenerator.Tests.NUnit.Input
 			var result = false;
 			Assert.That(async () => result = await (SimpleFile.WriteAsync("")), Throws.Nothing);
 			Assert.That<Task<bool>>(async () => result = await (SimpleFile.WriteAsync("")), Throws.Nothing);
-			Assert.IsTrue(result);
+			Assert.That(result, Is.True);
 
 		}
 	}
