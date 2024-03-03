@@ -188,22 +188,22 @@ namespace AsyncGenerator.Tests
 			foreach (var documentResult in projectResult.Documents)
 			{
 				var rootNode = documentResult.Transformed;
-				Assert.AreEqual(1, rootNode.GetAnnotatedNodes(documentResult.Annotation).ToList().Count);
+				Assert.That(rootNode.GetAnnotatedNodes(documentResult.Annotation).ToList().Count, Is.EqualTo(1));
 				foreach (var namespaceResult in documentResult.TransformedNamespaces)
 				{
-					Assert.AreEqual(1, rootNode.GetAnnotatedNodes(namespaceResult.Annotation).ToList().Count);
+					Assert.That(rootNode.GetAnnotatedNodes(namespaceResult.Annotation).ToList().Count, Is.EqualTo(1));
 					foreach (var typeResult in namespaceResult.TransformedTypes)
 					{
-						Assert.AreEqual(1, rootNode.GetAnnotatedNodes(typeResult.Annotation).ToList().Count);
+						Assert.That(rootNode.GetAnnotatedNodes(typeResult.Annotation).ToList().Count, Is.EqualTo(1));
 						foreach (var methodResult in typeResult.TransformedMethods)
 						{
-							Assert.AreEqual(1, rootNode.GetAnnotatedNodes(methodResult.Annotation).ToList().Count);
+							Assert.That(rootNode.GetAnnotatedNodes(methodResult.Annotation).ToList().Count, Is.EqualTo(1));
 						}
 					}
 				}
 				foreach (var typeResult in documentResult.TransformedTypes)
 				{
-					Assert.AreEqual(1, rootNode.GetAnnotatedNodes(typeResult.Annotation).ToList().Count);
+					Assert.That(rootNode.GetAnnotatedNodes(typeResult.Annotation).ToList().Count, Is.EqualTo(1));
 				}
 			}
 		}
@@ -212,8 +212,8 @@ namespace AsyncGenerator.Tests
 		{
 			foreach (var method in methodAnalyzationResults)
 			{
-				Assert.AreNotEqual(MethodConversion.Smart, method.Conversion);
-				Assert.AreNotEqual(MethodConversion.Unknown, method.Conversion);
+				Assert.That(method.Conversion, Is.Not.EqualTo(MethodConversion.Smart));
+				Assert.That(method.Conversion, Is.Not.EqualTo(MethodConversion.Unknown));
 			}
 		}
 

@@ -21,10 +21,10 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(6, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(6));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				var awaitRequiredMethods = new[]
@@ -37,11 +37,11 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 				foreach (var awaitRequiredMethod in awaitRequiredMethods)
 				{
 					method = methods[awaitRequiredMethod];
-					Assert.IsFalse(method.OmitAsync);
-					Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+					Assert.That(method.OmitAsync, Is.False);
+					Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 					methodReference = method.BodyFunctionReferences.First();
-					Assert.IsTrue(methodReference.AwaitInvocation);
-					Assert.IsTrue(methodReference.UseAsReturnValue);
+					Assert.That(methodReference.AwaitInvocation, Is.True);
+					Assert.That(methodReference.UseAsReturnValue, Is.True);
 				}
 
 				var awaitNotRequiredMethods = new[]
@@ -51,11 +51,11 @@ namespace AsyncGenerator.Tests.CastOmitAsync
 				foreach (var awaitNotRequiredMethod in awaitNotRequiredMethods)
 				{
 					method = methods[awaitNotRequiredMethod];
-					Assert.IsTrue(method.OmitAsync);
-					Assert.AreEqual(1, method.BodyFunctionReferences.Count());
+					Assert.That(method.OmitAsync, Is.True);
+					Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(1));
 					methodReference = method.BodyFunctionReferences.First();
-					Assert.IsFalse(methodReference.AwaitInvocation);
-					Assert.IsTrue(methodReference.UseAsReturnValue);
+					Assert.That(methodReference.AwaitInvocation, Is.False);
+					Assert.That(methodReference.UseAsReturnValue, Is.True);
 				}
 			}
 

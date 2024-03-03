@@ -21,10 +21,10 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AssertThat)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AssertThat))));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(false))
@@ -43,10 +43,10 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AssertThatTryCatch)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AssertThatTryCatch))));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(false))
@@ -65,10 +65,10 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(DoesNotThrowTryCatch)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(DoesNotThrowTryCatch))));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(false))
@@ -89,10 +89,10 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.IsNotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AssertThatNoToken)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AssertThatNoToken))));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(false))
@@ -112,7 +112,7 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(false))
@@ -131,10 +131,10 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AssertMultiple)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AssertMultiple))));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(false))
@@ -153,9 +153,9 @@ namespace AsyncGenerator.Tests.NUnit
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.AreEqual(GetOutputFile(createNewTypes ? "SimpleFixtureNewType" : "SimpleFixturePartial"), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(createNewTypes ? "SimpleFixtureNewType" : "SimpleFixturePartial")));
 					})
 				)
 				.RegisterPlugin(new NUnitPlugin(createNewTypes))
@@ -186,9 +186,9 @@ namespace AsyncGenerator.Tests.NUnit
 					.ConfigureTransformation(t => t.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.AreEqual(GetOutputFile("SimpleFixturePartial"), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("SimpleFixturePartial")));
 					}))
 			);
 		}
@@ -217,7 +217,7 @@ namespace AsyncGenerator.Tests.NUnit
 					.ConfigureTransformation(t => t.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					}))
 			);
 		}
@@ -247,9 +247,9 @@ namespace AsyncGenerator.Tests.NUnit
 					.ConfigureTransformation(t => t.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.AreEqual(GetOutputFile("SimpleFixturePartial"), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("SimpleFixturePartial")));
 					}))
 			);
 		}
@@ -278,7 +278,7 @@ namespace AsyncGenerator.Tests.NUnit
 					.ConfigureTransformation(t => t.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(0, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(0));
 					}))
 			);
 		}
@@ -308,9 +308,9 @@ namespace AsyncGenerator.Tests.NUnit
 					.ConfigureTransformation(t => t.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.AreEqual(GetOutputFile("SimpleFixtureNewType"), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("SimpleFixtureNewType")));
 					}))
 			);
 		}

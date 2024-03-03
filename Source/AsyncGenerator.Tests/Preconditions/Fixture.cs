@@ -23,27 +23,27 @@ namespace AsyncGenerator.Tests.Preconditions
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(2));
 
 				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(3, types[nameof(TestCase)].Methods.Count);
+				Assert.That(types[nameof(TestCase)].Methods.Count, Is.EqualTo(3));
 				var methods = types[nameof(TestCase)].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(1, methods[readFile].Preconditions.Count);
-				Assert.IsFalse(methods[readFile].SplitTail);
+				Assert.That(methods[readFile].Preconditions.Count, Is.EqualTo(1));
+				Assert.That(methods[readFile].SplitTail, Is.False);
 
-				Assert.AreEqual(0, methods[divideShort].Preconditions.Count);
-				Assert.IsFalse(methods[divideShort].SplitTail);
+				Assert.That(methods[divideShort].Preconditions.Count, Is.EqualTo(0));
+				Assert.That(methods[divideShort].SplitTail, Is.False);
 
-				Assert.AreEqual(1, methods[divide].Preconditions.Count);
-				Assert.IsTrue(methods[divide].SplitTail);
+				Assert.That(methods[divide].Preconditions.Count, Is.EqualTo(1));
+				Assert.That(methods[divide].SplitTail, Is.True);
 
 				foreach (var method in methods.Values)
 				{
-					Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+					Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
 				}
 			}
 
@@ -65,10 +65,10 @@ namespace AsyncGenerator.Tests.Preconditions
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -85,10 +85,10 @@ namespace AsyncGenerator.Tests.Preconditions
 					.LocalFunctions(true)
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseLocalFunctions"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseLocalFunctions")));
 					})
 				)
 			);
@@ -103,27 +103,27 @@ namespace AsyncGenerator.Tests.Preconditions
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(2));
 
 				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(3, types[nameof(Input.TestCase)].Methods.Count);
+				Assert.That(types[nameof(Input.TestCase)].Methods.Count, Is.EqualTo(3));
 				var methods = types[nameof(Input.TestCase)].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(1, methods[readFile].Preconditions.Count);
-				Assert.IsFalse(methods[readFile].SplitTail);
+				Assert.That(methods[readFile].Preconditions.Count, Is.EqualTo(1));
+				Assert.That(methods[readFile].SplitTail, Is.False);
 
-				Assert.AreEqual(1, methods[divideShort].Preconditions.Count);
-				Assert.IsTrue(methods[divideShort].SplitTail);
+				Assert.That(methods[divideShort].Preconditions.Count, Is.EqualTo(1));
+				Assert.That(methods[divideShort].SplitTail, Is.True);
 
-				Assert.AreEqual(1, methods[divide].Preconditions.Count);
-				Assert.IsTrue(methods[divide].SplitTail);
+				Assert.That(methods[divide].Preconditions.Count, Is.EqualTo(1));
+				Assert.That(methods[divide].SplitTail, Is.True);
 
 				foreach (var method in methods.Values)
 				{
-					Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+					Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
 				}
 			}
 
@@ -167,10 +167,10 @@ namespace AsyncGenerator.Tests.Preconditions
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseCustomChecker"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseCustomChecker")));
 					})
 				)
 			);
@@ -187,10 +187,10 @@ namespace AsyncGenerator.Tests.Preconditions
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseWithTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseWithTokens")));
 					})
 				)
 			);
@@ -208,10 +208,10 @@ namespace AsyncGenerator.Tests.Preconditions
 					.LocalFunctions(true)
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseLocalFunctionsWithTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseLocalFunctionsWithTokens")));
 					})
 				)
 			);

@@ -36,10 +36,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("CustomTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("CustomTokens")));
 					})
 				)
 			);
@@ -68,10 +68,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("GuardsCustomTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("GuardsCustomTokens")));
 					})
 				)
 			);
@@ -95,10 +95,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(DefaultParameter)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(DefaultParameter))));
 					})
 				)
 			);
@@ -127,10 +127,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("DefaultParameterNoToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("DefaultParameterNoToken")));
 					})
 				)
 			);
@@ -154,10 +154,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Params)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Params))));
 					})
 				)
 			);
@@ -180,11 +180,11 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
+						Assert.That(document.OriginalModified, Is.Not.Null);
 						Console.WriteLine(document.Transformed.ToFullString());
-						Assert.AreEqual(GetOutputFile("ClassWithLocalAsyncMethodsGuarded"), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("ClassWithLocalAsyncMethodsGuarded")));
 					})
 				)
 			);
@@ -206,11 +206,11 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
+						Assert.That(document.OriginalModified, Is.Not.Null);
 						Console.WriteLine(document.Transformed.ToFullString());
-						Assert.AreEqual(GetOutputFile("ClassWithLocalAsyncMethodsUnGuarded"), document.Transformed.ToFullString());
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("ClassWithLocalAsyncMethodsUnGuarded")));
 					})
 				)
 			);
@@ -236,10 +236,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(AbstractClass) + "RequiresToken"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(AbstractClass) + "RequiresToken")));
 					})
 				)
 			);
@@ -261,10 +261,10 @@ namespace AsyncGenerator.Tests.CancellationTokens
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Override)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Override))));
 					})
 				)
 				.ConfigureParsing(p => p

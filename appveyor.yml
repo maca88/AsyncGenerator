@@ -4,23 +4,23 @@ skip_tags: true
 image:
 - Visual Studio 2022
 - Ubuntu
-- macos
+- macos-sonoma
 environment:
   matrix:
   - Target: TestCore
     ScriptArgs: '--netcoreVersion="3.1.200" --netcore="netcoreapp3.1"'
   - Target: TestCore
-    ScriptArgs: '--netcoreVersion="5.0.400" --netcore="net5.0"'
-  - Target: TestCore
     ScriptArgs: '--netcore="net6.0"'
+  - Target: TestCore
+    ScriptArgs: '--netcore="net8.0"'
   - Target: Test
     ScriptArgs: ''
 matrix:
   exclude:
-  - image: macos
+  - image: Ubuntu
     Target: TestCore
-    ScriptArgs: '--netcore="net6.0"'
-  - image: macos
+    ScriptArgs: '--netcore="net8.0"'
+  - image: macos-sonoma
     Target: Test
   - image: Ubuntu
     Target: Test

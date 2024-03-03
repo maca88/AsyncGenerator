@@ -152,10 +152,10 @@ namespace AsyncGenerator.Tests.AlwaysAwait
 		private void AfterTransformation(IProjectTransformationResult result, string fileName)
 		{
 			AssertValidAnnotations(result);
-			Assert.AreEqual(1, result.Documents.Count);
+			Assert.That(result.Documents.Count, Is.EqualTo(1));
 			var document = result.Documents[0];
-			Assert.NotNull(document.OriginalModified);
-			Assert.AreEqual(GetOutputFile(fileName), document.Transformed.ToFullString());
+			Assert.That(document.OriginalModified, Is.Not.Null);
+			Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(fileName)));
 		}
 	}
 }

@@ -39,9 +39,9 @@ namespace AsyncGenerator.Tests.Formatting.Input
 				.WriteAsync("")))
 				.ToString();
 
-			Assert.IsTrue(
+			Assert.That(
 				(await (SimpleFile
-					.WriteAsync(""))).Equals(true));
+					.WriteAsync(""))).Equals(true), Is.True);
 		}
 	}
 }

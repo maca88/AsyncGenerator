@@ -27,18 +27,18 @@ namespace AsyncGenerator.Tests.Diagnostics
 					{
 						var methods = result.Documents.First().AllTypes.First().Methods.ToDictionary(o => o.Symbol.Name);
 						var testMethod = (MethodData)methods[test];
-						Assert.AreEqual(DiagnosticSeverity.Warning, testMethod.IgnoredReason.DiagnosticSeverity);
-						Assert.AreEqual(0, testMethod.GetDiagnostics().Count());
+						Assert.That(testMethod.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+						Assert.That(testMethod.GetDiagnostics().Count(), Is.EqualTo(0));
 						var bodyReference = testMethod.BodyFunctionReferences.First();
-						Assert.AreEqual(1, bodyReference.GetDiagnostics().Count());
-						Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.GetDiagnostics().First().DiagnosticSeverity);
+						Assert.That(bodyReference.GetDiagnostics().Count(), Is.EqualTo(1));
+						Assert.That(bodyReference.GetDiagnostics().First().DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
 
 						var test2Method = (MethodData)methods[test2];
-						Assert.AreEqual(DiagnosticSeverity.Warning, test2Method.IgnoredReason.DiagnosticSeverity);
-						Assert.AreEqual(0, test2Method.GetDiagnostics().Count());
+						Assert.That(test2Method.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+						Assert.That(test2Method.GetDiagnostics().Count(), Is.EqualTo(0));
 						bodyReference = testMethod.BodyFunctionReferences.First();
-						Assert.AreEqual(1, bodyReference.GetDiagnostics().Count());
-						Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.GetDiagnostics().First().DiagnosticSeverity);
+						Assert.That(bodyReference.GetDiagnostics().Count(), Is.EqualTo(1));
+						Assert.That(bodyReference.GetDiagnostics().First().DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
 					})
 				)
 				.ConfigureTransformation(t => t.Disable())
@@ -103,10 +103,10 @@ namespace AsyncGenerator.Tests.Diagnostics
 
 			var methods = result.Documents.First().AllTypes.First().Methods.ToDictionary(o => o.Symbol.Name);
 			var test2Method = (MethodData)methods[test2];
-			Assert.AreEqual(DiagnosticSeverity.Hidden, test2Method.IgnoredReason.DiagnosticSeverity);
-			Assert.AreEqual(0, test2Method.GetDiagnostics().Count());
+			Assert.That(test2Method.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Hidden));
+			Assert.That(test2Method.GetDiagnostics().Count(), Is.EqualTo(0));
 			var bodyReference = test2Method.BodyFunctionReferences.First();
-			Assert.AreEqual(0, bodyReference.GetDiagnostics().Count());
+			Assert.That(bodyReference.GetDiagnostics().Count(), Is.EqualTo(0));
 		}
 
 
@@ -125,49 +125,49 @@ namespace AsyncGenerator.Tests.Diagnostics
 					{
 						var methods = result.Documents.First().AllTypes.First().Methods.ToDictionary(o => o.Symbol.Name);
 						FunctionData method = (MethodData)methods[enumerable];
-						Assert.AreEqual(DiagnosticSeverity.Warning, method.IgnoredReason.DiagnosticSeverity);
-						Assert.AreEqual(0, method.GetDiagnostics().Count());
-						Assert.AreEqual(2, method.ChildFunctions.Count);
+						Assert.That(method.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+						Assert.That(method.GetDiagnostics().Count(), Is.EqualTo(0));
+						Assert.That(method.ChildFunctions.Count, Is.EqualTo(2));
 
 						foreach (var functionData in method.ChildFunctions.Values)
 						{
-							Assert.AreEqual(DiagnosticSeverity.Warning, functionData.IgnoredReason.DiagnosticSeverity);
-							Assert.AreEqual(0, functionData.GetDiagnostics().Count());
-							Assert.AreEqual(1, functionData.BodyFunctionReferences.Count());
+							Assert.That(functionData.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+							Assert.That(functionData.GetDiagnostics().Count(), Is.EqualTo(0));
+							Assert.That(functionData.BodyFunctionReferences.Count(), Is.EqualTo(1));
 							var bodyReference = functionData.BodyFunctionReferences.First();
-							Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.IgnoredReason.DiagnosticSeverity);
-							Assert.AreEqual(1, bodyReference.GetDiagnostics().Count());
-							Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.GetDiagnostics().First().DiagnosticSeverity);
+							Assert.That(bodyReference.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+							Assert.That(bodyReference.GetDiagnostics().Count(), Is.EqualTo(1));
+							Assert.That(bodyReference.GetDiagnostics().First().DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
 						}
 
 
 						method = (MethodData)methods[enumerableQueryExpression];
-						Assert.AreEqual(DiagnosticSeverity.Warning, method.IgnoredReason.DiagnosticSeverity);
-						Assert.AreEqual(0, method.GetDiagnostics().Count());
+						Assert.That(method.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+						Assert.That(method.GetDiagnostics().Count(), Is.EqualTo(0));
 
-						Assert.AreEqual(2, method.BodyFunctionReferences.Count());
+						Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(2));
 						foreach (var bodyReference in method.BodyFunctionReferences)
 						{
-							Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.IgnoredReason.DiagnosticSeverity);
-							Assert.AreEqual(1, bodyReference.GetDiagnostics().Count());
-							Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.GetDiagnostics().First().DiagnosticSeverity);
+							Assert.That(bodyReference.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+							Assert.That(bodyReference.GetDiagnostics().Count(), Is.EqualTo(1));
+							Assert.That(bodyReference.GetDiagnostics().First().DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
 						}
 
 						method = (MethodData)methods[enumerableQueryExpressionNested];
-						Assert.AreEqual(DiagnosticSeverity.Warning, method.IgnoredReason.DiagnosticSeverity);
-						Assert.AreEqual(0, method.GetDiagnostics().Count());
-						Assert.AreEqual(1, method.ChildFunctions.Count);
+						Assert.That(method.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+						Assert.That(method.GetDiagnostics().Count(), Is.EqualTo(0));
+						Assert.That(method.ChildFunctions.Count, Is.EqualTo(1));
 
 						method = method.ChildFunctions.First().Value;
-						Assert.AreEqual(DiagnosticSeverity.Warning, method.IgnoredReason.DiagnosticSeverity);
-						Assert.AreEqual(0, method.GetDiagnostics().Count());
+						Assert.That(method.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+						Assert.That(method.GetDiagnostics().Count(), Is.EqualTo(0));
 
-						Assert.AreEqual(2, method.BodyFunctionReferences.Count());
+						Assert.That(method.BodyFunctionReferences.Count(), Is.EqualTo(2));
 						foreach (var bodyReference in method.BodyFunctionReferences)
 						{
-							Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.IgnoredReason.DiagnosticSeverity);
-							Assert.AreEqual(1, bodyReference.GetDiagnostics().Count());
-							Assert.AreEqual(DiagnosticSeverity.Warning, bodyReference.GetDiagnostics().First().DiagnosticSeverity);
+							Assert.That(bodyReference.IgnoredReason.DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
+							Assert.That(bodyReference.GetDiagnostics().Count(), Is.EqualTo(1));
+							Assert.That(bodyReference.GetDiagnostics().First().DiagnosticSeverity, Is.EqualTo(DiagnosticSeverity.Warning));
 						}
 					})
 				)

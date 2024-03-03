@@ -21,10 +21,10 @@ namespace AsyncGenerator.Tests.NestedNamespaces
 					.MethodConversion(symbol => MethodConversion.Smart)
 					.AfterAnalyzation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
-						Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-						Assert.AreEqual(2, result.Documents[0].GlobalNamespace.NestedNamespaces[0].NestedNamespaces.Count);
-						Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
+						Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+						Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].NestedNamespaces.Count, Is.EqualTo(2));
+						Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
 					})
 				)
 			);
@@ -41,11 +41,11 @@ namespace AsyncGenerator.Tests.NestedNamespaces
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseOriginal"), document.OriginalModified.ToFullString());
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.OriginalModified.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseOriginal")));
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);

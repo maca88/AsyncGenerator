@@ -23,16 +23,16 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(4, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(4));
 				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(1, types[nameof(DerivedClass)].Methods.Count);
-				Assert.AreEqual(MethodConversion.ToAsync, types[nameof(DerivedClass)].Methods[0].Conversion);
+				Assert.That(types[nameof(DerivedClass)].Methods.Count, Is.EqualTo(1));
+				Assert.That(types[nameof(DerivedClass)].Methods[0].Conversion, Is.EqualTo(MethodConversion.ToAsync));
 
-				Assert.AreEqual(1, types[nameof(BaseClass)].Methods.Count);
-				Assert.AreEqual(MethodConversion.ToAsync, types[nameof(BaseClass)].Methods[0].Conversion);
+				Assert.That(types[nameof(BaseClass)].Methods.Count, Is.EqualTo(1));
+				Assert.That(types[nameof(BaseClass)].Methods[0].Conversion, Is.EqualTo(MethodConversion.ToAsync));
 			}
 
 			return ReadonlyTest(p => p
@@ -57,10 +57,10 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(TestCase))));
 					})
 				)
 			);
@@ -78,10 +78,10 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseDefaultTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseDefaultTokens")));
 					})
 				)
 			);
@@ -107,10 +107,10 @@ namespace AsyncGenerator.Tests.SimpleClassInheritance
 					.AfterTransformation(result =>
 					{
 						AssertValidAnnotations(result);
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseCustomTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseCustomTokens")));
 					})
 				)
 			);

@@ -21,13 +21,13 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(3));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
-				Assert.AreEqual(1, methods[readFile].ReferencedBy.Count());
+				Assert.That(methods[readFile].ReferencedBy.Count(), Is.EqualTo(1));
 
 				var circularMethods = new[]
 				{
@@ -37,7 +37,7 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 				foreach (var circularMethod in circularMethods)
 				{
 					method = methods[circularMethod];
-					Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
+					Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
 				}
 			}
 
@@ -61,10 +61,10 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile(nameof(Input.TestCase)), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile(nameof(Input.TestCase))));
 					})
 				)
 			);
@@ -83,10 +83,10 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 					.ConfigureAwaitArgument(SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression))
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseWithConfigureAwait"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseWithConfigureAwait")));
 					})
 				)
 			);
@@ -101,29 +101,29 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(3));
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 
 				var method = methods[readFile];
-				Assert.AreEqual(1, method.FunctionReferences.Count);
-				Assert.IsTrue(method.BodyFunctionReferences.First().PassCancellationToken);
-				Assert.IsTrue(method.CancellationTokenRequired);
+				Assert.That(method.FunctionReferences.Count, Is.EqualTo(1));
+				Assert.That(method.BodyFunctionReferences.First().PassCancellationToken, Is.True);
+				Assert.That(method.CancellationTokenRequired, Is.True);
 
 				method = methods[method2];
-				Assert.AreEqual(2, method.FunctionReferences.Count);
+				Assert.That(method.FunctionReferences.Count, Is.EqualTo(2));
 				foreach (var reference in method.BodyFunctionReferences)
 				{
-					Assert.IsTrue(reference.PassCancellationToken);
+					Assert.That(reference.PassCancellationToken, Is.True);
 				}
-				Assert.IsTrue(method.CancellationTokenRequired);
+				Assert.That(method.CancellationTokenRequired, Is.True);
 
 				method = methods[method1];
-				Assert.AreEqual(1, method.FunctionReferences.Count);
-				Assert.IsTrue(method.BodyFunctionReferences.First().PassCancellationToken);
-				Assert.IsTrue(method.CancellationTokenRequired);
+				Assert.That(method.FunctionReferences.Count, Is.EqualTo(1));
+				Assert.That(method.BodyFunctionReferences.First().PassCancellationToken, Is.True);
+				Assert.That(method.CancellationTokenRequired, Is.True);
 			}
 
 			return ReadonlyTest(p => p
@@ -148,10 +148,10 @@ namespace AsyncGenerator.Tests.SimpleCircularCall
 				.ConfigureTransformation(t => t
 					.AfterTransformation(result =>
 					{
-						Assert.AreEqual(1, result.Documents.Count);
+						Assert.That(result.Documents.Count, Is.EqualTo(1));
 						var document = result.Documents[0];
-						Assert.NotNull(document.OriginalModified);
-						Assert.AreEqual(GetOutputFile("TestCaseWithTokens"), document.Transformed.ToFullString());
+						Assert.That(document.OriginalModified, Is.Not.Null);
+						Assert.That(document.Transformed.ToFullString(), Is.EqualTo(GetOutputFile("TestCaseWithTokens")));
 					})
 				)
 			);

@@ -27,10 +27,10 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
-				Assert.AreEqual(10, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.Count, Is.EqualTo(10));
 
 				var methods = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types[0].Methods.ToDictionary(o => o.Symbol.Name);
 				IBodyFunctionReferenceAnalyzationResult methodReference;
@@ -40,10 +40,10 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				};
 				foreach (var awaitableMethod in awaitableMethods)
 				{
-					Assert.AreEqual(1, methods[awaitableMethod].BodyFunctionReferences.Count());
+					Assert.That(methods[awaitableMethod].BodyFunctionReferences.Count(), Is.EqualTo(1));
 					methodReference = methods[awaitableMethod].BodyFunctionReferences.First();
-					Assert.IsTrue(methodReference.AwaitInvocation, awaitableMethod);
-					Assert.IsTrue(methodReference.SynchronouslyAwaited, awaitableMethod);
+					Assert.That(methodReference.AwaitInvocation, Is.True, awaitableMethod);
+					Assert.That(methodReference.SynchronouslyAwaited, Is.True, awaitableMethod);
 				}
 
 				var notAwaitableMethods = new[]
@@ -52,10 +52,10 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				};
 				foreach (var notAwaitableMethod in notAwaitableMethods)
 				{
-					Assert.AreEqual(1, methods[notAwaitableMethod].BodyFunctionReferences.Count());
+					Assert.That(methods[notAwaitableMethod].BodyFunctionReferences.Count(), Is.EqualTo(1));
 					methodReference = methods[notAwaitableMethod].BodyFunctionReferences.First();
-					Assert.IsFalse(methodReference.AwaitInvocation);
-					Assert.IsFalse(methodReference.SynchronouslyAwaited);
+					Assert.That(methodReference.AwaitInvocation, Is.False);
+					Assert.That(methodReference.SynchronouslyAwaited, Is.False);
 				}
 
 				var configurableAwaitableMethods = new[]
@@ -65,7 +65,7 @@ namespace AsyncGenerator.Tests.VariousTaskRunUsages
 				foreach (var configurableAwaitableMethod in configurableAwaitableMethods)
 				{
 					methodReference = methods[configurableAwaitableMethod].BodyFunctionReferences.First();
-					Assert.IsNotNull(methodReference.ConfigureAwaitParameter);
+					Assert.That(methodReference.ConfigureAwaitParameter, Is.Not.Null);
 				}
 			}
 

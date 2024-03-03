@@ -25,53 +25,53 @@ namespace AsyncGenerator.Tests.OverloadWithDifferentParameters
 
 			void AfterAnalyzation(IProjectAnalyzationResult result)
 			{
-				Assert.AreEqual(1, result.Documents.Count);
-				Assert.AreEqual(1, result.Documents[0].GlobalNamespace.NestedNamespaces.Count);
-				Assert.AreEqual(3, result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count);
+				Assert.That(result.Documents.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces.Count, Is.EqualTo(1));
+				Assert.That(result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.Count, Is.EqualTo(3));
 
 				var types = result.Documents[0].GlobalNamespace.NestedNamespaces[0].Types.ToDictionary(o => o.Symbol.Name);
 
 				var type = types[overloadWithDiffParams];
-				Assert.AreEqual(2, type.Methods.Count);
+				Assert.That(type.Methods.Count, Is.EqualTo(2));
 				var methods = type.Methods.ToLookup(o => o.Symbol.Name);
 
 				var method = methods[readData].First();
-				Assert.AreEqual(MethodConversion.ToAsync, method.Conversion);
-				Assert.IsTrue(method.OmitAsync);
-				Assert.IsFalse(method.WrapInTryCatch);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.ToAsync));
+				Assert.That(method.OmitAsync, Is.True);
+				Assert.That(method.WrapInTryCatch, Is.False);
 				var methodReference = method.BodyFunctionReferences.First();
-				Assert.AreEqual(ReferenceConversion.ToAsync, methodReference.GetConversion());
-				Assert.IsFalse(methodReference.AwaitInvocation);
-				Assert.IsTrue(methodReference.UseAsReturnValue);
-				Assert.IsNotNull(methodReference.ReferenceFunction);
+				Assert.That(methodReference.GetConversion(), Is.EqualTo(ReferenceConversion.ToAsync));
+				Assert.That(methodReference.AwaitInvocation, Is.False);
+				Assert.That(methodReference.UseAsReturnValue, Is.True);
+				Assert.That(methodReference.ReferenceFunction, Is.Not.Null);
 
 				method = methods[customReadData].First();
-				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.Ignore));
 
 
 				type = types[dataReader];
-				Assert.AreEqual(3, type.Methods.Count);
+				Assert.That(type.Methods.Count, Is.EqualTo(3));
 				methods = type.Methods.ToLookup(o => o.Symbol.Name);
 
 				method = methods[read].First();
-				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.Ignore));
 
 				method = methods[readAsync].First(o => o.Symbol.Parameters.Length == 0);
-				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.Ignore));
 
 				method = methods[readAsync].First(o => o.Symbol.Parameters.Length == 1);
-				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.Ignore));
 
 
 				type = types[customDataReader];
-				Assert.AreEqual(2, type.Methods.Count);
+				Assert.That(type.Methods.Count, Is.EqualTo(2));
 				methods = type.Methods.ToLookup(o => o.Symbol.Name);
 
 				method = methods[read].First();
-				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.Ignore));
 
 				method = methods[readAsync].First();
-				Assert.AreEqual(MethodConversion.Ignore, method.Conversion);
+				Assert.That(method.Conversion, Is.EqualTo(MethodConversion.Ignore));
 			}
 
 			return ReadonlyTest(p => p
