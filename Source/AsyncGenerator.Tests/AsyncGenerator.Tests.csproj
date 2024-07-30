@@ -35,6 +35,7 @@
     </PackageReference>
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageReference Include="System.Interactive.Async" Version="4.1.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <!-- https://stackoverflow.com/a/73422940 -->
     <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
