@@ -65,6 +65,7 @@ namespace AsyncGenerator.Transformation.Internal
 			var newMembers = transformResults
 				.OrderBy(o => o.OriginalStartSpan)
 				.SelectMany(o => o.GetTransformedNodes())
+				.OfType<MemberDeclarationSyntax>()
 				.ToList();
 
 			if (!newMembers.Any())

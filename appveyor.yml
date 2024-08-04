@@ -8,18 +8,11 @@ image:
 environment:
   matrix:
   - Target: TestCore
-    ScriptArgs: '--netcoreVersion="3.1.200" --netcore="netcoreapp3.1"'
-  - Target: TestCore
-    ScriptArgs: '--netcore="net6.0"'
-  - Target: TestCore
     ScriptArgs: '--netcore="net8.0"'
   - Target: Test
     ScriptArgs: ''
 matrix:
   exclude:
-  - image: Ubuntu
-    Target: TestCore
-    ScriptArgs: '--netcore="net8.0"'
   - image: macos-sonoma
     Target: Test
   - image: Ubuntu

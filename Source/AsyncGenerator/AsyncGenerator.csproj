@@ -7,7 +7,6 @@
     <Description>Library for generating async C# code</Description>
     <IncludeSymbols>true</IncludeSymbols>
     <LangVersion>7.3</LangVersion>
-    <NoWarn Condition="'$(TargetFramework)' == 'netcoreapp3.1'">CS8032</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
@@ -28,19 +27,19 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="$(MicrosoftCodeAnalysisVersion)" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="$(MicrosoftCodeAnalysisVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" /> <!-- https://github.com/advisories/GHSA-hq7w-xv5x-g34j -->
   </ItemGroup>
   <ItemGroup>
-    <!-- Fix for RS1024 error -->
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Framework" Version="16.8.0" ExcludeAssets="Runtime" PrivateAssets="all">
+    <PackageReference Include="Microsoft.Build.Framework" Version="17.10.4" ExcludeAssets="Runtime" PrivateAssets="all">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="Microsoft.IO.Redist" Version="6.0.1" /> <!-- https://github.com/advisories/GHSA-hq7w-xv5x-g34j -->
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net472'">
+    <PackageReference Include="System.Formats.Asn1" Version="8.0.1" /> <!-- https://github.com/advisories/GHSA-447r-wph3-92pm -->
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsyncGenerator.Core\AsyncGenerator.Core.csproj" />

@@ -4,7 +4,6 @@
     <TargetFramework>$(TestTargetFramework)</TargetFramework>
     <IsPackable>false</IsPackable>
     <LangVersion>9.0</LangVersion>
-    <NoWarn Condition="'$(TargetFramework)' == 'netcoreapp3.1'">CS8032</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -21,13 +20,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
     <PackageReference Include="Microsoft.Build.Locator" Version="$(MicrosoftBuildLocatorVersion)" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit.Analyzers" Version="4.0.1">
       <PrivateAssets>all</PrivateAssets>
@@ -35,13 +32,12 @@
     </PackageReference>
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageReference Include="System.Interactive.Async" Version="4.1.1" />
-    <!-- https://stackoverflow.com/a/73422940 -->
-    <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Transactions" />
-    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.6.0" />
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="8.0.1" />
     <PackageReference Include="SQLitePCLRaw.core" Version="$(SQLitePCLRawVersion)" /> <!-- Needed for MONO 5.16+ -->
   </ItemGroup>
 
