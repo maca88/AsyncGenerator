@@ -3,26 +3,19 @@ skip_branch_with_pr: true
 skip_tags: true
 image:
 - Visual Studio 2022
-- Ubuntu
+- Ubuntu2004
 - macos-sonoma
 environment:
   matrix:
-  - Target: TestCore
-    ScriptArgs: '--netcoreVersion="3.1.200" --netcore="netcoreapp3.1"'
-  - Target: TestCore
-    ScriptArgs: '--netcore="net6.0"'
   - Target: TestCore
     ScriptArgs: '--netcore="net8.0"'
   - Target: Test
     ScriptArgs: ''
 matrix:
   exclude:
-  - image: Ubuntu
-    Target: TestCore
-    ScriptArgs: '--netcore="net8.0"'
   - image: macos-sonoma
     Target: Test
-  - image: Ubuntu
+  - image: Ubuntu2004
     Target: Test
 install:
   - dotnet tool restore
