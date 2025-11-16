@@ -323,6 +323,11 @@ namespace AsyncGenerator.Analyzation.Internal
 				var documentData = ProjectData.GetDocumentData(refLocation.Document);
 				// We need to find the type where the reference location is
 				var node = documentData.Node.GetSimpleName(refLocation.Location.SourceSpan, true);
+				if (node == null)
+				{
+					continue; // Does happen for ctor
+				}
+
 				var referenceData = documentData.GetNearestNodeData(node.Parent, node.IsInsideCref());
 				if (referenceData == null)
 				{

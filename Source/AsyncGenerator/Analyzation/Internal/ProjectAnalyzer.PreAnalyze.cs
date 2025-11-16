@@ -247,7 +247,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			// Constructors should always be copied for new types
-			if (newType && 
+			if (newType &&
 			    (
 				    methodSymbol.MethodKind == MethodKind.Constructor ||
 					methodSymbol.MethodKind == MethodKind.Destructor ||
@@ -259,7 +259,7 @@ namespace AsyncGenerator.Analyzation.Internal
 			}
 
 			if (
-				methodSymbol.MethodKind != MethodKind.Ordinary && 
+				methodSymbol.MethodKind != MethodKind.Ordinary &&
 				methodSymbol.MethodKind != MethodKind.ExplicitInterfaceImplementation &&
 				methodSymbol.MethodKind != MethodKind.PropertyGet &&
 				methodSymbol.MethodKind != MethodKind.PropertySet)
@@ -357,7 +357,7 @@ namespace AsyncGenerator.Analyzation.Internal
 						.Where(
 							m =>
 							{
-								// Find out if the method implements the interface member or an override 
+								// Find out if the method implements the interface member or an override
 								// method that implements it
 								var impl = type.FindImplementationForInterfaceMember(m);
 								return methodSymbol.EqualTo(impl) || methodData.OverridenMethods.Any(ov => ov.EqualTo(impl));
@@ -496,7 +496,7 @@ namespace AsyncGenerator.Analyzation.Internal
 					functionData.AddDiagnostic(reason, DiagnosticSeverity.Hidden);
 				}
 			}
-			
+
 			if (funcionSymbol.IsAsync)
 			{
 				Copy(IgnoreReason.AlreadyAsync.Reason);

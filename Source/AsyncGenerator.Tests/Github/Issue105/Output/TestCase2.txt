@@ -38,6 +38,6 @@ namespace AsyncGenerator.Tests.Github.Issue105.Input
 		}
 	}
 
-	#if TEST
+#if TEST
 #endif
 }

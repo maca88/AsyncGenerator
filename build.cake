@@ -78,7 +78,7 @@ Task("SetupTestFramework")
 });
 
 Task("SetupTestFrameworkCore")
-    .IsDependentOn("ClearGlobalJs")
+    .IsDependentOn("ClearGlobalJson")
     .Does(() =>
 {
     if (!string.IsNullOrEmpty(netcoreVersion))
@@ -105,7 +105,7 @@ Task("ClearTestFramework")
     }
 });
 
-Task("ClearGlobalJs")
+Task("ClearGlobalJson")
     .Does(() =>
 {
     if (FileExists("global.json"))
@@ -223,7 +223,7 @@ Task("Pack")
 
     foreach(var project in projects)
     {
-        MSBuild(project, new MSBuildSettings {
+        DotNetBuild(project, new DotNetBuildSettings {
             Configuration = configuration,
             ArgumentCustomization = args => args
                 .Append("/t:pack")
@@ -238,7 +238,7 @@ Task("Pack")
         ArgumentCustomization = arg => arg.Append("/p:PackAsTool=true")
     });
 });
-    
+
 Task("Publish")
     .IsDependentOn("Pack")
     .Does(() =>
