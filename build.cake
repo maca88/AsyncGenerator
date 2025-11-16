@@ -7,7 +7,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
-var netcore = Argument("netcore", "net8.0");
+var netcore = Argument("netcore", "net10.0");
 var netcoreVersion = Argument("netcoreVersion", "");
 var nugetApiKey = Argument("nugetApiKey", "");
 

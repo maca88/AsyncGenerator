@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ "**" ]   # skip tags by default
+  pull_request:
+    branches: [ "**" ]   # skip PR builds if needed
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # .NET Core - Cross-platform
+          - target: TestCore
+            os: windows-2022
+            dotnet-version: 10.0.x
+            scriptArgs: ''
+          - target: TestCore
+            os: windows-2022
+            dotnet-version: 8.0.x
+            scriptArgs: '--netcore=net8.0'
+          - target: TestCore
+            os: ubuntu-22.04
+            dotnet-version: 10.0.x
+            scriptArgs: ''
+          - target: TestCore
+            os: ubuntu-22.04
+            dotnet-version: 8.0.x
+            scriptArgs: '--netcore=net8.0'
+          - target: TestCore
+            os: macos-15
+            dotnet-version: 10.0.x
+            scriptArgs: ''
+          - target: TestCore
+            os: macos-15
+            dotnet-version: 8.0.x
+            scriptArgs: '--netcore=net8.0'
+
+          # .NET Framework 4.7.2 - Windows only
+          - target: Test
+            os: windows-2022
+            dotnet-version: 10.0.x
+            scriptArgs: ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Restore Cake tools
+        run: dotnet tool restore
+
+      - name: Run Cake
+        run: |
+          dotnet cake --target=${{ matrix.target }} ${{ matrix.scriptArgs }}
