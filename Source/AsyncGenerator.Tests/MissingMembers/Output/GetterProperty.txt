@@ -19,9 +19,9 @@ using AsyncGenerator.TestCases;
 namespace AsyncGenerator.Tests.MissingMembers.Input
 {
 
-	#if TEST
+#if TEST
 
-	#endif
+#endif
 
 	public partial class GetterProperty : IGetterProperty
 	{

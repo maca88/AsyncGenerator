@@ -29,7 +29,7 @@ namespace AsyncGenerator.Tests.CancellationTokens.Input
 			return ExecuteWriteAsync(cancellationToken);
 		}
 
-		#if TEST
+#if TEST
 #endif
 	}
 

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>$(TestTargetFramework)</TargetFramework>
     <IsPackable>false</IsPackable>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>latest</LangVersion>
     <NoWarn>CA2022;CS0618</NoWarn>
   </PropertyGroup>
 

@@ -20,9 +20,9 @@ namespace AsyncGenerator.Tests.IfDirective.Input
 			return ReadInternalAsync();
 		}
 
-		#if DISABLED
-		#elif TEST
-		#else
+#if DISABLED
+#elif TEST
+#else
 #endif
 
 		private Task ReadInternalAsync()

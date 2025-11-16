@@ -22,7 +22,7 @@ namespace AsyncGenerator.Extensions.Internal
 	internal static partial class SyntaxNodeExtensions
 	{
 		/// <summary>
-		/// Check if the statement is a precondition. A statement will qualify for a precondition only if it is a 
+		/// Check if the statement is a precondition. A statement will qualify for a precondition only if it is a
 		/// <see cref="IfStatementSyntax"/> and contains a <see cref="ThrowExpressionSyntax"/>
 		/// </summary>
 		/// <param name="statement">The statement to be checked</param>
@@ -100,7 +100,7 @@ namespace AsyncGenerator.Extensions.Internal
 			if (typeDeclaration.Modifiers.Any(o => o.IsKind(SyntaxKind.PartialKeyword)))
 			{
 				// Modify the node for consistency so that the Parent node will be always null
-				return typeDeclaration.WithLeadingTrivia(typeDeclaration.GetLeadingTrivia()); 
+				return typeDeclaration.WithLeadingTrivia(typeDeclaration.GetLeadingTrivia());
 			}
 			if (typeDeclaration.Modifiers.Count > 0)
 			{
@@ -129,7 +129,7 @@ namespace AsyncGenerator.Extensions.Internal
 			return typeDeclaration;
 		}
 
-		internal static NamespaceDeclarationSyntax AddUsing(this NamespaceDeclarationSyntax namespaceDeclaration, string fullName, 
+		internal static NamespaceDeclarationSyntax AddUsing(this NamespaceDeclarationSyntax namespaceDeclaration, string fullName,
 			SyntaxTriviaList leadingTrivia, SyntaxTrivia endOfLineTrivia)
 		{
 			return namespaceDeclaration.AddUsings(
@@ -246,7 +246,7 @@ namespace AsyncGenerator.Extensions.Internal
 		internal static SyntaxTrivia GetIndent(this SyntaxNode node, SyntaxTrivia? leadingWhitespaceTrivia = null, SyntaxTrivia? parentLeadingWhitespace = null)
 		{
 			var nodeIndent = (leadingWhitespaceTrivia ?? node.GetLeadingWhitespace()).ToFullString();
-			var parentIndent = parentLeadingWhitespace.HasValue 
+			var parentIndent = parentLeadingWhitespace.HasValue
 				? parentLeadingWhitespace.Value.ToFullString()
 				: node.Parent?.GetLeadingWhitespace().ToFullString();
 			if (parentIndent == null)
@@ -590,7 +590,7 @@ namespace AsyncGenerator.Extensions.Internal
 		}
 
 		// TODO: take the original directive whitespace
-		internal static TypeDeclarationSyntax RemoveMembersKeepDirectives(this TypeDeclarationSyntax node, 
+		internal static TypeDeclarationSyntax RemoveMembersKeepDirectives(this TypeDeclarationSyntax node,
 			Predicate<MemberDeclarationSyntax> predicate, SyntaxTrivia directiveLeadingWhitespace, SyntaxTrivia eol)
 		{
 			var annotations = new List<string>();
@@ -627,38 +627,16 @@ namespace AsyncGenerator.Extensions.Internal
 			return node;
 		}
 
-		// TODO: take the original directive whitespace
 		internal static T RemoveNodeKeepDirectives<T>(this T node, string annotation, SyntaxTrivia directiveLeadingWhitespace, SyntaxTrivia eol)
 			where T : SyntaxNode
 		{
 			var toRemoveNode = node.GetAnnotatedNodes(annotation).First();
-			// We need to add a whitespace trivia to keept directives as they will not have any leading whitespace
-			var directiveAnnotations = new List<string>();
-			var directiveSpans = toRemoveNode.GetDirectives().Select(o => o.Span);
-			foreach (var directiveSpan in directiveSpans)
-			{
-				var directiveNode = toRemoveNode.GetDirectives().First(o => o.Span == directiveSpan).GetStructure();
-				var directiveAnnotation = Guid.NewGuid().ToString();
-				directiveAnnotations.Add(directiveAnnotation);
-				node = node.ReplaceNode(directiveNode, directiveNode.WithAdditionalAnnotations(new SyntaxAnnotation(directiveAnnotation)));
-				toRemoveNode = node.GetAnnotatedNodes(annotation).First();
-			}
 			if (node.Equals(toRemoveNode))
 			{
 				return null; // TODO: we need to preserve or remove directives!
 			}
-			node = node.RemoveNode(toRemoveNode, SyntaxRemoveOptions.KeepUnbalancedDirectives);
-			foreach (var directiveAnnotation in directiveAnnotations)
-			{
-				var directiveNode = node.GetAnnotatedNodes(directiveAnnotation).FirstOrDefault();
-				if (directiveNode == null)
-				{
-					continue; // The directive was removed
-				}
-				node = node.ReplaceNode(directiveNode,
-					directiveNode.WithLeadingTrivia(directiveLeadingWhitespace));
-			}
-			return node;
+
+			return node.RemoveNode(toRemoveNode, SyntaxRemoveOptions.KeepUnbalancedDirectives);
 		}
 
 		private static IEnumerable<SyntaxTrivia> GetDirectives(this SyntaxNode node)
@@ -695,8 +673,8 @@ namespace AsyncGenerator.Extensions.Internal
 				return node;
 			}
 
-			ExpressionSyntax argExpression = argumentName != null 
-				? IdentifierName(argumentName) 
+			ExpressionSyntax argExpression = argumentName != null
+				? IdentifierName(argumentName)
 				: ConstructNameSyntax("CancellationToken.None");
 
 			var invokedMethod = functionReference.ReferenceSymbol;
@@ -713,7 +691,7 @@ namespace AsyncGenerator.Extensions.Internal
 			{
 				return node.AddArgumentListArguments(argument);
 			}
-			
+
 			// We need to add an extra space after the comma
 			var argumentList = SeparatedList<ArgumentSyntax>(
 				node.ArgumentList.Arguments.GetWithSeparators()
@@ -878,8 +856,8 @@ namespace AsyncGenerator.Extensions.Internal
 			return lambda;
 		}
 
-		internal static MethodDeclarationSyntax AddCancellationTokenParameter(this MethodDeclarationSyntax node, 
-			string parameterName, 
+		internal static MethodDeclarationSyntax AddCancellationTokenParameter(this MethodDeclarationSyntax node,
+			string parameterName,
 			bool defaultParameter,
 			SyntaxTrivia leadingWhitespace,
 			SyntaxTrivia endOfLine)
@@ -912,7 +890,7 @@ namespace AsyncGenerator.Extensions.Internal
 			}
 
 			var parameters = node.ParameterList.Parameters.GetWithSeparators()
-				.Concat(node.ParameterList.Parameters.Count > 0 
+				.Concat(node.ParameterList.Parameters.Count > 0
 					? new SyntaxNodeOrToken[]
 					{
 						Token(TriviaList(), SyntaxKind.CommaToken, TriviaList(Space)),
@@ -920,14 +898,14 @@ namespace AsyncGenerator.Extensions.Internal
 					}
 					: new SyntaxNodeOrToken[] { parameter });
 			node = node.WithParameterList(node.ParameterList.WithParameters(SeparatedList<ParameterSyntax>(parameters)));
-			
+
 			var commentTrivia = node.GetLeadingTrivia().FirstOrDefault(o => o.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia));
 			var commentNode = (DocumentationCommentTriviaSyntax)commentTrivia.GetStructure();
 			if (commentNode == null)
 			{
 				return node;
 			}
-			
+
 			var lastParam = commentNode.Content.OfType<XmlElementSyntax>()
 				.LastOrDefault(o => o.StartTag.Name.ToString() == "param");
 			var eol = endOfLine.ToFullString();
@@ -984,7 +962,7 @@ namespace AsyncGenerator.Extensions.Internal
 						})
 				);
 			node = node.ReplaceNode(commentNode, newCommentNode);
-			
+
 
 			return node;
 		}
@@ -1233,10 +1211,10 @@ namespace AsyncGenerator.Extensions.Internal
 						break;
 					}
 				}
-				leadingTrivia = lastWhitespaceIndex.HasValue 
+				leadingTrivia = lastWhitespaceIndex.HasValue
 					? leadingTrivia.InsertRange(lastWhitespaceIndex.Value, commentTrivias)
 					: leadingTrivia.AddRange(commentTrivias);
-				
+
 			}
 			return node.WithLeadingTrivia(leadingTrivia);
 		}
@@ -1293,7 +1271,7 @@ namespace AsyncGenerator.Extensions.Internal
 			return InvocationExpression(identifier, ArgumentList(SeparatedList<ArgumentSyntax>(argumentList)));
 		}
 
-		
+
 
 		internal static FileLinePositionSpan GetLineSpan(this SyntaxNode node)
 		{
