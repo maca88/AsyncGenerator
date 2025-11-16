@@ -8,7 +8,7 @@ image:
 environment:
   matrix:
   - Target: TestCore
-    ScriptArgs: '--netcore="net8.0"'
+    ScriptArgs: '--netcore=net8.0 --netcoreVersion=net8.0'
   - Target: Test
     ScriptArgs: ''
 matrix:

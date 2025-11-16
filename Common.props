@@ -11,12 +11,10 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <TreatSpecificWarningsAsErrors />
-    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0;net8.0</LibTargetFrameworks>
-    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;net8.0</AppTargetFrameworks>
-    <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net8.0</TestTargetFramework>
-    <ToolTargetFrameworks Condition ="$(ToolTargetFrameworks) == ''">net8.0</ToolTargetFrameworks>
-    <MicrosoftCodeAnalysisVersion>4.10.0</MicrosoftCodeAnalysisVersion>
-    <MicrosoftBuildLocatorVersion>1.7.8</MicrosoftBuildLocatorVersion>
-    <SQLitePCLRawVersion>2.1.8</SQLitePCLRawVersion>
+    <LibTargetFrameworks Condition ="$(LibTargetFrameworks) == ''">netstandard2.0;net8.0;net10.0</LibTargetFrameworks>
+    <AppTargetFrameworks Condition ="$(AppTargetFrameworks) == ''">net472;net8.0;net10.0</AppTargetFrameworks>
+    <TestTargetFramework Condition ="$(TestTargetFramework) == ''">net10.0</TestTargetFramework>
+    <ToolTargetFrameworks Condition ="$(ToolTargetFrameworks) == ''">net8.0;net10.0</ToolTargetFrameworks>
+    <MicrosoftCodeAnalysisVersion>4.12.0</MicrosoftCodeAnalysisVersion>
   </PropertyGroup>
 </Project>
