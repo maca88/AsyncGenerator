@@ -9,6 +9,7 @@ var configuration = Argument("configuration", "Release");
 var netfx = Argument("netfx", "net472");
 var netcore = Argument("netcore", "net8.0");
 var netcoreVersion = Argument("netcoreVersion", "");
+var nugetApiKey = Argument("nugetApiKey", "");
 
 //////////////////////////////////////////////////////////////////////
 // CONSTANTS
@@ -245,9 +246,11 @@ Task("Publish")
 {
     foreach(var package in System.IO.Directory.GetFiles(PACKAGE_DIR, "*.nupkg").Where(o => !o.Contains("symbols")))
     {
-        NuGetPush(package, new NuGetPushSettings()
+        DotNetNuGetPush(package, new DotNetNuGetPushSettings()
         {
-            Source = "https://api.nuget.org/v3/index.json"
+            Source = "https://api.nuget.org/v3/index.json",
+            ApiKey = nugetApiKey,
+            SkipDuplicate = true
         });
     }
 });
